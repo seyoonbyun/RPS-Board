@@ -214,9 +214,15 @@ textarea::placeholder,
 [data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
 [data-radix-select-trigger] > span:not([data-value]),
 [data-radix-select-value]:empty::before {
-  color: #f3f4f6 !important;
+  color: #e5e7eb !important;
   opacity: 1 !important;
 }
+
+/* 최고 우선순위 placeholder 스타일링 */
+input::-webkit-input-placeholder { color: #e5e7eb !important; }
+input::-moz-placeholder { color: #e5e7eb !important; }
+input:-ms-input-placeholder { color: #e5e7eb !important; }
+input:-moz-placeholder { color: #e5e7eb !important; }
 
 /* Ultimate override for input border colors and background - this should override all browser defaults */
 input,
@@ -289,4 +295,11 @@ input:-webkit-autofill:active {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+}
+
+/* 최고 우선순위 placeholder 색상 강제 적용 */
+input[placeholder]::placeholder,
+textarea[placeholder]::placeholder {
+  color: #d1d5db !important;
+  opacity: 1 !important;
 }
