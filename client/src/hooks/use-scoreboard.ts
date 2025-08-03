@@ -27,31 +27,6 @@ export function useScoreboard(userId?: string) {
     },
   });
 
-  const syncFromSheetsMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await apiRequest("POST", `/api/sync-from-sheets/${userId}`);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // 캐시 무효화하여 최신 데이터 반영
-      queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/changes", userId] });
-      
-      toast({
-        title: "구글 시트에서 가져오기 완료",
-        description: `${data.changes?.length || 0}개 항목이 업데이트되었습니다.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "동기화 실패",
-        description: error.message || "구글 시트에서 가져오기에 실패했습니다",
-        variant: "destructive",
-      });
-    },
-  });
-
   const calculateAchievement = (scoreboardData?: ScoreboardData | null, userProfile?: any) => {
     let vStage = 0;
     let cStage = 0;
@@ -105,7 +80,6 @@ export function useScoreboard(userId?: string) {
 
   return {
     syncMutation,
-    syncFromSheetsMutation,
     calculateAchievement,
   };
 }

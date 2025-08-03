@@ -36,7 +36,7 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
-  const { calculateAchievement, syncFromSheetsMutation } = useScoreboard(user?.id);
+  const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
     localStorage.removeItem("bni_user");
@@ -51,11 +51,7 @@ export default function Dashboard() {
     window.print();
   };
 
-  const handleSyncFromSheets = () => {
-    if (user?.id) {
-      syncFromSheetsMutation.mutate(user.id);
-    }
-  };
+
 
   if (!user) {
     return <div>Loading...</div>;
@@ -79,16 +75,6 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSyncFromSheets}
-                disabled={syncFromSheetsMutation.isPending}
-                className="text-green-800 border-green-200 hover:bg-green-50"
-              >
-                <RefreshCw className={`mr-1 w-4 h-4 ${syncFromSheetsMutation.isPending ? 'animate-spin' : ''}`} />
-                {syncFromSheetsMutation.isPending ? '가져오는 중...' : '구글시트에서 가져오기'}
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
