@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
@@ -45,7 +44,6 @@ interface UserProfile {
 export default function PartnerForm({ userId, initialData, onDataSaved }: PartnerFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("basic");
 
   // Fetch user profile from Google Sheets
   const { data: userProfile, isLoading: isProfileLoading } = useQuery<UserProfile>({
@@ -143,14 +141,13 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
   };
 
   const stageOptions = [
-    { value: "", label: "단계 선택" },
     { value: "V", label: "Visibility : 아는단계" },
     { value: "C", label: "Credibility : 신뢰단계" },
     { value: "P", label: "Profit : 수익단계" },
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (
-    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
       <div className="flex items-center mb-3">
         <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2">
           {partnerNumber}
@@ -201,10 +198,10 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="단계 선택" />
+                    <SelectValue placeholder="Profit : 수익단계" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -234,114 +231,119 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="basic">기본 정보</TabsTrigger>
-                <TabsTrigger value="partners">리퍼럴 파트너 정보</TabsTrigger>
-              </TabsList>
+            {/* 기본 정보 섹션 */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <User className="w-4 h-4 text-gray-600" />
+                <h3 className="text-base font-medium text-gray-800">기본 정보</h3>
+              </div>
               
-              <TabsContent value="basic" className="space-y-4 mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="region"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>지역 (구분 시트 연동)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="서울" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="partner"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>챕터 (구분 시트 연동)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="하이" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="targetCustomer"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>나의 리퍼럴 서비스 (구분 시트 연동)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="디자이너스" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>지역 (구분 시트 연동)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="서울" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="memberName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>멤버 (구분 시트 연동)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="JOY" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="specialty"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>업태명 (구분 시트 연동)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="디자인" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="partner"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>챕터 (구분 시트 연동)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="하이" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="userIdField"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>타겟고객</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="예: 중소기업 대표" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </TabsContent>
+                <FormField
+                  control={form.control}
+                  name="targetCustomer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>나의 리퍼럴 서비스 (구분 시트 연동)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="디자이너스" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
-              <TabsContent value="partners" className="space-y-4 mt-6">
-                <div className="space-y-4">
-                  {[1, 2, 3, 4].map((partnerNumber) => (
-                    <div key={partnerNumber}>
-                      {renderPartnerSection(partnerNumber)}
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="memberName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>멤버 (구분 시트 연동)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="JOY" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="specialty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>업태명 (구분 시트 연동)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="디자인" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div>
+                <FormField
+                  control={form.control}
+                  name="userIdField"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>타겟고객</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="예: 중소기업 대표" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* 리퍼럴 파트너 정보 섹션 */}
+            <div className="space-y-4 pt-6 border-t">
+              <div className="flex items-center space-x-2 mb-4">
+                <User className="w-4 h-4 text-gray-600" />
+                <h3 className="text-base font-medium text-gray-800">리퍼럴 파트너 정보</h3>
+              </div>
+              
+              <div className="space-y-0">
+                {[1, 2, 3, 4].map((partnerNumber) => (
+                  <div key={partnerNumber}>
+                    {renderPartnerSection(partnerNumber)}
+                  </div>
+                ))}
+              </div>
+            </div>
             
             <div className="flex justify-end pt-4 border-t">
               <Button
