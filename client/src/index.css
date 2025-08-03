@@ -156,22 +156,19 @@ input::placeholder,
   color: rgb(156 163 175) !important;
 }
 
-/* Default placeholder styling for Select trigger */
-[data-radix-select-trigger] span[data-radix-select-value]:empty,
-[data-radix-select-trigger]:not([data-value]) span {
+/* Select component placeholder and value styling */
+[data-radix-select-trigger] span {
   color: rgb(156 163 175) !important;
 }
 
-/* Selected value styling - dark text for actual values */
-[data-radix-select-trigger][data-value] span,
-[data-radix-select-trigger] span[data-radix-select-value]:not(:empty) {
+/* When a value is selected, make it dark */
+[data-radix-select-trigger].has-value span {
   color: rgb(17 24 39) !important;
 }
 
-/* Additional nuclear targeting for Radix Select placeholder */
-[role="combobox"] span:not([data-value]),
-[role="combobox"] > span:first-child {
-  color: rgb(156 163 175) !important;
+/* Backup method using attribute selector */
+[data-radix-select-trigger][data-has-value="true"] span {
+  color: rgb(17 24 39) !important;
 }
 
 /* Print styles */
