@@ -368,16 +368,21 @@ class GoogleSheetsService {
 
       const existingData = await getResponse.json();
       const existingRows = existingData.values || [];
-      // Email is in column B (index 1), find existing user in first 100 rows
+      
+      // Email is now in column A (index 0) after A column deletion
       let userRowIndex = -1;
       for (let i = 1; i < existingRows.length; i++) {
         const row = existingRows[i];
-        if (row && row[1] === data.userEmail) {
+        if (row && row[0] && row[0].toLowerCase() === data.userEmail.toLowerCase()) {
           userRowIndex = i;
+          console.log(`Found existing user ${data.userEmail} in row ${userRowIndex + 1} (0-based index: ${userRowIndex})`);
           break;
         }
       }
-      console.log(`User row index for ${data.userEmail}:`, userRowIndex);
+      
+      if (userRowIndex === -1) {
+        console.log(`User ${data.userEmail} not found in existing rows - will add as new user`);
+      }
 
       let updateResponse;
       if (userRowIndex >= 0) {
