@@ -90,7 +90,7 @@ export default function LoginPage() {
               <Handshake className="text-white text-2xl w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">BNI 코리아</h1>
-            <h2 className="text-lg text-blue-600 mb-4">파워팀 리퍼럴 파트너 스코어보드</h2>
+            <h2 className="text-lg mb-4" style={{ color: '#d12031' }}>파워팀 리퍼럴 파트너 스코어보드</h2>
             <div className="w-16 h-1 bni-blue mx-auto rounded"></div>
           </div>
 

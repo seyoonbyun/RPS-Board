@@ -356,7 +356,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bni-blue hover:bni-dark text-white"
               >
                 <Save className="mr-2 w-4 h-4" />
                 {saveMutation.isPending ? "저장 중..." : "저장하기"}
@@ -388,7 +388,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               a 15.9155 15.9155 0 0 1 0 31.831
                               a 15.9155 15.9155 0 0 1 0 -31.831"
                             fill="none"
-                            stroke="#3b82f6"
+                            stroke="#d12031"
                             strokeWidth="2"
                             strokeDasharray={`${achievementData.percentage}, 100`}
                             className="drop-shadow-sm"

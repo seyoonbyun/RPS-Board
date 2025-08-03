@@ -52,6 +52,10 @@ Preferred communication style: Simple, everyday language.
   - Left side: Circular progress chart with percentage and ratio display
   - Right side: Partner statistics breakdown (P/C/V counts)
   - Bottom: "나의 총 리퍼럴 파트너 수" showing total partner count
+- **Brand Color Update**: ✅ UPDATED (Aug 3, 2025)
+  - Official BNI Korea brand color #d12031 (red) applied system-wide
+  - Updated CSS variables for primary colors, buttons, progress indicators
+  - Consistent color scheme across login, dashboard, and form components
 - **Form Styling Consistency**: ✅ RESOLVED (Aug 3, 2025)
   - Unified placeholder text colors across all form fields using rgb(156 163 175)
   - User input text colors consistently dark using rgb(17 24 39)

@@ -85,7 +85,11 @@ export default function Dashboard() {
                 variant="outline"
                 size="sm"
                 onClick={handlePrint}
-                className="text-blue-800 border-blue-200 hover:bg-blue-50"
+                style={{ 
+                  color: '#d12031', 
+                  borderColor: '#f5c2c7', 
+                }}
+                className="hover:bg-red-50"
               >
                 <Printer className="mr-1 w-4 h-4" />
                 인쇄
@@ -106,13 +110,13 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Guide Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-6 mb-6 print-friendly rounded-lg">
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg" style={{ borderLeftColor: '#d12031' }}>
           <div className="flex">
             <div className="flex-shrink-0">
-              <Compass className="text-blue-500 w-5 h-5" />
+              <Compass style={{ color: '#d12031' }} className="w-5 h-5" />
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-medium text-blue-800 mb-2">🧭 STEP 3: 나의 리퍼럴 파워팀 스코어 보드</h3>
+              <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 리퍼럴 파워팀 스코어 보드</h3>
               <div className="text-sm text-gray-700 space-y-2">
                 <p>파워팀: 리퍼럴 파트너 스코어보드는 자신의 성과를 측정하고 기록하는 데 도움을 주는 기록 툴로서, 사용자 경험을 향상시키고, 사용자에게 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
                 

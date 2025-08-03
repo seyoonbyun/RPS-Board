@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
  
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 351 78% 44%;
     --primary-foreground: 210 40% 98%;
  
     --secondary: 210 40% 96%;
@@ -45,8 +45,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
  
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 351 78% 44%;
+    --primary-foreground: 210 40% 98%;
  
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -77,11 +77,11 @@
 
 /* BNI 브랜드 색상 정의 */
 .bni-blue {
-  background-color: #4f84ff !important;
+  background-color: #d12031 !important;
 }
 
 .bni-dark {
-  background-color: #3b6bdc !important;
+  background-color: #b01c29 !important;
 }
 
 /* Clean and minimal form styling */
