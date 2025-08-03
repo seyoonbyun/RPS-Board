@@ -63,6 +63,10 @@ Preferred communication style: Simple, everyday language.
   - Browser autofill and focus blue color issues completely resolved with webkit overrides
   - "선택 안함" option added to relationship stage dropdown for clearing values
   - Applied to all existing users (biesy0011@naver.com, syoon850@gmail.com, info@bnikorea.com) and future users
+- **Login Page Enhancement**: ✅ UPDATED (Aug 3, 2025)
+  - Footer message updated from generic signup text to BNI Connect email clarification
+  - Toast notification styling enhanced with proper white background and 3-second duration
+  - All popup notifications (login, logout, save) use consistent styling and timing
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
   - ✅ UPDATED (Aug 3, 2025): "총 R파트너 수" now records only P-stage partners (not total partners)
