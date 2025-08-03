@@ -283,12 +283,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 
                 <FormField
                   control={form.control}
-                  name="targetCustomer"
+                  name="memberName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>나의 핵심 고객층</FormLabel>
+                      <FormLabel>멤버명</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 디자이너스" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} placeholder="작성예) JOY" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -299,12 +299,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="memberName"
+                  name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>멤버</FormLabel>
+                      <FormLabel>전문분야</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) JOY" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} placeholder="작성예) 디자인" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -313,12 +313,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 
                 <FormField
                   control={form.control}
-                  name="specialty"
+                  name="targetCustomer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>전문분야</FormLabel>
+                      <FormLabel>나의 핵심 고객층</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 디자인" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} placeholder="작성예) 디자이너스" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
