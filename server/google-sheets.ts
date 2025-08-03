@@ -33,18 +33,27 @@ class GoogleSheetsService {
       // Clean up the private key format
       privateKey = privateKey.trim();
       
-      // Ensure proper line breaks in PEM format
-      if (privateKey.includes('-----BEGIN PRIVATE KEY-----') && !privateKey.includes('\n')) {
-        privateKey = privateKey
-          .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
-          .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
-          .replace(/(.{64})/g, '$1\n')
-          .replace(/\n\n/g, '\n')
-          .trim();
-      }
-      
       // Log for debugging (without exposing the key)
       console.log(`Private key format check: starts with BEGIN? ${privateKey.includes('-----BEGIN PRIVATE KEY-----')}, length: ${privateKey.length}`);
+      
+      // Try API Key method first (simpler and avoids SSL issues)
+      if (config.apiKey && config.apiKey.length > 10) {
+        console.log('Trying API Key authentication method...');
+        try {
+          this.sheets = google.sheets({ 
+            version: 'v4', 
+            auth: config.apiKey 
+          });
+          this.spreadsheetId = config.spreadsheetId;
+          console.log('Google Sheets service initialized with API Key successfully');
+          return;
+        } catch (apiError) {
+          console.warn('API Key method failed, trying service account:', apiError.message);
+        }
+      }
+      
+      // Fallback to service account
+      console.log('Using service account authentication...');
       
       // More flexible format check
       if (!privateKey.includes('-----BEGIN') || !privateKey.includes('-----END')) {
@@ -52,44 +61,45 @@ class GoogleSheetsService {
         throw new Error('Invalid Google Service Account private key format');
       }
       
-      // Try different authentication methods
-      let jwtClient;
-      try {
-        jwtClient = new google.auth.JWT({
-          email: config.serviceAccountEmail,
-          key: privateKey,
-          scopes: [
-            'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive.file'
-          ]
-        });
-      } catch (jwtError) {
-        console.warn('JWT client creation failed, trying GoogleAuth:', jwtError.message);
-        
-        // Fallback to GoogleAuth with credentials object
-        const credentials = {
-          type: "service_account",
-          client_email: config.serviceAccountEmail,
-          private_key: privateKey,
-        };
-        
-        const auth = new google.auth.GoogleAuth({
-          credentials,
-          scopes: ['https://www.googleapis.com/auth/spreadsheets']
-        });
-        
-        jwtClient = await auth.getClient();
-      }
-
-      // Skip async authorization in constructor - will auth on first API call
+      // Create credentials object for GoogleAuth (more compatible with Node.js SSL)
+      const credentials = {
+        type: "service_account",
+        project_id: "qualified-glow-467905-k0",
+        private_key_id: "",
+        private_key: privateKey,
+        client_email: config.serviceAccountEmail,
+        client_id: "",
+        auth_uri: "https://accounts.google.com/o/oauth2/auth",
+        token_uri: "https://oauth2.googleapis.com/token",
+        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+      };
+      
+      const auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+      });
+      
+      const jwtClient = await auth.getClient();
 
       // Initialize Google Sheets API
       this.sheets = google.sheets({ version: 'v4', auth: jwtClient });
       this.spreadsheetId = config.spreadsheetId;
       
-      console.log('Google Sheets service initialized successfully');
+      console.log('Google Sheets service initialized with service account successfully');
     } catch (error) {
       console.error('Failed to initialize Google Sheets service:', error);
+      console.error('Error details:', error.code, error.message);
+      
+      // Provide helpful error messages
+      if (error.message?.includes('DECODER routines')) {
+        console.log('\n💡 SSL/OpenSSL Issue Detected:');
+        console.log('This is a known Node.js/OpenSSL compatibility issue with private keys.');
+        console.log('Possible solutions:');
+        console.log('1. Try regenerating the service account key');
+        console.log('2. Use API Key authentication if available');
+        console.log('3. Update Node.js version');
+      }
+      
       // Don't throw error to allow app to continue running
       this.sheets = null;
       this.spreadsheetId = config.spreadsheetId;
