@@ -44,10 +44,12 @@ Preferred communication style: Simple, everyday language.
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
 - **Partner Management**: Form-based interface for managing up to 4 referral partners
 - **Stage Tracking**: V (Visitor), C (Contact), P (Partner) stage progression
-- **Automatic Google Sheets Sync**: Data automatically syncs to Google Sheets upon saving with proper column mapping (B1:V1)
-  - Headers: ID(email), 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성%
-  - Automatic calculation of total partners and achievement percentage
+- **Google Sheets Integration**: Designed for automatic sync to Google Sheets RPS tab (A1:U1 format)
+  - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
+  - Automatic calculation of total partners and achievement percentage  
   - User-specific row updates with email-based identification
+  - Note: Currently experiencing Node.js v20/OpenSSL 3.x compatibility issues with service account authentication
+  - Fallback: Data logging for manual Google Sheets entry when SSL issues occur
 - **Change History**: Audit trail of data modifications
 - **Print Support**: Print-friendly layout for physical scoreboard display
 - **Responsive Design**: Mobile-friendly interface with adaptive layouts
