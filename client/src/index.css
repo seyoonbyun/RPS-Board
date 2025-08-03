@@ -339,3 +339,13 @@ input[placeholder*="작성예"]:-moz-placeholder {
   color: #9ca3af !important;
   opacity: 1 !important;
 }
+
+/* 최종 폭탄급 - Tailwind 무시하고 강제 적용 */
+.placeholder-gray-400::placeholder,
+.placeholder-gray-400::-webkit-input-placeholder,
+.placeholder-gray-400::-moz-placeholder,
+.placeholder-gray-400:-ms-input-placeholder,
+.placeholder-gray-400:-moz-placeholder {
+  color: #9ca3af !important;
+  opacity: 1 !important;
+}
