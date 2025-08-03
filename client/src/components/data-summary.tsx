@@ -4,6 +4,7 @@ import type { ScoreboardData } from "@shared/schema";
 
 interface DataSummaryProps {
   scoreboardData?: ScoreboardData | null;
+  userProfile?: any;
   achievement: {
     current: number;
     percent: number;
@@ -14,8 +15,31 @@ interface DataSummaryProps {
   };
 }
 
-export default function DataSummary({ scoreboardData, achievement }: DataSummaryProps) {
+export default function DataSummary({ scoreboardData, userProfile, achievement }: DataSummaryProps) {
   const getPartnersList = () => {
+    // 구글 시트 프로필 데이터가 있으면 우선 사용
+    if (userProfile) {
+      const partners = [];
+      const partnerData = [
+        { name: userProfile.rpartner1, specialty: userProfile.rpartner1Specialty, stage: userProfile.rpartner1Stage },
+        { name: userProfile.rpartner2, specialty: userProfile.rpartner2Specialty, stage: userProfile.rpartner2Stage },
+        { name: userProfile.rpartner3, specialty: userProfile.rpartner3Specialty, stage: userProfile.rpartner3Stage },
+        { name: userProfile.rpartner4, specialty: userProfile.rpartner4Specialty, stage: userProfile.rpartner4Stage },
+      ];
+
+      partnerData.forEach(partner => {
+        if (partner.name && partner.name.trim()) {
+          partners.push({
+            name: partner.name.trim(),
+            specialty: partner.specialty || "",
+            stage: partner.stage || "",
+          });
+        }
+      });
+      return partners;
+    }
+
+    // 폴백으로 scoreboardData 사용
     if (!scoreboardData) return [];
 
     const partners = [];

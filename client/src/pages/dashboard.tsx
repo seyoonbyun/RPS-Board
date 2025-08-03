@@ -30,6 +30,11 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["/api/user-profile", user?.id],
+    enabled: !!user?.id,
+  });
+
   const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
@@ -49,7 +54,7 @@ export default function Dashboard() {
     return <div>Loading...</div>;
   }
 
-  const achievement = calculateAchievement(scoreboardData);
+  const achievement = calculateAchievement(scoreboardData, userProfile);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -140,7 +145,8 @@ export default function Dashboard() {
 
         {/* Data Summary */}
         <DataSummary 
-          scoreboardData={scoreboardData} 
+          scoreboardData={scoreboardData}
+          userProfile={userProfile}
           achievement={achievement}
         />
       </div>
