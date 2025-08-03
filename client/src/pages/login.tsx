@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
 import { Handshake, LogIn } from "lucide-react";
-import React from "react";
+
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -74,18 +74,7 @@ export default function LoginPage() {
     },
   });
 
-  // Debug: Log current styles
-  React.useEffect(() => {
-    const emailInput = document.querySelector('input[type="email"]');
-    if (emailInput) {
-      const computedStyle = window.getComputedStyle(emailInput);
-      console.log('Email input computed styles:', {
-        letterSpacing: computedStyle.letterSpacing,
-        fontFamily: computedStyle.fontFamily,
-        wordSpacing: computedStyle.wordSpacing
-      });
-    }
-  }, []);
+
 
   const onSubmit = (data: LoginForm) => {
     console.log('Form submitted with data:', data);
@@ -114,14 +103,11 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="이메일을 입력하세요"
-                          className="email-input-fix"
-                        />
-                      </div>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="이메일을 입력하세요"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

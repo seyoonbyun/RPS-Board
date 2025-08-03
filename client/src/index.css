@@ -63,21 +63,7 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
   
-  /* Email input with compressed rendering */
-  .email-input-fix {
-    font-family: Arial, sans-serif !important;
-    letter-spacing: -0.5px !important;
-    word-spacing: -1px !important;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    font-stretch: condensed !important;
-    text-rendering: geometricPrecision !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    font-feature-settings: "kern" 0, "liga" 0 !important;
-    font-variant: normal !important;
-    text-transform: none !important;
-  }
+
 
 
 }
