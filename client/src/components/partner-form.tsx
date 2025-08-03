@@ -424,9 +424,14 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   
                   {/* Bottom row: Total Partners (c이미지) */}
                   <div className="pt-4 border-t">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700 font-medium">나의 총 리퍼럴 파트너 수</span>
-                      <span className="font-bold text-lg">{achievementData.total}명</span>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">R</span>
+                        </div>
+                        <span className="text-blue-800 font-medium">나의 총 리퍼럴 파트너 수</span>
+                      </div>
+                      <span className="font-bold text-xl text-blue-800">{achievementData.total}명</span>
                     </div>
                   </div>
                 </div>
