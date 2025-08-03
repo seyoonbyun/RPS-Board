@@ -27,10 +27,14 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
+      console.log('Sending login request with:', data);
       const response = await apiRequest("POST", "/api/auth/login", data);
-      return response.json();
+      const result = await response.json();
+      console.log('Login response:', result);
+      return result;
     },
     onSuccess: (data) => {
+      console.log('Login successful:', data);
       localStorage.setItem("bni_user", JSON.stringify(data.user));
       toast({
         title: "로그인 성공",
@@ -39,6 +43,7 @@ export default function LoginPage() {
       setLocation("/dashboard");
     },
     onError: (error: any) => {
+      console.error('Login error:', error);
       toast({
         title: "로그인 실패",
         description: error.message || "로그인에 실패했습니다",
@@ -48,6 +53,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginForm) => {
+    console.log('Form submitted with data:', data);
     loginMutation.mutate(data);
   };
 
@@ -78,7 +84,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="이메일을 입력하세요"
                         className="focus:ring-2 focus:ring-blue-500"
-                        noValidate
+                        style={{letterSpacing: 'normal'}}
                       />
                     </FormControl>
                     <FormMessage />

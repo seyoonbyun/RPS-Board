@@ -72,6 +72,8 @@ export const loginSchema = z.object({
   password: z.string().length(4, "비밀번호는 4자리여야 합니다"),
 });
 
+export type LoginForm = z.infer<typeof loginSchema>;
+
 export const scoreboardFormSchema = insertScoreboardSchema.extend({
   region: z.string().min(1, "지역을 입력해주세요"),
   userIdField: z.string().optional(), // ID 필드는 선택사항으로 변경
@@ -80,5 +82,4 @@ export const scoreboardFormSchema = insertScoreboardSchema.extend({
   targetCustomer: z.string().optional(), // 핵심 고객층도 선택사항으로 변경
 });
 
-export type LoginForm = z.infer<typeof loginSchema>;
 export type ScoreboardForm = z.infer<typeof scoreboardFormSchema>;
