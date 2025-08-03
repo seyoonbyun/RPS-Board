@@ -364,12 +364,12 @@ class GoogleSheetsService {
       const achievement = Math.round((profitPartners / 4) * 100);
       
       // Add total partners and achievement (S열, T열)
-      values.push(totalPartners.toString()); // S열: 총 R파트너 수
-      values.push(`${achievement}%`); // T열: 달성
+      values.push(totalPartners.toString()); // S열: 총 R파트너 수 (index 18)
+      values.push(`${achievement}%`); // T열: 달성 (index 19)
       
-      // Add ID and PW columns (U열, V열) - 기존 값 유지
-      values.push(data.userEmail); // U열: ID
-      values.push(''); // V열: PW (기존 값 유지)
+      // Add ID and PW columns (U열, V열) - 기존 값 유지  
+      values.push(data.userEmail); // U열: ID (index 20)
+      values.push(''); // V열: PW (index 21) - 기존 값 유지
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
@@ -413,13 +413,16 @@ class GoogleSheetsService {
         
         // 기존 값들 유지 (기본 정보는 구글 시트에서 가져온 값 우선)
         if (existingRow) {
-          // 기본 정보는 구글 시트 값 유지
+          // 기본 정보는 구글 시트 값 유지하되 앱에서 업데이트된 파트너 정보는 반영
           values[0] = existingRow[0] || data.userEmail; // 이메일
           values[1] = existingRow[1] || data.region || ''; // 지역
           values[2] = existingRow[2] || data.partner || ''; // 챕터
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명
           values[4] = existingRow[4] || data.specialty || ''; // 전문분야
           values[5] = existingRow[5] || data.targetCustomer || ''; // 나의 핵심 고객층
+          
+          // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
+          // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
           
           // PW 값 유지 (V열, index 21)
           const existingPW = existingRow[21] ? existingRow[21] : '';
