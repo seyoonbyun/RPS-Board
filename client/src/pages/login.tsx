@@ -92,7 +92,7 @@ export default function LoginPage() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 login-form" noValidate>
               <FormField
                 control={form.control}
                 name="email"
@@ -106,10 +106,10 @@ export default function LoginPage() {
                         placeholder="이메일을 입력하세요"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{
-                          letterSpacing: '0',
-                          wordSpacing: '0',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontFeatureSettings: 'normal',
+                          letterSpacing: '-0.3px',
+                          wordSpacing: '-1px',
+                          fontFamily: 'SF Pro Text, -apple-system, sans-serif',
+                          fontFeatureSettings: 'kern 0, liga 0',
                           fontKerning: 'none'
                         }}
                       />
@@ -133,10 +133,10 @@ export default function LoginPage() {
                         placeholder="4자리 숫자를 입력하세요"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{
-                          letterSpacing: '0',
-                          wordSpacing: '0',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontFeatureSettings: 'normal',
+                          letterSpacing: '-0.3px',
+                          wordSpacing: '-1px',
+                          fontFamily: 'SF Pro Text, -apple-system, sans-serif',
+                          fontFeatureSettings: 'kern 0, liga 0',
                           fontKerning: 'none'
                         }}
                       />

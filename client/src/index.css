@@ -64,15 +64,33 @@
     letter-spacing: normal;
   }
 
-  /* Direct input element styling - bypass shadcn */
-  input {
-    font-family: system-ui, -apple-system, sans-serif !important;
-    letter-spacing: 0 !important;
-    word-spacing: 0 !important;
-    font-feature-settings: normal !important;
+  /* FORCED input styling - maximum specificity */
+  input[type="email"], input[type="password"], input[type="text"],
+  .login-form input[type="email"], .login-form input[type="password"],
+  form input[type="email"], form input[type="password"] {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif !important;
+    letter-spacing: -0.5px !important;
+    word-spacing: -2px !important;
+    font-feature-settings: "kern" 0, "liga" 0, "calt" 0, "dlig" 0 !important;
     font-kerning: none !important;
     font-variant-ligatures: none !important;
-    text-rendering: auto !important;
+    font-variant-caps: normal !important;
+    font-variant-numeric: normal !important;
+    text-rendering: geometricPrecision !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-transform: none !important;
+    font-stretch: normal !important;
+    font-optical-sizing: none !important;
+  }
+  
+  /* Force compact spacing with highest specificity */
+  html body .login-form input,
+  html body form input[type="email"],
+  html body form input[type="password"] {
+    letter-spacing: -0.5px !important;
+    word-spacing: -2px !important;
+    font-family: -apple-system, system-ui, sans-serif !important;
   }
 }
 
