@@ -235,7 +235,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   );
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-2" style={{ borderColor: '#d12031' }}>
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Edit className="w-5 h-5 text-blue-600" />
