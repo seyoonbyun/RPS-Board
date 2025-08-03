@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
-import { Save, Eye, Edit, UserCircle2 } from "lucide-react";
+import { Save, Eye, Edit, UserCircle2, Lock } from "lucide-react";
 
 interface PartnerFormProps {
   userId: string;
@@ -17,18 +17,33 @@ interface PartnerFormProps {
   onDataSaved: () => void;
 }
 
+interface UserProfile {
+  email: string;
+  region: string;
+  chapter: string;
+  memberName: string;
+  specialty: string;
+  targetCustomer: string;
+}
+
 export default function PartnerForm({ userId, initialData, onDataSaved }: PartnerFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch user profile from Google Sheets
+  const { data: userProfile, isLoading: isProfileLoading } = useQuery<UserProfile>({
+    queryKey: ["/api/user-profile", userId],
+    retry: false,
+  });
+
   const form = useForm<ScoreboardForm>({
     resolver: zodResolver(scoreboardFormSchema),
     defaultValues: {
-      region: initialData?.region || "",
-      userIdField: initialData?.userIdField || "",
-      partner: initialData?.partner || "",
-      memberName: initialData?.memberName || "",
-      specialty: initialData?.specialty || "",
+      region: userProfile?.region || initialData?.region || "",
+      userIdField: userProfile?.targetCustomer || initialData?.userIdField || "",
+      partner: userProfile?.chapter || initialData?.partner || "",
+      memberName: userProfile?.memberName || initialData?.memberName || "",
+      specialty: userProfile?.specialty || initialData?.specialty || "",
       targetCustomer: initialData?.targetCustomer || "",
       rpartner1: initialData?.rpartner1 || "",
       rpartner1Specialty: initialData?.rpartner1Specialty || "",
@@ -97,91 +112,83 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                 기본 정보
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="region"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>지역 <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="예: 서울" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Read-only profile information from Google Sheets */}
+              {isProfileLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+                  <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+                  <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+                  <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+                  <div className="animate-pulse h-10 bg-gray-200 rounded"></div>
+                  <div className="animate-pulse h-10 bg-gray-200 rounded md:col-span-2 lg:col-span-3"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Lock className="w-3 h-3 mr-1 text-gray-400" />
+                      지역 (구글 시트 연동)
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
+                      {userProfile?.region || '정보 없음'}
+                    </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="partner"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>챕터</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="챕터명" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Lock className="w-3 h-3 mr-1 text-gray-400" />
+                      챕터 (구글 시트 연동)
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
+                      {userProfile?.chapter || '정보 없음'}
+                    </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="userIdField"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>나의 리펀 서비스</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="나의 리펀 서비스" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Lock className="w-3 h-3 mr-1 text-gray-400" />
+                      나의 리펀 서비스 (구글 시트 연동)
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
+                      {userProfile?.targetCustomer || '정보 없음'}
+                    </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="memberName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>멤버 <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="멤버명" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Lock className="w-3 h-3 mr-1 text-gray-400" />
+                      멤버 (구글 시트 연동)
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
+                      {userProfile?.memberName || '정보 없음'}
+                    </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="specialty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>업태명 <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="예: 마케팅" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Lock className="w-3 h-3 mr-1 text-gray-400" />
+                      업태명 (구글 시트 연동)
+                    </label>
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-600">
+                      {userProfile?.specialty || '정보 없음'}
+                    </div>
+                  </div>
 
-                <FormField
-                  control={form.control}
-                  name="targetCustomer"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2 lg:col-span-3">
-                      <FormLabel>타겟고객 <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="예: 중소기업 대표" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="targetCustomer"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2 lg:col-span-3">
+                        <FormLabel>타겟고객</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="예: 중소기업 대표" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Referral Partners Section */}

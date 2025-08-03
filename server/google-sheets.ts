@@ -162,6 +162,49 @@ class GoogleSheetsService {
     }
   }
 
+  async getUserProfile(email: string): Promise<any> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z100`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error('Failed to read Google Sheets for user profile');
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // Find user row
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
+          return {
+            email: row[0],
+            region: row[1] || '',
+            chapter: row[2] || '',
+            memberName: row[3] || '',
+            specialty: row[4] || '',
+            targetCustomer: row[5] || ''
+          };
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  }
+
   async checkUserCredentials(email: string, password: string): Promise<boolean> {
     try {
       const accessToken = await this.getAccessToken();

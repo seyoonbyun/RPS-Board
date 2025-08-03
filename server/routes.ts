@@ -34,6 +34,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user profile from Google Sheets
+  app.get("/api/user-profile/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      // Get user profile from Google Sheets
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      const profile = await googleSheetsService.getUserProfile(user.email);
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "프로필을 불러오는데 실패했습니다" });
+    }
+  });
+
   // Scoreboard data routes
   app.get("/api/scoreboard/:userId", async (req, res) => {
     try {
