@@ -125,48 +125,60 @@
   backdrop-filter: blur(5px);
 }
 
-/* Select placeholder color consistency */
+/* Select placeholder color consistency - unified with Input fields */
 [data-radix-select-trigger] [data-placeholder] {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Ensure Select placeholder matches Input placeholder color */
 [data-radix-select-trigger] span:not([data-radix-select-value]) {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Additional Select placeholder styling */
 [role="combobox"] span[data-placeholder] {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Comprehensive Select placeholder styling to match Input fields */
 button[role="combobox"] span:not([style*="color"]) {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Target SelectValue component specifically */
 .select-trigger span {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Override any default text color for empty Select */
 [data-radix-select-trigger]:not([data-state="open"]) span:empty + span {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
 }
 
 /* Most specific rule for Select placeholder */
 [data-radix-select-trigger] > span {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
 }
 
 /* Force all span elements in SelectTrigger to use placeholder color */
 button[role="combobox"] > span {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
+  color: rgb(107 114 128) !important; /* text-gray-500 */
+}
+
+/* Unify all input placeholder colors to match Select color */
+input::placeholder {
+  color: rgb(107 114 128) !important; /* text-gray-500 - slightly darker to match Select */
+  opacity: 1;
+}
+
+/* Override default placeholder styling */
+.placeholder\:text-muted-foreground::placeholder {
+  color: rgb(107 114 128) !important; /* text-gray-500 */
+  opacity: 1;
 }
