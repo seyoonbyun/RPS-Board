@@ -61,20 +61,32 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    letter-spacing: 0;
+    letter-spacing: normal;
   }
 
-  *, input, input[type="email"], input[type="text"], input[type="password"], .email-input {
-    letter-spacing: -0.01em !important;
-    font-feature-settings: "kern" off !important;
-    font-kerning: none !important;
-    text-rendering: optimizeSpeed !important;
+  /* Reset all spacing and kerning */
+  * {
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-feature-settings: normal !important;
+    font-kerning: auto !important;
   }
   
-  /* shadcn input component specific fix */
-  .email-input, .email-input input {
-    letter-spacing: -0.01em !important;
-    font-feature-settings: "kern" off !important;
+  /* Input specific fixes */
+  input, input[type="email"], input[type="text"], input[type="password"] {
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
+    font-feature-settings: normal !important;
+    font-kerning: auto !important;
+    text-rendering: auto !important;
+  }
+  
+  /* Force normal spacing for email input */
+  .email-input {
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-variant-ligatures: normal !important;
   }
 }
 
