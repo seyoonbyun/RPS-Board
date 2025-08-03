@@ -100,13 +100,10 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         {...field}
-                        type="text"
-                        inputMode="email"
-                        autoComplete="email"
+                        type="email"
                         placeholder="이메일을 입력하세요"
-                        className="email-input-custom"
                       />
                     </FormControl>
                     <FormMessage />
@@ -121,19 +118,11 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>비밀번호 (4자리)</FormLabel>
                     <FormControl>
-                      <input
+                      <Input
                         {...field}
                         type="password"
                         maxLength={4}
                         placeholder="4자리 숫자를 입력하세요"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        style={{
-                          letterSpacing: 'normal',
-                          wordSpacing: 'normal',
-                          fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                          fontFeatureSettings: 'kern 1',
-                          fontKerning: 'auto'
-                        }}
                       />
                     </FormControl>
                     <FormMessage />

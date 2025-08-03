@@ -64,54 +64,7 @@
     letter-spacing: normal;
   }
 
-  /* COMPLETE RESET - No inheritance allowed */
-  * {
-    letter-spacing: inherit !important;
-  }
-  
-  .email-input-custom {
-    all: unset !important;
-    display: block !important;
-    box-sizing: border-box !important;
-    height: 2.5rem !important;
-    width: 100% !important;
-    border-radius: 0.375rem !important;
-    border: 1px solid #d1d5db !important;
-    background-color: #ffffff !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 14px !important;
-    font-family: Arial, sans-serif !important;
-    font-weight: normal !important;
-    font-style: normal !important;
-    font-variant: normal !important;
-    font-stretch: normal !important;
-    line-height: normal !important;
-    letter-spacing: 0px !important;
-    word-spacing: 0px !important;
-    text-align: left !important;
-    text-decoration: none !important;
-    text-transform: none !important;
-    text-indent: 0px !important;
-    text-shadow: none !important;
-    color: #000000 !important;
-    outline: none !important;
-    transition: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-  }
-  
-  .email-input-custom::placeholder {
-    color: #6b7280 !important;
-    font-family: Arial, sans-serif !important;
-    letter-spacing: 0px !important;
-  }
-  
-  .email-input-custom:focus {
-    outline: 2px solid #3b82f6 !important;
-    outline-offset: 2px !important;
-    border-color: #3b82f6 !important;
-  }
+
 }
 
 @layer components {
