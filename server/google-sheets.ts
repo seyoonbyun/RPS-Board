@@ -175,7 +175,7 @@ class GoogleSheetsService {
         '', // ID (auto-generated)
         data.userEmail,
         data.region || '',
-        data.chapter || '',
+        data.partner || '',
         data.memberName || '',
         data.specialty || '',
         data.targetCustomer || '',
