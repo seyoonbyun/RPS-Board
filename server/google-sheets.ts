@@ -188,7 +188,8 @@ class GoogleSheetsService {
       console.log('Google Sheets data for authentication:', {
         totalRows: rows.length,
         headerRow: rows[0],
-        sampleUserRow: rows[1]
+        sampleUserRow: rows[1],
+        columnsCount: rows[0] ? rows[0].length : 0
       });
       
       // Find the correct columns for ID and PW by checking the header row
@@ -209,10 +210,10 @@ class GoogleSheetsService {
       
       console.log(`Using column indices - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]})`);
       
-      // Check if email exists in column B and validate credentials
+      // Check if email exists in column A (since USER column was deleted) and validate credentials
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row && row[1] && row[1].toLowerCase() === email.toLowerCase()) {
+        if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
           // Get ID and PW from the correct columns
           const userIdInSheet = userIdColumnIndex >= 0 ? row[userIdColumnIndex] : null;
           const passwordInSheet = passwordColumnIndex >= 0 ? row[passwordColumnIndex] : null;
