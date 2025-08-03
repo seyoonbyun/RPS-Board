@@ -260,7 +260,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>지역 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 서울" />
+                        <Input {...field} placeholder="작성예) 서울" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -274,7 +274,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>챕터 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 하이" />
+                        <Input {...field} placeholder="작성예) 하이" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -288,7 +288,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>나의 리퍼럴 서비스 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 디자이너스" />
+                        <Input {...field} placeholder="작성예) 디자이너스" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -304,7 +304,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>멤버 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) JOY" />
+                        <Input {...field} placeholder="작성예) JOY" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -318,7 +318,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>업태명 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 디자인" />
+                        <Input {...field} placeholder="작성예) 디자인" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -332,9 +332,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="userIdField"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>타겟고객</FormLabel>
+                      <FormLabel>타겟고객 (구분 시트 연동)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 중소기업 대표" />
+                        <Input {...field} placeholder="작성예) 중소기업 대표" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

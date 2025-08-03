@@ -67,6 +67,13 @@ Preferred communication style: Simple, everyday language.
   - Footer message updated from generic signup text to BNI Connect email clarification
   - Toast notification styling enhanced with proper white background and 3-second duration
   - All popup notifications (login, logout, save) use consistent styling and timing
+  - Login card styling enhanced with brand color border (1px #d12031) and 3D shadow effects
+  - Login failure message customized to "잠깐 !" with friendly guidance text
+- **Data Integrity Control**: ✅ IMPLEMENTED (Aug 3, 2025)
+  - Google Sheets sourced fields (지역, 챕터, 멤버, 업태명, 타겟고객) converted to read-only
+  - Visual indicators added: gray background, disabled cursor, "(구분 시트 연동)" labels
+  - User can only modify R파트너 information while viewing authentic Google Sheets data
+  - Prevents data corruption between local changes and Google Sheets synchronization
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
   - ✅ UPDATED (Aug 3, 2025): "총 R파트너 수" now records only P-stage partners (not total partners)
