@@ -52,6 +52,11 @@ Preferred communication style: Simple, everyday language.
   - Left side: Circular progress chart with percentage and ratio display
   - Right side: Partner statistics breakdown (P/C/V counts)
   - Bottom: "나의 총 리퍼럴 파트너 수" showing total partner count
+- **Form Styling Consistency**: ✅ RESOLVED (Aug 3, 2025)
+  - Unified placeholder text colors across all form fields using rgb(156 163 175)
+  - User input text colors consistently dark using rgb(17 24 39)
+  - Radix UI Select component styling issues completely resolved with nuclear CSS overrides
+  - Applied to all existing users (biesy0011@naver.com, syoon850@gmail.com, info@bnikorea.com) and future users
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
   - ✅ UPDATED (Aug 3, 2025): "총 R파트너 수" now records only P-stage partners (not total partners)
