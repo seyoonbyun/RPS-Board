@@ -28,10 +28,31 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
       console.log('Sending login request with:', data);
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      const result = await response.json();
-      console.log('Login response:', result);
-      return result;
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response body:', errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('Login response:', result);
+        return result;
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        throw fetchError;
+      }
     },
     onSuccess: (data) => {
       console.log('Login successful:', data);
@@ -83,8 +104,13 @@ export default function LoginPage() {
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        className="focus:ring-2 focus:ring-blue-500"
-                        style={{letterSpacing: '0px', fontFeatureSettings: 'normal'}}
+                        className="focus:ring-2 focus:ring-blue-500 email-input"
+                        style={{
+                          letterSpacing: '-0.01em',
+                          fontFeatureSettings: '"kern" off',
+                          fontKerning: 'none',
+                          textRendering: 'optimizeSpeed'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

@@ -64,9 +64,17 @@
     letter-spacing: 0;
   }
 
-  *, input, input[type="email"], input[type="text"], input[type="password"] {
-    letter-spacing: 0 !important;
-    font-feature-settings: normal !important;
+  *, input, input[type="email"], input[type="text"], input[type="password"], .email-input {
+    letter-spacing: -0.01em !important;
+    font-feature-settings: "kern" off !important;
+    font-kerning: none !important;
+    text-rendering: optimizeSpeed !important;
+  }
+  
+  /* shadcn input component specific fix */
+  .email-input, .email-input input {
+    letter-spacing: -0.01em !important;
+    font-feature-settings: "kern" off !important;
   }
 }
 
