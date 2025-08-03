@@ -102,17 +102,11 @@ export default function LoginPage() {
                     <FormControl>
                       <input
                         {...field}
-                        type="email"
+                        type="text"
+                        inputMode="email"
+                        autoComplete="email"
                         placeholder="이메일을 입력하세요"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        style={{
-                          letterSpacing: '0',
-                          wordSpacing: '0',
-                          fontFamily: 'monospace',
-                          fontWeight: 'normal',
-                          textTransform: 'none',
-                          fontVariant: 'normal'
-                        } as React.CSSProperties}
+                        className="email-input-custom"
                       />
                     </FormControl>
                     <FormMessage />
