@@ -211,9 +211,9 @@ class GoogleSheetsService {
       
       console.log('Data to sync to Google Sheets:', values);
 
-      // Check if user row already exists (based on email in column B)
+      // Check if user row already exists in first 100 rows (to avoid massive data scanning)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:U`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:U100`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -227,12 +227,16 @@ class GoogleSheetsService {
       }
 
       const existingData = await getResponse.json();
-      console.log('Existing data from Google Sheets:', existingData);
       const existingRows = existingData.values || [];
-      // Email is now in column B (index 1), but we need to check for existing user
-      const userRowIndex = existingRows.findIndex((row: string[], index) => {
-        return index > 0 && row && row[1] === data.userEmail; // Skip header row
-      });
+      // Email is in column B (index 1), find existing user in first 100 rows
+      let userRowIndex = -1;
+      for (let i = 1; i < existingRows.length; i++) {
+        const row = existingRows[i];
+        if (row && row[1] === data.userEmail) {
+          userRowIndex = i;
+          break;
+        }
+      }
       console.log(`User row index for ${data.userEmail}:`, userRowIndex);
 
       let updateResponse;
@@ -253,14 +257,20 @@ class GoogleSheetsService {
           }
         );
       } else {
-        // Find the first empty row after the header (row 1)
-        let firstEmptyRow = 2; // Start from row 2 (after header)
-        for (let i = 1; i < existingRows.length; i++) {
+        // Find the first empty row after the header, starting from row 2
+        let firstEmptyRow = 2;
+        for (let i = 1; i < Math.min(existingRows.length, 100); i++) {
           const row = existingRows[i];
-          if (!row || row.length === 0 || !row[1]) { // If row is empty or email column is empty
+          if (!row || row.length === 0 || !row[1] || row[1].trim() === '') {
             firstEmptyRow = i + 1;
             break;
           }
+          firstEmptyRow = i + 2; // Next row after the last filled row
+        }
+        
+        // Ensure we don't go beyond row 100 for new entries
+        if (firstEmptyRow > 100) {
+          firstEmptyRow = 2; // Force to row 2 if too many rows
         }
         
         const range = `RPS!A${firstEmptyRow}:U${firstEmptyRow}`;
