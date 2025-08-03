@@ -171,9 +171,31 @@ input[type="email"],
 input[type="password"],
 textarea,
 textarea:focus,
-textarea:active {
+textarea:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
   color: rgb(17 24 39) !important;
   caret-color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+/* Nuclear override for all input styling issues */
+* {
+  -webkit-text-fill-color: inherit !important;
+}
+
+input * {
+  color: rgb(17 24 39) !important;
+}
+
+/* Remove browser default blue selection and focus colors */
+input:focus,
+input:active,
+input:hover {
+  color: rgb(17 24 39) !important;
+  -webkit-text-fill-color: rgb(17 24 39) !important;
 }
 
 /* Print styles */

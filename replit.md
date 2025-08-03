@@ -60,6 +60,8 @@ Preferred communication style: Simple, everyday language.
   - Unified placeholder text colors across all form fields using rgb(156 163 175)
   - User input text colors consistently dark using rgb(17 24 39)
   - Radix UI Select component styling issues completely resolved with nuclear CSS overrides
+  - Browser autofill and focus blue color issues completely resolved with webkit overrides
+  - "선택 안함" option added to relationship stage dropdown for clearing values
   - Applied to all existing users (biesy0011@naver.com, syoon850@gmail.com, info@bnikorea.com) and future users
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
