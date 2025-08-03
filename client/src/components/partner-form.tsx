@@ -371,9 +371,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
                   
                   {/* Top row: Achievement Ring + Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="flex items-start gap-8 mb-6">
                     {/* Left: Achievement Ring (a이미지) */}
-                    <div className="flex items-center justify-center">
+                    <div className="flex-shrink-0">
                       <div className="relative w-32 h-32">
                         <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
                           <path
@@ -407,17 +407,17 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* Right: Partner Stats (b이미지) */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">수익 파트너 (P)</span>
+                    <div className="flex-1 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">수익 파트너 (P)</span>
                         <span className="font-medium text-emerald-600">{achievementData.profitable}명</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">신뢰 파트너 (C)</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">신뢰 파트너 (C)</span>
                         <span className="font-medium text-orange-600">{achievementData.credible}명</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">인지 파트너 (V)</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
                         <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
                       </div>
                     </div>
@@ -425,9 +425,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   
                   {/* Bottom row: Total Partners (c이미지) */}
                   <div className="pt-4 border-t">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">나의 총 리퍼럴 파트너 수</span>
-                      <span className="font-medium">{achievementData.profitable}명</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700 font-medium">나의 총 리퍼럴 파트너 수</span>
+                      <span className="font-bold text-lg">{achievementData.total}명</span>
                     </div>
                   </div>
                 </div>
