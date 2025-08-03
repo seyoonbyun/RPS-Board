@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BNI 코리아 파워팀 리퍼럴 파트너 스코어보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body { font-size: 12px; margin: 0; padding: 10px; }
+            .no-print { display: none !important; }
+            .print-friendly { page-break-inside: avoid; }
+        }
+        .popup-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        .achievement-ring {
+            background: conic-gradient(from 0deg, #10b981 calc(var(--progress) * 1%), #e5e7eb calc(var(--progress) * 1%));
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- 로그인 페이지 -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">BNI 코리아</h1>
+                <h2 class="text-lg text-blue-600 mb-4">파워팀 리퍼럴 파트너 스코어보드</h2>
+                <div class="w-16 h-1 bg-blue-600 mx-auto"></div>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                    <input type="email" id="loginEmail" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="이메일을 입력하세요">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호 (4자리)</label>
+                    <input type="password" id="loginPassword" required maxlength="4" minlength="4"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="4자리 숫자를 입력하세요">
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>로그인
+                </button>
+            </form>
+            
+            <p class="text-xs text-gray-500 text-center mt-4">
+                처음 방문하시면 이메일과 원하는 4자리 비밀번호로 가입됩니다.
+            </p>
+        </div>
+    </div>
+
+    <!-- 메인 스코어보드 페이지 -->
+    <div id="mainPage" class="hidden">
+        <!-- 헤더 -->
+        <header class="bg-white shadow-sm border-b no-print">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">파워팀 스코어보드</h1>
+                        <span id="userEmail" class="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded"></span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button id="syncButton" class="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200">
+                            <i class="fas fa-sync-alt mr-1"></i>구글 시트 동기화
+                        </button>
+                        <button id="logoutButton" class="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200">
+                            <i class="fas fa-sign-out-alt mr-1"></i>로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- 안내 텍스트 -->
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 print-friendly">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">🧭 STEP 3: 나의 리퍼럴 파워팀 스코어 보드</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <p>파워팀: 리퍼럴 파트너 스코어보드는 자신의 성과를 측정하고 기록하는 데 도움을 주는 기록 툴로서, 사용자 경험을 향상시키고, 사용자에게 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
+                            <div class="mt-3 space-y-1">
+                                <p><strong>🔁 관계 단계:</strong></p>
+                                <p>• <strong>V (Visibility)</strong>: 아는 단계</p>
+                                <p>• <strong>C (Credibility)</strong>: 신뢰 단계</p>
+                                <p>• <strong>P (Profit)</strong>: 수익 단계</p>
+                            </div>
+                            <p class="mt-3"><strong>⚠️ 참고:</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않습니다. 2년간 총 4명의 파트너를 영입하시면 100% 달성하게 됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 달성률 표시 -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6 print-friendly">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-trophy text-yellow-500 mr-2"></i>달성 현황
+                </h2>
+                <div class="flex items-center justify-center">
+                    <div class="relative w-32 h-32">
+                        <div id="achievementRing" class="achievement-ring w-32 h-32 rounded-full flex items-center justify-center" style="--progress: 0">
+                            <div class="bg-white w-24 h-24 rounded-full flex items-center justify-center">
+                                <div class="text-center">
+                                    <div id="achievementPercent" class="text-2xl font-bold text-gray-800">0%</div>
+                                    <div class="text-xs text-gray-500">달성률</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-8">
+                        <div class="text-sm text-gray-600 space-y-2">
+                            <div>목표: 4명의 P단계 파트너</div>
+                            <div>현재: <span id="currentPartners" class="font-semibold text-blue-600">0</span>명</div>
+                            <div>남은 목표: <span id="remainingPartners" class="font-semibold text-orange-600">4</span>명</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 데이터 입력 폼 -->
+            <div class="bg-white rounded-lg shadow p-6 print-friendly">
+                <h2 class="text-lg font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-edit text-blue-500 mr-2"></i>리퍼럴 파트너 정보 입력
+                </h2>
+                
+                <form id="dataForm" class="space-y-6">
+                    <!-- 기본 정보 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">지역</label>
+                            <input type="text" id="region" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 서울">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                            <input type="text" id="userId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="사용자 ID">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">파트너</label>
+                            <input type="text" id="partner" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="파트너명">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">멤버명</label>
+                            <input type="text" id="memberName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="멤버명">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">전문분야</label>
+                            <input type="text" id="specialty" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 마케팅">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">나의 핵심 고객층</label>
+                            <input type="text" id="targetCustomer" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="예: 중소기업 대표">
+                        </div>
+                    </div>
+
+                    <!-- 리퍼럴 파트너 1-4 -->
+                    <div class="space-y-6">
+                        <h3 class="text-md font-medium text-gray-800 border-b pb-2">리퍼럴 파트너 정보</h3>
+                        
+                        <div id="partnersContainer">
+                            <!-- 파트너 1-4가 동적으로 생성됩니다 -->
+                        </div>
+                    </div>
+
+                    <!-- 저장 버튼 -->
+                    <div class="pt-4 border-t">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                            <i class="fas fa-save mr-2"></i>데이터 저장 및 동기화
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 저장된 데이터 요약 -->
+            <div id="dataSummary" class="bg-white rounded-lg shadow p-6 mt-6 print-friendly">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-chart-line text-green-500 mr-2"></i>현재 데이터 요약
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center p-3 bg-blue-50 rounded">
+                        <div class="text-2xl font-bold text-blue-600" id="totalPartners">0</div>
+                        <div class="text-sm text-gray-600">총 파트너 수</div>
+                    </div>
+                    <div class="text-center p-3 bg-yellow-50 rounded">
+                        <div class="text-2xl font-bold text-yellow-600" id="vStagePartners">0</div>
+                        <div class="text-sm text-gray-600">V 단계</div>
+                    </div>
+                    <div class="text-center p-3 bg-orange-50 rounded">
+                        <div class="text-2xl font-bold text-orange-600" id="cStagePartners">0</div>
+                        <div class="text-sm text-gray-600">C 단계</div>
+                    </div>
+                    <div class="text-center p-3 bg-green-50 rounded">
+                        <div class="text-2xl font-bold text-green-600" id="pStagePartners">0</div>
+                        <div class="text-sm text-gray-600">P 단계 (성과)</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-600">
+                    마지막 업데이트: <span id="lastUpdate">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 변경 내역 팝업 -->
+    <div id="changePopup" class="fixed inset-0 popup-overlay z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">
+                        <i class="fas fa-history text-blue-500 mr-2"></i>변경 내역
+                    </h3>
+                    <button id="closePopup" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="changeContent" class="space-y-3">
+                    <!-- 변경 내역이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 성공 메시지 토스트 -->
+    <div id="successToast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="toastMessage">저장되었습니다!</span>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentUser = null;
+        let userData = {};
+        let changeHistory = [];
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 로그인 상태 확인
+            const savedUser = localStorage.getItem('bni_current_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                loadUserData();
+                showMainPage();
+            } else {
+                showLoginPage();
+            }
+
+            // 이벤트 리스너 등록
+            setupEventListeners();
+            
+            // 파트너 입력 필드 생성
+            createPartnerFields();
+        });
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 로그인 폼
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // 로그아웃 버튼
+            document.getElementById('logoutButton').addEventListener('click', handleLogout);
+            
+            // 데이터 폼
+            document.getElementById('dataForm').addEventListener('submit', handleDataSave);
+            
+            // 동기화 버튼
+            document.getElementById('syncButton').addEventListener('click', handleSync);
+            
+            // 팝업 닫기
+            document.getElementById('closePopup').addEventListener('click', closePopup);
+            
+            // 폼 필드 변경 감지
+            document.getElementById('dataForm').addEventListener('change', trackChanges);
+        }
+
+        // 로그인 처리
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (password.length !== 4) {
+                alert('비밀번호는 4자리여야 합니다.');
+                return;
+            }
+            
+            currentUser = { email, password };
+            localStorage.setItem('bni_current_user', JSON.stringify(currentUser));
+            
+            loadUserData();
+            showMainPage();
+            showToast('로그인되었습니다!');
+        }
+
+        // 로그아웃 처리
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('bni_current_user');
+            showLoginPage();
+            showToast('로그아웃되었습니다!');
+        }
+
+        // 페이지 표시 함수들
+        function showLoginPage() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('mainPage').classList.add('hidden');
+        }
+
+        function showMainPage() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser.email;
+            updateSummary();
+        }
+
+        // 파트너 입력 필드 생성
+        function createPartnerFields() {
+            const container = document.getElementById('partnersContainer');
+            
+            for (let i = 1; i <= 4; i++) {
+                const partnerDiv = document.createElement('div');
+                partnerDiv.className = 'border rounded-lg p-4 bg-gray-50';
+                partnerDiv.innerHTML = `
+                    <h4 class="font-medium text-gray-800 mb-3">R파트너 ${i}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">파트너명</label>
+                            <input type="text" id="partner${i}Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="파트너 ${i} 이름">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">전문분야</label>
+                            <input type="text" id="partner${i}Specialty" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="전문분야">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">관계 단계</label>
+                            <select id="partner${i}Stage" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">선택하세요</option>
+                                <option value="V">V - Visibility (아는 단계)</option>
+                                <option value="C">C - Credibility (신뢰 단계)</option>
+                                <option value="P">P - Profit (수익 단계)</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(partnerDiv);
+            }
+        }
+
+        // 사용자 데이터 로드
+        function loadUserData() {
+            const savedData = localStorage.getItem(`bni_data_${currentUser.email}`);
+            if (savedData) {
+                userData = JSON.parse(savedData);
+                populateForm();
+            } else {
+                userData = {};
+            }
+        }
+
+        // 폼에 데이터 채우기
+        function populateForm() {
+            Object.keys(userData).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = userData[key] || '';
+                }
+            });
+        }
+
+        // 데이터 저장 처리
+        function handleDataSave(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const newData = {};
+            
+            // 모든 폼 필드 수집
+            const inputs = e.target.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                newData[input.id] = input.value;
+            });
+            
+            // 변경 사항 추적
+            const changes = trackDataChanges(userData, newData);
+            
+            // 데이터 업데이트
+            userData = { ...newData };
+            localStorage.setItem(`bni_data_${currentUser.email}`, JSON.stringify(userData));
+            
+            // 변경 내역 기록
+            if (changes.length > 0) {
+                addChangeHistory(changes);
+                showChangePopup(changes);
+            }
+            
+            // UI 업데이트
+            updateSummary();
+            showToast('데이터가 저장되었습니다!');
+            
+            // 구글 시트 동기화 시뮬레이션
+            simulateGoogleSheetSync();
+        }
+
+        // 데이터 변경 사항 추적
+        function trackDataChanges(oldData, newData) {
+            const changes = [];
+            
+            Object.keys(newData).forEach(key => {
+                if (oldData[key] !== newData[key]) {
+                    changes.push({
+                        field: key,
+                        oldValue: oldData[key] || '',
+                        newValue: newData[key] || '',
+                        timestamp: new Date().toLocaleString('ko-KR')
+                    });
+                }
+            });
+            
+            return changes;
+        }
+
+        // 변경 내역 추가
+        function addChangeHistory(changes) {
+            const historyEntry = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                changes: changes
+            };
+            
+            changeHistory.unshift(historyEntry);
+            
+            // 최대 50개까지만 저장
+            if (changeHistory.length > 50) {
+                changeHistory = changeHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem(`bni_history_${currentUser.email}`, JSON.stringify(changeHistory));
+        }
+
+        // 변경 내역 팝업 표시
+        function showChangePopup(changes) {
+            const content = document.getElementById('changeContent');
+            content.innerHTML = '';
+            
+            changes.forEach(change => {
+                const changeDiv = document.createElement('div');
+                changeDiv.className = 'p-3 bg-blue-50 rounded border-l-4 border-blue-400';
+                changeDiv.innerHTML = `
+                    <div class="text-sm font-medium text-gray-800">${getFieldLabel(change.field)}</div>
+                    <div class="text-xs text-gray-600 mt-1">
+                        <span class="line-through text-red-500">${change.oldValue || '(빈 값)'}</span>
+                        <i class="fas fa-arrow-right mx-2 text-gray-400"></i>
+                        <span class="text-green-600">${change.newValue || '(빈 값)'}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">${change.timestamp}</div>
+                `;
+                content.appendChild(changeDiv);
+            });
+            
+            document.getElementById('changePopup').classList.remove('hidden');
+        }
+
+        // 필드 라벨 매핑
+        function getFieldLabel(fieldId) {
+            const labels = {
+                'region': '지역',
+                'userId': 'ID',
+                'partner': '파트너',
+                'memberName': '멤버명',
+                'specialty': '전문분야',
+                'targetCustomer': '나의 핵심 고객층',
+                'partner1Name': 'R파트너1',
+                'partner1Specialty': 'R파트너1 전문분야',
+                'partner1Stage': 'R파트너1 단계',
+                'partner2Name': 'R파트너2',
+                'partner2Specialty': 'R파트너2 전문분야',
+                'partner2Stage': 'R파트너2 단계',
+                'partner3Name': 'R파트너3',
+                'partner3Specialty': 'R파트너3 전문분야',
+                'partner3Stage': 'R파트너3 단계',
+                'partner4Name': 'R파트너4',
+                'partner4Specialty': 'R파트너4 전문분야',
+                'partner4Stage': 'R파트너4 단계'
+            };
+            return labels[fieldId] || fieldId;
+        }
+
+        // 팝업 닫기
+        function closePopup() {
+            document.getElementById('changePopup').classList.add('hidden');
+        }
+
+        // 요약 정보 업데이트
+        function updateSummary() {
+            let totalPartners = 0;
+            let vStage = 0, cStage = 0, pStage = 0;
+            
+            for (let i = 1; i <= 4; i++) {
+                const name = userData[`partner${i}Name`];
+                const stage = userData[`partner${i}Stage`];
+                
+                if (name && name.trim()) {
+                    totalPartners++;
+                    if (stage === 'V') vStage++;
+                    else if (stage === 'C') cStage++;
+                    else if (stage === 'P') pStage++;
+                }
+            }
+            
+            // UI 업데이트
+            document.getElementById('totalPartners').textContent = totalPartners;
+            document.getElementById('vStagePartners').textContent = vStage;
+            document.getElementById('cStagePartners').textContent = cStage;
+            document.getElementById('pStagePartners').textContent = pStage;
+            document.getElementById('currentPartners').textContent = pStage;
+            document.getElementById('remainingPartners').textContent = Math.max(0, 4 - pStage);
+            
+            // 달성률 계산 및 표시
+            const achievementRate = Math.min(100, (pStage / 4) * 100);
+            document.getElementById('achievementPercent').textContent = Math.round(achievementRate) + '%';
+            
+            const ring = document.getElementById('achievementRing');
+            ring.style.setProperty('--progress', achievementRate);
+            
+            // 마지막 업데이트 시간
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('ko-KR');
+        }
+
+        // 구글 시트 동기화 시뮬레이션
+        function simulateGoogleSheetSync() {
+            // 실제 구현에서는 Google Sheets API를 사용
+            console.log('Google Sheets 동기화 시뮬레이션:', userData);
+            showToast('구글 시트와 동기화되었습니다!');
+        }
+
+        // 동기화 버튼 처리
+        function handleSync() {
+            simulateGoogleSheetSync();
+        }
+
+        // 토스트 메시지 표시
+        function showToast(message) {
+            const toast = document.getElementById('successToast');
+            const messageSpan = document.getElementById('toastMessage');
+            
+            messageSpan.textContent = message;
+            toast.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        // 변경 사항 실시간 추적
+        function trackChanges(e) {
+            // 실시간으로 요약 정보 업데이트
+            setTimeout(updateSummary, 100);
+        }
+    </script>
+</body>
+</html>
