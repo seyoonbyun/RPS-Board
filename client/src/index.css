@@ -238,27 +238,57 @@ button[role="combobox"].text-muted-foreground {
   color: rgb(17 24 39) !important; /* Force dark text */
 }
 
-/* FINAL OVERRIDE - This rule comes last and has ultimate precedence */
-/* Ensures ALL users (existing and future) have consistent styling */
+/* ULTIMATE OVERRIDE - Brute force approach to fix Select placeholder colors */
+/* This uses the highest CSS specificity to override all other rules */
 
-/* All Select components with values MUST be dark text */
+/* Step 1: Reset ALL Select spans to light gray first */
 [data-radix-select-trigger] span,
-button[role="combobox"] span {
-  color: rgb(17 24 39) !important; /* Dark text for ALL Select content */
+button[role="combobox"] span,
+[data-radix-select-trigger] > span,
+button[role="combobox"] > span {
+  color: rgb(156 163 175) !important; /* Light gray as default */
+  opacity: 1 !important;
   background-color: transparent !important;
 }
 
-/* Only actual placeholder text should be gray */
-[data-radix-select-trigger] span:empty:after,
-button[role="combobox"] span:empty:after,
-[data-radix-select-trigger] span[data-placeholder]:before,
-button[role="combobox"] span[data-placeholder]:before {
-  color: rgb(156 163 175) !important; /* Gray only for placeholder pseudo-elements */
+/* Step 2: ONLY spans with actual selected values should be dark */
+[data-radix-select-trigger] span:not([data-placeholder]):not(:empty):not([class*="placeholder"]),
+button[role="combobox"] span:not([data-placeholder]):not(:empty):not([class*="placeholder"]) {
+  color: rgb(17 24 39) !important; /* Dark only for actual values */
 }
 
-/* Ensure Select background is always white */
+/* Step 3: Force Select containers to have white background and dark text */
 [data-radix-select-trigger],
 button[role="combobox"] {
   background-color: white !important;
   color: rgb(17 24 39) !important;
+}
+
+/* Step 4: Nuclear option - target specific text content */
+[data-radix-select-trigger] span:not(:empty):not([data-radix-select-value]),
+button[role="combobox"] span:not(:empty):not([data-radix-select-value]) {
+  color: rgb(156 163 175) !important; /* Force placeholder color */
+}
+
+/* Step 5: But actual selected values should still be dark */
+[data-radix-select-trigger][data-state] span:not([class*="placeholder"]):not([data-placeholder]),
+button[role="combobox"][data-state] span:not([class*="placeholder"]):not([data-placeholder]) {
+  color: rgb(17 24 39) !important; /* Dark for actual selections */
+}
+
+/* NUCLEAR OPTION - Override everything with maximum specificity */
+/* This solves the stubborn placeholder color issue once and for all */
+html body * [data-radix-select-trigger] span,
+html body * button[role="combobox"] span,
+html body div * [data-radix-select-trigger] span,
+html body div * button[role="combobox"] span {
+  color: rgb(156 163 175) !important; /* Force ALL Select text to be gray first */
+}
+
+/* Then make only actual values dark */
+html body * [data-radix-select-trigger] span[data-radix-select-value],
+html body * button[role="combobox"] span[data-radix-select-value],
+html body div * [data-radix-select-trigger] span:not([class*="placeholder"]):not(:empty),
+html body div * button[role="combobox"] span:not([class*="placeholder"]):not(:empty) {
+  color: rgb(17 24 39) !important; /* Dark only for selected values */
 }
