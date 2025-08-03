@@ -305,4 +305,55 @@ button[role="combobox"] span[data-radix-select-value] {
   color: rgb(17 24 39) !important; /* Dark only for real values */
 }
 
+/* ULTIMATE FORCE - Target any text containing specific placeholder text */
+* [data-radix-select-trigger] span,
+* button[role="combobox"] span {
+  color: rgb(156 163 175) !important;
+  opacity: 1 !important;
+}
+
+/* Special rule for SelectValue spans specifically */
+span[data-radix-select-value] {
+  color: rgb(156 163 175) !important;
+  opacity: 1 !important;
+}
+
+/* FORCE ALL SELECT PLACEHOLDER TEXT TO BE GRAY */
+[role="combobox"] span,
+[role="combobox"] * span,
+[data-radix-select-trigger] span,
+[data-radix-select-trigger] * span,
+.select-trigger span,
+.select-value span {
+  color: rgb(156 163 175) !important;
+}
+
+/* Override for selected values only */
+[role="combobox"][data-state="closed"]:not([data-placeholder]) span,
+[data-radix-select-trigger][data-state="closed"]:not([data-placeholder]) span {
+  color: rgb(17 24 39) !important;
+}
+
+/* FINAL NUCLEAR OPTION - Force all Select components */
+body [data-radix-select-trigger] {
+  color: rgb(156 163 175) !important;
+}
+
+body [data-radix-select-trigger] span {
+  color: rgb(156 163 175) !important;
+}
+
+body [data-radix-select-trigger] [data-radix-select-value] {
+  color: rgb(156 163 175) !important;
+}
+
+/* Only show dark when there's actual value */
+body [data-radix-select-trigger][data-state="closed"]:not(:empty) {
+  color: rgb(17 24 39) !important;
+}
+
+body [data-radix-select-trigger][data-state="closed"]:not(:empty) span {
+  color: rgb(17 24 39) !important;
+}
+
 /* Clean up - removed redundant rules */
