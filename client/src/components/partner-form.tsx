@@ -369,54 +369,65 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <div className="mt-6 pt-6 border-t">
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
-                  <div className="flex items-center justify-center">
-                    <div className="relative w-32 h-32">
-                      <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#f3f4f6"
-                          strokeWidth="2"
-                        />
-                        <path
-                          d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="2"
-                          strokeDasharray={`${achievementData.percentage}, 100`}
-                          className="drop-shadow-sm"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-800">{achievementData.percentage}%</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {achievementData.profitable}/4
+                  
+                  {/* Top row: Achievement Ring + Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Left: Achievement Ring (a이미지) */}
+                    <div className="flex items-center justify-center">
+                      <div className="relative w-32 h-32">
+                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#f3f4f6"
+                            strokeWidth="2"
+                          />
+                          <path
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="2"
+                            strokeDasharray={`${achievementData.percentage}, 100`}
+                            className="drop-shadow-sm"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-800">{achievementData.percentage}%</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {achievementData.profitable}/4
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Right: Partner Stats (b이미지) */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">수익 파트너 (P)</span>
+                        <span className="font-medium text-emerald-600">{achievementData.profitable}명</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">신뢰 파트너 (C)</span>
+                        <span className="font-medium text-orange-600">{achievementData.credible}명</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">인지 파트너 (V)</span>
+                        <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-4 space-y-2">
+                  
+                  {/* Bottom row: Total Partners (c이미지) */}
+                  <div className="pt-4 border-t">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">수익 파트너 (P)</span>
-                      <span className="font-medium text-emerald-600">{achievementData.profitable}명</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">신뢰 파트너 (C)</span>
-                      <span className="font-medium text-orange-600">{achievementData.credible}명</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">인지 파트너 (V)</span>
-                      <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm pt-2 border-t">
-                      <span className="text-gray-600">총 파트너</span>
-                      <span className="font-medium">{achievementData.total}명</span>
+                      <span className="text-gray-600">나의 총 리퍼럴 파트너 수</span>
+                      <span className="font-medium">{achievementData.profitable}명</span>
                     </div>
                   </div>
                 </div>
