@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Letter Spacing Debug</title>
+    <style>
+        .test-input {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: normal;
+            padding: 8px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            width: 300px;
+        }
+        .debug-info {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Letter Spacing Debug Test</h1>
+    
+    <div class="debug-info">
+        Expected: joy.byun@bnikorea.com (normal spacing)
+    </div>
+    
+    <input type="email" class="test-input" value="joy.byun@bnikorea.com" />
+    <input type="text" class="test-input" value="joy.byun@bnikorea.com" />
+    
+    <script>
+        const inputs = document.querySelectorAll('.test-input');
+        inputs.forEach((input, index) => {
+            const computedStyle = window.getComputedStyle(input);
+            console.log(`Input ${index + 1} computed styles:`, {
+                letterSpacing: computedStyle.letterSpacing,
+                fontFamily: computedStyle.fontFamily,
+                wordSpacing: computedStyle.wordSpacing
+            });
+        });
+    </script>
+</body>
+</html>

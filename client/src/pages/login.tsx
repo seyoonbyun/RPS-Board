@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
 import { Handshake, LogIn } from "lucide-react";
+import React from "react";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -73,6 +74,19 @@ export default function LoginPage() {
     },
   });
 
+  // Debug: Log current styles
+  React.useEffect(() => {
+    const emailInput = document.querySelector('input[type="email"]');
+    if (emailInput) {
+      const computedStyle = window.getComputedStyle(emailInput);
+      console.log('Email input computed styles:', {
+        letterSpacing: computedStyle.letterSpacing,
+        fontFamily: computedStyle.fontFamily,
+        wordSpacing: computedStyle.wordSpacing
+      });
+    }
+  }, []);
+
   const onSubmit = (data: LoginForm) => {
     console.log('Form submitted with data:', data);
     loginMutation.mutate(data);
@@ -104,6 +118,10 @@ export default function LoginPage() {
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
+                        style={{
+                          letterSpacing: 'normal',
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
