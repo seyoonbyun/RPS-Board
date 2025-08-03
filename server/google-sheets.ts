@@ -52,6 +52,25 @@ class GoogleSheetsService {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
+      // Ensure proper PEM format
+      if (!privateKey.includes('\n')) {
+        privateKey = privateKey
+          .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+          .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
+          .replace(/(.{64})/g, '$1\n')
+          .replace(/\n+/g, '\n')
+          .trim();
+      }
+      
+      console.log('Private key format check:', {
+        hasBegin: privateKey.includes('-----BEGIN PRIVATE KEY-----'),
+        hasEnd: privateKey.includes('-----END PRIVATE KEY-----'),
+        hasNewlines: privateKey.includes('\n'),
+        length: privateKey.length,
+        firstLine: privateKey.split('\n')[0],
+        lastLine: privateKey.split('\n').slice(-1)[0]
+      });
+      
       // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
       const jwtToken = jwt.sign(payload, privateKey, {
         algorithm: 'RS256',
