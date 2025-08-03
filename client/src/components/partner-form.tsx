@@ -318,7 +318,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>나의 핵심 고객층</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="작성예) 디자이너스" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} placeholder="작성예) 디자이너스" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
