@@ -64,32 +64,44 @@
     letter-spacing: normal;
   }
 
-  /* FORCED input styling - maximum specificity */
+  /* Complete Tailwind tracking override */
+  .tracking-tighter,
+  .tracking-tight,
+  .tracking-normal,
+  .tracking-wide,
+  .tracking-wider,
+  .tracking-widest {
+    letter-spacing: 0px !important;
+  }
+  
+  /* NUCLEAR option - Override ALL input styling */
   input[type="email"], input[type="password"], input[type="text"],
   .login-form input[type="email"], .login-form input[type="password"],
-  form input[type="email"], form input[type="password"] {
+  form input[type="email"], form input[type="password"],
+  input.tracking-tight, input.tracking-normal {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif !important;
-    letter-spacing: -0.5px !important;
-    word-spacing: -2px !important;
-    font-feature-settings: "kern" 0, "liga" 0, "calt" 0, "dlig" 0 !important;
-    font-kerning: none !important;
-    font-variant-ligatures: none !important;
+    letter-spacing: 0px !important;
+    word-spacing: 0px !important;
+    font-feature-settings: normal !important;
+    font-kerning: auto !important;
+    font-variant-ligatures: normal !important;
     font-variant-caps: normal !important;
     font-variant-numeric: normal !important;
-    text-rendering: geometricPrecision !important;
+    text-rendering: auto !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
     text-transform: none !important;
     font-stretch: normal !important;
-    font-optical-sizing: none !important;
+    font-optical-sizing: auto !important;
   }
   
-  /* Force compact spacing with highest specificity */
-  html body .login-form input,
+  /* Ultra-specific for login inputs */
+  html body .login-form input[type="email"],
+  html body .login-form input[type="password"],
   html body form input[type="email"],
   html body form input[type="password"] {
-    letter-spacing: -0.5px !important;
-    word-spacing: -2px !important;
+    letter-spacing: 0px !important;
+    word-spacing: 0px !important;
     font-family: -apple-system, system-ui, sans-serif !important;
   }
 }
