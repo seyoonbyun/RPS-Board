@@ -72,28 +72,29 @@ class GoogleSheetsService {
       
       const achievement = Math.round((profitPartners / 4) * 100);
 
-      // Prepare data for Google Sheets (B1:V1 format)
+      // Prepare data for Google Sheets RPS sheet (A1:U1 format)  
       const row = [
-        data.userEmail, // ID(email)
-        data.region || '', // 지역
-        data.partner || '', // 챕터
-        data.memberName || '', // 멤버명
-        data.specialty || '', // 전문분야
-        data.targetCustomer || '', // 나의 핵심 고객층
-        data.rpartner1 || '', // R파트너 1
-        data.rpartner1Specialty || '', // R파트너 1 : 전문분야
-        data.rpartner1Stage || '', // R파트너 1 : V-C-P
-        data.rpartner2 || '', // R파트너 2
-        data.rpartner2Specialty || '', // R파트너 2 : 전문분야
-        data.rpartner2Stage || '', // R파트너 2 : V-C-P
-        data.rpartner3 || '', // R파트너 3
-        data.rpartner3Specialty || '', // R파트너 3 : 전문분야
-        data.rpartner3Stage || '', // R파트너 3 : V-C-P
-        data.rpartner4 || '', // R파트너 4
-        data.rpartner4Specialty || '', // R파트너 4 : 전문분야
-        data.rpartner4Stage || '', // R파트너 4 : V-C-P
-        totalPartners, // 총 R파트너 수
-        `${achievement}%`, // 달성
+        data.region || '', // 지역 (A)
+        data.userEmail, // 이메일 (B)
+        data.partner || '', // 챕터 (C)
+        data.memberName || '', // 멤버 (D)
+        data.specialty || '', // 업태명 (E)
+        data.targetCustomer || '', // 타겟고객 (F)
+        data.userIdField || '', // 나의 리펀 서비스 (G)
+        data.rpartner1 || '', // R파트너 1 (H)
+        data.rpartner1Specialty || '', // R파트너 1 : 전문분야 (I)
+        data.rpartner1Stage || '', // R파트너 1 : V-C-P (J)
+        data.rpartner2 || '', // R파트너 2 (K)
+        data.rpartner2Specialty || '', // R파트너 2 : 전문분야 (L)
+        data.rpartner2Stage || '', // R파트너 2 : V-C-P (M)
+        data.rpartner3 || '', // R파트너 3 (N)
+        data.rpartner3Specialty || '', // R파트너 3 : 전문분야 (O)
+        data.rpartner3Stage || '', // R파트너 3 : V-C-P (P)
+        data.rpartner4 || '', // R파트너 4 (Q)
+        data.rpartner4Specialty || '', // R파트너 4 : 전문분야 (R)
+        data.rpartner4Stage || '', // R파트너 4 : V-C-P (S)
+        totalPartners, // 총 R파트너 수 (T)
+        `${achievement}%`, // 달성 (U)
       ];
 
       // Check if header row exists, if not create it
@@ -103,20 +104,20 @@ class GoogleSheetsService {
       const existingRowIndex = await this.findUserRow(data.userEmail);
       
       if (existingRowIndex !== -1) {
-        // Update existing row (B to V columns)
+        // Update existing row in RPS sheet (A to U columns)
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: `Sheet1!B${existingRowIndex}:V${existingRowIndex}`,
+          range: `RPS!A${existingRowIndex}:U${existingRowIndex}`,
           valueInputOption: 'RAW',
           requestBody: {
             values: [row]
           }
         });
       } else {
-        // Append new row (B to V columns)
+        // Append new row in RPS sheet (A to U columns)
         await this.sheets.spreadsheets.values.append({
           spreadsheetId: this.spreadsheetId,
-          range: 'Sheet1!B:V',
+          range: 'RPS!A:U',
           valueInputOption: 'RAW',
           requestBody: {
             values: [row]
@@ -133,21 +134,22 @@ class GoogleSheetsService {
 
   private async ensureHeaderRow(): Promise<void> {
     try {
-      // Check if header row exists in B1:V1
+      // Check if header row exists in RPS sheet A1:U1
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Sheet1!B1:V1'
+        range: 'RPS!A1:U1'
       });
 
       if (!response.data.values || response.data.values.length === 0) {
-        // Create header row in B1:V1
+        // Create header row in RPS sheet A1:U1
         const headers = [
-          'ID(email)',
           '지역',
+          '이메일',
           '챕터',
-          '멤버명',
-          '전문분야',
-          '나의 핵심 고객층',
+          '멤버',
+          '업태명',
+          '타겟고객',
+          '나의 리펀 서비스',
           'R파트너 1',
           'R파트너 1 : 전문분야',
           'R파트너 1 : V-C-P',
@@ -166,7 +168,7 @@ class GoogleSheetsService {
 
         await this.sheets.spreadsheets.values.update({
           spreadsheetId: this.spreadsheetId,
-          range: 'Sheet1!B1:V1',
+          range: 'RPS!A1:U1',
           valueInputOption: 'RAW',
           requestBody: {
             values: [headers]
@@ -182,7 +184,7 @@ class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'Sheet1!B:B' // Column B contains user emails
+        range: 'RPS!B:B' // Column B contains user emails in RPS sheet
       });
 
       if (response.data.values) {

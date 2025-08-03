@@ -114,12 +114,12 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
 
                 <FormField
                   control={form.control}
-                  name="userIdField"
+                  name="partner"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>ID <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>챕터</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="사용자 ID" />
+                        <Input {...field} value={field.value || ""} placeholder="챕터명" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -128,12 +128,12 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
 
                 <FormField
                   control={form.control}
-                  name="partner"
+                  name="userIdField"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>파트너</FormLabel>
+                      <FormLabel>나의 리펀 서비스</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="파트너명" />
+                        <Input {...field} value={field.value || ""} placeholder="나의 리펀 서비스" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -145,7 +145,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                   name="memberName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>멤버명 <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>멤버 <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="멤버명" />
                       </FormControl>
@@ -159,7 +159,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>전문분야 <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>업태명 <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="예: 마케팅" />
                       </FormControl>
@@ -173,7 +173,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                   name="targetCustomer"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2 lg:col-span-3">
-                      <FormLabel>나의 핵심 고객층 <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>타겟고객 <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="예: 중소기업 대표" />
                       </FormControl>
