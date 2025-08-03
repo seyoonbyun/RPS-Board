@@ -204,7 +204,7 @@ input:hover {
   -webkit-text-fill-color: rgb(17 24 39) !important;
 }
 
-/* Ultimate override for input border colors - this should override all browser defaults */
+/* Ultimate override for input border colors and background - this should override all browser defaults */
 input,
 input:focus,
 input:focus-visible,
@@ -215,12 +215,18 @@ input[type="email"],
 input[type="password"],
 textarea,
 textarea:focus,
-textarea:active {
+textarea:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
   border: 1px solid #d12031 !important;
   border-color: #d12031 !important;
   box-shadow: 0 0 0 1px #d12031 !important;
   outline: 2px solid transparent !important;
   outline-offset: 2px !important;
+  background-color: white !important;
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
 }
 
 /* Print styles */
