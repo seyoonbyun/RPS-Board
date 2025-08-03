@@ -86,30 +86,66 @@ input::placeholder {
   color: rgb(156 163 175) !important;
 }
 
-/* Select component styling - clean and simple */
+/* Select component styling - target the exact Radix UI structure */
+
+/* Force ALL Select triggers to be gray by default */
 [data-radix-select-trigger] {
-  color: rgb(156 163 175) !important; /* Default gray for placeholder */
+  color: rgb(156 163 175) !important;
   background-color: white !important;
 }
 
-/* When Select has a value (not placeholder), make it dark */
-[data-radix-select-trigger]:not([data-placeholder]) {
+/* Force ALL spans inside Select triggers to be gray */
+[data-radix-select-trigger] span {
+  color: rgb(156 163 175) !important;
+}
+
+/* Force SelectValue spans to be gray */
+[data-radix-select-value] {
+  color: rgb(156 163 175) !important;
+}
+
+/* Only when a Select has an actual value (data-state exists and not placeholder), make it dark */
+[data-radix-select-trigger][data-state]:not([data-placeholder]) {
   color: rgb(17 24 39) !important;
 }
 
-/* SelectValue - always inherit from parent */
-[data-radix-select-value] {
-  color: inherit !important;
+[data-radix-select-trigger][data-state]:not([data-placeholder]) span {
+  color: rgb(17 24 39) !important;
 }
 
-/* Specific handling for spans inside Select */
-[data-radix-select-trigger] span {
-  color: inherit !important;
+[data-radix-select-trigger][data-state]:not([data-placeholder]) [data-radix-select-value] {
+  color: rgb(17 24 39) !important;
 }
 
 /* Override any Tailwind classes that might interfere */
 .text-muted-foreground {
   color: rgb(156 163 175) !important;
+}
+
+/* ULTIMATE OVERRIDE - Use highest specificity to force Select placeholder colors */
+html body [data-radix-select-trigger] {
+  color: rgb(156 163 175) !important;
+}
+
+html body [data-radix-select-trigger] span {
+  color: rgb(156 163 175) !important;
+}
+
+html body [data-radix-select-trigger] [data-radix-select-value] {
+  color: rgb(156 163 175) !important;
+}
+
+/* Only override when there's an actual selected value */
+html body [data-radix-select-trigger]:not([data-placeholder]):not(:empty) {
+  color: rgb(17 24 39) !important;
+}
+
+html body [data-radix-select-trigger]:not([data-placeholder]):not(:empty) span {
+  color: rgb(17 24 39) !important;
+}
+
+html body [data-radix-select-trigger]:not([data-placeholder]):not(:empty) [data-radix-select-value] {
+  color: rgb(17 24 39) !important;
 }
 
 /* Ensure proper colors for form labels */
