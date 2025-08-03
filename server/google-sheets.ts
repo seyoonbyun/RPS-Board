@@ -193,7 +193,22 @@ class GoogleSheetsService {
             chapter: row[2] || '',
             memberName: row[3] || '',
             specialty: row[4] || '',
-            targetCustomer: row[5] || ''
+            targetCustomer: row[5] || '',
+            // R파트너 정보 추가
+            rpartner1: row[6] || '',
+            rpartner1Specialty: row[7] || '',
+            rpartner1Stage: row[8] || '',
+            rpartner2: row[9] || '',
+            rpartner2Specialty: row[10] || '',
+            rpartner2Stage: row[11] || '',
+            rpartner3: row[12] || '',
+            rpartner3Specialty: row[13] || '',
+            rpartner3Stage: row[14] || '',
+            rpartner4: row[15] || '',
+            rpartner4Specialty: row[16] || '',
+            rpartner4Stage: row[17] || '',
+            totalPartners: row[18] || '',
+            achievement: row[19] || ''
           };
         }
       }

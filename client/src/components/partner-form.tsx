@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -24,6 +25,20 @@ interface UserProfile {
   memberName: string;
   specialty: string;
   targetCustomer: string;
+  rpartner1: string;
+  rpartner1Specialty: string;
+  rpartner1Stage: string;
+  rpartner2: string;
+  rpartner2Specialty: string;
+  rpartner2Stage: string;
+  rpartner3: string;
+  rpartner3Specialty: string;
+  rpartner3Stage: string;
+  rpartner4: string;
+  rpartner4Specialty: string;
+  rpartner4Stage: string;
+  totalPartners: string;
+  achievement: string;
 }
 
 export default function PartnerForm({ userId, initialData, onDataSaved }: PartnerFormProps) {
@@ -45,20 +60,46 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
       memberName: userProfile?.memberName || initialData?.memberName || "",
       specialty: userProfile?.specialty || initialData?.specialty || "",
       targetCustomer: initialData?.targetCustomer || "",
-      rpartner1: initialData?.rpartner1 || "",
-      rpartner1Specialty: initialData?.rpartner1Specialty || "",
-      rpartner1Stage: initialData?.rpartner1Stage || "",
-      rpartner2: initialData?.rpartner2 || "",
-      rpartner2Specialty: initialData?.rpartner2Specialty || "",
-      rpartner2Stage: initialData?.rpartner2Stage || "",
-      rpartner3: initialData?.rpartner3 || "",
-      rpartner3Specialty: initialData?.rpartner3Specialty || "",
-      rpartner3Stage: initialData?.rpartner3Stage || "",
-      rpartner4: initialData?.rpartner4 || "",
-      rpartner4Specialty: initialData?.rpartner4Specialty || "",
-      rpartner4Stage: initialData?.rpartner4Stage || "",
+      rpartner1: userProfile?.rpartner1 || initialData?.rpartner1 || "",
+      rpartner1Specialty: userProfile?.rpartner1Specialty || initialData?.rpartner1Specialty || "",
+      rpartner1Stage: userProfile?.rpartner1Stage || initialData?.rpartner1Stage || "",
+      rpartner2: userProfile?.rpartner2 || initialData?.rpartner2 || "",
+      rpartner2Specialty: userProfile?.rpartner2Specialty || initialData?.rpartner2Specialty || "",
+      rpartner2Stage: userProfile?.rpartner2Stage || initialData?.rpartner2Stage || "",
+      rpartner3: userProfile?.rpartner3 || initialData?.rpartner3 || "",
+      rpartner3Specialty: userProfile?.rpartner3Specialty || initialData?.rpartner3Specialty || "",
+      rpartner3Stage: userProfile?.rpartner3Stage || initialData?.rpartner3Stage || "",
+      rpartner4: userProfile?.rpartner4 || initialData?.rpartner4 || "",
+      rpartner4Specialty: userProfile?.rpartner4Specialty || initialData?.rpartner4Specialty || "",
+      rpartner4Stage: userProfile?.rpartner4Stage || initialData?.rpartner4Stage || "",
     },
   });
+
+  // Reset form when userProfile data is loaded
+  React.useEffect(() => {
+    if (userProfile && !isProfileLoading) {
+      form.reset({
+        region: userProfile.region || "",
+        userIdField: userProfile.targetCustomer || "",
+        partner: userProfile.chapter || "",
+        memberName: userProfile.memberName || "",
+        specialty: userProfile.specialty || "",
+        targetCustomer: initialData?.targetCustomer || "",
+        rpartner1: userProfile.rpartner1 || "",
+        rpartner1Specialty: userProfile.rpartner1Specialty || "",
+        rpartner1Stage: userProfile.rpartner1Stage || "",
+        rpartner2: userProfile.rpartner2 || "",
+        rpartner2Specialty: userProfile.rpartner2Specialty || "",
+        rpartner2Stage: userProfile.rpartner2Stage || "",
+        rpartner3: userProfile.rpartner3 || "",
+        rpartner3Specialty: userProfile.rpartner3Specialty || "",
+        rpartner3Stage: userProfile.rpartner3Stage || "",
+        rpartner4: userProfile.rpartner4 || "",
+        rpartner4Specialty: userProfile.rpartner4Specialty || "",
+        rpartner4Stage: userProfile.rpartner4Stage || "",
+      });
+    }
+  }, [userProfile, isProfileLoading, form, initialData]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: ScoreboardForm) => {
