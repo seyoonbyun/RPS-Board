@@ -100,15 +100,17 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
-                      <Input
+                      <input
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        className="focus:ring-2 focus:ring-blue-500 natural-spacing"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{
-                          letterSpacing: '0px',
-                          wordSpacing: '0px',
-                          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+                          letterSpacing: '0',
+                          wordSpacing: '0',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          fontFeatureSettings: 'normal',
+                          fontKerning: 'none'
                         }}
                       />
                     </FormControl>
@@ -124,16 +126,18 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>비밀번호 (4자리)</FormLabel>
                     <FormControl>
-                      <Input
+                      <input
                         {...field}
                         type="password"
                         maxLength={4}
                         placeholder="4자리 숫자를 입력하세요"
-                        className="focus:ring-2 focus:ring-blue-500 natural-spacing"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         style={{
-                          letterSpacing: '0px',
-                          wordSpacing: '0px',
-                          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+                          letterSpacing: '0',
+                          wordSpacing: '0',
+                          fontFamily: 'system-ui, -apple-system, sans-serif',
+                          fontFeatureSettings: 'normal',
+                          fontKerning: 'none'
                         }}
                       />
                     </FormControl>
