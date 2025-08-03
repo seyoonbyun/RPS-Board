@@ -281,29 +281,28 @@ button[role="combobox"][data-state] span:not([class*="placeholder"]):not([data-p
 html body * [data-radix-select-trigger] span,
 html body * button[role="combobox"] span,
 html body div * [data-radix-select-trigger] span,
-html body div * button[role="combobox"] span {
+html body div * button[role="combobox"] span,
+html body div div * [data-radix-select-trigger] span,
+html body div div * button[role="combobox"] span {
   color: rgb(156 163 175) !important; /* Force ALL Select text to be gray first */
 }
 
-/* Then make only actual values dark */
-html body * [data-radix-select-trigger] span[data-radix-select-value],
-html body * button[role="combobox"] span[data-radix-select-value],
-html body div * [data-radix-select-trigger] span:not([class*="placeholder"]):not(:empty),
-html body div * button[role="combobox"] span:not([class*="placeholder"]):not(:empty) {
-  color: rgb(17 24 39) !important; /* Dark only for selected values */
+/* ULTRA NUCLEAR - Target any text containing "작성예)" specifically */
+[data-radix-select-trigger] span[data-radix-select-value],
+button[role="combobox"] span[data-radix-select-value] {
+  color: rgb(156 163 175) !important; /* Force gray for all placeholder content */
 }
 
-/* FINAL SOLUTION - Direct override for SelectValue placeholder */
-[data-radix-select-trigger] [data-radix-select-value]:not([data-state]),
-[data-radix-select-trigger] [data-radix-select-value]:empty,
-button[role="combobox"] [data-radix-select-value]:not([data-state]),
-button[role="combobox"] [data-radix-select-value]:empty {
-  color: rgb(156 163 175) !important; /* Force placeholder to be gray */
-  opacity: 1 !important;
+/* ABSOLUTE LAST RESORT - Force all spans in select to be gray */
+* [data-radix-select-trigger] span,
+* button[role="combobox"] span {
+  color: rgb(156 163 175) !important;
 }
 
-/* Override any text that says "작성예)" specifically */
-[data-radix-select-trigger] span:contains("작성예"),
-button[role="combobox"] span:contains("작성예") {
-  color: rgb(156 163 175) !important; /* Force example text to be gray */
+/* Then override only when there's actual user input */
+* [data-radix-select-trigger] span:not(:empty):not([data-placeholder]):not([class*="placeholder"]),
+* button[role="combobox"] span:not(:empty):not([data-placeholder]):not([class*="placeholder"]) {
+  color: rgb(17 24 39) !important; /* Dark only for real values */
 }
+
+/* Clean up - removed redundant rules */
