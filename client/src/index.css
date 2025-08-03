@@ -229,6 +229,33 @@ input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px white inset !important;
 }
 
+/* Toast notification styling fix */
+[data-radix-toast-viewport] {
+  position: fixed !important;
+  z-index: 100 !important;
+}
+
+[data-radix-toast-root] {
+  background-color: white !important;
+  border: 1px solid rgb(229 231 235) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  opacity: 1 !important;
+}
+
+[data-radix-toast-title] {
+  color: rgb(17 24 39) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-bottom: 4px !important;
+}
+
+[data-radix-toast-description] {
+  color: rgb(107 114 128) !important;
+  font-size: 14px !important;
+}
+
 /* Print styles */
 @media print {
   .no-print {
