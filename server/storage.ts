@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getScoreboardData(userId: string): Promise<ScoreboardData | undefined>;
   upsertScoreboardData(userId: string, data: InsertScoreboardData): Promise<ScoreboardData>;
@@ -30,6 +31,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(
       (user) => user.email === email,
     );
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    return this.users.get(id);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

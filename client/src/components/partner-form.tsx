@@ -59,9 +59,12 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
       onDataSaved();
     },
     onError: (error: any) => {
+      const errorMessage = error.message || "데이터 저장에 실패했습니다";
       toast({
         title: "저장 실패",
-        description: error.message || "데이터 저장에 실패했습니다",
+        description: errorMessage.includes("Google Sheets") 
+          ? "데이터는 저장되었지만 구글 시트 동기화에 실패했습니다" 
+          : errorMessage,
         variant: "destructive",
       });
     },
