@@ -421,7 +421,7 @@ class GoogleSheetsService {
           values[2] = existingRow[2] || data.partner || ''; // 챕터
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명
           values[4] = existingRow[4] || data.specialty || ''; // 전문분야
-          values[5] = existingRow[5] || data.targetCustomer || ''; // 나의 핵심 고객층
+          values[5] = data.targetCustomer || existingRow[5] || ''; // 나의 핵심 고객층 - 앱 데이터 우선
           
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
