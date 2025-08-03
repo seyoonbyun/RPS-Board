@@ -65,7 +65,7 @@ export default function LoginPage() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" noValidate>
               <FormField
                 control={form.control}
                 name="email"
@@ -78,6 +78,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="이메일을 입력하세요"
                         className="focus:ring-2 focus:ring-blue-500"
+                        noValidate
                       />
                     </FormControl>
                     <FormMessage />
