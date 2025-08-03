@@ -127,43 +127,43 @@
 
 /* Select placeholder color consistency - unified with Input fields */
 [data-radix-select-trigger] [data-placeholder] {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Ensure Select placeholder matches Input placeholder color */
 [data-radix-select-trigger] span:not([data-radix-select-value]) {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Additional Select placeholder styling */
 [role="combobox"] span[data-placeholder] {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Comprehensive Select placeholder styling to match Input fields */
 button[role="combobox"] span:not([style*="color"]) {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Target SelectValue component specifically */
 .select-trigger span {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Override any default text color for empty Select */
 [data-radix-select-trigger]:not([data-state="open"]) span:empty + span {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
   opacity: 1;
 }
 
 /* Most specific rule for Select placeholder - only when empty/placeholder */
 [data-radix-select-trigger]:not([data-state="open"]) > span:not([data-radix-select-value]) {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - lighter like other placeholders */
 }
 
 /* Ensure Select with actual selected value shows dark text */
@@ -174,23 +174,23 @@ button[role="combobox"] span:not([style*="color"]) {
 
 /* Force all span elements in SelectTrigger to use placeholder color when empty */
 button[role="combobox"] > span:empty {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
 }
 
 /* Show placeholder color only when no value is selected */
 button[role="combobox"] > span:not([data-radix-select-value]):empty::before {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 - match Input placeholders */
 }
 
-/* Unify all input placeholder colors to match Select color */
+/* Unify all input placeholder colors */
 input::placeholder {
-  color: rgb(107 114 128) !important; /* text-gray-500 - slightly darker to match Select */
+  color: rgb(156 163 175) !important; /* text-gray-400 - consistent with all placeholders */
   opacity: 1;
 }
 
 /* Override default placeholder styling */
 .placeholder\:text-muted-foreground::placeholder {
-  color: rgb(107 114 128) !important; /* text-gray-500 */
+  color: rgb(156 163 175) !important; /* text-gray-400 */
   opacity: 1;
 }
 
