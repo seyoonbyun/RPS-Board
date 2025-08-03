@@ -364,7 +364,7 @@ class GoogleSheetsService {
       const achievement = Math.round((profitPartners / 4) * 100);
       
       // Add total partners and achievement (S열, T열)
-      values.push(totalPartners.toString()); // S열: 총 R파트너 수 (index 18)
+      values.push(profitPartners.toString()); // S열: 총 R파트너 수 - P 단계만 (index 18)
       values.push(`${achievement}%`); // T열: 달성 (index 19)
       
       // Add ID and PW columns (U열, V열) - 기존 값 유지  
