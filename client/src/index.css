@@ -244,10 +244,25 @@ textarea::placeholder {
   color: rgb(17 24 39) !important; /* Dark text for selected values */
 }
 
+/* Force Select with actual values to show dark text */
+[data-radix-select-trigger] span:not(:empty),
+button[role="combobox"] span:not(:empty) {
+  color: rgb(17 24 39) !important; /* Dark text for selected values */
+}
+
 /* Select placeholder text - all instances */
-[role="combobox"]:not([data-state="open"]) span:not([data-radix-select-value]),
-[data-radix-select-trigger]:not([data-state="open"]) span:not([data-radix-select-value]) {
+[role="combobox"]:not([data-state="open"]) span:not([data-radix-select-value]):empty,
+[data-radix-select-trigger]:not([data-state="open"]) span:not([data-radix-select-value]):empty {
   color: rgb(156 163 175) !important; /* Light gray for placeholders */
+  opacity: 1;
+}
+
+/* Most specific rule - Select with actual selected values must be dark */
+[data-radix-select-trigger] span[data-radix-select-value],
+[role="combobox"] span[data-radix-select-value],
+[data-radix-select-trigger][data-state="closed"] span:not(:empty),
+button[role="combobox"][data-state="closed"] span:not(:empty) {
+  color: rgb(17 24 39) !important; /* Dark text for selected values */
   opacity: 1;
 }
 
@@ -261,4 +276,23 @@ textarea::placeholder {
 .text-muted-foreground[data-placeholder],
 span[data-placeholder] {
   color: rgb(156 163 175) !important; /* Keep placeholders light */
+}
+
+/* Ultimate specificity - Force all Select values to be dark */
+button[role="combobox"] > span,
+[data-radix-select-trigger] > span {
+  color: rgb(17 24 39) !important; /* Dark text for all Select content */
+}
+
+/* Only empty spans with placeholder should be light */
+button[role="combobox"] > span:empty:before,
+[data-radix-select-trigger] > span:empty:before {
+  color: rgb(156 163 175) !important; /* Light placeholder only */
+}
+
+/* Force Select trigger content to be dark when it has actual value */
+button[role="combobox"][data-state="closed"] > span:not(:empty),
+[data-radix-select-trigger][data-state="closed"] > span:not(:empty) {
+  color: rgb(17 24 39) !important; /* Dark text for selected values */
+  font-weight: normal;
 }
