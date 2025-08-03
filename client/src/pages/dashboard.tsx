@@ -29,13 +29,13 @@ export default function Dashboard() {
   const { data: scoreboardData, refetch } = useQuery({
     queryKey: ["/api/scoreboard", user?.id],
     enabled: !!user?.id,
-    refetchInterval: 30000, // 30초마다 자동 새로고침
+    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ["/api/user-profile", user?.id],
     enabled: !!user?.id,
-    refetchInterval: 30000, // 30초마다 자동 새로고침
+    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   const { calculateAchievement, syncFromSheetsMutation } = useScoreboard(user?.id);
