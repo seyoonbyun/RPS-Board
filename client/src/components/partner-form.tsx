@@ -207,13 +207,13 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" />
+                  <SelectTrigger className="h-9 bg-white border-gray-300 select-trigger-text">
+                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" className="select-placeholder" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg">
                   {stageOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.value} className="text-gray-900 hover:bg-gray-100">
                       {option.label}
                     </SelectItem>
                   ))}

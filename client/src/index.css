@@ -89,6 +89,48 @@ input::placeholder {
   color: rgb(156 163 175) !important;
 }
 
+/* Select component styling fixes */
+[data-radix-select-trigger] {
+  background-color: white !important;
+  border: 1px solid rgb(209 213 219) !important;
+  color: rgb(17 24 39) !important;
+}
+
+[data-radix-select-trigger][data-placeholder] {
+  color: rgb(156 163 175) !important;
+}
+
+[data-radix-select-trigger] span[data-radix-select-value] {
+  color: rgb(17 24 39) !important;
+}
+
+[data-radix-select-trigger]:focus {
+  border-color: rgb(59 130 246) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px rgb(59 130 246) !important;
+}
+
+[data-radix-select-content] {
+  background-color: white !important;
+  border: 1px solid rgb(229 231 235) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  z-index: 50 !important;
+}
+
+[data-radix-select-item] {
+  color: rgb(17 24 39) !important;
+}
+
+[data-radix-select-item]:hover {
+  background-color: rgb(243 244 246) !important;
+}
+
+/* Force consistent placeholder styling across all form elements */
+input::placeholder,
+[data-radix-select-trigger][data-placeholder] {
+  color: rgb(156 163 175) !important;
+}
+
 /* Print styles */
 @media print {
   .no-print {
