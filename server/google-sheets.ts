@@ -195,19 +195,19 @@ class GoogleSheetsService {
             memberName: row[3] || '',
             specialty: row[4] || '',
             targetCustomer: row[5] || '',
-            // R파트너 정보 추가
+            // R파트너 정보 추가 - 전체 텍스트를 V-C-P로 변환
             rpartner1: row[6] || '',
             rpartner1Specialty: row[7] || '',
-            rpartner1Stage: row[8] || '',
+            rpartner1Stage: this.convertFullTextToStage(row[8] || ''),
             rpartner2: row[9] || '',
             rpartner2Specialty: row[10] || '',
-            rpartner2Stage: row[11] || '',
+            rpartner2Stage: this.convertFullTextToStage(row[11] || ''),
             rpartner3: row[12] || '',
             rpartner3Specialty: row[13] || '',
-            rpartner3Stage: row[14] || '',
+            rpartner3Stage: this.convertFullTextToStage(row[14] || ''),
             rpartner4: row[15] || '',
             rpartner4Specialty: row[16] || '',
-            rpartner4Stage: row[17] || '',
+            rpartner4Stage: this.convertFullTextToStage(row[17] || ''),
             totalPartners: row[18] || '',
             achievement: row[19] || ''
           };
@@ -303,6 +303,24 @@ class GoogleSheetsService {
     }
   }
 
+  // V-C-P 단계를 전체 텍스트로 변환하는 함수
+  private convertStageToFullText(stage: string): string {
+    const stageMap: { [key: string]: string } = {
+      'V': 'Visibility : 아는단계',
+      'C': 'Credibility : 신뢰단계', 
+      'P': 'Profit : 수익단계'
+    };
+    return stageMap[stage] || stage;
+  }
+
+  // 전체 텍스트에서 V-C-P 값을 추출하는 함수
+  private convertFullTextToStage(fullText: string): string {
+    if (fullText.includes('Visibility')) return 'V';
+    if (fullText.includes('Credibility')) return 'C';
+    if (fullText.includes('Profit')) return 'P';
+    return fullText; // 기존 V, C, P 값 그대로 반환
+  }
+
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
     try {
       console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
@@ -321,16 +339,16 @@ class GoogleSheetsService {
         data.targetCustomer || '', // F열: 나의 핵심 고객층
         data.rpartner1 || '', // G열: R파트너 1
         data.rpartner1Specialty || '', // H열: R파트너 1 전문분야
-        data.rpartner1Stage || '', // I열: R파트너 1 V-C-P
+        this.convertStageToFullText(data.rpartner1Stage || ''), // I열: R파트너 1 V-C-P
         data.rpartner2 || '', // J열: R파트너 2
         data.rpartner2Specialty || '', // K열: R파트너 2 전문분야
-        data.rpartner2Stage || '', // L열: R파트너 2 V-C-P
+        this.convertStageToFullText(data.rpartner2Stage || ''), // L열: R파트너 2 V-C-P
         data.rpartner3 || '', // M열: R파트너 3
         data.rpartner3Specialty || '', // N열: R파트너 3 전문분야
-        data.rpartner3Stage || '', // O열: R파트너 3 V-C-P
+        this.convertStageToFullText(data.rpartner3Stage || ''), // O열: R파트너 3 V-C-P
         data.rpartner4 || '', // P열: R파트너 4
         data.rpartner4Specialty || '', // Q열: R파트너 4 전문분야
-        data.rpartner4Stage || '', // R열: R파트너 4 V-C-P
+        this.convertStageToFullText(data.rpartner4Stage || ''), // R열: R파트너 4 V-C-P
       ];
 
       // Calculate total R-Partners (non-empty names)
@@ -353,7 +371,7 @@ class GoogleSheetsService {
       values.push(data.userEmail); // U열: ID
       values.push(''); // V열: PW (기존 값 유지)
       
-      console.log('Data to sync to Google Sheets:', values);
+      console.log('Data to sync to Google Sheets (with full stage text):', values);
 
       // Check if user row already exists in first 100 rows (to avoid massive data scanning)
       const getResponse = await fetch(
