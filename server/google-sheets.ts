@@ -48,6 +48,13 @@ class GoogleSheetsService {
 
       // Clean private key format
       let privateKey = this.serviceAccountPrivateKey;
+      
+      // Remove JSON string quotes if present
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      
+      // Replace escaped newlines with actual newlines
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
