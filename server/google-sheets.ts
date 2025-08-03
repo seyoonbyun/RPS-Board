@@ -253,9 +253,17 @@ class GoogleSheetsService {
           }
         );
       } else {
-        // Append new row to the next available row (after header)
-        const nextRow = existingRows.length + 1;
-        const range = `RPS!A${nextRow}:U${nextRow}`;
+        // Find the first empty row after the header (row 1)
+        let firstEmptyRow = 2; // Start from row 2 (after header)
+        for (let i = 1; i < existingRows.length; i++) {
+          const row = existingRows[i];
+          if (!row || row.length === 0 || !row[1]) { // If row is empty or email column is empty
+            firstEmptyRow = i + 1;
+            break;
+          }
+        }
+        
+        const range = `RPS!A${firstEmptyRow}:U${firstEmptyRow}`;
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
@@ -269,7 +277,7 @@ class GoogleSheetsService {
             })
           }
         );
-        console.log(`Adding new row at position ${nextRow}`);
+        console.log(`Adding new row at position ${firstEmptyRow}`);
       }
 
       if (!updateResponse.ok) {
