@@ -249,7 +249,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
                 <User className="w-4 h-4 text-gray-600" />
-                <h3 className="text-base font-medium text-gray-800">기본 정보</h3>
+                <h3 className="text-base font-medium text-gray-800">나의 정보</h3>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -329,11 +329,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
             </div>
 
-            {/* 리퍼럴 파트너 정보 섹션 */}
+            {/* 나의 파워팀 정보 섹션 */}
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center space-x-2 mb-4">
                 <User className="w-4 h-4 text-gray-600" />
-                <h3 className="text-base font-medium text-gray-800">리퍼럴 파트너 정보</h3>
+                <h3 className="text-base font-medium text-gray-800">나의 파워팀 정보 입력</h3>
               </div>
               
               <div className="space-y-0">
