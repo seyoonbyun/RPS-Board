@@ -36,24 +36,8 @@ class GoogleSheetsService {
       // Log for debugging (without exposing the key)
       console.log(`Private key format check: starts with BEGIN? ${privateKey.includes('-----BEGIN PRIVATE KEY-----')}, length: ${privateKey.length}`);
       
-      // Try API Key method first (simpler and avoids SSL issues)
-      if (config.apiKey && config.apiKey.length > 10) {
-        console.log('Trying API Key authentication method...');
-        try {
-          this.sheets = google.sheets({ 
-            version: 'v4', 
-            auth: config.apiKey 
-          });
-          this.spreadsheetId = config.spreadsheetId;
-          console.log('Google Sheets service initialized with API Key successfully');
-          return;
-        } catch (apiError) {
-          console.warn('API Key method failed, trying service account:', apiError.message);
-        }
-      }
-      
-      // Fallback to service account
-      console.log('Using service account authentication...');
+      // Skip API Key method as it doesn't support write operations
+      console.log('Using service account authentication for write operations...');
       
       // More flexible format check
       if (!privateKey.includes('-----BEGIN') || !privateKey.includes('-----END')) {
@@ -61,25 +45,33 @@ class GoogleSheetsService {
         throw new Error('Invalid Google Service Account private key format');
       }
       
-      // Create credentials object for GoogleAuth (more compatible with Node.js SSL)
-      const credentials = {
-        type: "service_account",
-        project_id: "qualified-glow-467905-k0",
-        private_key_id: "",
-        private_key: privateKey,
-        client_email: config.serviceAccountEmail,
-        client_id: "",
-        auth_uri: "https://accounts.google.com/o/oauth2/auth",
-        token_uri: "https://oauth2.googleapis.com/token",
-        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+      // Try different approaches to handle SSL issues
+      let jwtClient;
+      
+      // Create a complete service account JSON credential
+      const serviceAccountKey = {
+        "type": "service_account",
+        "project_id": "qualified-glow-467905-k0",
+        "private_key_id": "",
+        "private_key": privateKey,
+        "client_email": config.serviceAccountEmail,
+        "client_id": "",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(config.serviceAccountEmail)}`
       };
       
+      console.log('Creating Google Auth with complete service account JSON...');
+      
+      // Use GoogleAuth instead of JWT to avoid OpenSSL issues
       const auth = new google.auth.GoogleAuth({
-        credentials,
+        credentials: serviceAccountKey,
         scopes: ['https://www.googleapis.com/auth/spreadsheets']
       });
       
-      const jwtClient = await auth.getClient();
+      jwtClient = await auth.getClient();
+      console.log('Successfully created GoogleAuth client');
 
       // Initialize Google Sheets API
       this.sheets = google.sheets({ version: 'v4', auth: jwtClient });
