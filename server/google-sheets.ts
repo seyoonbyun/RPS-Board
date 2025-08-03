@@ -310,6 +310,8 @@ class GoogleSheetsService {
       'C': 'Credibility : 신뢰단계', 
       'P': 'Profit : 수익단계'
     };
+    // "none" 값은 빈 문자열로 변환
+    if (stage === 'none' || !stage) return '';
     return stageMap[stage] || stage;
   }
 

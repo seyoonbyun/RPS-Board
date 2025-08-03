@@ -90,7 +90,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         if (stage?.includes('Profit')) return 'P';
         if (stage?.includes('Credibility')) return 'C';
         if (stage?.includes('Visibility')) return 'V';
-        return stage || '';
+        return stage || 'none';
       };
 
       form.reset({
@@ -216,7 +216,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="" className="text-gray-500 hover:bg-gray-100">
+                  <SelectItem value="none" className="text-gray-500 hover:bg-gray-100">
                     선택 안함
                   </SelectItem>
                   {stageOptions.map((option) => (
