@@ -1,5 +1,5 @@
 import type { ScoreboardData } from '@shared/schema';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
 interface GoogleSheetsConfig {
   apiKey: string;
@@ -46,26 +46,18 @@ class GoogleSheetsService {
         iat: now
       };
 
-      // Base64URL encode header and payload
-      const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-      const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-      
-      // Create the signature using Node.js crypto (avoiding googleapis library)
-      const signatureInput = `${encodedHeader}.${encodedPayload}`;
-      
       // Clean private key format
       let privateKey = this.serviceAccountPrivateKey;
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
-      const signature = crypto.sign('RSA-SHA256', Buffer.from(signatureInput), {
-        key: privateKey,
-        padding: crypto.constants.RSA_PKCS1_PADDING
+      // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
+      const jwtToken = jwt.sign(payload, privateKey, {
+        algorithm: 'RS256',
+        header: header,
+        keyid: undefined
       });
-      
-      const encodedSignature = signature.toString('base64url');
-      const jwt = `${signatureInput}.${encodedSignature}`;
       
       // Exchange JWT for access token
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -75,7 +67,7 @@ class GoogleSheetsService {
         },
         body: new URLSearchParams({
           grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-          assertion: jwt
+          assertion: jwtToken
         })
       });
       
