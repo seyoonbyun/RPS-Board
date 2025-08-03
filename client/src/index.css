@@ -145,7 +145,7 @@ input[data-focused] {
 input::placeholder,
 [data-radix-select-trigger][data-placeholder],
 [data-radix-select-trigger] span[data-radix-select-value][data-placeholder] {
-  color: rgb(156 163 175) !important;
+  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
 }
 
 /* More specific Radix Select placeholder styling */
@@ -153,13 +153,13 @@ input::placeholder,
 [data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
 [data-radix-select-trigger] > span:not([data-value]),
 [data-radix-select-trigger] > span[data-radix-select-value]:empty::before {
-  color: rgb(156 163 175) !important;
+  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
 }
 
 /* Target the SelectValue component specifically */
 [data-radix-select-value]:empty::before {
   content: attr(data-placeholder);
-  color: rgb(156 163 175) !important;
+  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
 }
 
 /* Select component with clean styling */
@@ -202,6 +202,20 @@ input:active,
 input:hover {
   color: rgb(17 24 39) !important;
   -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+/* ULTIMATE PLACEHOLDER COLOR OVERRIDE - 최우선 적용 */
+*::placeholder,
+input::placeholder,
+textarea::placeholder,
+[data-radix-select-trigger][data-placeholder],
+[data-radix-select-trigger] span[data-radix-select-value][data-placeholder],
+.select-placeholder,
+[data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
+[data-radix-select-trigger] > span:not([data-value]),
+[data-radix-select-value]:empty::before {
+  color: rgb(209 213 219) !important;
+  opacity: 1 !important;
 }
 
 /* Ultimate override for input border colors and background - this should override all browser defaults */
