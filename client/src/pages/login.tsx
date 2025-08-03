@@ -119,8 +119,11 @@ export default function LoginPage() {
                         type="email"
                         placeholder="이메일을 입력하세요"
                         style={{
-                          letterSpacing: 'normal',
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                          letterSpacing: '0',
+                          wordSpacing: '0',
+                          fontFamily: '"Courier New", Courier, monospace',
+                          fontSize: '14px',
+                          lineHeight: '1.4'
                         }}
                       />
                     </FormControl>
