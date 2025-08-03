@@ -154,12 +154,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (
-    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+    <div className="bg-red-50 p-4 rounded-lg border mb-4" style={{ borderColor: '#f5c2c7' }}>
       <div className="flex items-center mb-3">
-        <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2">
+        <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: '#d12031' }}>
           {partnerNumber}
         </div>
-        <h3 className="text-sm font-medium text-blue-800">R파트너 {partnerNumber}</h3>
+        <h3 className="text-sm font-medium" style={{ color: '#d12031' }}>R파트너 {partnerNumber}</h3>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
