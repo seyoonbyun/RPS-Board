@@ -152,7 +152,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/scoreboard/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
+      console.log('📝 Received scoreboard data for save:', JSON.stringify(req.body, null, 2));
+      
       const formData = scoreboardFormSchema.parse(req.body);
+      console.log('✅ Validated form data:', JSON.stringify(formData, null, 2));
       
       // Get existing data for change tracking
       const existingData = await storage.getScoreboardData(userId);
@@ -180,6 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get user's email for Google Sheets sync
         const user = await storage.getUserById(userId);
         if (user) {
+          console.log('🔄 Starting Google Sheets sync with validated data:', JSON.stringify(formData, null, 2));
           const sheetsService = getGoogleSheetsService();
           if (sheetsService) {
             await sheetsService.syncScoreboardData({
@@ -196,6 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(savedData);
     } catch (error) {
+      console.error('Error in POST /api/scoreboard:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "입력 데이터를 확인해주세요", errors: error.errors });
       }

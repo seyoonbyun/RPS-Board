@@ -144,6 +144,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   });
 
   const onSubmit = (data: ScoreboardForm) => {
+    console.log('🚀 Form submission data:', JSON.stringify(data, null, 2));
     saveMutation.mutate(data);
   };
 
