@@ -208,7 +208,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" />
+                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" className="text-gray-400" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
