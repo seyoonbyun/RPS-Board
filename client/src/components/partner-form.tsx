@@ -133,9 +133,9 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
   };
 
   const stageOptions = [
-    { value: "V", label: "V (Visibility) - 아는 단계" },
-    { value: "C", label: "C (Credibility) - 신뢰 단계" },
-    { value: "P", label: "P (Profit) - 수익 단계" },
+    { value: "V", label: "Visibility : 아는단계" },
+    { value: "C", label: "Credibility : 신뢰단계" },
+    { value: "P", label: "Profit : 수익단계" },
   ];
 
   return (
