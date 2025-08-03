@@ -64,46 +64,30 @@
     letter-spacing: normal;
   }
 
-  /* Complete Tailwind tracking override */
-  .tracking-tighter,
-  .tracking-tight,
-  .tracking-normal,
-  .tracking-wide,
-  .tracking-wider,
-  .tracking-widest {
-    letter-spacing: 0px !important;
-  }
-  
-  /* NUCLEAR option - Override ALL input styling */
-  input[type="email"], input[type="password"], input[type="text"],
-  .login-form input[type="email"], .login-form input[type="password"],
-  form input[type="email"], form input[type="password"],
-  input.tracking-tight, input.tracking-normal {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif !important;
-    letter-spacing: 0px !important;
-    word-spacing: 0px !important;
-    font-feature-settings: normal !important;
+  /* Complete font and spacing reset for inputs */
+  input, input[type="email"], input[type="password"], input[type="text"] {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-feature-settings: "kern" 1 !important;
     font-kerning: auto !important;
-    font-variant-ligatures: normal !important;
-    font-variant-caps: normal !important;
-    font-variant-numeric: normal !important;
-    text-rendering: auto !important;
+    font-variant-ligatures: common-ligatures !important;
+    text-rendering: optimizeLegibility !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
-    text-transform: none !important;
-    font-stretch: normal !important;
-    font-optical-sizing: auto !important;
   }
   
-  /* Ultra-specific for login inputs */
-  html body .login-form input[type="email"],
-  html body .login-form input[type="password"],
-  html body form input[type="email"],
-  html body form input[type="password"] {
-    letter-spacing: 0px !important;
-    word-spacing: 0px !important;
-    font-family: -apple-system, system-ui, sans-serif !important;
+  /* Override all Tailwind tracking classes globally */
+  * {
+    letter-spacing: inherit !important;
   }
+  
+  .tracking-tighter { letter-spacing: -0.05em !important; }
+  .tracking-tight { letter-spacing: -0.025em !important; }
+  .tracking-normal { letter-spacing: 0em !important; }
+  .tracking-wide { letter-spacing: 0.025em !important; }
+  .tracking-wider { letter-spacing: 0.05em !important; }
+  .tracking-widest { letter-spacing: 0.1em !important; }
 }
 
 @layer components {
