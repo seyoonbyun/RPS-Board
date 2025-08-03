@@ -1,21 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import AchievementRing from "@/components/achievement-ring";
-import PartnerForm from "@/components/partner-form";
-import DataSummary from "@/components/data-summary";
-import ChangeNotification from "@/components/change-notification";
 import { useScoreboard } from "@/hooks/use-scoreboard";
-import { BarChart3, RefreshCw, LogOut, Printer, Compass, Users } from "lucide-react";
-import type { User } from "@shared/schema";
+import { BarChart3, Printer, LogOut, Compass } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import PartnerForm from "@/components/partner-form";
+// import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
+  const [user, setUser] = useState<{id: string, email: string} | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
@@ -38,7 +35,7 @@ export default function Dashboard() {
     refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
-  const { calculateAchievement, syncFromSheetsMutation } = useScoreboard(user?.id);
+  const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
     localStorage.removeItem("bni_user");
@@ -52,14 +49,6 @@ export default function Dashboard() {
   const handlePrint = () => {
     window.print();
   };
-
-  const handleSyncFromSheets = () => {
-    if (user?.id) {
-      syncFromSheetsMutation.mutate(user.id);
-    }
-  };
-
-
 
   if (!user) {
     return <div>Loading...</div>;
@@ -83,16 +72,6 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSyncFromSheets}
-                disabled={syncFromSheetsMutation.isPending}
-                className="text-green-800 border-green-200 hover:bg-green-50"
-              >
-                <RefreshCw className={`mr-1 w-4 h-4 ${syncFromSheetsMutation.isPending ? 'animate-spin' : ''}`} />
-                구글시트 동기화
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -154,30 +133,80 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Achievement Section */}
-        <AchievementRing achievement={achievement} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Achievement Ring */}
+          <div className="bg-white p-6 rounded-lg shadow print:bg-transparent print:shadow-none">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
+            <div className="flex items-center justify-center">
+              <div className="relative w-32 h-32">
+                <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#f3f4f6"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="2"
+                    strokeDasharray={`${achievement.percentage}, 100`}
+                    className="drop-shadow-sm"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-800">{achievement.percentage}%</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {achievement.profitable}/4
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">수익 파트너 (P)</span>
+                <span className="font-medium text-emerald-600">{achievement.profitable}명</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">신뢰 파트너 (C)</span>
+                <span className="font-medium text-orange-600">{achievement.credible}명</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">인지 파트너 (V)</span>
+                <span className="font-medium text-yellow-600">{achievement.visible}명</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t">
+                <span className="text-gray-600">총 파트너</span>
+                <span className="font-medium">{achievement.total}명</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Data Input Form */}
-        <PartnerForm 
-          userId={user.id} 
-          initialData={scoreboardData} 
-          onDataSaved={() => {
-            refetch();
-            // 프로필 데이터도 함께 새로고침하여 달성률 실시간 업데이트
-            queryClient.invalidateQueries({ queryKey: ["/api/user-profile", user.id] });
-          }}
-        />
+          {/* Partner Form */}
+          <div className="lg:col-span-2">
+            <PartnerForm
+              userId={user.id}
+              scoreboardData={scoreboardData}
+              onDataUpdate={() => {
+                refetch();
+                refetchProfile();
+              }}
+            />
+          </div>
+        </div>
 
-        {/* Data Summary */}
-        <DataSummary 
-          scoreboardData={scoreboardData}
-          userProfile={userProfile}
-          achievement={achievement}
-        />
+        {/* Change History - Temporarily disabled */}
+        {/* <div className="mt-6">
+          <ChangeHistory userId={user.id} />
+        </div> */}
       </div>
-
-      {/* Change Notifications */}
-      <ChangeNotification userId={user.id} />
     </div>
   );
 }
