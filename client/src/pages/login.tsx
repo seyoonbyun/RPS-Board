@@ -104,13 +104,11 @@ export default function LoginPage() {
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        className="focus:ring-2 focus:ring-blue-500 email-input"
+                        className="focus:ring-2 focus:ring-blue-500 natural-spacing"
                         style={{
-                          letterSpacing: 'normal',
-                          wordSpacing: 'normal',
-                          fontFamily: 'system-ui, -apple-system, sans-serif',
-                          fontFeatureSettings: 'normal',
-                          fontKerning: 'auto'
+                          letterSpacing: '0px',
+                          wordSpacing: '0px',
+                          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
                         }}
                       />
                     </FormControl>
@@ -131,11 +129,11 @@ export default function LoginPage() {
                         type="password"
                         maxLength={4}
                         placeholder="4자리 숫자를 입력하세요"
-                        className="focus:ring-2 focus:ring-blue-500"
+                        className="focus:ring-2 focus:ring-blue-500 natural-spacing"
                         style={{
-                          letterSpacing: 'normal',
-                          wordSpacing: 'normal',
-                          fontFamily: 'system-ui, -apple-system, sans-serif'
+                          letterSpacing: '0px',
+                          wordSpacing: '0px',
+                          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
                         }}
                       />
                     </FormControl>

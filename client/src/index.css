@@ -64,29 +64,32 @@
     letter-spacing: normal;
   }
 
-  /* Reset all spacing and kerning */
-  * {
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
+  /* Aggressive input styling reset */
+  input, input[type="email"], input[type="text"], input[type="password"], textarea,
+  .email-input, [type="email"], [data-testid="email-input"] {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+    letter-spacing: 0px !important;
+    word-spacing: 0px !important;
+    font-variant: normal !important;
     font-feature-settings: normal !important;
-    font-kerning: auto !important;
-  }
-  
-  /* Input specific fixes */
-  input, input[type="email"], input[type="text"], input[type="password"] {
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    font-family: system-ui, -apple-system, sans-serif !important;
-    font-feature-settings: normal !important;
-    font-kerning: auto !important;
+    font-kerning: none !important;
     text-rendering: auto !important;
+    font-stretch: normal !important;
+    font-optical-sizing: auto !important;
   }
   
-  /* Force normal spacing for email input */
-  .email-input {
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    font-variant-ligatures: normal !important;
+  /* Override any Tailwind tracking classes */
+  .natural-spacing,
+  input.natural-spacing {
+    letter-spacing: 0px !important;
+    word-spacing: 0px !important;
+    font-variant-ligatures: none !important;
+    font-feature-settings: "kern" 0, "liga" 0 !important;
+  }
+  
+  /* Override Tailwind tracking utilities */
+  .tracking-normal, .tracking-wide, .tracking-wider, .tracking-widest {
+    letter-spacing: 0px !important;
   }
 }
 
