@@ -41,10 +41,6 @@ class GoogleSheetsService {
       
       // Create JWT assertion for Google OAuth2
       const now = Math.floor(Date.now() / 1000);
-      const header = {
-        alg: 'RS256',
-        typ: 'JWT'
-      };
       
       const payload = {
         iss: this.serviceAccountEmail,
@@ -53,6 +49,8 @@ class GoogleSheetsService {
         exp: now + 3600,
         iat: now
       };
+      
+      console.log('JWT payload:', payload);
 
       // Clean private key format
       let privateKey = this.serviceAccountPrivateKey;
@@ -86,10 +84,24 @@ class GoogleSheetsService {
         lastLine: privateKey.split('\n').slice(-1)[0]
       });
       
-      // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
+      // Test if private key can be used to create a JWT
+      try {
+        // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
+        const jwtToken = jwt.sign(payload, privateKey, {
+          algorithm: 'RS256'
+        });
+        
+        console.log('JWT token created successfully, length:', jwtToken.length);
+        console.log('JWT header (decoded):', JSON.parse(Buffer.from(jwtToken.split('.')[0], 'base64').toString()));
+        console.log('JWT payload (decoded):', JSON.parse(Buffer.from(jwtToken.split('.')[1], 'base64').toString()));
+      } catch (jwtError) {
+        console.error('JWT creation failed:', jwtError);
+        throw new Error(`JWT creation failed: ${jwtError.message}`);
+      }
+      
+      // Create the final JWT for OAuth2
       const jwtToken = jwt.sign(payload, privateKey, {
         algorithm: 'RS256'
-        // Remove header and keyid options that cause validation errors
       });
       
       // Exchange JWT for access token
