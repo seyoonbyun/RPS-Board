@@ -237,11 +237,20 @@ input:-webkit-autofill:active {
 
 [data-radix-toast-root] {
   background-color: white !important;
+  background: white !important;
   border: 1px solid rgb(229 231 235) !important;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
   border-radius: 8px !important;
   padding: 16px !important;
   opacity: 1 !important;
+}
+
+/* Additional toast background fixes */
+.toast,
+[role="status"],
+[data-state="open"][data-radix-toast-root] {
+  background-color: white !important;
+  background: white !important;
 }
 
 [data-radix-toast-title] {
