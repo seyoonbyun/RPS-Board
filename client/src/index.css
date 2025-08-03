@@ -218,3 +218,47 @@ input {
 [data-radix-select-trigger]:not([data-placeholder]) > span {
   color: rgb(17 24 39) !important; /* text-gray-900 */
 }
+
+/* Global form styling - applies to all users across the application */
+/* This ensures consistent styling for all existing and future users */
+
+/* All form inputs - consistent placeholder styling */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+textarea {
+  color: rgb(17 24 39) !important; /* Dark text for user input */
+}
+
+input[type="text"]::placeholder, 
+input[type="email"]::placeholder, 
+input[type="password"]::placeholder, 
+textarea::placeholder {
+  color: rgb(156 163 175) !important; /* Light gray for placeholders */
+  opacity: 1;
+}
+
+/* All Select components - consistent styling */
+[role="combobox"],
+[data-radix-select-trigger] {
+  color: rgb(17 24 39) !important; /* Dark text for selected values */
+}
+
+/* Select placeholder text - all instances */
+[role="combobox"]:not([data-state="open"]) span:not([data-radix-select-value]),
+[data-radix-select-trigger]:not([data-state="open"]) span:not([data-radix-select-value]) {
+  color: rgb(156 163 175) !important; /* Light gray for placeholders */
+  opacity: 1;
+}
+
+/* Comprehensive override for any component using muted text colors */
+.text-muted-foreground {
+  color: rgb(17 24 39) !important; /* Ensure user content is dark */
+}
+
+/* Override for empty state text that should remain as placeholder */
+.text-muted-foreground:empty,
+.text-muted-foreground[data-placeholder],
+span[data-placeholder] {
+  color: rgb(156 163 175) !important; /* Keep placeholders light */
+}
