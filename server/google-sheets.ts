@@ -196,33 +196,40 @@ class GoogleSheetsService {
       let userIdColumnIndex = -1;
       let passwordColumnIndex = -1;
       
-      // Look for columns that might contain user ID and password
+      // Look for ID and PW columns specifically
       for (let j = 0; j < headerRow.length; j++) {
-        const header = headerRow[j] ? headerRow[j].toString().toLowerCase() : '';
-        if (header.includes('user') || header.includes('id') || j === 0) { // Column A (USER)
+        const header = headerRow[j] ? headerRow[j].toString().trim() : '';
+        if (header === 'ID') {
           userIdColumnIndex = j;
         }
-        // Look for password-related columns - since we don't see password in the screenshot,
-        // let's check if A column (USER) contains the credential info we need
+        if (header === 'PW') {
+          passwordColumnIndex = j;
+        }
       }
       
-      console.log(`Using column indices - USER/ID: ${userIdColumnIndex}, PW: ${passwordColumnIndex}`);
+      console.log(`Using column indices - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]})`);
       
       // Check if email exists in column B and validate credentials
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (row && row[1] && row[1].toLowerCase() === email.toLowerCase()) {
-          // For now, let's check if the USER column (A) has any content and use simple password validation
-          const userIdInSheet = row[0]; // Column A (USER)
+          // Get ID and PW from the correct columns
+          const userIdInSheet = userIdColumnIndex >= 0 ? row[userIdColumnIndex] : null;
+          const passwordInSheet = passwordColumnIndex >= 0 ? row[passwordColumnIndex] : null;
           
-          console.log(`Found user ${email} in row ${i+1}, USER column value: ${userIdInSheet}`);
+          console.log(`Found user ${email} in row ${i+1}:`);
+          console.log(`- ID column (${userIdColumnIndex}): ${userIdInSheet}`);
+          console.log(`- PW column (${passwordColumnIndex}): ${passwordInSheet}`);
           
-          // If there's a user ID in column A and it's not empty, allow login with any 4-digit password
-          if (userIdInSheet && userIdInSheet.trim() !== '' && password.length === 4) {
-            console.log(`User ${email} authenticated successfully (USER: ${userIdInSheet})`);
+          // Both ID and PW must exist and PW must match exactly
+          if (userIdInSheet && userIdInSheet.trim() !== '' && 
+              passwordInSheet && passwordInSheet.toString() === password) {
+            console.log(`User ${email} authenticated successfully (ID: ${userIdInSheet})`);
             return true;
           } else {
-            console.log(`User ${email} found but authentication failed (USER: ${userIdInSheet}, PW length: ${password.length})`);
+            console.log(`User ${email} authentication failed:`);
+            console.log(`- ID present: ${!!userIdInSheet}`);
+            console.log(`- PW match: ${passwordInSheet?.toString()} === ${password} ? ${passwordInSheet?.toString() === password}`);
             return false;
           }
         }
