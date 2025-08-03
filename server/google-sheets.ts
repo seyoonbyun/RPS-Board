@@ -169,14 +169,16 @@ class GoogleSheetsService {
       // Get access token
       const accessToken = await this.getAccessToken();
       
+      // Match the exact order from Google Sheets header:
+      // ID, 이메일, 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1, R파트너 1 전문분야, R파트너 1 V-C-P, etc.
       const values = [
-        data.region || '',
+        '', // ID (auto-generated)
         data.userEmail,
+        data.region || '',
         data.chapter || '',
         data.memberName || '',
         data.specialty || '',
         data.targetCustomer || '',
-        data.userIdField || '',
         data.rpartner1 || '',
         data.rpartner1Specialty || '',
         data.rpartner1Stage || '',
@@ -227,7 +229,10 @@ class GoogleSheetsService {
       const existingData = await getResponse.json();
       console.log('Existing data from Google Sheets:', existingData);
       const existingRows = existingData.values || [];
-      const userRowIndex = existingRows.findIndex((row: string[]) => row[1] === data.userEmail);
+      // Email is now in column B (index 1), but we need to check for existing user
+      const userRowIndex = existingRows.findIndex((row: string[], index) => {
+        return index > 0 && row && row[1] === data.userEmail; // Skip header row
+      });
       console.log(`User row index for ${data.userEmail}:`, userRowIndex);
 
       let updateResponse;
@@ -248,11 +253,13 @@ class GoogleSheetsService {
           }
         );
       } else {
-        // Append new row
+        // Append new row to the next available row (after header)
+        const nextRow = existingRows.length + 1;
+        const range = `RPS!A${nextRow}:U${nextRow}`;
         updateResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:U:append?valueInputOption=RAW`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
-            method: 'POST',
+            method: 'PUT',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
@@ -262,6 +269,7 @@ class GoogleSheetsService {
             })
           }
         );
+        console.log(`Adding new row at position ${nextRow}`);
       }
 
       if (!updateResponse.ok) {
