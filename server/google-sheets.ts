@@ -17,7 +17,15 @@ class GoogleSheetsService {
   private tokenExpiry: number = 0;
 
   constructor(config: GoogleSheetsConfig) {
-    this.spreadsheetId = config.spreadsheetId;
+    // Extract spreadsheet ID from URL if needed
+    let spreadsheetId = config.spreadsheetId;
+    if (spreadsheetId.includes('/spreadsheets/d/')) {
+      const match = spreadsheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (match) {
+        spreadsheetId = match[1];
+      }
+    }
+    this.spreadsheetId = spreadsheetId;
     
     // Clean service account email (remove JSON quotes if present)
     let email = config.serviceAccountEmail;
@@ -27,7 +35,8 @@ class GoogleSheetsService {
     this.serviceAccountEmail = email;
     
     this.serviceAccountPrivateKey = config.serviceAccountPrivateKey;
-    console.log('Google Sheets service initialized with direct OAuth2 approach');
+    console.log('Google Sheets service initialized');
+    console.log('Spreadsheet ID:', this.spreadsheetId);
     console.log('Service account email:', this.serviceAccountEmail);
   }
 
