@@ -1,5 +1,5 @@
-import { google } from 'googleapis';
 import type { ScoreboardData } from '@shared/schema';
+import crypto from 'crypto';
 
 interface GoogleSheetsConfig {
   apiKey: string;
@@ -9,193 +9,208 @@ interface GoogleSheetsConfig {
 }
 
 class GoogleSheetsService {
-  private sheets: any;
   private spreadsheetId: string;
+  private serviceAccountEmail: string;
+  private serviceAccountPrivateKey: string;
+  private accessToken: string | null = null;
+  private tokenExpiry: number = 0;
 
   constructor(config: GoogleSheetsConfig) {
     this.spreadsheetId = config.spreadsheetId;
-    // Don't await in constructor - init will be called lazily on first API call
-    this.initPromise = this.init(config);
+    this.serviceAccountEmail = config.serviceAccountEmail;
+    this.serviceAccountPrivateKey = config.serviceAccountPrivateKey;
+    console.log('Google Sheets service initialized with direct OAuth2 approach');
   }
-  
-  private initPromise: Promise<void>;
 
-  private async init(config: GoogleSheetsConfig) {
+  private async getAccessToken(): Promise<string> {
+    // Check if we have a valid token
+    if (this.accessToken && Date.now() < this.tokenExpiry) {
+      return this.accessToken;
+    }
+
     try {
-      // Create JWT auth client  
-      let privateKey = config.serviceAccountPrivateKey;
+      console.log('Generating new OAuth2 access token...');
       
-      // Handle different private key formats
+      // Create JWT assertion for Google OAuth2
+      const now = Math.floor(Date.now() / 1000);
+      const header = {
+        alg: 'RS256',
+        typ: 'JWT'
+      };
+      
+      const payload = {
+        iss: this.serviceAccountEmail,
+        scope: 'https://www.googleapis.com/auth/spreadsheets',
+        aud: 'https://oauth2.googleapis.com/token',
+        exp: now + 3600,
+        iat: now
+      };
+
+      // Base64URL encode header and payload
+      const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+      const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+      
+      // Create the signature using Node.js crypto (avoiding googleapis library)
+      const signatureInput = `${encodedHeader}.${encodedPayload}`;
+      
+      // Clean private key format
+      let privateKey = this.serviceAccountPrivateKey;
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
-      // Clean up the private key format
-      privateKey = privateKey.trim();
-      
-      // Log for debugging (without exposing the key)
-      console.log(`Private key format check: starts with BEGIN? ${privateKey.includes('-----BEGIN PRIVATE KEY-----')}, length: ${privateKey.length}`);
-      
-      // Skip API Key method as it doesn't support write operations
-      console.log('Using service account authentication for write operations...');
-      
-      // More flexible format check
-      if (!privateKey.includes('-----BEGIN') || !privateKey.includes('-----END')) {
-        console.error('Invalid private key format. Must be in PEM format');
-        throw new Error('Invalid Google Service Account private key format');
-      }
-      
-      // Try different approaches to handle SSL issues
-      let jwtClient;
-      
-      // Create a complete service account JSON credential
-      const serviceAccountKey = {
-        "type": "service_account",
-        "project_id": "qualified-glow-467905-k0",
-        "private_key_id": "",
-        "private_key": privateKey,
-        "client_email": config.serviceAccountEmail,
-        "client_id": "",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(config.serviceAccountEmail)}`
-      };
-      
-      console.log('Creating Google Auth with complete service account JSON...');
-      
-      // Use GoogleAuth instead of JWT to avoid OpenSSL issues
-      const auth = new google.auth.GoogleAuth({
-        credentials: serviceAccountKey,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+      const signature = crypto.sign('RSA-SHA256', Buffer.from(signatureInput), {
+        key: privateKey,
+        padding: crypto.constants.RSA_PKCS1_PADDING
       });
       
-      jwtClient = await auth.getClient();
-      console.log('Successfully created GoogleAuth client');
-
-      // Initialize Google Sheets API
-      this.sheets = google.sheets({ version: 'v4', auth: jwtClient });
-      this.spreadsheetId = config.spreadsheetId;
+      const encodedSignature = signature.toString('base64url');
+      const jwt = `${signatureInput}.${encodedSignature}`;
       
-      console.log('Google Sheets service initialized with service account successfully');
-    } catch (error) {
-      console.error('Failed to initialize Google Sheets service:', error);
-      console.error('Error details:', error.code, error.message);
+      // Exchange JWT for access token
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          assertion: jwt
+        })
+      });
       
-      // Provide helpful error messages
-      if (error.message?.includes('DECODER routines')) {
-        console.log('\n💡 SSL/OpenSSL Issue Detected:');
-        console.log('This is a known Node.js/OpenSSL compatibility issue with private keys.');
-        console.log('Possible solutions:');
-        console.log('1. Try regenerating the service account key');
-        console.log('2. Use API Key authentication if available');
-        console.log('3. Update Node.js version');
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        throw new Error(`Token request failed: ${tokenResponse.status} ${errorText}`);
       }
       
-      // Don't throw error to allow app to continue running
-      this.sheets = null;
-      this.spreadsheetId = config.spreadsheetId;
+      const tokenData = await tokenResponse.json();
+      this.accessToken = tokenData.access_token;
+      this.tokenExpiry = Date.now() + (tokenData.expires_in * 1000) - 60000; // 1 minute buffer
+      
+      console.log('Successfully obtained OAuth2 access token');
+      return this.accessToken;
+      
+    } catch (error) {
+      console.error('Failed to get access token:', error);
+      throw error;
     }
   }
 
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
-    // Check if Google Sheets service is properly initialized
-    if (!this.sheets) {
-      console.warn('Google Sheets service not initialized due to SSL issues, using fallback logging');
-      // Log the data that would have been synced for debugging
-      this.logSyncData(data);
-      return;
-    }
-    
     try {
-      // Wait for initialization to complete
-      await this.initPromise;
-      // Calculate total R partners and achievement
-      const profitPartners = [
-        data.rpartner1Stage === 'P' ? 1 : 0,
-        data.rpartner2Stage === 'P' ? 1 : 0,
-        data.rpartner3Stage === 'P' ? 1 : 0,
-        data.rpartner4Stage === 'P' ? 1 : 0,
-      ].reduce((sum, count) => sum + count, 0);
+      console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
       
-      const totalPartners = [
-        data.rpartner1 ? 1 : 0,
-        data.rpartner2 ? 1 : 0,
-        data.rpartner3 ? 1 : 0,
-        data.rpartner4 ? 1 : 0,
-      ].reduce((sum, count) => sum + count, 0);
+      // Get access token
+      const accessToken = await this.getAccessToken();
       
-      const achievement = Math.round((profitPartners / 4) * 100);
-
-      // Prepare data for Google Sheets RPS sheet (A1:U1 format)  
-      const row = [
-        data.region || '', // 지역 (A)
-        data.userEmail, // 이메일 (B)
-        data.partner || '', // 챕터 (C)
-        data.memberName || '', // 멤버 (D)
-        data.specialty || '', // 업태명 (E)
-        data.targetCustomer || '', // 타겟고객 (F)
-        data.userIdField || '', // 나의 리펀 서비스 (G)
-        data.rpartner1 || '', // R파트너 1 (H)
-        data.rpartner1Specialty || '', // R파트너 1 : 전문분야 (I)
-        data.rpartner1Stage || '', // R파트너 1 : V-C-P (J)
-        data.rpartner2 || '', // R파트너 2 (K)
-        data.rpartner2Specialty || '', // R파트너 2 : 전문분야 (L)
-        data.rpartner2Stage || '', // R파트너 2 : V-C-P (M)
-        data.rpartner3 || '', // R파트너 3 (N)
-        data.rpartner3Specialty || '', // R파트너 3 : 전문분야 (O)
-        data.rpartner3Stage || '', // R파트너 3 : V-C-P (P)
-        data.rpartner4 || '', // R파트너 4 (Q)
-        data.rpartner4Specialty || '', // R파트너 4 : 전문분야 (R)
-        data.rpartner4Stage || '', // R파트너 4 : V-C-P (S)
-        totalPartners, // 총 R파트너 수 (T)
-        `${achievement}%`, // 달성 (U)
+      const values = [
+        data.region || '',
+        data.userEmail,
+        data.chapter || '',
+        data.memberName || '',
+        data.specialty || '',
+        data.targetCustomer || '',
+        data.userIdField || '',
+        data.rpartner1 || '',
+        data.rpartner1Specialty || '',
+        data.rpartner1Stage || '',
+        data.rpartner2 || '',
+        data.rpartner2Specialty || '',
+        data.rpartner2Stage || '',
+        data.rpartner3 || '',
+        data.rpartner3Specialty || '',
+        data.rpartner3Stage || '',
+        data.rpartner4 || '',
+        data.rpartner4Specialty || '',
+        data.rpartner4Stage || '',
       ];
 
-      // Check if header row exists, if not create it
-      await this.ensureHeaderRow();
-
-      // Find existing row for this user or append new row
-      const existingRowIndex = await this.findUserRow(data.userEmail);
+      // Calculate total R-Partners (non-empty names)
+      const partners = [
+        { name: data.rpartner1, stage: data.rpartner1Stage },
+        { name: data.rpartner2, stage: data.rpartner2Stage },
+        { name: data.rpartner3, stage: data.rpartner3Stage },
+        { name: data.rpartner4, stage: data.rpartner4Stage },
+      ];
       
-      if (existingRowIndex !== -1) {
-        // Update existing row in RPS sheet (A to U columns)
-        await this.sheets.spreadsheets.values.update({
-          spreadsheetId: this.spreadsheetId,
-          range: `RPS!A${existingRowIndex}:U${existingRowIndex}`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [row]
+      const totalPartners = partners.filter(p => p.name && p.name.trim()).length;
+      const profitPartners = partners.filter(p => p.stage === 'P').length;
+      const achievement = Math.round((profitPartners / 4) * 100);
+      
+      // Add total partners and achievement
+      values.push(totalPartners.toString());
+      values.push(`${achievement}%`);
+
+      // Check if user row already exists (based on email in column B)
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:U`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
           }
-        });
-      } else {
-        // Append new row in RPS sheet (A to U columns)
-        await this.sheets.spreadsheets.values.append({
-          spreadsheetId: this.spreadsheetId,
-          range: 'RPS!A:U',
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [row]
-          }
-        });
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to read existing data: ${getResponse.status}`);
       }
 
-      console.log(`Successfully synced data to Google Sheets for ${data.userEmail}`);
+      const existingData = await getResponse.json();
+      const existingRows = existingData.values || [];
+      const userRowIndex = existingRows.findIndex((row: string[]) => row[1] === data.userEmail);
+
+      let updateResponse;
+      if (userRowIndex >= 0) {
+        // Update existing row
+        const range = `RPS!A${userRowIndex + 1}:U${userRowIndex + 1}`;
+        updateResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [values]
+            })
+          }
+        );
+      } else {
+        // Append new row
+        updateResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:U:append?valueInputOption=RAW`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [values]
+            })
+          }
+        );
+      }
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`Failed to update Google Sheets: ${updateResponse.status} ${errorText}`);
+      }
+
+      console.log(`✅ Successfully synced data to Google Sheets for ${data.userEmail}`);
     } catch (error: any) {
       console.error('Google Sheets sync error:', error);
-      // If we get an SSL error, disable Google Sheets sync and continue
-      if (error?.message?.includes('DECODER routines') || error?.code === 'ERR_OSSL_UNSUPPORTED') {
-        console.error('SSL/OpenSSL compatibility issue detected. Disabling Google Sheets sync.');
-        console.log('💡 This is a known Node.js v20 + OpenSSL 3.x compatibility issue with certain private key formats.');
-        
-        // Disable the sheets service to prevent future attempts
-        this.sheets = null;
-        
-        // Log the data for manual review
+      
+      // If we get an SSL/crypto error, log the data for manual entry
+      if (error?.message?.includes('DECODER routines') || 
+          error?.code === 'ERR_OSSL_UNSUPPORTED' ||
+          error?.message?.includes('crypto')) {
+        console.error('Crypto/SSL compatibility issue detected. Using fallback logging.');
         this.logSyncData(data);
-        
-        // Don't throw error - let the application continue working
-        console.log('✅ Data saved locally. Google Sheets sync temporarily disabled due to SSL compatibility.');
+        console.log('✅ Data saved locally. Manual Google Sheets entry may be required.');
         return;
       }
       
@@ -208,7 +223,7 @@ class GoogleSheetsService {
     console.log('='.repeat(60));
     console.log(`User: ${data.userEmail}`);
     console.log(`Region: ${data.region || 'N/A'}`);
-    console.log(`Chapter: ${data.partner || 'N/A'}`);
+    console.log(`Chapter: ${data.chapter || 'N/A'}`);
     console.log(`Member: ${data.memberName || 'N/A'}`);
     console.log(`Business Type: ${data.specialty || 'N/A'}`);
     console.log(`Target Customer: ${data.targetCustomer || 'N/A'}`);
@@ -234,83 +249,18 @@ class GoogleSheetsService {
     console.log(`Achievement: ${achievement}%`);
     console.log('='.repeat(60));
   }
-
-  private async ensureHeaderRow(): Promise<void> {
-    try {
-      // Check if header row exists in RPS sheet A1:U1
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: 'RPS!A1:U1'
-      });
-
-      if (!response.data.values || response.data.values.length === 0) {
-        // Create header row in RPS sheet A1:U1
-        const headers = [
-          '지역',
-          '이메일',
-          '챕터',
-          '멤버',
-          '업태명',
-          '타겟고객',
-          '나의 리펀 서비스',
-          'R파트너 1',
-          'R파트너 1 : 전문분야',
-          'R파트너 1 : V-C-P',
-          'R파트너 2',
-          'R파트너 2 : 전문분야',
-          'R파트너 2 : V-C-P',
-          'R파트너 3',
-          'R파트너 3 : 전문분야',
-          'R파트너 3 : V-C-P',
-          'R파트너 4',
-          'R파트너 4 : 전문분야',
-          'R파트너 4 : V-C-P',
-          '총 R파트너 수',
-          '달성'
-        ];
-
-        await this.sheets.spreadsheets.values.update({
-          spreadsheetId: this.spreadsheetId,
-          range: 'RPS!A1:U1',
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [headers]
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error ensuring header row:', error);
-    }
-  }
-
-  private async findUserRow(userEmail: string): Promise<number> {
-    try {
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: 'RPS!B:B' // Column B contains user emails in RPS sheet
-      });
-
-      if (response.data.values) {
-        for (let i = 0; i < response.data.values.length; i++) {
-          if (response.data.values[i][0] === userEmail) {
-            return i + 1; // Return 1-indexed row number
-          }
-        }
-      }
-      return -1; // User not found
-    } catch (error) {
-      console.error('Error finding user row:', error);
-      return -1;
-    }
-  }
 }
 
-// Create and export Google Sheets service instance
-const googleSheetsConfig: GoogleSheetsConfig = {
-  apiKey: process.env.GOOGLE_SHEETS_API_KEY!,
-  spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID!,
-  serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
-  serviceAccountPrivateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!,
-};
+// Export singleton instance
+let googleSheetsService: GoogleSheetsService | null = null;
 
-export const googleSheetsService = new GoogleSheetsService(googleSheetsConfig);
+export function initializeGoogleSheets(config: GoogleSheetsConfig): GoogleSheetsService {
+  if (!googleSheetsService) {
+    googleSheetsService = new GoogleSheetsService(config);
+  }
+  return googleSheetsService;
+}
+
+export function getGoogleSheetsService(): GoogleSheetsService | null {
+  return googleSheetsService;
+}

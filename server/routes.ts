@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { loginSchema, scoreboardFormSchema, type InsertScoreboardData } from "@shared/schema";
 import { z } from "zod";
-import { googleSheetsService } from "./google-sheets";
+import { getGoogleSheetsService } from "./google-sheets";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -73,11 +73,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get user's email for Google Sheets sync
         const user = await storage.getUserById(userId);
         if (user) {
-          await googleSheetsService.syncScoreboardData({
-            ...savedData,
-            userEmail: user.email
-          });
-          console.log(`Successfully synced data to Google Sheets for ${user.email}`);
+          const sheetsService = getGoogleSheetsService();
+          if (sheetsService) {
+            await sheetsService.syncScoreboardData({
+              ...savedData,
+              userEmail: user.email
+            });
+            console.log(`Successfully synced data to Google Sheets for ${user.email}`);
+          }
         }
       } catch (syncError) {
         console.error('Google Sheets auto-sync failed:', syncError);
