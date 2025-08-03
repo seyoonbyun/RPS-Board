@@ -431,7 +431,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         </div>
                         <span className="text-blue-800 font-medium">나의 총 리퍼럴 파트너 수</span>
                       </div>
-                      <span className="font-bold text-xl text-blue-800">{achievementData.total}명</span>
+                      <span className="font-bold text-xl text-blue-800">{achievementData.profitable}명</span>
                     </div>
                   </div>
                 </div>
