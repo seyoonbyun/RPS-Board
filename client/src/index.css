@@ -2,358 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(210, 40%, 98%);
-  --muted-foreground: hsl(215, 13.8%, 44.7%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --primary: hsl(220, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222, 84%, 4.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222, 84%, 4.9%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(220, 90%, 54%);
-  --radius: 0.5rem;
-  
-  /* BNI Korea specific colors */
-  --bni-blue: hsl(220, 90%, 54%);
-  --bni-dark: hsl(224, 87%, 45%);
-  --success: hsl(151, 55%, 42%);
-  --warning: hsl(36, 96%, 63%);
-  --info: hsl(210, 100%, 56%);
-}
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-.dark {
-  --background: hsl(222, 84%, 4.9%);
-  --foreground: hsl(210, 40%, 98%);
-  --muted: hsl(217, 32%, 17%);
-  --muted-foreground: hsl(215, 20%, 65%);
-  --popover: hsl(222, 84%, 4.9%);
-  --popover-foreground: hsl(210, 40%, 98%);
-  --card: hsl(222, 84%, 4.9%);
-  --card-foreground: hsl(210, 40%, 98%);
-  --border: hsl(217, 32%, 17%);
-  --input: hsl(217, 32%, 17%);
-  --primary: hsl(220, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(217, 32%, 17%);
-  --secondary-foreground: hsl(210, 40%, 98%);
-  --accent: hsl(217, 32%, 17%);
-  --accent-foreground: hsl(210, 40%, 98%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(220, 90%, 54%);
-}
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+ 
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-  }
-  
-
-  
-
-
-
-}
-
-@layer components {
-  .achievement-ring {
-    background: conic-gradient(
-      from 0deg,
-      hsl(151, 55%, 42%) calc(var(--progress) * 1%),
-      hsl(214, 32%, 91%) calc(var(--progress) * 1%)
-    );
-    transition: background 0.5s ease;
-  }
-  
-  .bni-blue {
-    background-color: var(--bni-blue);
-  }
-  
-  .bni-dark {
-    background-color: var(--bni-dark);
-  }
-  
-  .toast-enter {
-    animation: slideIn 0.3s ease-out;
-  }
-  
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
+    @apply bg-background text-foreground;
   }
 }
 
+/* Simple, clean form styling - no conflicts */
+
+/* Input fields */
+input {
+  color: rgb(17 24 39) !important;
+}
+
+input::placeholder {
+  color: rgb(156 163 175) !important;
+}
+
+/* Select component styling - clean and simple */
+[data-radix-select-trigger] {
+  color: rgb(156 163 175) !important; /* Default gray for placeholder */
+  background-color: white !important;
+}
+
+/* When Select has a value (not placeholder), make it dark */
+[data-radix-select-trigger]:not([data-placeholder]) {
+  color: rgb(17 24 39) !important;
+}
+
+/* SelectValue - always inherit from parent */
+[data-radix-select-value] {
+  color: inherit !important;
+}
+
+/* Specific handling for spans inside Select */
+[data-radix-select-trigger] span {
+  color: inherit !important;
+}
+
+/* Override any Tailwind classes that might interfere */
+.text-muted-foreground {
+  color: rgb(156 163 175) !important;
+}
+
+/* Ensure proper colors for form labels */
+label {
+  color: rgb(75 85 99) !important;
+}
+
+/* Print styles */
 @media print {
-  body {
-    font-size: 12px;
-    margin: 0;
-    padding: 10px;
-  }
-  
   .no-print {
     display: none !important;
   }
   
-  .print-friendly {
-    page-break-inside: avoid;
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
-
-.popup-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
-}
-
-/* Cleaned up - these rules are now handled by the MASTER RULE above */
-
-/* Unify all input placeholder colors */
-input::placeholder {
-  color: rgb(156 163 175) !important; /* text-gray-400 - consistent with all placeholders */
-  opacity: 1;
-}
-
-/* Override default placeholder styling */
-.placeholder\:text-muted-foreground::placeholder {
-  color: rgb(156 163 175) !important; /* text-gray-400 */
-  opacity: 1;
-}
-
-/* Ensure user input text is dark and clear */
-input:not(:placeholder-shown) {
-  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for user input */
-}
-
-/* Ensure Select component shows dark text for selected values */
-[data-radix-select-trigger] span[data-radix-select-value] {
-  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for selected values */
-}
-
-/* Override any muted text styling for actual input values */
-button[role="combobox"] span:not(:empty) {
-  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for selected values */
-}
-
-/* Force all non-placeholder text to be dark */
-input {
-  color: rgb(17 24 39) !important; /* text-gray-900 */
-}
-
-/* Ensure Select trigger with value shows dark text */
-[data-radix-select-trigger]:not([data-placeholder]) > span {
-  color: rgb(17 24 39) !important; /* text-gray-900 */
-}
-
-/* Global form styling - applies to all users across the application */
-/* This ensures consistent styling for all existing and future users */
-
-/* All form inputs - consistent placeholder styling */
-input[type="text"], 
-input[type="email"], 
-input[type="password"], 
-textarea {
-  color: rgb(17 24 39) !important; /* Dark text for user input */
-}
-
-input[type="text"]::placeholder, 
-input[type="email"]::placeholder, 
-input[type="password"]::placeholder, 
-textarea::placeholder {
-  color: rgb(156 163 175) !important; /* Light gray for placeholders */
-  opacity: 1;
-}
-
-/* All Select components - consistent styling */
-[role="combobox"],
-[data-radix-select-trigger] {
-  color: rgb(17 24 39) !important; /* Dark text for selected values */
-}
-
-/* These rules are now consolidated into the MASTER RULE below */
-
-/* Comprehensive override for any component using muted text colors */
-.text-muted-foreground {
-  color: rgb(17 24 39) !important; /* Ensure user content is dark */
-}
-
-/* Override for empty state text that should remain as placeholder */
-.text-muted-foreground:empty,
-.text-muted-foreground[data-placeholder],
-span[data-placeholder] {
-  color: rgb(156 163 175) !important; /* Keep placeholders light */
-}
-
-/* MASTER RULE - All Select components must follow this styling */
-/* This overrides ALL other styling with maximum specificity */
-
-/* Force ALL Select spans to be dark EXCEPT when they are actual placeholders */
-button[role="combobox"] > span:not([data-placeholder]):not(:empty),
-[data-radix-select-trigger] > span:not([data-placeholder]):not(:empty),
-button[role="combobox"] > span[data-radix-select-value],
-[data-radix-select-trigger] > span[data-radix-select-value] {
-  color: rgb(17 24 39) !important; /* Dark text for selected values */
-  background-color: transparent !important;
-  opacity: 1 !important;
-}
-
-/* PLACEHOLDER ONLY - Light gray color for actual placeholder text */
-button[role="combobox"] > span:empty,
-[data-radix-select-trigger] > span:empty,
-button[role="combobox"] > span[data-placeholder],
-[data-radix-select-trigger] > span[data-placeholder] {
-  color: rgb(156 163 175) !important; /* Light gray for placeholders */
-  opacity: 1 !important;
-}
-
-/* Force Select component text to be dark regardless of state */
-[data-radix-select-trigger],
-button[role="combobox"] {
-  color: rgb(17 24 39) !important; /* Ensure parent is also dark */
-  background-color: white !important; /* Ensure white background */
-}
-
-/* Override any inherited text-muted-foreground on Select components */
-[data-radix-select-trigger].text-muted-foreground,
-button[role="combobox"].text-muted-foreground {
-  color: rgb(17 24 39) !important; /* Force dark text */
-}
-
-/* ULTIMATE OVERRIDE - Brute force approach to fix Select placeholder colors */
-/* This uses the highest CSS specificity to override all other rules */
-
-/* Step 1: Reset ALL Select spans to light gray first */
-[data-radix-select-trigger] span,
-button[role="combobox"] span,
-[data-radix-select-trigger] > span,
-button[role="combobox"] > span {
-  color: rgb(156 163 175) !important; /* Light gray as default */
-  opacity: 1 !important;
-  background-color: transparent !important;
-}
-
-/* Step 2: ONLY spans with actual selected values should be dark */
-[data-radix-select-trigger] span:not([data-placeholder]):not(:empty):not([class*="placeholder"]),
-button[role="combobox"] span:not([data-placeholder]):not(:empty):not([class*="placeholder"]) {
-  color: rgb(17 24 39) !important; /* Dark only for actual values */
-}
-
-/* Step 3: Force Select containers to have white background and dark text */
-[data-radix-select-trigger],
-button[role="combobox"] {
-  background-color: white !important;
-  color: rgb(17 24 39) !important;
-}
-
-/* Step 4: Nuclear option - target specific text content */
-[data-radix-select-trigger] span:not(:empty):not([data-radix-select-value]),
-button[role="combobox"] span:not(:empty):not([data-radix-select-value]) {
-  color: rgb(156 163 175) !important; /* Force placeholder color */
-}
-
-/* Step 5: But actual selected values should still be dark */
-[data-radix-select-trigger][data-state] span:not([class*="placeholder"]):not([data-placeholder]),
-button[role="combobox"][data-state] span:not([class*="placeholder"]):not([data-placeholder]) {
-  color: rgb(17 24 39) !important; /* Dark for actual selections */
-}
-
-/* NUCLEAR OPTION - Override everything with maximum specificity */
-/* This solves the stubborn placeholder color issue once and for all */
-html body * [data-radix-select-trigger] span,
-html body * button[role="combobox"] span,
-html body div * [data-radix-select-trigger] span,
-html body div * button[role="combobox"] span,
-html body div div * [data-radix-select-trigger] span,
-html body div div * button[role="combobox"] span {
-  color: rgb(156 163 175) !important; /* Force ALL Select text to be gray first */
-}
-
-/* ULTRA NUCLEAR - Target any text containing "작성예)" specifically */
-[data-radix-select-trigger] span[data-radix-select-value],
-button[role="combobox"] span[data-radix-select-value] {
-  color: rgb(156 163 175) !important; /* Force gray for all placeholder content */
-}
-
-/* ABSOLUTE LAST RESORT - Force all spans in select to be gray */
-* [data-radix-select-trigger] span,
-* button[role="combobox"] span {
-  color: rgb(156 163 175) !important;
-}
-
-/* Then override only when there's actual user input */
-* [data-radix-select-trigger] span:not(:empty):not([data-placeholder]):not([class*="placeholder"]),
-* button[role="combobox"] span:not(:empty):not([data-placeholder]):not([class*="placeholder"]) {
-  color: rgb(17 24 39) !important; /* Dark only for real values */
-}
-
-/* ULTIMATE FORCE - Target any text containing specific placeholder text */
-* [data-radix-select-trigger] span,
-* button[role="combobox"] span {
-  color: rgb(156 163 175) !important;
-  opacity: 1 !important;
-}
-
-/* Special rule for SelectValue spans specifically */
-span[data-radix-select-value] {
-  color: rgb(156 163 175) !important;
-  opacity: 1 !important;
-}
-
-/* FORCE ALL SELECT PLACEHOLDER TEXT TO BE GRAY */
-[role="combobox"] span,
-[role="combobox"] * span,
-[data-radix-select-trigger] span,
-[data-radix-select-trigger] * span,
-.select-trigger span,
-.select-value span {
-  color: rgb(156 163 175) !important;
-}
-
-/* Override for selected values only */
-[role="combobox"][data-state="closed"]:not([data-placeholder]) span,
-[data-radix-select-trigger][data-state="closed"]:not([data-placeholder]) span {
-  color: rgb(17 24 39) !important;
-}
-
-/* FINAL NUCLEAR OPTION - Force all Select components */
-body [data-radix-select-trigger] {
-  color: rgb(156 163 175) !important;
-}
-
-body [data-radix-select-trigger] span {
-  color: rgb(156 163 175) !important;
-}
-
-body [data-radix-select-trigger] [data-radix-select-value] {
-  color: rgb(156 163 175) !important;
-}
-
-/* Only show dark when there's actual value */
-body [data-radix-select-trigger][data-state="closed"]:not(:empty) {
-  color: rgb(17 24 39) !important;
-}
-
-body [data-radix-select-trigger][data-state="closed"]:not(:empty) span {
-  color: rgb(17 24 39) !important;
-}
-
-/* Clean up - removed redundant rules */

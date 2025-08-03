@@ -207,20 +207,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
-                  <SelectTrigger 
-                    className="h-9" 
-                    style={{ 
-                      color: field.value ? 'rgb(17 24 39)' : 'rgb(156 163 175)'
-                    }}
-                  >
-                    <SelectValue 
-                      placeholder="작성예) Profit : 수익단계 (선택)" 
-                      className="placeholder-gray-400"
-                      style={{ 
-                        color: field.value ? 'rgb(17 24 39)' : 'rgb(156 163 175)',
-                        opacity: 1
-                      }}
-                    />
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
