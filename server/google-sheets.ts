@@ -1,5 +1,6 @@
 import type { ScoreboardData } from '@shared/schema';
 import jwt from 'jsonwebtoken';
+import { google } from 'googleapis';
 
 interface GoogleSheetsConfig {
   apiKey: string;
@@ -37,7 +38,59 @@ class GoogleSheetsService {
     }
 
     try {
-      console.log('Generating new OAuth2 access token...');
+      console.log('Trying Google OAuth2 with googleapis library...');
+      
+      // Clean private key format
+      let privateKey = this.serviceAccountPrivateKey;
+      
+      // Remove JSON string quotes if present
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      
+      // Replace escaped newlines with actual newlines
+      if (privateKey.includes('\\n')) {
+        privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+      
+      // Create service account credentials
+      const credentials = {
+        client_email: this.serviceAccountEmail,
+        private_key: privateKey,
+        private_key_id: undefined // Google will handle this
+      };
+      
+      console.log('Using googleapis library for authentication...');
+      const auth = new google.auth.GoogleAuth({
+        credentials: credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+      });
+      
+      const authClient = await auth.getClient();
+      const accessTokenResponse = await authClient.getAccessToken();
+      
+      if (!accessTokenResponse.token) {
+        throw new Error('Failed to get access token from Google API');
+      }
+      
+      this.accessToken = accessTokenResponse.token;
+      this.tokenExpiry = Date.now() + (3600 * 1000) - 60000; // 1 hour minus 1 minute buffer
+      
+      console.log('Successfully obtained OAuth2 access token via googleapis');
+      return this.accessToken;
+      
+    } catch (error) {
+      console.error('googleapis authentication failed:', error);
+      console.log('Falling back to direct JWT approach...');
+      
+      // Fallback to direct JWT method
+      return await this.getAccessTokenDirectJWT();
+    }
+  }
+
+  private async getAccessTokenDirectJWT(): Promise<string> {
+    try {
+      console.log('Generating new OAuth2 access token with direct JWT...');
       
       // Create JWT assertion for Google OAuth2
       const now = Math.floor(Date.now() / 1000);
@@ -65,41 +118,7 @@ class GoogleSheetsService {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
-      // Ensure proper PEM format
-      if (!privateKey.includes('\n')) {
-        privateKey = privateKey
-          .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
-          .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
-          .replace(/(.{64})/g, '$1\n')
-          .replace(/\n+/g, '\n')
-          .trim();
-      }
-      
-      console.log('Private key format check:', {
-        hasBegin: privateKey.includes('-----BEGIN PRIVATE KEY-----'),
-        hasEnd: privateKey.includes('-----END PRIVATE KEY-----'),
-        hasNewlines: privateKey.includes('\n'),
-        length: privateKey.length,
-        firstLine: privateKey.split('\n')[0],
-        lastLine: privateKey.split('\n').slice(-1)[0]
-      });
-      
-      // Test if private key can be used to create a JWT
-      try {
-        // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
-        const jwtToken = jwt.sign(payload, privateKey, {
-          algorithm: 'RS256'
-        });
-        
-        console.log('JWT token created successfully, length:', jwtToken.length);
-        console.log('JWT header (decoded):', JSON.parse(Buffer.from(jwtToken.split('.')[0], 'base64').toString()));
-        console.log('JWT payload (decoded):', JSON.parse(Buffer.from(jwtToken.split('.')[1], 'base64').toString()));
-      } catch (jwtError) {
-        console.error('JWT creation failed:', jwtError);
-        throw new Error(`JWT creation failed: ${jwtError.message}`);
-      }
-      
-      // Create the final JWT for OAuth2
+      // Create the JWT for OAuth2
       const jwtToken = jwt.sign(payload, privateKey, {
         algorithm: 'RS256'
       });
@@ -125,11 +144,11 @@ class GoogleSheetsService {
       this.accessToken = tokenData.access_token;
       this.tokenExpiry = Date.now() + (tokenData.expires_in * 1000) - 60000; // 1 minute buffer
       
-      console.log('Successfully obtained OAuth2 access token');
+      console.log('Successfully obtained OAuth2 access token via direct JWT');
       return this.accessToken;
       
     } catch (error) {
-      console.error('Failed to get access token:', error);
+      console.error('Direct JWT authentication also failed:', error);
       throw error;
     }
   }
