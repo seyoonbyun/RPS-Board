@@ -107,7 +107,7 @@ export default function LoginPage() {
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        key="email-input-refresh"
+
                       />
                     </FormControl>
                     <FormMessage />
