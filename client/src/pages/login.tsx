@@ -114,18 +114,14 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        placeholder="이메일을 입력하세요"
-                        style={{
-                          letterSpacing: '0',
-                          wordSpacing: '0',
-                          fontFamily: '"Courier New", Courier, monospace',
-                          fontSize: '14px',
-                          lineHeight: '1.4'
-                        }}
-                      />
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="이메일을 입력하세요"
+                          className="email-input-fix"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
