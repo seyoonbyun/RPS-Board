@@ -93,10 +93,16 @@ input {
   border: 1px solid #d12031 !important;
 }
 
-input:focus {
+input:focus,
+input:focus-visible,
+input:active,
+input:hover,
+input[data-focus],
+input[data-focused] {
   border-color: #d12031 !important;
   box-shadow: 0 0 0 1px #d12031 !important;
   outline: none !important;
+  outline-color: #d12031 !important;
 }
 
 /* Select component styling fixes */
@@ -196,6 +202,25 @@ input:active,
 input:hover {
   color: rgb(17 24 39) !important;
   -webkit-text-fill-color: rgb(17 24 39) !important;
+}
+
+/* Ultimate override for input border colors - this should override all browser defaults */
+input,
+input:focus,
+input:focus-visible,
+input:active,
+input:hover,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+textarea:focus,
+textarea:active {
+  border: 1px solid #d12031 !important;
+  border-color: #d12031 !important;
+  box-shadow: 0 0 0 1px #d12031 !important;
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
 }
 
 /* Print styles */
