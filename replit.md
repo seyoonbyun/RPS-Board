@@ -54,7 +54,8 @@ Preferred communication style: Simple, everyday language.
   - Bottom: "나의 총 리퍼럴 파트너 수" showing total partner count
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
-  - Automatic calculation of total partners and achievement percentage  
+  - ✅ UPDATED (Aug 3, 2025): "총 R파트너 수" now records only P-stage partners (not total partners)
+  - Automatic calculation of P-stage partners and achievement percentage  
   - User-specific row updates with email-based identification
   - ✅ RESOLVED: Node.js v20/OpenSSL 3.x compatibility issues bypassed using googleapis library
   - ✅ SUCCESS: Real-time data synchronization working with service account authentication
