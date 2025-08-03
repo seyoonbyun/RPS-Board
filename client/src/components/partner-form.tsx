@@ -212,7 +212,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     style={{borderColor: '#d12031'}}
                     data-has-value={field.value ? 'true' : 'false'}
                   >
-                    <SelectValue placeholder="작성예) Profit : 수익단계 (선택)" className="select-placeholder" />
+                    <SelectValue placeholder="" className="select-placeholder" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">

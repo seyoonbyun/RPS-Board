@@ -156,13 +156,8 @@ input::placeholder,
   color: rgb(156 163 175) !important;
 }
 
-/* Reset all Select trigger text to default placeholder color */
+/* Select component with clean styling */
 [data-radix-select-trigger] span {
-  color: rgb(156 163 175) !important;
-}
-
-/* Override ONLY when there's a real value (not placeholder) */
-[data-radix-select-trigger].has-value span {
   color: rgb(17 24 39) !important;
 }
 
