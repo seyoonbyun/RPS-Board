@@ -67,7 +67,7 @@ export default function LoginPage() {
     onError: (error: any) => {
       console.error('Login error:', error);
       toast({
-        title: "로그인 실패",
+        title: "잠깐 !",
         description: "대표님의 회원 정보가 확인되지 않습니다.\n담당 오피스로 문의해주시면 바로 안내해드리겠습니다 ! :)",
         variant: "destructive",
       });
