@@ -11,10 +11,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
+      // First check if user is allowed in Google Sheets
+      const isAllowed = await storage.isUserAllowed(email);
+      if (!isAllowed) {
+        return res.status(403).json({ 
+          message: "접근이 허용되지 않은 사용자입니다. 관리자에게 문의하세요." 
+        });
+      }
+      
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
-        // Auto-register new users
+        // Auto-register new users (only if allowed)
         user = await storage.createUser({ email, password });
       } else if (user.password !== password) {
         return res.status(401).json({ message: "비밀번호가 일치하지 않습니다" });
@@ -22,6 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {
+      console.error("Login error:", error);
       res.status(400).json({ message: "올바른 이메일과 4자리 비밀번호를 입력해주세요" });
     }
   });

@@ -1,4 +1,6 @@
-import { type User, type InsertUser, type ScoreboardData, type InsertScoreboardData, type ChangeHistory, type InsertChangeHistory } from "@shared/schema";
+import { users, scoreboardData, changeHistory, type User, type InsertUser, type ScoreboardData, type InsertScoreboardData, type ChangeHistory, type InsertChangeHistory } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -6,6 +8,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  isUserAllowed(email: string): Promise<boolean>;
   getScoreboardData(userId: string): Promise<ScoreboardData | undefined>;
   upsertScoreboardData(userId: string, data: InsertScoreboardData): Promise<ScoreboardData>;
   getChangeHistory(userId: string): Promise<ChangeHistory[]>;
@@ -46,6 +49,12 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async isUserAllowed(email: string): Promise<boolean> {
+    // For memory storage, we'll check Google Sheets directly
+    // This is implemented in the DatabaseStorage class
+    return true;
   }
 
   async getScoreboardData(userId: string): Promise<ScoreboardData | undefined> {
@@ -114,4 +123,78 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    return this.getUser(id);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async isUserAllowed(email: string): Promise<boolean> {
+    // Check Google Sheets for allowed users
+    const GoogleSheetsService = (await import('./google-sheets.js')).default;
+    const googleSheetsService = new GoogleSheetsService();
+    return await googleSheetsService.isUserAllowed(email);
+  }
+
+  async getScoreboardData(userId: string): Promise<ScoreboardData | undefined> {
+    const [data] = await db.select().from(scoreboardData).where(eq(scoreboardData.userId, userId));
+    return data || undefined;
+  }
+
+  async upsertScoreboardData(userId: string, data: InsertScoreboardData): Promise<ScoreboardData> {
+    const existing = await this.getScoreboardData(userId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(scoreboardData)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(scoreboardData.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(scoreboardData)
+        .values({
+          userId,
+          ...data,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async getChangeHistory(userId: string): Promise<ChangeHistory[]> {
+    return await db.select().from(changeHistory).where(eq(changeHistory.userId, userId));
+  }
+
+  async addChangeHistory(change: InsertChangeHistory): Promise<ChangeHistory> {
+    const [created] = await db
+      .insert(changeHistory)
+      .values(change)
+      .returning();
+    return created;
+  }
+}
+
+export const storage = new DatabaseStorage();

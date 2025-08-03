@@ -162,6 +162,49 @@ class GoogleSheetsService {
     }
   }
 
+  async isUserAllowed(email: string): Promise<boolean> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // Get the first 100 rows to check for allowed users
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:B100`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        console.error('Failed to read Google Sheets for user validation');
+        return false;
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // Check if email exists in column B (starting from row 2)
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row && row[1] && row[1].toLowerCase() === email.toLowerCase()) {
+          // Also check if there's an ID in column A
+          if (row[0] && row[0].trim() !== '') {
+            console.log(`User ${email} is allowed (ID: ${row[0]})`);
+            return true;
+          }
+        }
+      }
+      
+      console.log(`User ${email} is not found in allowed users list`);
+      return false;
+    } catch (error) {
+      console.error('Error checking user permissions:', error);
+      return false;
+    }
+  }
+
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
     try {
       console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
