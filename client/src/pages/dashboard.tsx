@@ -78,6 +78,11 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-xl font-bold" style={{ color: '#d12031' }}>파워팀 스코어보드</h1>
                 <span className="text-sm text-gray-500">{user.email}</span>
+                {userProfile && (
+                  <div className="text-sm text-gray-700 mt-1">
+                    {userProfile.partner} {userProfile.memberName} 대표님, 환영합니다 ! :)
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center space-x-4">
