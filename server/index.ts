@@ -38,12 +38,41 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize Google Sheets service
+  // Initialize Google Sheets service with new credentials if available
+  // Check which credentials to use based on what looks like email vs private key
+  let serviceAccountEmail = '';
+  let serviceAccountPrivateKey = '';
+  
+  // Determine which env var contains email vs private key
+  const newEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL_NEW || '';
+  const newKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_NEW || '';
+  const oldEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+  const oldKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || '';
+  
+  if (newEmail.includes('@') && !newEmail.includes('BEGIN PRIVATE KEY')) {
+    serviceAccountEmail = newEmail;
+  } else if (newKey.includes('@') && !newKey.includes('BEGIN PRIVATE KEY')) {
+    serviceAccountEmail = newKey;
+  } else {
+    serviceAccountEmail = oldEmail;
+  }
+  
+  if (newKey.includes('BEGIN PRIVATE KEY')) {
+    serviceAccountPrivateKey = newKey;
+  } else if (newEmail.includes('BEGIN PRIVATE KEY')) {
+    serviceAccountPrivateKey = newEmail;
+  } else {
+    serviceAccountPrivateKey = oldKey;
+  }
+  
+  console.log('Using service account email:', serviceAccountEmail);
+  console.log('Private key starts with:', serviceAccountPrivateKey.substring(0, 50) + '...');
+  
   initializeGoogleSheets({
     apiKey: process.env.GOOGLE_SHEETS_API_KEY || '',
-    spreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID || '',
-    serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
-    serviceAccountPrivateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || ''
+    spreadsheetId: '1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg', // Direct spreadsheet ID
+    serviceAccountEmail: serviceAccountEmail,
+    serviceAccountPrivateKey: serviceAccountPrivateKey
   });
 
   const server = await registerRoutes(app);
