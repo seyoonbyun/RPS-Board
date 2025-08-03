@@ -17,9 +17,17 @@ class GoogleSheetsService {
 
   constructor(config: GoogleSheetsConfig) {
     this.spreadsheetId = config.spreadsheetId;
-    this.serviceAccountEmail = config.serviceAccountEmail;
+    
+    // Clean service account email (remove JSON quotes if present)
+    let email = config.serviceAccountEmail;
+    if (email.startsWith('"') && email.endsWith('"')) {
+      email = email.slice(1, -1);
+    }
+    this.serviceAccountEmail = email;
+    
     this.serviceAccountPrivateKey = config.serviceAccountPrivateKey;
     console.log('Google Sheets service initialized with direct OAuth2 approach');
+    console.log('Service account email:', this.serviceAccountEmail);
   }
 
   private async getAccessToken(): Promise<string> {
@@ -80,9 +88,8 @@ class GoogleSheetsService {
       
       // Use jsonwebtoken library instead of Node.js crypto.sign to avoid OpenSSL issues
       const jwtToken = jwt.sign(payload, privateKey, {
-        algorithm: 'RS256',
-        header: header,
-        keyid: undefined
+        algorithm: 'RS256'
+        // Remove header and keyid options that cause validation errors
       });
       
       // Exchange JWT for access token
