@@ -161,6 +161,21 @@ input::placeholder,
   color: rgb(17 24 39) !important;
 }
 
+/* Force all input fields to have consistent black text in all states */
+input,
+input:focus,
+input:active,
+input:not(:placeholder-shown),
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+textarea:focus,
+textarea:active {
+  color: rgb(17 24 39) !important;
+  caret-color: rgb(17 24 39) !important;
+}
+
 /* Print styles */
 @media print {
   .no-print {
