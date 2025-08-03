@@ -239,7 +239,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Edit className="w-5 h-5 text-blue-600" />
-          <CardTitle className="text-lg">리퍼럴 파트너 정보 입력</CardTitle>
+          <CardTitle className="text-lg">나의 파워팀 정보 입력</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -329,11 +329,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
             </div>
 
-            {/* 나의 파워팀 정보 섹션 */}
+            {/* 나의 리퍼럴 파트너 정보 섹션 */}
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center space-x-2 mb-4">
                 <User className="w-4 h-4 text-gray-600" />
-                <h3 className="text-base font-medium text-gray-800">나의 파워팀 정보 입력</h3>
+                <h3 className="text-base font-medium text-gray-800">나의 리퍼럴 파트너 정보 입력</h3>
               </div>
               
               <div className="space-y-0">
