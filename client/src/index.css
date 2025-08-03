@@ -84,15 +84,25 @@
   background-color: #b01c29 !important;
 }
 
-/* Clean and minimal form styling */
+/* Clean and minimal form styling with BNI brand colors */
 input::placeholder {
   color: rgb(156 163 175) !important;
+}
+
+input {
+  border: 1px solid #d12031 !important;
+}
+
+input:focus {
+  border-color: #d12031 !important;
+  box-shadow: 0 0 0 1px #d12031 !important;
+  outline: none !important;
 }
 
 /* Select component styling fixes */
 [data-radix-select-trigger] {
   background-color: white !important;
-  border: 1px solid rgb(209 213 219) !important;
+  border: 1px solid #d12031 !important;
   color: rgb(17 24 39) !important;
 }
 
@@ -105,9 +115,9 @@ input::placeholder {
 }
 
 [data-radix-select-trigger]:focus {
-  border-color: rgb(59 130 246) !important;
+  border-color: #d12031 !important;
   outline: none !important;
-  box-shadow: 0 0 0 1px rgb(59 130 246) !important;
+  box-shadow: 0 0 0 1px #d12031 !important;
 }
 
 [data-radix-select-content] {
