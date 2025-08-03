@@ -161,13 +161,24 @@ button[role="combobox"] span:not([style*="color"]) {
   opacity: 1;
 }
 
-/* Most specific rule for Select placeholder */
-[data-radix-select-trigger] > span {
+/* Most specific rule for Select placeholder - only when empty/placeholder */
+[data-radix-select-trigger]:not([data-state="open"]) > span:not([data-radix-select-value]) {
   color: rgb(107 114 128) !important; /* text-gray-500 */
 }
 
-/* Force all span elements in SelectTrigger to use placeholder color */
-button[role="combobox"] > span {
+/* Ensure Select with actual selected value shows dark text */
+[data-radix-select-trigger] > span[data-radix-select-value],
+[data-radix-select-trigger] > span:not(:empty):not([data-placeholder]) {
+  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for selected values */
+}
+
+/* Force all span elements in SelectTrigger to use placeholder color when empty */
+button[role="combobox"] > span:empty {
+  color: rgb(107 114 128) !important; /* text-gray-500 */
+}
+
+/* Show placeholder color only when no value is selected */
+button[role="combobox"] > span:not([data-radix-select-value]):empty::before {
   color: rgb(107 114 128) !important; /* text-gray-500 */
 }
 
@@ -181,4 +192,29 @@ input::placeholder {
 .placeholder\:text-muted-foreground::placeholder {
   color: rgb(107 114 128) !important; /* text-gray-500 */
   opacity: 1;
+}
+
+/* Ensure user input text is dark and clear */
+input:not(:placeholder-shown) {
+  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for user input */
+}
+
+/* Ensure Select component shows dark text for selected values */
+[data-radix-select-trigger] span[data-radix-select-value] {
+  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for selected values */
+}
+
+/* Override any muted text styling for actual input values */
+button[role="combobox"] span:not(:empty) {
+  color: rgb(17 24 39) !important; /* text-gray-900 - dark text for selected values */
+}
+
+/* Force all non-placeholder text to be dark */
+input {
+  color: rgb(17 24 39) !important; /* text-gray-900 */
+}
+
+/* Ensure Select trigger with value shows dark text */
+[data-radix-select-trigger]:not([data-placeholder]) > span {
+  color: rgb(17 24 39) !important; /* text-gray-900 */
 }
