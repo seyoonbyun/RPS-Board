@@ -64,30 +64,18 @@
     letter-spacing: normal;
   }
 
-  /* Complete font and spacing reset for inputs */
-  input, input[type="email"], input[type="password"], input[type="text"] {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    font-feature-settings: "kern" 1 !important;
-    font-kerning: auto !important;
-    font-variant-ligatures: common-ligatures !important;
-    text-rendering: optimizeLegibility !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
+  /* NUCLEAR RESET - Override everything */
+  input[type="email"] {
+    font-family: monospace !important;
+    letter-spacing: 0 !important;
+    word-spacing: 0 !important;
+    font-variant: normal !important;
+    font-feature-settings: normal !important;
+    text-transform: none !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    text-rendering: auto !important;
   }
-  
-  /* Override all Tailwind tracking classes globally */
-  * {
-    letter-spacing: inherit !important;
-  }
-  
-  .tracking-tighter { letter-spacing: -0.05em !important; }
-  .tracking-tight { letter-spacing: -0.025em !important; }
-  .tracking-normal { letter-spacing: 0em !important; }
-  .tracking-wide { letter-spacing: 0.025em !important; }
-  .tracking-wider { letter-spacing: 0.05em !important; }
-  .tracking-widest { letter-spacing: 0.1em !important; }
 }
 
 @layer components {
