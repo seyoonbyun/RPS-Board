@@ -102,23 +102,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               if (changes.length > 0) {
                 console.log(`Auto-synced ${changes.length} changes from Google Sheets for ${user.email}`);
-                
-                // 구글 시트에서 변경된 데이터를 다시 구글 시트로 동기화 (달성율 업데이트)
-                try {
-                  const { getGoogleSheetsService } = await import('./google-sheets.js');
-                  const googleSheetsService = getGoogleSheetsService();
-                  if (googleSheetsService) {
-                    await googleSheetsService.syncScoreboardData({
-                      ...updatedData,
-                      userEmail: user.email
-                    });
-                    console.log(`Updated achievement rate in Google Sheets for ${user.email}`);
-                  }
-                } catch (syncError) {
-                  console.error('Failed to update Google Sheets achievement rate:', syncError);
-                }
               }
             }
+          }
+
+          // 항상 달성율을 다시 계산하여 구글 시트에 업데이트
+          try {
+            const { getGoogleSheetsService } = await import('./google-sheets.js');
+            const googleSheetsService = getGoogleSheetsService();
+            if (googleSheetsService) {
+              await googleSheetsService.syncScoreboardData({
+                ...updatedData,
+                userEmail: user.email
+              });
+              console.log(`Updated achievement rate in Google Sheets for ${user.email}`);
+            }
+          } catch (syncError) {
+            console.error('Failed to update Google Sheets achievement rate:', syncError);
           }
         } catch (syncError) {
           console.error('Auto-sync failed:', syncError);
