@@ -74,10 +74,10 @@ export const loginSchema = z.object({
 
 export const scoreboardFormSchema = insertScoreboardSchema.extend({
   region: z.string().min(1, "지역을 입력해주세요"),
-  userIdField: z.string().min(1, "ID를 입력해주세요"),
+  userIdField: z.string().optional(), // ID 필드는 선택사항으로 변경
   memberName: z.string().min(1, "멤버명을 입력해주세요"),
   specialty: z.string().min(1, "전문분야를 입력해주세요"),
-  targetCustomer: z.string().min(1, "핵심 고객층을 입력해주세요"),
+  targetCustomer: z.string().optional(), // 핵심 고객층도 선택사항으로 변경
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;

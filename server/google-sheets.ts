@@ -183,10 +183,11 @@ class GoogleSheetsService {
       const data = await getResponse.json();
       const rows = data.values || [];
       
-      // Find user row
+      // Find user row - 구글 시트의 새로운 사용자도 포함
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
+          console.log(`Found user profile for ${email} in row ${i+1}:`, row);
           return {
             email: row[0],
             region: row[1] || '',
@@ -389,13 +390,28 @@ class GoogleSheetsService {
 
       let updateResponse;
       if (userRowIndex >= 0) {
-        // Update existing row - 기존 PW 값 유지
+        // Update existing row - 기존 PW와 기본 정보 값 유지
         const existingRow = existingRows[userRowIndex];
-        const existingPW = existingRow && existingRow[21] ? existingRow[21] : ''; // V열(index 21)의 기존 PW 값
-        values[21] = existingPW; // PW 값 유지
+        
+        // 기존 값들 유지 (기본 정보는 구글 시트에서 가져온 값 우선)
+        if (existingRow) {
+          // 기본 정보는 구글 시트 값 유지
+          values[0] = existingRow[0] || data.userEmail; // 이메일
+          values[1] = existingRow[1] || data.region || ''; // 지역
+          values[2] = existingRow[2] || data.partner || ''; // 챕터
+          values[3] = existingRow[3] || data.memberName || ''; // 멤버명
+          values[4] = existingRow[4] || data.specialty || ''; // 전문분야
+          values[5] = existingRow[5] || data.targetCustomer || ''; // 나의 핵심 고객층
+          
+          // PW 값 유지 (V열, index 21)
+          const existingPW = existingRow[21] ? existingRow[21] : '';
+          values[21] = existingPW;
+        }
         
         const range = `RPS!A${userRowIndex + 1}:V${userRowIndex + 1}`;
         console.log(`Updating existing user ${data.userEmail} in row ${userRowIndex + 1} with range ${range}`);
+        console.log(`Values to update:`, values);
+        
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
