@@ -173,7 +173,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <Input 
                   {...field} 
                   placeholder="작성예) 홍길동" 
-                  className="h-9"
+                  className="h-9 form-input"
+                  style={{ 
+                    '--placeholder-color': '#d1d5db'
+                  } as React.CSSProperties}
                 />
               </FormControl>
               <FormMessage />
@@ -191,7 +194,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <Input 
                   {...field} 
                   placeholder="작성예) 디자이너" 
-                  className="h-9"
+                  className="h-9 form-input"
+                  style={{ 
+                    '--placeholder-color': '#d1d5db'
+                  } as React.CSSProperties}
                 />
               </FormControl>
               <FormMessage />

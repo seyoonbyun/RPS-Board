@@ -303,3 +303,23 @@ textarea[placeholder]::placeholder {
   color: #d1d5db !important;
   opacity: 1 !important;
 }
+
+/* 극강 우선순위 - 모든 브라우저 대응 */
+input::-webkit-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+input::-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+input:-ms-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+input:-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+textarea::-webkit-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+textarea::-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+textarea:-ms-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+textarea:-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
+
+/* 절대 최우선 적용 */
+.form-input::placeholder,
+.form-input::-webkit-input-placeholder,
+.form-input::-moz-placeholder,
+.form-input:-ms-input-placeholder,
+.form-input:-moz-placeholder {
+  color: #d1d5db !important;
+  opacity: 1 !important;
+}
