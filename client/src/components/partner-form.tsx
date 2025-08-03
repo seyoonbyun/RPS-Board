@@ -72,7 +72,6 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
   };
 
   const stageOptions = [
-    { value: "", label: "선택하세요" },
     { value: "V", label: "V (Visibility) - 아는 단계" },
     { value: "C", label: "C (Credibility) - 신뢰 단계" },
     { value: "P", label: "P (Profit) - 수익 단계" },
@@ -131,7 +130,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                     <FormItem>
                       <FormLabel>파트너</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="파트너명" />
+                        <Input {...field} value={field.value || ""} placeholder="파트너명" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -206,7 +205,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                         <FormItem>
                           <FormLabel>파트너명</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder={`R파트너 ${num}`} />
+                            <Input {...field} value={field.value || ""} placeholder={`R파트너 ${num}`} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -220,7 +219,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                         <FormItem>
                           <FormLabel>전문분야</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="전문분야" />
+                            <Input {...field} value={field.value || ""} placeholder="전문분야" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -233,7 +232,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>관계 단계</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || undefined}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="선택하세요" />

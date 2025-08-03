@@ -54,9 +54,26 @@ export class MemStorage implements IStorage {
     const id = existing?.id || randomUUID();
     
     const scoreboardData: ScoreboardData = {
-      ...data,
       id,
       userId,
+      region: data.region || null,
+      userIdField: data.userIdField || null,
+      partner: data.partner || null,
+      memberName: data.memberName || null,
+      specialty: data.specialty || null,
+      targetCustomer: data.targetCustomer || null,
+      rpartner1: data.rpartner1 || null,
+      rpartner1Specialty: data.rpartner1Specialty || null,
+      rpartner1Stage: data.rpartner1Stage || null,
+      rpartner2: data.rpartner2 || null,
+      rpartner2Specialty: data.rpartner2Specialty || null,
+      rpartner2Stage: data.rpartner2Stage || null,
+      rpartner3: data.rpartner3 || null,
+      rpartner3Specialty: data.rpartner3Specialty || null,
+      rpartner3Stage: data.rpartner3Stage || null,
+      rpartner4: data.rpartner4 || null,
+      rpartner4Specialty: data.rpartner4Specialty || null,
+      rpartner4Stage: data.rpartner4Stage || null,
       updatedAt: new Date(),
     };
     
@@ -71,8 +88,11 @@ export class MemStorage implements IStorage {
   async addChangeHistory(change: InsertChangeHistory): Promise<ChangeHistory> {
     const id = randomUUID();
     const changeRecord: ChangeHistory = {
-      ...change,
       id,
+      userId: change.userId,
+      fieldName: change.fieldName,
+      oldValue: change.oldValue || null,
+      newValue: change.newValue || null,
       timestamp: new Date(),
     };
     
