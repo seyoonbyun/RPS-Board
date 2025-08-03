@@ -107,7 +107,9 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
       return response.json();
     },
     onSuccess: () => {
+      // 스코어보드와 프로필 데이터 모두 새로고침
       queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
       toast({
         title: "저장 완료",
         description: "데이터가 성공적으로 저장되고 구글 시트에 자동 동기화되었습니다.",

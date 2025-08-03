@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import AchievementRing from "@/components/achievement-ring";
@@ -14,6 +14,7 @@ import type { User } from "@shared/schema";
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -140,7 +141,11 @@ export default function Dashboard() {
         <PartnerForm 
           userId={user.id} 
           initialData={scoreboardData} 
-          onDataSaved={() => refetch()}
+          onDataSaved={() => {
+            refetch();
+            // 프로필 데이터도 함께 새로고침하여 달성률 실시간 업데이트
+            queryClient.invalidateQueries({ queryKey: ["/api/user-profile", user.id] });
+          }}
         />
 
         {/* Data Summary */}

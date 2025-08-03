@@ -309,28 +309,27 @@ class GoogleSheetsService {
       // Get access token
       const accessToken = await this.getAccessToken();
       
-      // Match the exact order from Google Sheets header:
-      // ID, 이메일, 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1, R파트너 1 전문분야, R파트너 1 V-C-P, etc.
+      // Match the exact order from Google Sheets header starting from A column:
+      // 이메일, 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1, R파트너 1 전문분야, R파트너 1 V-C-P, etc.
       const values = [
-        '', // ID (auto-generated)
-        data.userEmail,
-        data.region || '',
-        data.partner || '',
-        data.memberName || '',
-        data.specialty || '',
-        data.targetCustomer || '',
-        data.rpartner1 || '',
-        data.rpartner1Specialty || '',
-        data.rpartner1Stage || '',
-        data.rpartner2 || '',
-        data.rpartner2Specialty || '',
-        data.rpartner2Stage || '',
-        data.rpartner3 || '',
-        data.rpartner3Specialty || '',
-        data.rpartner3Stage || '',
-        data.rpartner4 || '',
-        data.rpartner4Specialty || '',
-        data.rpartner4Stage || '',
+        data.userEmail, // A열: 이메일
+        data.region || '', // B열: 지역
+        data.partner || '', // C열: 챕터
+        data.memberName || '', // D열: 멤버명
+        data.specialty || '', // E열: 전문분야
+        data.targetCustomer || '', // F열: 나의 핵심 고객층
+        data.rpartner1 || '', // G열: R파트너 1
+        data.rpartner1Specialty || '', // H열: R파트너 1 전문분야
+        data.rpartner1Stage || '', // I열: R파트너 1 V-C-P
+        data.rpartner2 || '', // J열: R파트너 2
+        data.rpartner2Specialty || '', // K열: R파트너 2 전문분야
+        data.rpartner2Stage || '', // L열: R파트너 2 V-C-P
+        data.rpartner3 || '', // M열: R파트너 3
+        data.rpartner3Specialty || '', // N열: R파트너 3 전문분야
+        data.rpartner3Stage || '', // O열: R파트너 3 V-C-P
+        data.rpartner4 || '', // P열: R파트너 4
+        data.rpartner4Specialty || '', // Q열: R파트너 4 전문분야
+        data.rpartner4Stage || '', // R열: R파트너 4 V-C-P
       ];
 
       // Calculate total R-Partners (non-empty names)
@@ -345,15 +344,19 @@ class GoogleSheetsService {
       const profitPartners = partners.filter(p => p.stage === 'P').length;
       const achievement = Math.round((profitPartners / 4) * 100);
       
-      // Add total partners and achievement
-      values.push(totalPartners.toString());
-      values.push(`${achievement}%`);
+      // Add total partners and achievement (S열, T열)
+      values.push(totalPartners.toString()); // S열: 총 R파트너 수
+      values.push(`${achievement}%`); // T열: 달성
+      
+      // Add ID and PW columns (U열, V열) - 기존 값 유지
+      values.push(data.userEmail); // U열: ID
+      values.push(''); // V열: PW (기존 값 유지)
       
       console.log('Data to sync to Google Sheets:', values);
 
       // Check if user row already exists in first 100 rows (to avoid massive data scanning)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:U100`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V100`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -386,8 +389,13 @@ class GoogleSheetsService {
 
       let updateResponse;
       if (userRowIndex >= 0) {
-        // Update existing row
-        const range = `RPS!A${userRowIndex + 1}:U${userRowIndex + 1}`;
+        // Update existing row - 기존 PW 값 유지
+        const existingRow = existingRows[userRowIndex];
+        const existingPW = existingRow && existingRow[21] ? existingRow[21] : ''; // V열(index 21)의 기존 PW 값
+        values[21] = existingPW; // PW 값 유지
+        
+        const range = `RPS!A${userRowIndex + 1}:V${userRowIndex + 1}`;
+        console.log(`Updating existing user ${data.userEmail} in row ${userRowIndex + 1} with range ${range}`);
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
@@ -418,7 +426,8 @@ class GoogleSheetsService {
           firstEmptyRow = 2; // Force to row 2 if too many rows
         }
         
-        const range = `RPS!A${firstEmptyRow}:U${firstEmptyRow}`;
+        const range = `RPS!A${firstEmptyRow}:V${firstEmptyRow}`;
+        console.log(`Adding new user ${data.userEmail} in row ${firstEmptyRow} with range ${range}`);
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
