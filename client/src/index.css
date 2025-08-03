@@ -214,7 +214,7 @@ textarea::placeholder,
 [data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
 [data-radix-select-trigger] > span:not([data-value]),
 [data-radix-select-value]:empty::before {
-  color: rgb(209 213 219) !important;
+  color: rgb(229 231 235) !important;
   opacity: 1 !important;
 }
 
