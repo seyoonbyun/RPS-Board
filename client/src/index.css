@@ -86,7 +86,7 @@
 
 /* Clean and minimal form styling with BNI brand colors */
 input::placeholder {
-  color: rgb(156 163 175) !important;
+  color: rgb(209 213 219) !important; /* 더 연한 회색으로 변경 */
 }
 
 input {
@@ -113,7 +113,7 @@ input[data-focused] {
 }
 
 [data-radix-select-trigger][data-placeholder] {
-  color: rgb(156 163 175) !important;
+  color: rgb(209 213 219) !important; /* 더 연한 회색으로 변경 */
 }
 
 [data-radix-select-trigger] span[data-radix-select-value] {
