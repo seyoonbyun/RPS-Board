@@ -46,8 +46,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Key Features
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
-- **Partner Management**: Form-based interface for managing up to 4 referral partners
+- **Partner Management**: Single vertical form interface for managing up to 4 referral partners (reverted from tab layout)
 - **Stage Tracking**: V (Visitor), C (Contact), P (Partner) stage progression
+- **Achievement Rate Layout**: ✅ UPDATED (Aug 3, 2025)
+  - Left side: Circular progress chart with percentage and ratio display
+  - Right side: Partner statistics breakdown (P/C/V counts)
+  - Bottom: "나의 총 리퍼럴 파트너 수" showing total partner count
 - **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
   - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
   - Automatic calculation of total partners and achievement percentage  

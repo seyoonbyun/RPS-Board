@@ -152,10 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/scoreboard/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      console.log('📝 Received scoreboard data for save:', JSON.stringify(req.body, null, 2));
-      
       const formData = scoreboardFormSchema.parse(req.body);
-      console.log('✅ Validated form data:', JSON.stringify(formData, null, 2));
       
       // Get existing data for change tracking
       const existingData = await storage.getScoreboardData(userId);
