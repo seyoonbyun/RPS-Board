@@ -57,14 +57,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const existingData = await storage.getScoreboardData(userId);
 
-          // Update local scoreboard data with Google Sheets data
+          // Update local scoreboard data with Google Sheets data (preserve targetCustomer from local if exists)
           const updatedData = {
             region: profile.region || '',
             userIdField: '',
             partner: profile.chapter || '',
             memberName: profile.memberName || '',
             specialty: profile.specialty || '',
-            targetCustomer: profile.targetCustomer || '',
+            targetCustomer: existingData?.targetCustomer || profile.targetCustomer || '',
             rpartner1: profile.rpartner1 || '',
             rpartner1Specialty: profile.rpartner1Specialty || '',
             rpartner1Stage: profile.rpartner1Stage || '',
@@ -240,14 +240,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get current local data for change tracking
       const existingData = await storage.getScoreboardData(userId);
 
-      // Update local scoreboard data with Google Sheets data
+      // Update local scoreboard data with Google Sheets data (preserve targetCustomer from local if exists)
       const updatedData = {
         region: profile.region || '',
         userIdField: '',
         partner: profile.chapter || '',
         memberName: profile.memberName || '',
         specialty: profile.specialty || '',
-        targetCustomer: profile.targetCustomer || '',
+        targetCustomer: existingData?.targetCustomer || profile.targetCustomer || '',
         rpartner1: profile.rpartner1 || '',
         rpartner1Specialty: profile.rpartner1Specialty || '',
         rpartner1Stage: profile.rpartner1Stage || '',
