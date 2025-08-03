@@ -86,7 +86,7 @@
 
 /* Clean and minimal form styling with BNI brand colors */
 input::placeholder {
-  color: rgb(209 213 219) !important; /* 더 연한 회색으로 변경 */
+  color: #f3f4f6 !important; /* 아주 연한 회색으로 변경 */
 }
 
 input {
@@ -113,7 +113,7 @@ input[data-focused] {
 }
 
 [data-radix-select-trigger][data-placeholder] {
-  color: rgb(209 213 219) !important; /* 더 연한 회색으로 변경 */
+  color: #f3f4f6 !important; /* 아주 연한 회색으로 변경 */
 }
 
 [data-radix-select-trigger] span[data-radix-select-value] {
@@ -145,7 +145,7 @@ input[data-focused] {
 input::placeholder,
 [data-radix-select-trigger][data-placeholder],
 [data-radix-select-trigger] span[data-radix-select-value][data-placeholder] {
-  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
+  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
 }
 
 /* More specific Radix Select placeholder styling */
@@ -153,13 +153,13 @@ input::placeholder,
 [data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
 [data-radix-select-trigger] > span:not([data-value]),
 [data-radix-select-trigger] > span[data-radix-select-value]:empty::before {
-  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
+  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
 }
 
 /* Target the SelectValue component specifically */
 [data-radix-select-value]:empty::before {
   content: attr(data-placeholder);
-  color: rgb(209 213 219) !important; /* 더 연한 회색으로 통일 */
+  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
 }
 
 /* Select component with clean styling */
@@ -214,7 +214,7 @@ textarea::placeholder,
 [data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
 [data-radix-select-trigger] > span:not([data-value]),
 [data-radix-select-value]:empty::before {
-  color: rgb(229 231 235) !important;
+  color: #f3f4f6 !important;
   opacity: 1 !important;
 }
 
