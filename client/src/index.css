@@ -323,3 +323,9 @@ textarea:-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
   color: #d1d5db !important;
   opacity: 1 !important;
 }
+
+/* 최강 우선순위 - 인라인 스타일보다도 우선 */
+input.form-input::placeholder {
+  color: #d1d5db !important;
+  opacity: 1 !important;
+}
