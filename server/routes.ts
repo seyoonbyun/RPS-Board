@@ -11,22 +11,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
-      // First check if user is allowed in Google Sheets
-      const isAllowed = await storage.isUserAllowed(email);
+      // First check if user credentials are valid in Google Sheets (V and M columns)
+      const isAllowed = await storage.isUserAllowed(email, password);
       if (!isAllowed) {
         return res.status(403).json({ 
-          message: "접근이 허용되지 않은 사용자입니다. 관리자에게 문의하세요." 
+          message: "구글 시트에 등록되지 않았거나 잘못된 인증 정보입니다. 관리자에게 문의하세요." 
         });
       }
       
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
-        // Auto-register new users (only if allowed)
+        // Auto-register new users (only if credentials validated in Google Sheets)
         user = await storage.createUser({ email, password });
-      } else if (user.password !== password) {
-        return res.status(401).json({ message: "비밀번호가 일치하지 않습니다" });
       }
+      // Note: Password validation is now done against Google Sheets, not local storage
       
       res.json({ user: { id: user.id, email: user.email } });
     } catch (error) {

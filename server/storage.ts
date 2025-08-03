@@ -8,7 +8,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  isUserAllowed(email: string): Promise<boolean>;
+  isUserAllowed(email: string, password?: string): Promise<boolean>;
   getScoreboardData(userId: string): Promise<ScoreboardData | undefined>;
   upsertScoreboardData(userId: string, data: InsertScoreboardData): Promise<ScoreboardData>;
   getChangeHistory(userId: string): Promise<ChangeHistory[]>;
@@ -51,7 +51,7 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async isUserAllowed(email: string): Promise<boolean> {
+  async isUserAllowed(email: string, password?: string): Promise<boolean> {
     // For memory storage, we'll check Google Sheets directly
     // This is implemented in the DatabaseStorage class
     return true;
@@ -147,11 +147,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async isUserAllowed(email: string): Promise<boolean> {
+  async isUserAllowed(email: string, password?: string): Promise<boolean> {
     // Check Google Sheets for allowed users
-    const GoogleSheetsService = (await import('./google-sheets.js')).default;
-    const googleSheetsService = new GoogleSheetsService();
-    return await googleSheetsService.isUserAllowed(email);
+    const { getGoogleSheetsService } = await import('./google-sheets.js');
+    const googleSheetsService = getGoogleSheetsService();
+    return await googleSheetsService.checkUserCredentials(email, password || '');
   }
 
   async getScoreboardData(userId: string): Promise<ScoreboardData | undefined> {

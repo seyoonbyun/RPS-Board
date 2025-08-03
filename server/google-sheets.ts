@@ -162,13 +162,13 @@ class GoogleSheetsService {
     }
   }
 
-  async isUserAllowed(email: string): Promise<boolean> {
+  async checkUserCredentials(email: string, password: string): Promise<boolean> {
     try {
       const accessToken = await this.getAccessToken();
       
-      // Get the first 100 rows to check for allowed users
+      // Get the first 100 rows to check for allowed users (columns A to W to include V and M)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:B100`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W100`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -185,14 +185,21 @@ class GoogleSheetsService {
       const data = await getResponse.json();
       const rows = data.values || [];
       
-      // Check if email exists in column B (starting from row 2)
+      // Check if email exists in column B and validate credentials from V(ID) and M(PW) columns
+      // Column V = index 21, Column M = index 12 (0-based indexing)
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (row && row[1] && row[1].toLowerCase() === email.toLowerCase()) {
-          // Also check if there's an ID in column A
-          if (row[0] && row[0].trim() !== '') {
-            console.log(`User ${email} is allowed (ID: ${row[0]})`);
+          // Check if there's an ID in column V (index 21) and PW in column M (index 12)
+          const userId = row[21]; // Column V
+          const userPassword = row[12]; // Column M
+          
+          if (userId && userId.trim() !== '' && userPassword && userPassword.trim() === password) {
+            console.log(`User ${email} authenticated successfully (ID: ${userId})`);
             return true;
+          } else {
+            console.log(`User ${email} found but credentials don't match (ID: ${userId}, PW: ${userPassword ? '[PRESENT]' : '[MISSING]'})`);
+            return false;
           }
         }
       }
