@@ -22,9 +22,28 @@ class GoogleSheetsService {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
-      // Ensure proper PEM format
-      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
-        console.error('Invalid private key format. Must be in PEM format starting with -----BEGIN PRIVATE KEY-----');
+      // Additional handling for encoded private keys
+      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') && privateKey.length > 50) {
+        // Try to decode if it's base64 encoded or just missing line breaks
+        try {
+          if (privateKey.startsWith('-----BEGIN')) {
+            // Already in PEM format but missing line breaks
+            privateKey = privateKey;
+          } else {
+            // Could be base64 encoded
+            privateKey = Buffer.from(privateKey, 'base64').toString('utf8');
+          }
+        } catch (e) {
+          console.warn('Could not decode private key, using as-is');
+        }
+      }
+      
+      // Log for debugging (without exposing the key)
+      console.log(`Private key format check: starts with BEGIN? ${privateKey.includes('-----BEGIN PRIVATE KEY-----')}, length: ${privateKey.length}`);
+      
+      // More flexible format check
+      if (!privateKey.includes('-----BEGIN') || !privateKey.includes('-----END')) {
+        console.error('Invalid private key format. Must be in PEM format');
         throw new Error('Invalid Google Service Account private key format');
       }
       
