@@ -76,7 +76,7 @@ export default function Dashboard() {
                 <BarChart3 className="text-white w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">파워팀 스코어보드</h1>
+                <h1 className="text-xl font-bold" style={{ color: '#d12031' }}>파워팀 스코어보드</h1>
                 <span className="text-sm text-gray-500">{user.email}</span>
               </div>
             </div>
