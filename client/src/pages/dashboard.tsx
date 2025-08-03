@@ -29,14 +29,16 @@ export default function Dashboard() {
   const { data: scoreboardData, refetch } = useQuery({
     queryKey: ["/api/scoreboard", user?.id],
     enabled: !!user?.id,
+    refetchInterval: 30000, // 30초마다 자동 새로고침
   });
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, refetch: refetchProfile } = useQuery({
     queryKey: ["/api/user-profile", user?.id],
     enabled: !!user?.id,
+    refetchInterval: 30000, // 30초마다 자동 새로고침
   });
 
-  const { calculateAchievement } = useScoreboard(user?.id);
+  const { calculateAchievement, syncFromSheetsMutation } = useScoreboard(user?.id);
 
   const handleLogout = () => {
     localStorage.removeItem("bni_user");
@@ -49,6 +51,12 @@ export default function Dashboard() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSyncFromSheets = () => {
+    if (user?.id) {
+      syncFromSheetsMutation.mutate(user.id);
+    }
   };
 
 
@@ -75,6 +83,16 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSyncFromSheets}
+                disabled={syncFromSheetsMutation.isPending}
+                className="text-green-800 border-green-200 hover:bg-green-50"
+              >
+                <RefreshCw className={`mr-1 w-4 h-4 ${syncFromSheetsMutation.isPending ? 'animate-spin' : ''}`} />
+                구글시트 동기화
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
