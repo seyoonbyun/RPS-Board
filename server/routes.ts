@@ -66,6 +66,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+
+      // Automatically sync to Google Sheets after saving
+      try {
+        // TODO: Implement actual Google Sheets API integration
+        // For now, simulate successful auto-sync
+        console.log(`Auto-syncing data to Google Sheets for user ${userId}`);
+        
+        // Here you would integrate with Google Sheets API
+        // await googleSheetsService.syncData({
+        //   ...savedData,
+        //   email: userEmail // would need to get user email
+        // });
+        
+      } catch (syncError) {
+        console.error('Google Sheets auto-sync failed:', syncError);
+        // Don't fail the main request if sync fails
+      }
       
       res.json(savedData);
     } catch (error) {

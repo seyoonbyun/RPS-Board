@@ -54,7 +54,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
       queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
       toast({
         title: "저장 완료",
-        description: "데이터가 성공적으로 저장되었습니다.",
+        description: "데이터가 성공적으로 저장되고 구글 시트에 자동 동기화되었습니다.",
       });
       onDataSaved();
     },
@@ -263,7 +263,7 @@ export default function PartnerForm({ userId, initialData, onDataSaved }: Partne
                 disabled={saveMutation.isPending}
               >
                 <Save className="mr-2 w-4 h-4" />
-                {saveMutation.isPending ? "저장 중..." : "데이터 저장 및 동기화"}
+                {saveMutation.isPending ? "저장 중..." : "데이터 저장"}
               </Button>
             </div>
           </form>

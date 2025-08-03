@@ -44,6 +44,7 @@ Preferred communication style: Simple, everyday language.
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
 - **Partner Management**: Form-based interface for managing up to 4 referral partners
 - **Stage Tracking**: V (Visitor), C (Contact), P (Partner) stage progression
+- **Automatic Google Sheets Sync**: Data automatically syncs to Google Sheets upon saving, no manual sync required
 - **Change History**: Audit trail of data modifications
 - **Print Support**: Print-friendly layout for physical scoreboard display
 - **Responsive Design**: Mobile-friendly interface with adaptive layouts

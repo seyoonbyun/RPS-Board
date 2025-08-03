@@ -30,7 +30,7 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
-  const { syncMutation, calculateAchievement } = useScoreboard(user?.id);
+  const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
     localStorage.removeItem("bni_user");
@@ -39,11 +39,6 @@ export default function Dashboard() {
       title: "로그아웃",
       description: "로그아웃되었습니다",
     });
-  };
-
-  const handleSync = () => {
-    if (!user?.id) return;
-    syncMutation.mutate(user.id);
   };
 
   const handlePrint = () => {
@@ -72,16 +67,6 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSync}
-                disabled={syncMutation.isPending}
-                className="text-emerald-800 border-emerald-200 hover:bg-emerald-50"
-              >
-                <RefreshCw className={`mr-1 w-4 h-4 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-                {syncMutation.isPending ? '동기화 중...' : '구글 시트 동기화'}
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
