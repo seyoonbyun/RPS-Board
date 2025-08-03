@@ -206,6 +206,8 @@ class GoogleSheetsService {
       // Add total partners and achievement
       values.push(totalPartners.toString());
       values.push(`${achievement}%`);
+      
+      console.log('Data to sync to Google Sheets:', values);
 
       // Check if user row already exists (based on email in column B)
       const getResponse = await fetch(
@@ -223,8 +225,10 @@ class GoogleSheetsService {
       }
 
       const existingData = await getResponse.json();
+      console.log('Existing data from Google Sheets:', existingData);
       const existingRows = existingData.values || [];
       const userRowIndex = existingRows.findIndex((row: string[]) => row[1] === data.userEmail);
+      console.log(`User row index for ${data.userEmail}:`, userRowIndex);
 
       let updateResponse;
       if (userRowIndex >= 0) {
@@ -262,9 +266,12 @@ class GoogleSheetsService {
 
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text();
+        console.error(`Google Sheets update failed with status ${updateResponse.status}:`, errorText);
         throw new Error(`Failed to update Google Sheets: ${updateResponse.status} ${errorText}`);
       }
 
+      const updateResult = await updateResponse.json();
+      console.log('Google Sheets update result:', updateResult);
       console.log(`✅ Successfully synced data to Google Sheets for ${data.userEmail}`);
     } catch (error: any) {
       console.error('Google Sheets sync error:', error);
