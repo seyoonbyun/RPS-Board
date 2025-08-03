@@ -13,6 +13,14 @@ class GoogleSheetsService {
   private spreadsheetId: string;
 
   constructor(config: GoogleSheetsConfig) {
+    this.spreadsheetId = config.spreadsheetId;
+    // Don't await in constructor - init will be called lazily on first API call
+    this.initPromise = this.init(config);
+  }
+  
+  private initPromise: Promise<void>;
+
+  private async init(config: GoogleSheetsConfig) {
     try {
       // Create JWT auth client  
       let privateKey = config.serviceAccountPrivateKey;
@@ -22,20 +30,17 @@ class GoogleSheetsService {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
       
-      // Additional handling for encoded private keys
-      if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') && privateKey.length > 50) {
-        // Try to decode if it's base64 encoded or just missing line breaks
-        try {
-          if (privateKey.startsWith('-----BEGIN')) {
-            // Already in PEM format but missing line breaks
-            privateKey = privateKey;
-          } else {
-            // Could be base64 encoded
-            privateKey = Buffer.from(privateKey, 'base64').toString('utf8');
-          }
-        } catch (e) {
-          console.warn('Could not decode private key, using as-is');
-        }
+      // Clean up the private key format
+      privateKey = privateKey.trim();
+      
+      // Ensure proper line breaks in PEM format
+      if (privateKey.includes('-----BEGIN PRIVATE KEY-----') && !privateKey.includes('\n')) {
+        privateKey = privateKey
+          .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+          .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----')
+          .replace(/(.{64})/g, '$1\n')
+          .replace(/\n\n/g, '\n')
+          .trim();
       }
       
       // Log for debugging (without exposing the key)
@@ -47,11 +52,36 @@ class GoogleSheetsService {
         throw new Error('Invalid Google Service Account private key format');
       }
       
-      const jwtClient = new google.auth.JWT({
-        email: config.serviceAccountEmail,
-        key: privateKey,
-        scopes: ['https://www.googleapis.com/auth/spreadsheets']
-      });
+      // Try different authentication methods
+      let jwtClient;
+      try {
+        jwtClient = new google.auth.JWT({
+          email: config.serviceAccountEmail,
+          key: privateKey,
+          scopes: [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive.file'
+          ]
+        });
+      } catch (jwtError) {
+        console.warn('JWT client creation failed, trying GoogleAuth:', jwtError.message);
+        
+        // Fallback to GoogleAuth with credentials object
+        const credentials = {
+          type: "service_account",
+          client_email: config.serviceAccountEmail,
+          private_key: privateKey,
+        };
+        
+        const auth = new google.auth.GoogleAuth({
+          credentials,
+          scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        });
+        
+        jwtClient = await auth.getClient();
+      }
+
+      // Skip async authorization in constructor - will auth on first API call
 
       // Initialize Google Sheets API
       this.sheets = google.sheets({ version: 'v4', auth: jwtClient });
@@ -67,6 +97,9 @@ class GoogleSheetsService {
   }
 
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
+    // Wait for initialization to complete
+    await this.initPromise;
+    
     // Check if Google Sheets service is properly initialized
     if (!this.sheets) {
       console.warn('Google Sheets service not initialized, skipping sync');
