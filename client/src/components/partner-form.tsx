@@ -216,6 +216,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  <SelectItem value="" className="text-gray-500 hover:bg-gray-100">
+                    선택 안함
+                  </SelectItem>
                   {stageOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value} className="text-gray-900 hover:bg-gray-100">
                       {option.label}
