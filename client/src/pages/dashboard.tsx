@@ -55,6 +55,15 @@ export default function Dashboard() {
   }
 
   const achievement = calculateAchievement(scoreboardData, userProfile);
+  
+  // Type assertions to fix the property mapping issue
+  const achievementData = {
+    percentage: achievement.percentage || 0,
+    profitable: achievement.profitable || 0,
+    credible: achievement.credible || 0,
+    visible: achievement.visible || 0,
+    total: achievement.total || 0,
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -155,15 +164,15 @@ export default function Dashboard() {
                     fill="none"
                     stroke="#3b82f6"
                     strokeWidth="2"
-                    strokeDasharray={`${achievement.percentage}, 100`}
+                    strokeDasharray={`${achievementData.percentage}, 100`}
                     className="drop-shadow-sm"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800">{achievement.percentage}%</div>
+                    <div className="text-2xl font-bold text-gray-800">{achievementData.percentage}%</div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {achievement.profitable}/4
+                      {achievementData.profitable}/4
                     </div>
                   </div>
                 </div>
@@ -172,19 +181,19 @@ export default function Dashboard() {
             <div className="mt-4 space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600">수익 파트너 (P)</span>
-                <span className="font-medium text-emerald-600">{achievement.profitable}명</span>
+                <span className="font-medium text-emerald-600">{achievementData.profitable}명</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600">신뢰 파트너 (C)</span>
-                <span className="font-medium text-orange-600">{achievement.credible}명</span>
+                <span className="font-medium text-orange-600">{achievementData.credible}명</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-600">인지 파트너 (V)</span>
-                <span className="font-medium text-yellow-600">{achievement.visible}명</span>
+                <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
               </div>
               <div className="flex justify-between items-center text-sm pt-2 border-t">
                 <span className="text-gray-600">총 파트너</span>
-                <span className="font-medium">{achievement.total}명</span>
+                <span className="font-medium">{achievementData.total}명</span>
               </div>
             </div>
           </div>
@@ -193,8 +202,8 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <PartnerForm
               userId={user.id}
-              scoreboardData={scoreboardData}
-              onDataUpdate={() => {
+              initialData={scoreboardData}
+              onDataSaved={() => {
                 refetch();
                 refetchProfile();
               }}

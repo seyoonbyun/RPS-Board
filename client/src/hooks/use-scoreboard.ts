@@ -51,9 +51,10 @@ export function useScoreboard(userId?: string) {
       partners.forEach(partner => {
         if (partner.name && partner.name.trim()) {
           total++;
-          if (partner.stage === 'V') vStage++;
-          else if (partner.stage === 'C') cStage++;
-          else if (partner.stage === 'P') pStage++;
+          // Convert full stage names to counts
+          if (partner.stage?.includes('Profit') || partner.stage === 'P') pStage++;
+          else if (partner.stage?.includes('Credibility') || partner.stage === 'C') cStage++;
+          else if (partner.stage?.includes('Visibility') || partner.stage === 'V') vStage++;
         }
       });
     } else if (scoreboardData) {
@@ -64,22 +65,20 @@ export function useScoreboard(userId?: string) {
 
         if (name && name.trim()) {
           total++;
-          if (stage === 'V') vStage++;
+          if (stage === 'P') pStage++;
           else if (stage === 'C') cStage++;
-          else if (stage === 'P') pStage++;
+          else if (stage === 'V') vStage++;
         }
       }
     }
 
-    const percent = Math.min(100, Math.round((pStage / 4) * 100));
-    const remaining = Math.max(0, 4 - pStage);
+    const percentage = Math.min(100, Math.round((pStage / 4) * 100));
 
     return {
-      current: pStage,
-      percent,
-      remaining,
-      vStage,
-      cStage,
+      visible: vStage,
+      credible: cStage,
+      profitable: pStage,
+      percentage,
       total,
     };
   };
