@@ -84,7 +84,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="이메일을 입력하세요"
                         className="focus:ring-2 focus:ring-blue-500"
-                        style={{letterSpacing: 'normal'}}
+                        style={{letterSpacing: '0px', fontFeatureSettings: 'normal'}}
                       />
                     </FormControl>
                     <FormMessage />

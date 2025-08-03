@@ -61,10 +61,12 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    letter-spacing: 0;
   }
 
-  input[type="email"] {
-    letter-spacing: normal !important;
+  *, input, input[type="email"], input[type="text"], input[type="password"] {
+    letter-spacing: 0 !important;
+    font-feature-settings: normal !important;
   }
 }
 
