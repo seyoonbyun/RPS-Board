@@ -47,6 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user profile from Google Sheets
       const { getGoogleSheetsService } = await import('./google-sheets.js');
       const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
       const profile = await googleSheetsService.getUserProfile(user.email);
       
       res.json(profile);
@@ -137,7 +140,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Sheets sync route
+  // Sync from Google Sheets to local database
+  app.post("/api/sync-from-sheets/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      // Get latest data from Google Sheets
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+      const profile = await sheetsService.getUserProfile(user.email);
+      
+      if (!profile) {
+        return res.status(404).json({ message: "구글 시트에서 사용자 프로필을 찾을 수 없습니다" });
+      }
+
+      // Get current local data for change tracking
+      const existingData = await storage.getScoreboardData(userId);
+
+      // Update local scoreboard data with Google Sheets data
+      const updatedData = {
+        region: profile.region || '',
+        userIdField: '',
+        partner: profile.chapter || '',
+        memberName: profile.memberName || '',
+        specialty: profile.specialty || '',
+        targetCustomer: profile.targetCustomer || '',
+        rpartner1: profile.rpartner1 || '',
+        rpartner1Specialty: profile.rpartner1Specialty || '',
+        rpartner1Stage: profile.rpartner1Stage || '',
+        rpartner2: profile.rpartner2 || '',
+        rpartner2Specialty: profile.rpartner2Specialty || '',
+        rpartner2Stage: profile.rpartner2Stage || '',
+        rpartner3: profile.rpartner3 || '',
+        rpartner3Specialty: profile.rpartner3Specialty || '',
+        rpartner3Stage: profile.rpartner3Stage || '',
+        rpartner4: profile.rpartner4 || '',
+        rpartner4Specialty: profile.rpartner4Specialty || '',
+        rpartner4Stage: profile.rpartner4Stage || '',
+      };
+
+      const updatedScoreboard = await storage.upsertScoreboardData(userId, updatedData);
+
+      // Track changes for sync from sheets
+      if (existingData) {
+        const changes = await trackChanges(userId, existingData, updatedData);
+        
+        // Log changes to history with special sync marker
+        for (const change of changes) {
+          await storage.addChangeHistory({
+            userId,
+            fieldName: `[구글시트동기화] ${change.field}`,
+            oldValue: change.oldValue,
+            newValue: change.newValue,
+          });
+        }
+      }
+
+      res.json({ 
+        message: "구글 시트에서 성공적으로 동기화했습니다",
+        data: updatedScoreboard,
+        changes: existingData ? await trackChanges(userId, existingData, updatedData) : []
+      });
+    } catch (error) {
+      console.error('Error syncing from Google Sheets:', error);
+      res.status(500).json({ message: "구글 시트 동기화에 실패했습니다" });
+    }
+  });
+
+  // Google Sheets sync route (to sheets)
   app.post("/api/sync/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
@@ -147,8 +224,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "저장된 데이터가 없습니다" });
       }
       
-      // TODO: Implement actual Google Sheets API integration
-      // For now, simulate sync success
+      // Get user's email for Google Sheets sync
+      const user = await storage.getUserById(userId);
+      if (user) {
+        const sheetsService = getGoogleSheetsService();
+        if (sheetsService) {
+          await sheetsService.syncScoreboardData({
+            ...data,
+            userEmail: user.email
+          });
+        }
+      }
       
       res.json({ message: "구글 시트와 동기화가 완료되었습니다", timestamp: new Date() });
     } catch (error) {
