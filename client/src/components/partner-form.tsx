@@ -239,7 +239,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Edit className="w-5 h-5 text-blue-600" />
-          <CardTitle className="text-lg">나의 파워팀 정보 입력</CardTitle>
+          <CardTitle className="text-lg">나의 파워팀 정보</CardTitle>
         </div>
       </CardHeader>
       <CardContent>

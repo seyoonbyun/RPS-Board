@@ -146,7 +146,7 @@ export default function Dashboard() {
               <Compass style={{ color: '#d12031' }} className="w-5 h-5" />
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 리퍼럴 파워팀 스코어 보드</h3>
+              <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
               <div className="text-sm text-gray-700 space-y-2">
                 <p>파워팀: 리퍼럴 파트너 스코어보드는 자신의 성과를 측정하고 기록하는 데 도움을 주는 기록 툴로서, 사용자 경험을 향상시키고, 사용자에게 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
                 
