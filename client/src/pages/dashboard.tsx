@@ -168,6 +168,13 @@ export default function Dashboard() {
           <ChangeHistory userId={user.id} />
         </div> */}
       </div>
+
+      {/* Print Footer with Custom URL */}
+      <footer className="print-only fixed bottom-0 left-0 w-full text-xs text-gray-600 p-2 bg-white">
+        <div className="text-left">
+          https://www.powerteam-bnikorea.com
+        </div>
+      </footer>
     </div>
   );
 }

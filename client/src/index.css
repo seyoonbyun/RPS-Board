@@ -303,6 +303,13 @@ input:-webkit-autofill:active {
     /* This removes the default header with title and footer with URL/date */
     margin-top: 0.5in;
     margin-bottom: 0.5in;
+    /* Additional attempts to hide headers/footers */
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+    @top-center { content: ""; }
+    @bottom-left { content: ""; }
+    @bottom-right { content: ""; }
+    @bottom-center { content: ""; }
   }
   
   /* Force clean print layout */
@@ -331,6 +338,16 @@ input:-webkit-autofill:active {
     display: none !important;
     visibility: hidden !important;
   }
+  
+  /* Show print footer only when printing */
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Hide print footer by default */
+.print-only {
+  display: none;
 }
 
 /* 최고 우선순위 placeholder 색상 강제 적용 */
