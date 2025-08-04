@@ -78,6 +78,7 @@ Preferred communication style: Simple, everyday language.
   - Toast notifications and popup dialogs hidden during print to prevent inclusion in printed documents
   - Custom footer URL "https://www.powerteam-bnikorea.com" added for print layout
   - Enhanced @page CSS rules to override browser default headers and footers
+  - Print header added with "BNI Korea My Powerteam RPS Report" title and current timestamp (yyyy-mm-dd, hh:mm:ss format)
 - **Data Integrity Control**: ✅ IMPLEMENTED (Aug 3, 2025)
   - Google Sheets sourced fields (지역, 챕터, 멤버, 업태명, 타겟고객) converted to read-only
   - Visual indicators added: gray background, disabled cursor, "(구분 시트 연동)" labels

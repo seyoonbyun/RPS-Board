@@ -65,8 +65,36 @@ export default function Dashboard() {
     total: achievement.total || 0,
   };
 
+  // Format current date and time for print header
+  const formatPrintDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}, ${hours}:${minutes}:${seconds}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Print-only Header */}
+      <div className="print-only bg-white border-b-2 border-gray-300 mb-6">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex-1"></div>
+            <div className="flex-1 text-center">
+              <h1 className="text-xl font-bold text-gray-900">BNI Korea My Powerteam RPS Report</h1>
+            </div>
+            <div className="flex-1 text-right">
+              <div className="text-sm text-gray-600">{formatPrintDateTime()}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="bg-white shadow-sm border-b no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
