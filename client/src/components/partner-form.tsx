@@ -488,26 +488,32 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             멤버 탈퇴 처리
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="max-w-md">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
-                            <AlertDialogDescription className="space-y-2">
-                              <p>정말로 탈퇴 처리하시겠습니까?</p>
-                              <p className="font-semibold text-red-600">
-                                탈퇴 시 다음 작업이 수행됩니다:
-                              </p>
-                              <ul className="list-disc list-inside space-y-1 text-sm">
-                                <li>입력된 모든 R파트너 데이터가 삭제됩니다</li>
-                                <li>구글 시트에는 [탈퇴] 표시로 기록됩니다</li>
-                                <li>지역: {userProfile?.region} → [탈퇴] {userProfile?.region}</li>
-                                <li>챕터: {userProfile?.chapter} → [탈퇴] {userProfile?.chapter}</li>
-                                <li>멤버: {userProfile?.memberName} → [탈퇴] {userProfile?.memberName}</li>
-                              </ul>
-                              <p className="text-red-600 font-semibold">
-                                이 작업은 되돌릴 수 없습니다.
-                              </p>
+                            <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                              멤버 탈퇴 확인
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-700">
+                              정말로 탈퇴 처리하시겠습니까?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
+                          <div className="py-4 space-y-4">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-red-800 mb-2">
+                                탈퇴 시 다음 작업이 수행됩니다:
+                              </h4>
+                              <div className="space-y-2 text-sm text-red-700">
+                                <div>• 입력된 모든 R파트너 데이터가 삭제됩니다</div>
+                                <div>• 구글 시트에는 [탈퇴] 표시로 기록됩니다</div>
+                                <div>• 지역: {userProfile?.region} → [탈퇴] {userProfile?.region}</div>
+                                <div>• 챕터: {userProfile?.chapter} → [탈퇴] {userProfile?.chapter}</div>
+                                <div>• 멤버: {userProfile?.memberName} → [탈퇴] {userProfile?.memberName}</div>
+                              </div>
+                            </div>
+                            <div className="text-center font-semibold text-red-600 bg-red-100 p-3 rounded-lg">
+                              ⚠️ 이 작업은 되돌릴 수 없습니다
+                            </div>
+                          </div>
                           <AlertDialogFooter>
                             <AlertDialogCancel>취소</AlertDialogCancel>
                             <AlertDialogAction
