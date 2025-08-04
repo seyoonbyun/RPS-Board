@@ -163,14 +163,14 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>지역 필터</Label>
-                  <Select value={filters.region || ''} onValueChange={(value) => 
-                    setFilters(prev => ({ ...prev, region: value || undefined }))
+                  <Select value={filters.region || 'all'} onValueChange={(value) => 
+                    setFilters(prev => ({ ...prev, region: value === 'all' ? undefined : value }))
                   }>
                     <SelectTrigger>
                       <SelectValue placeholder="모든 지역" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">모든 지역</SelectItem>
+                      <SelectItem value="all">모든 지역</SelectItem>
                       <SelectItem value="서울">서울</SelectItem>
                       <SelectItem value="경기">경기</SelectItem>
                       <SelectItem value="인천">인천</SelectItem>
