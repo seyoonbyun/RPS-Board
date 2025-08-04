@@ -94,6 +94,13 @@ Preferred communication style: Simple, everyday language.
   - Active spreadsheet: https://docs.google.com/spreadsheets/d/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/edit
   - ✅ RESOLVED: Login page display issue caused by keyboard full-width character mode (전각문자)
   - ✅ ENHANCED: Seamless bidirectional auto-sync with Google Sheets every 5 seconds (no manual buttons needed)
+  - ✅ DYNAMIC USER MANAGEMENT (Aug 4, 2025): Robust handling of user additions/deletions
+    - Automatic detection of new users in Google Sheets (up to 1000 rows)
+    - Smart row reallocation: Empty rows from deleted users are recycled for new users
+    - Enhanced error handling for sheet limit exceeded scenarios
+    - Improved authentication with dynamic ID/PW column detection
+    - Safe bidirectional sync with no data loss during user changes
+    - Real-time achievement rate updates for all user modifications
 - **Change History**: Audit trail of data modifications
 - **Print Support**: Print-friendly layout for physical scoreboard display
 - **Responsive Design**: Mobile-friendly interface with adaptive layouts

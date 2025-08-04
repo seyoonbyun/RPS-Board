@@ -225,9 +225,9 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      // Get the first 100 rows to check for allowed users (get more columns to be safe)
+      // 동적 사용자 관리를 위해 전체 시트 데이터 조회 (최대 1000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z100`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z1000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -244,21 +244,21 @@ class GoogleSheetsService {
       const data = await getResponse.json();
       const rows = data.values || [];
       
-      console.log('Google Sheets data for authentication:', {
+      console.log('🔍 Dynamic user management - Google Sheets data scan:', {
         totalRows: rows.length,
         headerRow: rows[0],
-        sampleUserRow: rows[1],
+        activeUsers: rows.slice(1).filter(row => row && row[0] && row[0].trim()).length,
         columnsCount: rows[0] ? rows[0].length : 0
       });
       
-      // Find the correct columns for ID and PW by checking the header row
+      // 헤더 행에서 ID, PW 컬럼 동적 감지
       const headerRow = rows[0] || [];
       let userIdColumnIndex = -1;
       let passwordColumnIndex = -1;
       
-      // Look for ID and PW columns specifically
+      // ID, PW 컬럼 찾기 (대소문자 무관, 공백 허용)
       for (let j = 0; j < headerRow.length; j++) {
-        const header = headerRow[j] ? headerRow[j].toString().trim() : '';
+        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
         if (header === 'ID') {
           userIdColumnIndex = j;
         }
@@ -267,38 +267,55 @@ class GoogleSheetsService {
         }
       }
       
-      console.log(`Using column indices - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]})`);
+      if (userIdColumnIndex === -1 || passwordColumnIndex === -1) {
+        console.error('❌ Critical: ID or PW column not found in Google Sheets');
+        console.error('Available headers:', headerRow);
+        return false;
+      }
       
-      // Check if email exists in column A (since USER column was deleted) and validate credentials
+      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]})`);
+      
+      // 모든 행에서 사용자 검색 (빈 행 스킵)
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
-          // Get ID and PW from the correct columns
-          const userIdInSheet = userIdColumnIndex >= 0 ? row[userIdColumnIndex] : null;
-          const passwordInSheet = passwordColumnIndex >= 0 ? row[passwordColumnIndex] : null;
+        
+        // 빈 행이나 이메일이 없는 행은 스킵
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          continue;
+        }
+        
+        const emailInSheet = row[0].toString().trim().toLowerCase();
+        if (emailInSheet === email.toLowerCase()) {
+          // ID, PW 값 검증
+          const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ? 
+            row[userIdColumnIndex].toString().trim() : null;
+          const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] ? 
+            row[passwordColumnIndex].toString() : null;
           
-          console.log(`Found user ${email} in row ${i+1}:`);
-          console.log(`- ID column (${userIdColumnIndex}): ${userIdInSheet}`);
-          console.log(`- PW column (${passwordColumnIndex}): ${passwordInSheet}`);
+          console.log(`🔍 Found user ${email} in row ${i+1}:`);
+          console.log(`- Email: ${emailInSheet}`);
+          console.log(`- ID: ${userIdInSheet ? '✓' : '✗'}`);
+          console.log(`- PW: ${passwordInSheet ? '✓' : '✗'}`);
           
-          // Both ID and PW must exist and PW must match exactly
-          if (userIdInSheet && userIdInSheet.trim() !== '' && 
-              passwordInSheet && passwordInSheet.toString() === password) {
-            console.log(`User ${email} authenticated successfully (ID: ${userIdInSheet})`);
+          // 사용자 인증: ID와 PW 모두 존재하고 PW가 일치해야 함
+          if (userIdInSheet && userIdInSheet !== '' && 
+              passwordInSheet && passwordInSheet === password) {
+            console.log(`✅ User ${email} authenticated successfully (Row: ${i+1})`);
             return true;
           } else {
-            console.log(`User ${email} authentication failed:`);
+            console.log(`❌ User ${email} authentication failed:`);
             console.log(`- ID present: ${!!userIdInSheet}`);
-            console.log(`- PW match: ${passwordInSheet?.toString()} === ${password} ? ${passwordInSheet?.toString() === password}`);
+            console.log(`- PW match: ${passwordInSheet === password}`);
             return false;
           }
         }
       }
       
-      console.log(`User ${email} is not found in allowed users list`);
+      console.log(`❌ User ${email} not found in Google Sheets user list`);
       return false;
+      
     } catch (error) {
-      console.error('Error checking user permissions:', error);
+      console.error('❌ Error during user credential check:', error);
       return false;
     }
   }
@@ -384,9 +401,9 @@ class GoogleSheetsService {
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
-      // Check if user row already exists in first 100 rows (to avoid massive data scanning)
+      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (최대 1000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V100`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V1000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -402,19 +419,32 @@ class GoogleSheetsService {
       const existingData = await getResponse.json();
       const existingRows = existingData.values || [];
       
-      // Email is now in column A (index 0) after A column deletion
+      console.log(`🔍 Scanning ${existingRows.length} rows for user ${data.userEmail}...`);
+      
+      // 사용자 행 검색 (빈 행 및 삭제된 사용자 고려)
       let userRowIndex = -1;
+      let availableEmptyRows: number[] = [];
+      
       for (let i = 1; i < existingRows.length; i++) {
         const row = existingRows[i];
-        if (row && row[0] && row[0].toLowerCase() === data.userEmail.toLowerCase()) {
+        
+        // 빈 행 또는 삭제된 행 감지
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          availableEmptyRows.push(i);
+          continue;
+        }
+        
+        // 사용자 이메일 매칭 (대소문자 무관)
+        if (row[0].toString().trim().toLowerCase() === data.userEmail.toLowerCase()) {
           userRowIndex = i;
-          console.log(`Found existing user ${data.userEmail} in row ${userRowIndex + 1} (0-based index: ${userRowIndex})`);
+          console.log(`✅ Found existing user ${data.userEmail} in row ${userRowIndex + 1} (0-based index: ${userRowIndex})`);
           break;
         }
       }
       
       if (userRowIndex === -1) {
-        console.log(`User ${data.userEmail} not found in existing rows - will add as new user`);
+        console.log(`🆕 User ${data.userEmail} not found - will add as new user`);
+        console.log(`📍 Available empty rows: ${availableEmptyRows.slice(0, 5).map(r => r + 1)}`);
       }
 
       let updateResponse;
@@ -458,24 +488,28 @@ class GoogleSheetsService {
           }
         );
       } else {
-        // Find the first empty row after the header, starting from row 2
-        let firstEmptyRow = 2;
-        for (let i = 1; i < Math.min(existingRows.length, 100); i++) {
-          const row = existingRows[i];
-          if (!row || row.length === 0 || !row[1] || row[1].trim() === '') {
-            firstEmptyRow = i + 1;
-            break;
-          }
-          firstEmptyRow = i + 2; // Next row after the last filled row
+        // 새 사용자 추가: 빈 행 우선 사용, 없으면 마지막 행 다음에 추가
+        let targetRow = -1;
+        
+        if (availableEmptyRows.length > 0) {
+          // 빈 행 중 첫 번째 사용 (삭제된 사용자 자리 재활용)
+          targetRow = availableEmptyRows[0] + 1; // 1-based index
+          console.log(`♻️ Reusing empty row ${targetRow} for new user ${data.userEmail}`);
+        } else {
+          // 빈 행이 없으면 마지막 행 다음에 추가
+          targetRow = existingRows.length + 1;
+          console.log(`➕ Adding new user ${data.userEmail} at end of sheet (row ${targetRow})`);
         }
         
-        // Ensure we don't go beyond row 100 for new entries
-        if (firstEmptyRow > 100) {
-          firstEmptyRow = 2; // Force to row 2 if too many rows
+        // 행 범위 제한 (최대 1000행)
+        if (targetRow > 1000) {
+          console.error(`❌ Cannot add user ${data.userEmail}: Sheet limit reached (row ${targetRow})`);
+          throw new Error('Google Sheets row limit reached. Please clean up deleted users.');
         }
         
-        const range = `RPS!A${firstEmptyRow}:V${firstEmptyRow}`;
-        console.log(`Adding new user ${data.userEmail} in row ${firstEmptyRow} with range ${range}`);
+        const range = `RPS!A${targetRow}:V${targetRow}`;
+        console.log(`🆕 Adding new user ${data.userEmail} in row ${targetRow} with range ${range}`);
+        
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
@@ -489,7 +523,6 @@ class GoogleSheetsService {
             })
           }
         );
-        console.log(`Adding new row at position ${firstEmptyRow}`);
       }
 
       if (!updateResponse.ok) {
@@ -515,6 +548,42 @@ class GoogleSheetsService {
       }
       
       throw new Error(`Google Sheets 동기화 실패: ${error?.message || 'Unknown error'}`);
+    }
+  }
+  
+  // 동적 사용자 관리: Google Sheets의 활성 사용자 목록 가져오기
+  async getActiveUsersFromGoogleSheets(): Promise<string[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A1000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        console.error('Failed to read Google Sheets for active users');
+        return [];
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 헤더 제외하고 실제 이메일만 추출
+      const activeEmails = rows.slice(1)
+        .filter(row => row && row[0] && row[0].toString().trim())
+        .map(row => row[0].toString().trim().toLowerCase());
+      
+      console.log(`🔍 Active users in Google Sheets: ${activeEmails.length}`);
+      return activeEmails;
+    } catch (error) {
+      console.error('❌ Error getting active users from Google Sheets:', error);
+      return [];
     }
   }
   

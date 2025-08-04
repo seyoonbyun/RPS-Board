@@ -114,7 +114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`⚡ No changes detected for ${user.email}`);
           }
         } catch (syncError) {
-          console.error('Google Sheets to local sync failed:', syncError);
+          console.error('❌ Google Sheets to local sync failed:', syncError);
+          // 동기화 실패 시에도 사용자에게는 기본 프로필 정보 제공
         }
       }
       
