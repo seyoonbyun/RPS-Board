@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useScoreboard } from "@/hooks/use-scoreboard";
-import { BarChart3, Printer, LogOut, Compass } from "lucide-react";
+import { BarChart3, Printer, LogOut, Compass, Lightbulb, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import PartnerForm from "@/components/partner-form";
+import { PartnerRecommendations } from "@/components/partner-recommendations";
 // import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
@@ -176,17 +178,35 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="w-full">
-          <PartnerForm
-            userId={user.id}
-            initialData={scoreboardData}
-            achievementData={achievementData}
-            onDataSaved={() => {
-              refetch();
-              refetchProfile();
-            }}
-          />
-        </div>
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="scoreboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="scoreboard" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              스코어보드
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" />
+              AI 파트너 추천
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="scoreboard">
+            <PartnerForm
+              userId={user.id}
+              initialData={scoreboardData}
+              achievementData={achievementData}
+              onDataSaved={() => {
+                refetch();
+                refetchProfile();
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="recommendations">
+            <PartnerRecommendations userId={user.id} />
+          </TabsContent>
+        </Tabs>
 
         {/* Change History - Temporarily disabled */}
         {/* <div className="mt-6">

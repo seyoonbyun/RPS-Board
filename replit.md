@@ -95,7 +95,7 @@ Preferred communication style: Simple, everyday language.
   - ✅ RESOLVED: Login page display issue caused by keyboard full-width character mode (전각문자)
   - ✅ ENHANCED: Seamless bidirectional auto-sync with Google Sheets every 5 seconds (no manual buttons needed)
   - ✅ DYNAMIC USER MANAGEMENT (Aug 4, 2025): Robust handling of user additions/deletions
-    - Automatic detection of new users in Google Sheets (up to 1000 rows)
+    - Automatic detection of new users in Google Sheets (up to 5000 rows)
     - Smart row reallocation: Empty rows from deleted users are recycled for new users
     - Enhanced error handling for sheet limit exceeded scenarios
     - Improved authentication with dynamic ID/PW column detection

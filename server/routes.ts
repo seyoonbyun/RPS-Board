@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { loginSchema, scoreboardFormSchema, type InsertScoreboardData } from "@shared/schema";
 import { z } from "zod";
 import { getGoogleSheetsService } from "./google-sheets";
+import { PartnerRecommendationEngine } from './partner-recommendation.js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -327,6 +328,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "구글 시트와 동기화가 완료되었습니다", timestamp: new Date() });
     } catch (error) {
       res.status(500).json({ message: "동기화에 실패했습니다" });
+    }
+  });
+
+  // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
+  app.get("/api/partner-recommendations/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { region, chapter, minScore, excludeCurrent, maxResults } = req.query;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const { PartnerRecommendationEngine } = await import('./partner-recommendation.js');
+      const recommendationEngine = new PartnerRecommendationEngine(googleSheetsService);
+
+      const filters = {
+        region: region as string,
+        chapter: chapter as string,
+        minCompatibilityScore: minScore ? parseInt(minScore as string) : undefined,
+        excludeCurrentPartners: excludeCurrent === 'true',
+        maxResults: maxResults ? parseInt(maxResults as string) : 10
+      };
+
+      const recommendations = await recommendationEngine.getPartnerRecommendations(user.email, filters);
+      
+      res.json({ recommendations });
+    } catch (error) {
+      console.error("Partner recommendation error:", error);
+      res.status(500).json({ message: "파트너 추천 중 오류가 발생했습니다" });
+    }
+  });
+
+  // Industry analytics endpoint
+  app.get("/api/industry-analytics", async (req, res) => {
+    try {
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const { PartnerRecommendationEngine } = await import('./partner-recommendation.js');
+      const recommendationEngine = new PartnerRecommendationEngine(googleSheetsService);
+      
+      const analytics = await recommendationEngine.getIndustryAnalytics();
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Industry analytics error:", error);
+      res.status(500).json({ message: "업종 분석 중 오류가 발생했습니다" });
     }
   });
 

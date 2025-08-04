@@ -225,9 +225,9 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      // 동적 사용자 관리를 위해 전체 시트 데이터 조회 (최대 1000행)
+      // 동적 사용자 관리를 위해 전체 시트 데이터 조회 (최대 5000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z1000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -401,9 +401,9 @@ class GoogleSheetsService {
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
-      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (최대 1000행)
+      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (최대 5000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V1000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -501,8 +501,8 @@ class GoogleSheetsService {
           console.log(`➕ Adding new user ${data.userEmail} at end of sheet (row ${targetRow})`);
         }
         
-        // 행 범위 제한 (최대 1000행)
-        if (targetRow > 1000) {
+        // 행 범위 제한 (최대 5000행)
+        if (targetRow > 5000) {
           console.error(`❌ Cannot add user ${data.userEmail}: Sheet limit reached (row ${targetRow})`);
           throw new Error('Google Sheets row limit reached. Please clean up deleted users.');
         }
@@ -557,7 +557,7 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A1000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -579,7 +579,7 @@ class GoogleSheetsService {
         .filter(row => row && row[0] && row[0].toString().trim())
         .map(row => row[0].toString().trim().toLowerCase());
       
-      console.log(`🔍 Active users in Google Sheets: ${activeEmails.length}`);
+      console.log(`🔍 Active users in Google Sheets: ${activeEmails.length} (max 5000 supported)`);
       return activeEmails;
     } catch (error) {
       console.error('❌ Error getting active users from Google Sheets:', error);
