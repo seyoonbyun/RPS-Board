@@ -161,13 +161,16 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
     },
     onSuccess: (data) => {
       toast({ 
-        title: "탈퇴 완료", 
-        description: `${data.withdrawnUser.region} ${data.withdrawnUser.chapter} ${data.withdrawnUser.memberName}님의 탈퇴 처리가 완료되었습니다.`,
-        duration: 5000
+        title: "대표님의 파워팀 RPS 계정이 삭제되었습니다", 
+        description: "소중한 시간을 함께 나눌 수 있어 감사했습니다.\n앞으로의 모든 여정이 평안하고 따뜻하길 바랍니다 :)",
+        duration: 3000
       });
-      // Clear user data and redirect to login
-      localStorage.removeItem('user');
-      window.location.href = '/';
+      
+      // 3초 후 로그인 창으로 리다이렉트
+      setTimeout(() => {
+        localStorage.removeItem('user');
+        window.location.href = '/';
+      }, 3000);
     },
     onError: (error) => {
       console.error("Withdrawal error:", error);
