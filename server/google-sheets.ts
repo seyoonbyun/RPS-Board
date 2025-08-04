@@ -657,6 +657,77 @@ class GoogleSheetsService {
       throw new Error(`탈퇴 처리 실패: ${error?.message || 'Unknown error'}`);
     }
   }
+
+  // 관리자용: 모든 사용자 데이터 가져오기
+  async getAllUsers(): Promise<any[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      if (rows.length <= 1) return []; // 헤더만 있거나 빈 시트
+      
+      const users: any[] = [];
+      
+      // 헤더 행 스킵하고 데이터 행들 처리
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // 빈 행이나 이메일이 없는 행은 스킵
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          continue;
+        }
+        
+        const userData = {
+          email: row[0] || '',
+          region: row[1] || '',
+          chapter: row[2] || '',
+          memberName: row[3] || '',
+          specialty: row[4] || '',
+          targetCustomer: row[5] || '',
+          rpartner1: row[6] || '',
+          rpartner1Specialty: row[7] || '',
+          rpartner1Stage: this.convertFullTextToStage(row[8] || ''),
+          rpartner2: row[9] || '',
+          rpartner2Specialty: row[10] || '',
+          rpartner2Stage: this.convertFullTextToStage(row[11] || ''),
+          rpartner3: row[12] || '',
+          rpartner3Specialty: row[13] || '',
+          rpartner3Stage: this.convertFullTextToStage(row[14] || ''),
+          rpartner4: row[15] || '',
+          rpartner4Specialty: row[16] || '',
+          rpartner4Stage: this.convertFullTextToStage(row[17] || ''),
+          totalPartners: row[18] || '0',
+          achievement: row[19] || '0%',
+          status: row[22] || '활동중' // STATUS 컬럼
+        };
+        
+        users.push(userData);
+      }
+      
+      console.log(`📊 Retrieved ${users.length} users from Google Sheets for admin panel`);
+      return users;
+      
+    } catch (error) {
+      console.error('❌ Error fetching all users from Google Sheets:', error);
+      throw new Error(`모든 사용자 조회 실패: ${error}`);
+    }
+  }
   
   // 동적 사용자 관리: Google Sheets의 활성 사용자 목록 가져오기
   async getActiveUsersFromGoogleSheets(): Promise<string[]> {

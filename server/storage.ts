@@ -226,6 +226,24 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return created;
   }
+
+  async getAllUsersFromGoogleSheets(): Promise<any[]> {
+    const { getGoogleSheetsService } = await import('./google-sheets.js');
+    const googleSheetsService = getGoogleSheetsService();
+    if (!googleSheetsService) {
+      throw new Error('Google Sheets service not available');
+    }
+    return await googleSheetsService.getAllUsers();
+  }
+
+  async getUserProfileFromGoogleSheets(email: string): Promise<any> {
+    const { getGoogleSheetsService } = await import('./google-sheets.js');
+    const googleSheetsService = getGoogleSheetsService();
+    if (!googleSheetsService) {
+      return null;
+    }
+    return await googleSheetsService.getUserProfile(email);
+  }
 }
 
 export const storage = new DatabaseStorage();

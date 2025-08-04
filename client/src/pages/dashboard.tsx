@@ -113,6 +113,22 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {/* 관리자 패널 버튼 - 특정 이메일에만 표시 */}
+              {user.email === 'info@bnikorea.com' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/admin')}
+                  style={{ 
+                    color: '#d12031', 
+                    borderColor: '#f5c2c7', 
+                  }}
+                  className="hover:bg-red-50"
+                >
+                  <Users className="mr-1 w-4 h-4" />
+                  관리자 패널
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

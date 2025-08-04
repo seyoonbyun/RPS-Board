@@ -382,6 +382,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Get all users
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const allUsersData = await storage.getAllUsersFromGoogleSheets();
+      res.json(allUsersData);
+    } catch (error: any) {
+      console.error("❌ Error fetching all users:", error);
+      res.status(500).json({ message: "사용자 목록 조회 실패" });
+    }
+  });
+
+  // Admin API: Bulk withdrawal
+  app.post("/api/admin/bulk-withdrawal", async (req, res) => {
+    try {
+      const { userEmails } = req.body;
+      
+      if (!userEmails || !Array.isArray(userEmails) || userEmails.length === 0) {
+        return res.status(400).json({ message: "유효한 이메일 목록을 제공해주세요" });
+      }
+
+      console.log(`🔄 Starting bulk withdrawal for ${userEmails.length} users:`, userEmails);
+      
+      let processedCount = 0;
+      const errors: string[] = [];
+
+      for (const email of userEmails) {
+        try {
+          // Check if user exists in Google Sheets
+          const profile = await storage.getUserProfileFromGoogleSheets(email);
+          if (!profile) {
+            errors.push(`${email}: 사용자를 찾을 수 없습니다`);
+            continue;
+          }
+
+          // Mark user as withdrawn in Google Sheets
+          const sheetsService = getGoogleSheetsService();
+          if (!sheetsService) {
+            errors.push(`${email}: 구글 시트 서비스 초기화 실패`);
+            continue;
+          }
+          
+          await sheetsService.markUserAsWithdrawn(email);
+          
+          // Delete local user data if exists
+          const localUser = await storage.getUserByEmail(email);
+          if (localUser) {
+            await storage.deleteUserData(localUser.id);
+          }
+
+          processedCount++;
+          console.log(`✅ Bulk withdrawal completed for ${email}`);
+        } catch (error: any) {
+          console.error(`❌ Bulk withdrawal error for ${email}:`, error);
+          errors.push(`${email}: ${error.message}`);
+        }
+      }
+
+      const responseMessage = `${processedCount}명 탈퇴 처리 완료`;
+      const response: any = { 
+        message: responseMessage,
+        processedCount,
+        totalRequested: userEmails.length
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
+        response.message += ` (${errors.length}건 실패)`;
+      }
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("❌ Bulk withdrawal error:", error);
+      res.status(500).json({ message: error.message || "일괄 탈퇴 처리 중 오류가 발생했습니다" });
+    }
+  });
+
   // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
   app.get("/api/partner-recommendations/:userId", async (req, res) => {
     try {
