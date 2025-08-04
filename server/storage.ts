@@ -182,6 +182,9 @@ export class DatabaseStorage implements IStorage {
     // Check Google Sheets for allowed users
     const { getGoogleSheetsService } = await import('./google-sheets.js');
     const googleSheetsService = getGoogleSheetsService();
+    if (!googleSheetsService) {
+      throw new Error('Google Sheets service not initialized');
+    }
     return await googleSheetsService.checkUserCredentials(email, password || '');
   }
 

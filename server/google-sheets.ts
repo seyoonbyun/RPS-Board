@@ -154,7 +154,7 @@ class GoogleSheetsService {
       this.tokenExpiry = Date.now() + (tokenData.expires_in * 1000) - 60000; // 1 minute buffer
       
       console.log('Successfully obtained OAuth2 access token via direct JWT');
-      return this.accessToken;
+      return this.accessToken || '';
       
     } catch (error) {
       console.error('Direct JWT authentication also failed:', error);
@@ -247,7 +247,7 @@ class GoogleSheetsService {
       console.log('🔍 Dynamic user management - Google Sheets data scan:', {
         totalRows: rows.length,
         headerRow: rows[0],
-        activeUsers: rows.slice(1).filter(row => row && row[0] && row[0].trim()).length,
+        activeUsers: rows.slice(1).filter((row: any) => row && row[0] && row[0].trim()).length,
         columnsCount: rows[0] ? rows[0].length : 0
       });
       
@@ -754,8 +754,8 @@ class GoogleSheetsService {
       
       // 헤더 제외하고 실제 이메일만 추출
       const activeEmails = rows.slice(1)
-        .filter(row => row && row[0] && row[0].toString().trim())
-        .map(row => row[0].toString().trim().toLowerCase());
+        .filter((row: any) => row && row[0] && row[0].toString().trim())
+        .map((row: any) => row[0].toString().trim().toLowerCase());
       
       console.log(`🔍 Active users in Google Sheets: ${activeEmails.length} (max 5000 supported)`);
       return activeEmails;
@@ -770,7 +770,7 @@ class GoogleSheetsService {
     console.log('='.repeat(60));
     console.log(`User: ${data.userEmail}`);
     console.log(`Region: ${data.region || 'N/A'}`);
-    console.log(`Chapter: ${data.chapter || 'N/A'}`);
+    console.log(`Chapter: ${data.partner || 'N/A'}`);
     console.log(`Member: ${data.memberName || 'N/A'}`);
     console.log(`Business Type: ${data.specialty || 'N/A'}`);
     console.log(`Target Customer: ${data.targetCustomer || 'N/A'}`);
