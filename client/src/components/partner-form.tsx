@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
-import { Save, Edit, User, ExternalLink } from "lucide-react";
+import { Save, Edit, User, ExternalLink, Trash2 } from "lucide-react";
 
 interface PartnerFormProps {
   userId: string;
@@ -149,6 +150,32 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           ? "데이터는 저장되었지만 구글 시트 동기화에 실패했습니다" 
           : errorMessage,
         variant: "destructive",
+      });
+    },
+  });
+
+  const withdrawalMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/user-withdrawal/${userId}`, {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "탈퇴 완료", 
+        description: `${data.withdrawnUser.region} ${data.withdrawnUser.chapter} ${data.withdrawnUser.memberName}님의 탈퇴 처리가 완료되었습니다.`,
+        duration: 5000
+      });
+      // Clear user data and redirect to login
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    },
+    onError: (error) => {
+      console.error("Withdrawal error:", error);
+      toast({ 
+        title: "탈퇴 실패", 
+        description: "탈퇴 처리 중 오류가 발생했습니다.",
+        variant: "destructive",
+        duration: 3000 
       });
     },
   });
@@ -438,7 +465,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* RPI 확인하기 버튼 */}
-                    <div className="mt-4">
+                    <div className="mt-4 space-y-3">
                       <Button
                         type="button"
                         variant="outline"
@@ -448,6 +475,51 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <ExternalLink className="mr-2 w-4 h-4" />
                         나의 챕터 RPI (Referral Partner Index) 확인하기
                       </Button>
+                      
+                      {/* 탈퇴 버튼 */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400"
+                          >
+                            <Trash2 className="mr-2 w-4 h-4" />
+                            멤버 탈퇴 처리
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
+                            <AlertDialogDescription className="space-y-2">
+                              <p>정말로 탈퇴 처리하시겠습니까?</p>
+                              <p className="font-semibold text-red-600">
+                                탈퇴 시 다음 작업이 수행됩니다:
+                              </p>
+                              <ul className="list-disc list-inside space-y-1 text-sm">
+                                <li>입력된 모든 R파트너 데이터가 삭제됩니다</li>
+                                <li>구글 시트에는 [탈퇴] 표시로 기록됩니다</li>
+                                <li>지역: {userProfile?.region} → [탈퇴] {userProfile?.region}</li>
+                                <li>챕터: {userProfile?.chapter} → [탈퇴] {userProfile?.chapter}</li>
+                                <li>멤버: {userProfile?.memberName} → [탈퇴] {userProfile?.memberName}</li>
+                              </ul>
+                              <p className="text-red-600 font-semibold">
+                                이 작업은 되돌릴 수 없습니다.
+                              </p>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => withdrawalMutation.mutate()}
+                              disabled={withdrawalMutation.isPending}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              {withdrawalMutation.isPending ? "처리 중..." : "탈퇴 처리"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

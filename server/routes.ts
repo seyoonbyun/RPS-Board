@@ -331,6 +331,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User withdrawal/deletion endpoint - 사용자 탈퇴 처리
+  app.delete("/api/user-withdrawal/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUserById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      // Get current user profile from Google Sheets
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const profile = await sheetsService.getUserProfile(user.email);
+      if (!profile) {
+        return res.status(404).json({ message: "구글 시트에서 사용자 프로필을 찾을 수 없습니다" });
+      }
+
+      // Mark user as withdrawn in Google Sheets
+      const withdrawalData = {
+        ...profile,
+        userEmail: user.email,
+        region: `[탈퇴] ${profile.region}`,
+        chapter: `[탈퇴] ${profile.chapter}`,
+        memberName: `[탈퇴] ${profile.memberName}`,
+        specialty: '[탈퇴된 계정]',
+        targetCustomer: '[탈퇴된 계정]',
+        rpartner1: '',
+        rpartner1Specialty: '',
+        rpartner1Stage: '',
+        rpartner2: '',
+        rpartner2Specialty: '',
+        rpartner2Stage: '',
+        rpartner3: '',
+        rpartner3Specialty: '',
+        rpartner3Stage: '',
+        rpartner4: '',
+        rpartner4Specialty: '',
+        rpartner4Stage: '',
+        totalPartners: '0',
+        achievement: '0%'
+      };
+
+      await sheetsService.syncScoreboardData(withdrawalData);
+
+      // Delete user data from local database
+      await storage.deleteUserData(userId);
+
+      res.json({ 
+        message: "탈퇴 처리가 완료되었습니다",
+        withdrawnUser: {
+          region: profile.region,
+          chapter: profile.chapter,
+          memberName: profile.memberName,
+          email: user.email
+        }
+      });
+    } catch (error) {
+      console.error('Error in user withdrawal:', error);
+      res.status(500).json({ message: "탈퇴 처리 중 오류가 발생했습니다" });
+    }
+  });
+
   // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
   app.get("/api/partner-recommendations/:userId", async (req, res) => {
     try {

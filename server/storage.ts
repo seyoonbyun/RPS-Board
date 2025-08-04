@@ -8,6 +8,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  deleteUserData(userId: string): Promise<void>;
   isUserAllowed(email: string, password?: string): Promise<boolean>;
   getScoreboardData(userId: string): Promise<ScoreboardData | undefined>;
   upsertScoreboardData(userId: string, data: InsertScoreboardData): Promise<ScoreboardData>;
@@ -49,6 +50,22 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async deleteUserData(userId: string): Promise<void> {
+    // Delete user from users map
+    this.users.delete(userId);
+    
+    // Delete scoreboard data for this user
+    const scoreboardEntries = Array.from(this.scoreboardData.entries());
+    for (const [key, data] of scoreboardEntries) {
+      if (data.userId === userId) {
+        this.scoreboardData.delete(key);
+      }
+    }
+    
+    // Delete change history for this user
+    this.changeHistory.delete(userId);
   }
 
   async isUserAllowed(email: string, password?: string): Promise<boolean> {
@@ -145,6 +162,20 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async deleteUserData(userId: string): Promise<void> {
+    // Delete user data from database in transaction
+    await db.transaction(async (tx) => {
+      // Delete change history first (foreign key constraint)
+      await tx.delete(changeHistory).where(eq(changeHistory.userId, userId));
+      
+      // Delete scoreboard data
+      await tx.delete(scoreboardData).where(eq(scoreboardData.userId, userId));
+      
+      // Delete user
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async isUserAllowed(email: string, password?: string): Promise<boolean> {
