@@ -282,19 +282,19 @@ export default function AdminPage() {
                     이메일 목록으로 일괄 탈퇴 처리
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="alert-dialog-content">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>일괄 탈퇴 처리 확인</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="alert-dialog-title">일괄 탈퇴 처리 확인</AlertDialogTitle>
+                    <AlertDialogDescription className="alert-dialog-description">
                       입력한 이메일 목록의 모든 사용자를 탈퇴 처리하시겠습니까?
                       이 작업은 되돌릴 수 없습니다.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleBulkEmailsSubmit}
-                      className="bg-red-600 hover:bg-red-700"
+                      className="alert-dialog-action-destructive"
                     >
                       탈퇴 처리 실행
                     </AlertDialogAction>
@@ -331,19 +331,19 @@ export default function AdminPage() {
                       선택한 사용자 탈퇴 처리
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="alert-dialog-content">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>선택한 사용자 탈퇴 처리</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="alert-dialog-title">선택한 사용자 탈퇴 처리</AlertDialogTitle>
+                      <AlertDialogDescription className="alert-dialog-description">
                         선택한 {selectedUsers.length}명의 사용자를 탈퇴 처리하시겠습니까?
                         이 작업은 되돌릴 수 없습니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleSelectedUsersWithdrawal}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="alert-dialog-action-destructive"
                       >
                         탈퇴 처리 실행
                       </AlertDialogAction>

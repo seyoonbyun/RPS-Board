@@ -491,12 +491,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             멤버 탈퇴 처리
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="max-w-md">
+                        <AlertDialogContent className="alert-dialog-content max-w-md">
                           <AlertDialogHeader>
-                            <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                            <AlertDialogTitle className="alert-dialog-title">
                               멤버 탈퇴 확인
                             </AlertDialogTitle>
-                            <AlertDialogDescription className="text-gray-700">
+                            <AlertDialogDescription className="alert-dialog-description">
                               정말로 탈퇴 처리하시겠습니까?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -518,11 +518,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             </div>
                           </div>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>취소</AlertDialogCancel>
+                            <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => withdrawalMutation.mutate()}
                               disabled={withdrawalMutation.isPending}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="alert-dialog-action-destructive"
                             >
                               {withdrawalMutation.isPending ? "처리 중..." : "탈퇴 처리"}
                             </AlertDialogAction>

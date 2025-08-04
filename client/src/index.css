@@ -75,6 +75,56 @@
   }
 }
 
+/* AlertDialog 개선된 스타일링 */
+@layer components {
+  .alert-dialog-overlay {
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(4px);
+  }
+  
+  .alert-dialog-content {
+    background: white !important;
+    border: 2px solid #d12031 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 12px !important;
+    max-width: 500px !important;
+  }
+  
+  .alert-dialog-title {
+    color: #d12031 !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+  }
+  
+  .alert-dialog-description {
+    color: #374151 !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+  }
+  
+  .alert-dialog-action-destructive {
+    background-color: #d12031 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600 !important;
+  }
+  
+  .alert-dialog-action-destructive:hover {
+    background-color: #b01e2b !important;
+  }
+  
+  .alert-dialog-cancel {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    font-weight: 600 !important;
+  }
+  
+  .alert-dialog-cancel:hover {
+    background-color: #e5e7eb !important;
+  }
+}
+
 /* BNI 브랜드 색상 정의 */
 .bni-blue {
   background-color: #d12031 !important;
