@@ -53,77 +53,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await googleSheetsService.getUserProfile(user.email);
       
       if (profile) {
-        // Auto-sync from Google Sheets to local database
-        try {
-          const existingData = await storage.getScoreboardData(userId);
-
-          // Update local scoreboard data with Google Sheets data (preserve targetCustomer from local if exists)
-          const updatedData = {
-            region: profile.region || '',
-            userIdField: '',
-            partner: profile.chapter || '',
-            memberName: profile.memberName || '',
-            specialty: profile.specialty || '',
-            targetCustomer: existingData?.targetCustomer || profile.targetCustomer || '',
-            rpartner1: profile.rpartner1 || '',
-            rpartner1Specialty: profile.rpartner1Specialty || '',
-            rpartner1Stage: profile.rpartner1Stage || '',
-            rpartner2: profile.rpartner2 || '',
-            rpartner2Specialty: profile.rpartner2Specialty || '',
-            rpartner2Stage: profile.rpartner2Stage || '',
-            rpartner3: profile.rpartner3 || '',
-            rpartner3Specialty: profile.rpartner3Specialty || '',
-            rpartner3Stage: profile.rpartner3Stage || '',
-            rpartner4: profile.rpartner4 || '',
-            rpartner4Specialty: profile.rpartner4Specialty || '',
-            rpartner4Stage: profile.rpartner4Stage || '',
-          };
-
-          // Only update if there are actual changes
-          const hasChanges = !existingData || Object.keys(updatedData).some(key => 
-            existingData[key as keyof typeof existingData] !== updatedData[key as keyof typeof updatedData]
-          );
-
-          if (hasChanges) {
-            await storage.upsertScoreboardData(userId, updatedData);
-
-            // Track changes for auto-sync with special marker
-            if (existingData) {
-              const changes = await trackChanges(userId, existingData, updatedData);
-              
-              for (const change of changes) {
-                await storage.addChangeHistory({
-                  userId,
-                  fieldName: `[자동동기화] ${change.field}`,
-                  oldValue: change.oldValue,
-                  newValue: change.newValue,
-                });
-              }
-              
-              if (changes.length > 0) {
-                console.log(`Auto-synced ${changes.length} changes from Google Sheets for ${user.email}`);
-              }
-            }
-          }
-
-          // 항상 달성율을 다시 계산하여 구글 시트에 업데이트
-          try {
-            const { getGoogleSheetsService } = await import('./google-sheets.js');
-            const googleSheetsService = getGoogleSheetsService();
-            if (googleSheetsService) {
-              await googleSheetsService.syncScoreboardData({
-                ...updatedData,
-                userEmail: user.email
-              });
-              console.log(`Updated achievement rate in Google Sheets for ${user.email}`);
-            }
-          } catch (syncError) {
-            console.error('Failed to update Google Sheets achievement rate:', syncError);
-          }
-        } catch (syncError) {
-          console.error('Auto-sync failed:', syncError);
-          // Don't fail the main request if auto-sync fails
-        }
+        // 자동 동기화 비활성화 - 사용자 입력 우선
+        console.log(`⚡ Auto-sync disabled - user input takes priority for ${user.email}`);
       }
       
       res.json(profile);
