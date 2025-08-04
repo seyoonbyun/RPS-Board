@@ -295,6 +295,30 @@ input:-webkit-autofill:active {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+  
+  /* Hide browser's default print headers and footers */
+  @page {
+    margin: 0.5in;
+    size: A4;
+    /* This removes the default header with title and footer with URL/date */
+    margin-top: 0.5in;
+    margin-bottom: 0.5in;
+  }
+  
+  /* Force clean print layout */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Hide any potential replit banners or overlays during print */
+  [data-replit-banner],
+  .replit-banner,
+  #replit-banner {
+    display: none !important;
+  }
 }
 
 /* 최고 우선순위 placeholder 색상 강제 적용 */

@@ -69,6 +69,12 @@ Preferred communication style: Simple, everyday language.
   - All popup notifications (login, logout, save) use consistent styling and timing
   - Login card styling enhanced with brand color border (1px #d12031) and 3D shadow effects
   - Login failure message customized to "잠깐 !" with friendly guidance text
+- **Print Layout Enhancement**: ✅ UPDATED (Aug 4, 2025)
+  - Page title changed from "RPS Board - Replit" to "BNI Korea 파워팀 R파트너 스코어보드"
+  - HTML language attribute updated to Korean (lang="ko")
+  - Print CSS added to remove browser headers/footers during printing
+  - Clean A4 print layout with proper margins and white background
+  - Replit development banners hidden during print operations
 - **Data Integrity Control**: ✅ IMPLEMENTED (Aug 3, 2025)
   - Google Sheets sourced fields (지역, 챕터, 멤버, 업태명, 타겟고객) converted to read-only
   - Visual indicators added: gray background, disabled cursor, "(구분 시트 연동)" labels
