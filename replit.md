@@ -75,6 +75,7 @@ Preferred communication style: Simple, everyday language.
   - Print CSS added to remove browser headers/footers during printing
   - Clean A4 print layout with proper margins and white background
   - Replit development banners hidden during print operations
+  - Toast notifications and popup dialogs hidden during print to prevent inclusion in printed documents
 - **Data Integrity Control**: ✅ IMPLEMENTED (Aug 3, 2025)
   - Google Sheets sourced fields (지역, 챕터, 멤버, 업태명, 타겟고객) converted to read-only
   - Visual indicators added: gray background, disabled cursor, "(구분 시트 연동)" labels

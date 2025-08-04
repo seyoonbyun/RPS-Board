@@ -319,6 +319,18 @@ input:-webkit-autofill:active {
   #replit-banner {
     display: none !important;
   }
+  
+  /* Hide toast notifications and popups during print */
+  [data-radix-toast-viewport],
+  [data-radix-toast-root],
+  .toast,
+  [role="status"],
+  [data-state="open"][data-radix-toast-root],
+  [data-radix-dialog-overlay],
+  [data-radix-dialog-content] {
+    display: none !important;
+    visibility: hidden !important;
+  }
 }
 
 /* 최고 우선순위 placeholder 색상 강제 적용 */
