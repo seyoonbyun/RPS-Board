@@ -86,7 +86,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <div className="flex-1"></div>
             <div className="flex-1 text-center">
-              <h1 className="text-xl font-bold text-gray-900">BNI Korea My Powerteam RPS Report</h1>
+              <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">BNI Korea My Powerteam RPS Report</h1>
             </div>
             <div className="flex-1 text-right">
               <div className="text-sm text-gray-600">{formatPrintDateTime()}</div>
