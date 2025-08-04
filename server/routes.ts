@@ -53,8 +53,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await googleSheetsService.getUserProfile(user.email);
       
       if (profile) {
-        // 자동 동기화 비활성화 - 사용자 입력 우선
-        console.log(`⚡ Auto-sync disabled - user input takes priority for ${user.email}`);
+        // 완전한 양방향 동기화 - Google Sheets 변경사항을 로컬 데이터베이스에 반영
+        try {
+          const existingData = await storage.getScoreboardData(userId);
+          
+          // Google Sheets 데이터를 로컬 데이터베이스 형태로 변환
+          const googleSheetsData = {
+            region: profile.region || '',
+            userIdField: '',
+            partner: profile.chapter || '',
+            memberName: profile.memberName || '',
+            specialty: profile.specialty || '',
+            targetCustomer: profile.targetCustomer || '',
+            rpartner1: profile.rpartner1 || '',
+            rpartner1Specialty: profile.rpartner1Specialty || '',
+            rpartner1Stage: profile.rpartner1Stage || '',
+            rpartner2: profile.rpartner2 || '',
+            rpartner2Specialty: profile.rpartner2Specialty || '',
+            rpartner2Stage: profile.rpartner2Stage || '',
+            rpartner3: profile.rpartner3 || '',
+            rpartner3Specialty: profile.rpartner3Specialty || '',
+            rpartner3Stage: profile.rpartner3Stage || '',
+            rpartner4: profile.rpartner4 || '',
+            rpartner4Specialty: profile.rpartner4Specialty || '',
+            rpartner4Stage: profile.rpartner4Stage || '',
+          };
+
+          console.log(`🔄 Syncing Google Sheets data to local database for ${user.email}:`, {
+            rpartner1: googleSheetsData.rpartner1,
+            rpartner4: googleSheetsData.rpartner4,
+            existingR1: existingData?.rpartner1,
+            existingR4: existingData?.rpartner4
+          });
+
+          // 변경사항이 있는지 확인하고 업데이트
+          const hasChanges = !existingData || Object.keys(googleSheetsData).some(key => 
+            existingData[key as keyof typeof existingData] !== googleSheetsData[key as keyof typeof googleSheetsData]
+          );
+
+          if (hasChanges) {
+            const updatedData = await storage.upsertScoreboardData(userId, googleSheetsData);
+            console.log(`✅ Updated local database with Google Sheets data for ${user.email}`);
+            
+            // 변경 내역 추가
+            if (existingData) {
+              const changes = await trackChanges(userId, existingData, googleSheetsData);
+              for (const change of changes) {
+                await storage.addChangeHistory({
+                  userId,
+                  fieldName: `[구글시트 동기화] ${change.field}`,
+                  oldValue: change.oldValue,
+                  newValue: change.newValue,
+                });
+              }
+              if (changes.length > 0) {
+                console.log(`📝 Tracked ${changes.length} changes from Google Sheets for ${user.email}`);
+              }
+            }
+          } else {
+            console.log(`⚡ No changes detected for ${user.email}`);
+          }
+        } catch (syncError) {
+          console.error('Google Sheets to local sync failed:', syncError);
+        }
       }
       
       res.json(profile);
