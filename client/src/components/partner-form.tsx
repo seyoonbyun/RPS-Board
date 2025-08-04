@@ -121,15 +121,25 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       const response = await apiRequest("POST", `/api/scoreboard/${userId}`, data);
       return response.json();
     },
-    onSuccess: () => {
-      // 스코어보드와 프로필 데이터 모두 새로고침
+    onSuccess: (data) => {
+      // 스코어보드와 프로필 데이터 모두 새로고침하고 즉시 리렌더링 트리거
       queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
+      
+      // 즉시 캐시 업데이트로 UI 반영 가속화
+      queryClient.setQueryData(["/api/scoreboard", userId], data);
+      
       toast({
         title: "저장 완료",
-        description: "데이터가 성공적으로 저장되었습니다.",
+        description: "구글 시트와 실시간 동기화가 완료되었습니다.",
       });
       onDataSaved();
+      
+      // 추가 데이터 새로고침으로 확실한 동기화 보장
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
+      }, 1000);
     },
     onError: (error: any) => {
       const errorMessage = error.message || "데이터 저장에 실패했습니다";

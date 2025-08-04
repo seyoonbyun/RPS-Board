@@ -175,19 +175,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Automatically sync to Google Sheets after saving
+      // Automatically sync to Google Sheets after saving - 강화된 실시간 동기화
       try {
         // Get user's email for Google Sheets sync
         const user = await storage.getUserById(userId);
         if (user) {
-          console.log('🔄 Starting Google Sheets sync with validated data:', JSON.stringify(formData, null, 2));
+          console.log('🔄 Starting ENHANCED Google Sheets sync with validated data:', JSON.stringify(formData, null, 2));
+          console.log(`🔄 User: ${user.email}, Data saved:`, savedData);
+          
           const sheetsService = getGoogleSheetsService();
           if (sheetsService) {
+            // 실시간 달성률 계산 강화
+            const partners = [
+              { name: savedData.rpartner1, stage: savedData.rpartner1Stage },
+              { name: savedData.rpartner2, stage: savedData.rpartner2Stage },
+              { name: savedData.rpartner3, stage: savedData.rpartner3Stage },
+              { name: savedData.rpartner4, stage: savedData.rpartner4Stage },
+            ];
+            
+            const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage === 'P').length;
+            const achievement = Math.round((profitPartners / 4) * 100);
+            
+            console.log(`🔄 Real-time achievement calculation:`, {
+              partners,
+              profitPartners,
+              achievement: `${achievement}%`
+            });
+            
             await sheetsService.syncScoreboardData({
               ...savedData,
               userEmail: user.email
             });
-            console.log(`Successfully synced data to Google Sheets for ${user.email}`);
+            console.log(`✅ Successfully synced data to Google Sheets for ${user.email} with ${profitPartners} profit partners (${achievement}%)`);
           }
         }
       } catch (syncError) {

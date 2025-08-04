@@ -361,9 +361,18 @@ class GoogleSheetsService {
         { name: data.rpartner4, stage: data.rpartner4Stage },
       ];
       
-      const totalPartners = partners.filter(p => p.name && p.name.trim()).length;
-      const profitPartners = partners.filter(p => p.stage === 'P').length;
+      // 강화된 달성률 계산 - 이름이 있고 P 단계인 파트너만 카운트
+      const profitPartners = partners.filter(p => 
+        p.name && p.name.trim() !== '' && p.stage === 'P'
+      ).length;
       const achievement = Math.round((profitPartners / 4) * 100);
+      
+      console.log(`📊 Achievement calculation for ${data.userEmail}:`, {
+        allPartners: partners,
+        profitPartners,
+        achievement: `${achievement}%`,
+        partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`)
+      });
       
       // Add total partners and achievement (S열, T열)
       values.push(profitPartners.toString()); // S열: 총 R파트너 수 - P 단계만 (index 18)
