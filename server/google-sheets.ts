@@ -251,12 +251,13 @@ class GoogleSheetsService {
         columnsCount: rows[0] ? rows[0].length : 0
       });
       
-      // 헤더 행에서 ID, PW 컬럼 동적 감지
+      // 헤더 행에서 ID, PW, STATUS 컬럼 동적 감지
       const headerRow = rows[0] || [];
       let userIdColumnIndex = -1;
       let passwordColumnIndex = -1;
+      let statusColumnIndex = -1;
       
-      // ID, PW 컬럼 찾기 (대소문자 무관, 공백 허용)
+      // ID, PW, STATUS 컬럼 찾기 (대소문자 무관, 공백 허용)
       for (let j = 0; j < headerRow.length; j++) {
         const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
         if (header === 'ID') {
@@ -264,6 +265,9 @@ class GoogleSheetsService {
         }
         if (header === 'PW') {
           passwordColumnIndex = j;
+        }
+        if (header === 'STATUS') {
+          statusColumnIndex = j;
         }
       }
       
@@ -273,7 +277,7 @@ class GoogleSheetsService {
         return false;
       }
       
-      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]})`);
+      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]}), STATUS: ${statusColumnIndex} (${statusColumnIndex >= 0 ? headerRow[statusColumnIndex] : 'NOT FOUND'})`);
       
       // 모든 행에서 사용자 검색 (빈 행 스킵)
       for (let i = 1; i < rows.length; i++) {
@@ -286,16 +290,25 @@ class GoogleSheetsService {
         
         const emailInSheet = row[0].toString().trim().toLowerCase();
         if (emailInSheet === email.toLowerCase()) {
-          // ID, PW 값 검증
+          // ID, PW, STATUS 값 검증
           const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ? 
             row[userIdColumnIndex].toString().trim() : null;
           const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] ? 
             row[passwordColumnIndex].toString() : null;
+          const statusInSheet = statusColumnIndex >= 0 && row[statusColumnIndex] ? 
+            row[statusColumnIndex].toString().trim() : '활동중';
           
           console.log(`🔍 Found user ${email} in row ${i+1}:`);
           console.log(`- Email: ${emailInSheet}`);
           console.log(`- ID: ${userIdInSheet ? '✓' : '✗'}`);
           console.log(`- PW: ${passwordInSheet ? '✓' : '✗'}`);
+          console.log(`- STATUS: ${statusInSheet}`);
+          
+          // 탈퇴한 사용자는 로그인 차단
+          if (statusInSheet === '탈퇴') {
+            console.log(`❌ User ${email} is withdrawn (STATUS: 탈퇴) - login blocked`);
+            throw new Error('WITHDRAWN_USER');
+          }
           
           // 사용자 인증: ID와 PW 모두 존재하고 PW가 일치해야 함
           if (userIdInSheet && userIdInSheet !== '' && 
@@ -395,15 +408,16 @@ class GoogleSheetsService {
       values.push(profitPartners.toString()); // S열: 총 R파트너 수 - P 단계만 (index 18)
       values.push(`${achievement}%`); // T열: 달성 (index 19)
       
-      // Add ID and PW columns (U열, V열) - 기존 값 유지  
+      // Add ID, PW and STATUS columns (U열, V열, W열) - 기존 값 유지  
       values.push(data.userEmail); // U열: ID (index 20)
       values.push(''); // V열: PW (index 21) - 기존 값 유지
+      values.push('활동중'); // W열: STATUS (index 22) - 기본값
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
       // 동적 사용자 관리: 전체 시트에서 사용자 검색 (최대 5000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:V5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -465,12 +479,14 @@ class GoogleSheetsService {
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
           
-          // PW 값 유지 (V열, index 21)
+          // PW와 STATUS 값 유지 (V열, W열, index 21, 22)
           const existingPW = existingRow[21] ? existingRow[21] : '';
+          const existingStatus = existingRow[22] ? existingRow[22] : '활동중';
           values[21] = existingPW;
+          values[22] = existingStatus;
         }
         
-        const range = `RPS!A${userRowIndex + 1}:V${userRowIndex + 1}`;
+        const range = `RPS!A${userRowIndex + 1}:W${userRowIndex + 1}`;
         console.log(`Updating existing user ${data.userEmail} in row ${userRowIndex + 1} with range ${range}`);
         console.log(`Values to update:`, values);
         
@@ -507,7 +523,7 @@ class GoogleSheetsService {
           throw new Error('Google Sheets row limit reached. Please clean up deleted users.');
         }
         
-        const range = `RPS!A${targetRow}:V${targetRow}`;
+        const range = `RPS!A${targetRow}:W${targetRow}`;
         console.log(`🆕 Adding new user ${data.userEmail} in row ${targetRow} with range ${range}`);
         
         updateResponse = await fetch(
@@ -548,6 +564,97 @@ class GoogleSheetsService {
       }
       
       throw new Error(`Google Sheets 동기화 실패: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  // 사용자 탈퇴 처리 - STATUS를 "탈퇴"로 변경
+  async markUserAsWithdrawn(userEmail: string): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // 사용자 행 찾기
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 검색
+      let userRowIndex = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && 
+            rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+          userRowIndex = i;
+          break;
+        }
+      }
+      
+      if (userRowIndex === -1) {
+        throw new Error(`User ${userEmail} not found in Google Sheets`);
+      }
+      
+      const existingRow = rows[userRowIndex];
+      
+      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지는 기존 값 유지
+      const withdrawalValues = [...existingRow];
+      while (withdrawalValues.length < 23) {
+        withdrawalValues.push(''); // 빈 열 채우기
+      }
+      
+      // 데이터 삭제 (R파트너 정보 클리어)
+      withdrawalValues[6] = '';  // R파트너 1
+      withdrawalValues[7] = '';  // R파트너 1 전문분야
+      withdrawalValues[8] = '';  // R파트너 1 단계
+      withdrawalValues[9] = '';  // R파트너 2
+      withdrawalValues[10] = ''; // R파트너 2 전문분야
+      withdrawalValues[11] = ''; // R파트너 2 단계
+      withdrawalValues[12] = ''; // R파트너 3
+      withdrawalValues[13] = ''; // R파트너 3 전문분야
+      withdrawalValues[14] = ''; // R파트너 3 단계
+      withdrawalValues[15] = ''; // R파트너 4
+      withdrawalValues[16] = ''; // R파트너 4 전문분야
+      withdrawalValues[17] = ''; // R파트너 4 단계
+      withdrawalValues[18] = '0'; // 총 R파트너 수
+      withdrawalValues[19] = '0%'; // 달성률
+      withdrawalValues[22] = '탈퇴'; // STATUS를 "탈퇴"로 변경
+      
+      const range = `RPS!A${userRowIndex + 1}:W${userRowIndex + 1}`;
+      console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
+      
+      const updateResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [withdrawalValues]
+          })
+        }
+      );
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`Failed to mark user as withdrawn: ${updateResponse.status} ${errorText}`);
+      }
+
+      console.log(`✅ User ${userEmail} marked as withdrawn (STATUS: 탈퇴)`);
+    } catch (error: any) {
+      console.error(`❌ Error marking user ${userEmail} as withdrawn:`, error);
+      throw new Error(`탈퇴 처리 실패: ${error?.message || 'Unknown error'}`);
     }
   }
   

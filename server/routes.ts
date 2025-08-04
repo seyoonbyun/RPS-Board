@@ -13,11 +13,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = loginSchema.parse(req.body);
       
       // First check if user credentials are valid in Google Sheets (V and M columns)
-      const isAllowed = await storage.isUserAllowed(email, password);
-      if (!isAllowed) {
-        return res.status(403).json({ 
-          message: "구글 시트에 등록되지 않았거나 잘못된 인증 정보입니다. 관리자에게 문의하세요." 
-        });
+      try {
+        const isAllowed = await storage.isUserAllowed(email, password);
+        if (!isAllowed) {
+          return res.status(403).json({ 
+            message: "구글 시트에 등록되지 않았거나 잘못된 인증 정보입니다. 관리자에게 문의하세요." 
+          });
+        }
+      } catch (error: any) {
+        if (error.message === 'WITHDRAWN_USER') {
+          return res.status(403).json({ 
+            message: "탈퇴한 계정입니다. 관리자에게 계정 복구를 요청하세요." 
+          });
+        }
+        throw error;
       }
       
       let user = await storage.getUserByEmail(email);
@@ -352,32 +361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "구글 시트에서 사용자 프로필을 찾을 수 없습니다" });
       }
 
-      // Mark user as withdrawn in Google Sheets
-      const withdrawalData = {
-        ...profile,
-        userEmail: user.email,
-        region: `[탈퇴] ${profile.region}`,
-        chapter: `[탈퇴] ${profile.chapter}`,
-        memberName: `[탈퇴] ${profile.memberName}`,
-        specialty: '[탈퇴된 계정]',
-        targetCustomer: '[탈퇴된 계정]',
-        rpartner1: '',
-        rpartner1Specialty: '',
-        rpartner1Stage: '',
-        rpartner2: '',
-        rpartner2Specialty: '',
-        rpartner2Stage: '',
-        rpartner3: '',
-        rpartner3Specialty: '',
-        rpartner3Stage: '',
-        rpartner4: '',
-        rpartner4Specialty: '',
-        rpartner4Stage: '',
-        totalPartners: '0',
-        achievement: '0%'
-      };
-
-      await sheetsService.syncScoreboardData(withdrawalData);
+      // Mark user as withdrawn in Google Sheets - STATUS를 "탈퇴"로 변경
+      await sheetsService.markUserAsWithdrawn(user.email);
 
       // Delete user data from local database
       await storage.deleteUserData(userId);
