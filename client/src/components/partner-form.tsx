@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
-import { Save, Edit, User } from "lucide-react";
+import { Save, Edit, User, ExternalLink } from "lucide-react";
 
 interface PartnerFormProps {
   userId: string;
@@ -435,6 +435,19 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <span className="text-green-800 font-medium">나의 총 리퍼럴 파트너 수</span>
                       </div>
                       <span className="font-bold text-xl text-green-800">{achievementData.profitable}명</span>
+                    </div>
+                    
+                    {/* RPI 확인하기 버튼 */}
+                    <div className="mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => window.open('https://www.powerteam-bnikorea.com/RPI', '_blank')}
+                        className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                      >
+                        <ExternalLink className="mr-2 w-4 h-4" />
+                        나의 챕터 RPI (Referral Partner Index) 확인하기
+                      </Button>
                     </div>
                   </div>
                 </div>
