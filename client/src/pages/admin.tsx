@@ -366,11 +366,11 @@ export default function AdminPage() {
                         className="mr-3"
                       />
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
-                        <div className="font-medium">{user.email}</div>
-                        <div>{user.region}</div>
-                        <div>{user.chapter}</div>
-                        <div>{user.memberName}</div>
-                        <div>{user.specialty}</div>
+                        <div className="font-medium truncate" title={user.email}>{user.email}</div>
+                        <div className="truncate" title={user.region}>{user.region}</div>
+                        <div className="truncate" title={user.chapter}>{user.chapter}</div>
+                        <div className="truncate" title={user.memberName}>{user.memberName}</div>
+                        <div className="truncate" title={user.specialty}>{user.specialty}</div>
                         <div className="flex items-center space-x-2">
                           <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
                             {user.status}
@@ -399,11 +399,11 @@ export default function AdminPage() {
                 {withdrawnUsers.map((user) => (
                   <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 bg-red-50">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
-                      <div className="font-medium text-red-700">{user.email}</div>
-                      <div className="text-red-600">{user.region}</div>
-                      <div className="text-red-600">{user.chapter}</div>
-                      <div className="text-red-600">{user.memberName}</div>
-                      <div className="text-red-600">{user.specialty}</div>
+                      <div className="font-medium text-red-700 truncate" title={user.email}>{user.email}</div>
+                      <div className="text-red-600 truncate" title={user.region}>{user.region}</div>
+                      <div className="text-red-600 truncate" title={user.chapter}>{user.chapter}</div>
+                      <div className="text-red-600 truncate" title={user.memberName}>{user.memberName}</div>
+                      <div className="text-red-600 truncate" title={user.specialty}>{user.specialty}</div>
                       <Badge variant="destructive">탈퇴</Badge>
                     </div>
                   </div>
