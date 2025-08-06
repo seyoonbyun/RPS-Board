@@ -490,7 +490,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             className="w-full border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400"
                           >
                             <Trash2 className="mr-2 w-4 h-4" />
-                            멤버 탈퇴 처리
+                            나의 RPS 계정 삭제하기
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="alert-dialog-content max-w-md">
