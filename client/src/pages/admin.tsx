@@ -391,7 +391,7 @@ export default function AdminPage() {
                 className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600"
               >
                 <Download className="mr-2 w-4 h-4" />
-                사용자 목록 내보내기
+                RPS 목록 내보내기
               </Button>
               <Button
                 variant="outline"
