@@ -209,7 +209,8 @@ class GoogleSheetsService {
             rpartner4Specialty: row[16] || '',
             rpartner4Stage: this.convertFullTextToStage(row[17] || ''),
             totalPartners: row[18] || '',
-            achievement: row[19] || ''
+            achievement: row[19] || '',
+            auth: row[23] || '' // AUTH 컬럼 추가 (24번째 컬럼, index 23)
           };
         }
       }
@@ -251,13 +252,14 @@ class GoogleSheetsService {
         columnsCount: rows[0] ? rows[0].length : 0
       });
       
-      // 헤더 행에서 ID, PW, STATUS 컬럼 동적 감지
+      // 헤더 행에서 ID, PW, STATUS, AUTH 컬럼 동적 감지
       const headerRow = rows[0] || [];
       let userIdColumnIndex = -1;
       let passwordColumnIndex = -1;
       let statusColumnIndex = -1;
+      let authColumnIndex = -1;
       
-      // ID, PW, STATUS 컬럼 찾기 (대소문자 무관, 공백 허용)
+      // ID, PW, STATUS, AUTH 컬럼 찾기 (대소문자 무관, 공백 허용)
       for (let j = 0; j < headerRow.length; j++) {
         const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
         if (header === 'ID') {
@@ -269,6 +271,9 @@ class GoogleSheetsService {
         if (header === 'STATUS') {
           statusColumnIndex = j;
         }
+        if (header === 'AUTH') {
+          authColumnIndex = j;
+        }
       }
       
       if (userIdColumnIndex === -1 || passwordColumnIndex === -1) {
@@ -277,7 +282,7 @@ class GoogleSheetsService {
         return false;
       }
       
-      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]}), STATUS: ${statusColumnIndex} (${statusColumnIndex >= 0 ? headerRow[statusColumnIndex] : 'NOT FOUND'})`);
+      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]}), STATUS: ${statusColumnIndex} (${statusColumnIndex >= 0 ? headerRow[statusColumnIndex] : 'NOT FOUND'}), AUTH: ${authColumnIndex} (${authColumnIndex >= 0 ? headerRow[authColumnIndex] : 'NOT FOUND'})`);
       
       // 모든 행에서 사용자 검색 (빈 행 스킵)
       for (let i = 1; i < rows.length; i++) {
@@ -290,19 +295,22 @@ class GoogleSheetsService {
         
         const emailInSheet = row[0].toString().trim().toLowerCase();
         if (emailInSheet === email.toLowerCase()) {
-          // ID, PW, STATUS 값 검증
+          // ID, PW, STATUS, AUTH 값 검증
           const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ? 
             row[userIdColumnIndex].toString().trim() : null;
           const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] ? 
             row[passwordColumnIndex].toString() : null;
           const statusInSheet = statusColumnIndex >= 0 && row[statusColumnIndex] ? 
             row[statusColumnIndex].toString().trim() : '활동중';
+          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
+            row[authColumnIndex].toString().trim() : '';
           
           console.log(`🔍 Found user ${email} in row ${i+1}:`);
           console.log(`- Email: ${emailInSheet}`);
           console.log(`- ID: ${userIdInSheet ? '✓' : '✗'}`);
           console.log(`- PW: ${passwordInSheet ? '✓' : '✗'}`);
           console.log(`- STATUS: ${statusInSheet}`);
+          console.log(`- AUTH: ${authInSheet || 'NONE'}`);
           
           // 탈퇴한 사용자는 로그인 차단
           if (statusInSheet === '탈퇴') {
@@ -329,6 +337,73 @@ class GoogleSheetsService {
       
     } catch (error) {
       console.error('❌ Error during user credential check:', error);
+      return false;
+    }
+  }
+
+  async checkAdminPermission(email: string): Promise<boolean> {
+    try {
+      console.log(`🔐 Checking admin permission for ${email}...`);
+      
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:X?access_token=${this.accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to read Google Sheets for admin permission check');
+        return false;
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      // 헤더 행에서 AUTH 컬럼 찾기
+      const headerRow = rows[0] || [];
+      let authColumnIndex = -1;
+      
+      for (let j = 0; j < headerRow.length; j++) {
+        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
+        if (header === 'AUTH') {
+          authColumnIndex = j;
+          break;
+        }
+      }
+      
+      if (authColumnIndex === -1) {
+        console.log(`❌ AUTH column not found for admin permission check`);
+        return false;
+      }
+      
+      // 사용자 검색
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          continue;
+        }
+        
+        const emailInSheet = row[0].toString().trim().toLowerCase();
+        if (emailInSheet === email.toLowerCase()) {
+          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
+            row[authColumnIndex].toString().trim() : '';
+          
+          const isAdmin = authInSheet === 'Admin' || authInSheet === 'Growth Coordinator';
+          console.log(`🔐 Admin permission for ${email}: ${isAdmin ? '✅ GRANTED' : '❌ DENIED'} (AUTH: ${authInSheet})`);
+          return isAdmin;
+        }
+      }
+      
+      console.log(`❌ User ${email} not found for admin permission check`);
+      return false;
+      
+    } catch (error) {
+      console.error('❌ Error during admin permission check:', error);
       return false;
     }
   }

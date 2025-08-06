@@ -39,8 +39,24 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [bulkEmails, setBulkEmails] = useState('');
+  const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
 
   // 관리자 권한 확인
+  // 관리자 권한 확인
+  const { data: adminPermission, isLoading: isAdminLoading } = useQuery({
+    queryKey: ["/api/admin/check-permission", currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser?.email) return { isAdmin: false };
+      const response = await fetch(`/api/admin/check-permission?email=${encodeURIComponent(currentUser.email)}`);
+      if (!response.ok) {
+        return { isAdmin: false };
+      }
+      return response.json();
+    },
+    enabled: !!currentUser?.email,
+    staleTime: 60000, // 1분간 캐시
+  });
+
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
     if (!savedUser) {
@@ -49,16 +65,36 @@ export default function AdminPage() {
     }
     
     const user = JSON.parse(savedUser);
-    if (user.email !== 'info@bnikorea.com') {
+    setCurrentUser(user);
+  }, [setLocation]);
+
+  // 권한 확인 후 리다이렉트
+  useEffect(() => {
+    if (currentUser && adminPermission !== undefined && !adminPermission.isAdmin) {
       setLocation("/dashboard");
       toast({
         title: "접근 거부",
         description: "관리자 권한이 필요합니다.",
         variant: "destructive"
       });
-      return;
     }
-  }, [setLocation, toast]);
+  }, [currentUser, adminPermission, setLocation, toast]);
+
+  // 권한 확인 중이거나 권한이 없으면 로딩 또는 리다이렉트
+  if (!currentUser || isAdminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">권한을 확인하는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (adminPermission && !adminPermission.isAdmin) {
+    return null; // useEffect에서 리다이렉트 처리
+  }
 
   // 전체 사용자 목록 조회
   const { data: allUsers, isLoading } = useQuery<UserData[]>({

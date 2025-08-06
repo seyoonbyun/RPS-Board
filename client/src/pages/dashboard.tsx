@@ -37,6 +37,20 @@ export default function Dashboard() {
     refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
+  // 관리자 권한 확인
+  const { data: adminPermission } = useQuery({
+    queryKey: ["/api/admin/check-permission", user?.email],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/check-permission?email=${encodeURIComponent(user.email)}`);
+      if (!response.ok) {
+        return { isAdmin: false };
+      }
+      return response.json();
+    },
+    enabled: !!user?.email,
+    staleTime: 60000, // 1분간 캐시
+  });
+
   const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
@@ -113,8 +127,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {/* 관리자 패널 버튼 - 특정 이메일에만 표시 */}
-              {user.email === 'info@bnikorea.com' && (
+              {/* 관리자 패널 버튼 - AUTH 권한 기반 표시 */}
+              {adminPermission?.isAdmin && (
                 <Button
                   variant="outline"
                   size="sm"

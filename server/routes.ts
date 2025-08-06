@@ -383,6 +383,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin API: Get all users
+  // Admin permission check route
+  app.get("/api/admin/check-permission", async (req, res) => {
+    try {
+      const userEmail = req.query.email as string;
+      
+      if (!userEmail) {
+        return res.status(400).json({ message: "이메일이 필요합니다", isAdmin: false });
+      }
+
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다", isAdmin: false });
+      }
+
+      const isAdmin = await googleSheetsService.checkAdminPermission(userEmail);
+      res.json({ isAdmin });
+      
+    } catch (error) {
+      console.error('Admin permission check error:', error);
+      res.status(500).json({ message: "관리자 권한 확인 중 오류가 발생했습니다", isAdmin: false });
+    }
+  });
+
   app.get("/api/admin/users", async (req, res) => {
     try {
       const allUsersData = await storage.getAllUsersFromGoogleSheets();
