@@ -629,6 +629,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lines = csvContent.trim().split('\n');
       const errors: string[] = [];
       
+      // 헤더 행 건너뛰기 - 첫 번째 행이 헤더인지 확인
+      let dataLines = lines;
+      if (lines.length > 0) {
+        const firstLine = lines[0].toLowerCase();
+        // 헤더로 보이는 키워드들이 포함된 경우 첫 번째 행 제외
+        if (firstLine.includes('id') || firstLine.includes('이메일') || firstLine.includes('email') || 
+            firstLine.includes('region') || firstLine.includes('지역') || firstLine.includes('member')) {
+          console.log('📋 Header row detected, skipping first line:', lines[0]);
+          dataLines = lines.slice(1);
+        }
+      }
+      
       // 권한 키워드 매핑 함수
       const normalizeAuthKeyword = (keyword: string): string | null => {
         const lower = keyword.toLowerCase();
@@ -644,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return null;
       };
 
-      const users = lines.map((line, index) => {
+      const users = dataLines.map((line, index) => {
         console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
         const parts = line.split(',').map(part => part.trim());
         console.log(`📝 Parts array:`, parts);

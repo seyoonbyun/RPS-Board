@@ -104,7 +104,32 @@ export class ObjectStorageService {
       });
       
       stream.on('end', () => {
-        const content = Buffer.concat(chunks).toString('utf-8');
+        const buffer = Buffer.concat(chunks);
+        let content: string;
+        
+        // Try different encodings to handle Korean text properly
+        try {
+          // First try UTF-8
+          content = buffer.toString('utf-8');
+          // Check if it contains replacement characters (indicates encoding issue)
+          if (content.includes('�')) {
+            throw new Error('UTF-8 decode failed');
+          }
+        } catch (error) {
+          try {
+            // Try UTF-8 with BOM removal
+            let bomlessBuffer = buffer;
+            if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+              bomlessBuffer = buffer.slice(3);
+            }
+            content = bomlessBuffer.toString('utf-8');
+          } catch (error2) {
+            // Fallback to latin1 and then manually handle Korean encoding
+            content = buffer.toString('latin1');
+          }
+        }
+        
+        console.log('📄 CSV content preview (first 200 chars):', content.substring(0, 200));
         resolve(content);
       });
       
