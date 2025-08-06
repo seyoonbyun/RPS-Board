@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [bulkEmails, setBulkEmails] = useState('');
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -606,13 +607,35 @@ export default function AdminPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 단일 사용자 추가 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <Plus className="mr-2 w-5 h-5 text-red-600" />
-                새 사용자 추가
-              </h3>
+          <div className="space-y-6">
+            {/* 탭 선택 */}
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setAddMode('single')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  addMode === 'single'
+                    ? 'bg-white text-gray-900 shadow'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Plus className="w-4 h-4 inline mr-2" />
+                개별 사용자 추가
+              </button>
+              <button
+                onClick={() => setAddMode('csv')}
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  addMode === 'csv'
+                    ? 'bg-white text-gray-900 shadow'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <FileText className="w-4 h-4 inline mr-2" />
+                CSV 파일 업로드
+              </button>
+            </div>
+
+            {/* 개별 사용자 추가 폼 */}
+            {addMode === 'single' && (
               <div className="bg-red-50 p-4 rounded-lg space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -692,14 +715,10 @@ export default function AdminPage() {
                   {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
                 </Button>
               </div>
-            </div>
+            )}
 
             {/* CSV 파일 업로드 섹션 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <FileText className="mr-2 w-5 h-5 text-blue-600" />
-                CSV 파일로 일괄 사용자 추가
-              </h3>
+            {addMode === 'csv' && (
               <div className="bg-blue-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-blue-800 mb-3">
                   정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.
@@ -733,9 +752,7 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
-            </div>
-
-
+            )}
           </div>
           
           <AlertDialogFooter>
