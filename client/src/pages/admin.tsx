@@ -628,16 +628,19 @@ export default function AdminPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="text-sm text-gray-600">
-                  총 {filteredActiveUsers.length}명 표시 (전체 {activeUsers.length}명 중)
-                </div>
+
               </div>
 
               {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
               {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
                 <div className="border rounded-lg overflow-hidden">
                   <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
+                    <div className="flex items-center space-x-4">
+                      <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
+                      <div className="text-sm text-gray-600">
+                        총 {filteredActiveUsers.length}명 표시 (전체 {activeUsers.length}명 중)
+                      </div>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="select-all"
