@@ -304,11 +304,15 @@ export default function AdminPage() {
       // CSV 형식 파싱: 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호, 권한
       const lines = bulkAddUsers.trim().split('\n');
       const users = lines.map((line, index) => {
+        console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
         const parts = line.split(',').map(part => part.trim());
+        console.log(`📝 Parts array:`, parts);
+        
         if (parts.length < 4) {
           throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
         }
-        return {
+        
+        const user = {
           email: parts[0],
           region: parts[1] || '',
           chapter: parts[2] || '',
@@ -318,6 +322,14 @@ export default function AdminPage() {
           password: parts[6] || '1234',
           auth: parts[7] || 'Member'
         };
+        
+        console.log(`👤 Parsed user ${index + 1}:`, {
+          email: user.email,
+          password: user.password,
+          auth: user.auth
+        });
+        
+        return user;
       });
 
       bulkAddUserMutation.mutate(users);
