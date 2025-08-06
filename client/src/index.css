@@ -143,31 +143,39 @@ input {
   border: 1px solid #d12031 !important;
 }
 
-/* 체크박스 브랜드 컬러 적용 */
-[data-state="checked"] {
+/* 체크박스 브랜드 컬러 적용 - 깔끔한 스타일 */
+button[role="checkbox"][data-state="checked"] {
   background-color: #d12031 !important;
   border-color: #d12031 !important;
+  border-width: 2px !important;
+  box-shadow: none !important;
 }
 
-[data-state="checked"]:hover {
+button[role="checkbox"][data-state="checked"]:hover {
   background-color: #b01e2b !important;
   border-color: #b01e2b !important;
 }
 
-/* Radix UI 체크박스 전용 스타일 */
-.checkbox-root[data-state="checked"] {
-  background-color: #d12031 !important;
-  border-color: #d12031 !important;
+button[role="checkbox"][data-state="checked"]:focus {
+  outline: none !important;
+  ring: 2px solid #d12031 !important;
+  ring-offset: 2px !important;
 }
 
-.checkbox-root[data-state="checked"]:hover {
-  background-color: #b01e2b !important;
-  border-color: #b01e2b !important;
+button[role="checkbox"][data-state="unchecked"] {
+  background-color: white !important;
+  border-color: #d1d5db !important;
+  border-width: 2px !important;
+}
+
+button[role="checkbox"][data-state="unchecked"]:hover {
+  border-color: #d12031 !important;
 }
 
 /* 체크박스 내부 체크 아이콘 색상 */
-[data-state="checked"] svg {
+button[role="checkbox"][data-state="checked"] svg {
   color: white !important;
+  stroke-width: 3 !important;
 }
 
 input:focus,
