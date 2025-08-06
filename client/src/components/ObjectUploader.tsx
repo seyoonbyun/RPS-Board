@@ -82,10 +82,43 @@ export function ObjectUploader({
           });
         });
 
-        // 드래그 앤 드롭 힌트 텍스트 변경
+        // 드래그 앤 드롭 힌트 텍스트 변경 및 아이콘 추가
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
         if (dropHint && dropHint.textContent?.includes('Drop files here')) {
-          dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
+          // 아이콘 엘리먼트 생성
+          const iconElement = document.createElement('div');
+          iconElement.style.cssText = `
+            width: 40px;
+            height: 32px;
+            margin: 0 auto 12px auto;
+            background-color: #374151;
+            border: 2px solid #6b7280;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 18px;
+            font-weight: bold;
+          `;
+          iconElement.textContent = '↑';
+          
+          // 텍스트 엘리먼트 생성
+          const textElement = document.createElement('div');
+          textElement.style.cssText = `
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            margin: 0;
+            line-height: 1.5;
+          `;
+          textElement.textContent = '여기에 파일 끌어다 놓기 또는';
+          
+          // 기존 내용을 지우고 새 엘리먼트들 추가
+          dropHint.innerHTML = '';
+          dropHint.appendChild(iconElement);
+          dropHint.appendChild(textElement);
         }
         
         // 파일 선택 버튼 텍스트 변경

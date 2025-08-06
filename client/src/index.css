@@ -147,22 +147,7 @@
     position: relative !important;
   }
 
-  /* 업로드 아이콘 추가 */
-  .uppy-Dashboard-dropFilesHereHint::before {
-    content: "↑" !important;
-    display: block !important;
-    width: 40px !important;
-    height: 32px !important;
-    margin: 0 auto 12px auto !important;
-    font-size: 18px !important;
-    color: #6b7280 !important;
-    text-align: center !important;
-    line-height: 28px !important;
-    border: 2px solid #6b7280 !important;
-    border-radius: 6px !important;
-    background-color: #374151 !important;
-    font-weight: bold !important;
-  }
+  /* JavaScript로 생성된 아이콘을 위한 기본 스타일 */
 
   /* 파일이 없을 때의 상태 */
   .uppy-Dashboard-AddFiles[data-uppy-drag-drop-supported="true"] {
