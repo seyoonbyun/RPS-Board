@@ -663,5 +663,23 @@ input[placeholder*="작성예"]:-moz-placeholder {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
 }
 
+/* Uppy Dashboard 아이콘 추가 - 이미지와 정확히 동일한 디자인 */
+.uppy-Dashboard-AddFiles::before {
+  content: '↑';
+  display: flex;
+  width: 40px;
+  height: 32px;
+  background-color: #374151;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 6px;
+  margin: 0 auto 20px auto;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: 20px;
+}
+
 
 

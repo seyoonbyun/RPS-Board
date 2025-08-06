@@ -63,46 +63,7 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
 
-  // 모달이 열릴 때 아이콘 추가
-  useEffect(() => {
-    if (showModal) {
-      const addIcon = () => {
-        // 더 구체적인 선택자를 사용해서 드롭 영역 찾기
-        const dropArea = document.querySelector('.uppy-Dashboard-AddFiles');
-        const existingIcon = document.querySelector('.upload-icon');
-        
-        if (dropArea && !existingIcon) {
-          const icon = document.createElement('div');
-          icon.className = 'upload-icon';
-          icon.innerHTML = '↑';
-          icon.style.cssText = `
-            width: 40px;
-            height: 32px;
-            background-color: #374151;
-            border-radius: 6px;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px auto 10px auto;
-            position: relative;
-            z-index: 10;
-          `;
-          // 드롭 영역의 첫 번째 자식으로 삽입
-          dropArea.insertBefore(icon, dropArea.firstChild);
-          console.log('Upload icon added successfully');
-        }
-      };
-      
-      // DOM이 준비될 때까지 여러 번 시도
-      const attempts = [300, 600, 1000];
-      attempts.forEach(delay => {
-        setTimeout(addIcon, delay);
-      });
-    }
-  }, [showModal]);
+
 
 
   const [uppy] = useState(() =>
