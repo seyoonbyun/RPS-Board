@@ -595,32 +595,33 @@ export default function AdminPage() {
                 {/* 헤더 */}
                 <div className="bg-gray-100 px-4 py-2 border-b">
                   <div className="flex items-center">
-                    <div className="w-8 mr-3"></div> {/* 체크박스 공간 */}
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-xs font-medium text-gray-600">
-                      <div>ID</div>
-                      <div>지역</div>
-                      <div>챕터</div>
-                      <div>멤버명</div>
-                      <div>전문분야</div>
-                      <div>상태/파트너수</div>
+                    <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
+                    <div className="flex-1 grid grid-cols-6 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      <div className="text-left">ID</div>
+                      <div className="text-center">지역</div>
+                      <div className="text-center">챕터</div>
+                      <div className="text-center">멤버명</div>
+                      <div className="text-center">전문분야</div>
+                      <div className="text-center">상태/파트너수</div>
                     </div>
                   </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {filteredActiveUsers.map((user) => (
                     <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
-                      <Checkbox
-                        checked={selectedUsers.includes(user.email)}
-                        onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
-                        className="mr-3"
-                      />
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
-                        <div className="font-medium truncate" title={user.email}>{user.email}</div>
-                        <div className="truncate" title={user.region}>{user.region}</div>
-                        <div className="truncate" title={user.chapter}>{user.chapter}</div>
-                        <div className="truncate" title={user.memberName}>{user.memberName}</div>
-                        <div className="truncate" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex items-center space-x-2">
+                      <div className="w-[44px] flex-shrink-0 flex justify-start">
+                        <Checkbox
+                          checked={selectedUsers.includes(user.email)}
+                          onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
+                        />
+                      </div>
+                      <div className="flex-1 grid grid-cols-6 gap-4 text-sm">
+                        <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
+                        <div className="truncate text-center" title={user.region}>{user.region}</div>
+                        <div className="truncate text-center" title={user.chapter}>{user.chapter}</div>
+                        <div className="truncate text-center" title={user.memberName}>{user.memberName}</div>
+                        <div className="truncate text-center" title={user.specialty}>{user.specialty}</div>
+                        <div className="flex items-center justify-center space-x-2">
                           <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
                             {user.status}
                           </Badge>
@@ -644,16 +645,33 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="border rounded-lg overflow-hidden">
+              {/* 탈퇴 사용자 헤더 */}
+              <div className="bg-red-100 px-4 py-2 border-b">
+                <div className="flex items-center">
+                  <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
+                  <div className="flex-1 grid grid-cols-6 gap-4 text-xs font-medium text-red-800 uppercase tracking-wide">
+                    <div className="text-left">ID</div>
+                    <div className="text-center">지역</div>
+                    <div className="text-center">챕터</div>
+                    <div className="text-center">멤버명</div>
+                    <div className="text-center">전문분야</div>
+                    <div className="text-center">상태</div>
+                  </div>
+                </div>
+              </div>
               <div className="max-h-64 overflow-y-auto">
                 {withdrawnUsers.map((user) => (
                   <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 bg-red-50">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-sm">
-                      <div className="font-medium text-red-700 truncate" title={user.email}>{user.email}</div>
-                      <div className="text-red-600 truncate" title={user.region}>{user.region}</div>
-                      <div className="text-red-600 truncate" title={user.chapter}>{user.chapter}</div>
-                      <div className="text-red-600 truncate" title={user.memberName}>{user.memberName}</div>
-                      <div className="text-red-600 truncate" title={user.specialty}>{user.specialty}</div>
-                      <Badge variant="destructive">탈퇴</Badge>
+                    <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
+                    <div className="flex-1 grid grid-cols-6 gap-4 text-sm">
+                      <div className="font-medium text-red-700 truncate text-left" title={user.email}>{user.email}</div>
+                      <div className="text-red-600 truncate text-center" title={user.region}>{user.region}</div>
+                      <div className="text-red-600 truncate text-center" title={user.chapter}>{user.chapter}</div>
+                      <div className="text-red-600 truncate text-center" title={user.memberName}>{user.memberName}</div>
+                      <div className="text-red-600 truncate text-center" title={user.specialty}>{user.specialty}</div>
+                      <div className="flex justify-center">
+                        <Badge variant="destructive">탈퇴</Badge>
+                      </div>
                     </div>
                   </div>
                 ))}
