@@ -53,7 +53,7 @@ export default function AdminPage() {
     password: '1234',
     auth: 'Member'
   });
-  const [bulkAddUsers, setBulkAddUsers] = useState('');
+
 
   // 관리자 권한 확인
   // 관리자 권한 확인
@@ -169,7 +169,6 @@ export default function AdminPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       setShowBulkAddDialog(false);
-      setBulkAddUsers('');
       toast({
         title: "일괄 사용자 추가 완료",
         description: data.message,
@@ -332,130 +331,7 @@ export default function AdminPage() {
     addUserMutation.mutate(newUser);
   };
 
-  const handleBulkAddUsers = () => {
-    if (!bulkAddUsers.trim()) {
-      toast({
-        title: "입력 오류",
-        description: "사용자 정보를 입력해주세요",
-        variant: "destructive",
-        className: "bg-white text-gray-900"
-      });
-      return;
-    }
 
-    try {
-      // CSV 형식 파싱: 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호, 권한
-      const lines = bulkAddUsers.trim().split('\n');
-      const users = lines.map((line, index) => {
-        console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
-        const parts = line.split(',').map(part => part.trim());
-        console.log(`📝 Parts array:`, parts);
-        
-        if (parts.length < 4) {
-          throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
-        }
-        
-        // 필드 개수에 따라 유연하게 처리
-        let password = '1234';
-        let auth = 'Member';
-        
-        // 권한 키워드 매핑 함수
-        const normalizeAuthKeyword = (keyword: string): string | null => {
-          const lower = keyword.toLowerCase();
-          if (lower === 'admin' || lower === 'ADMIN'.toLowerCase() || lower === '어드민') {
-            return 'Admin';
-          }
-          if (lower === 'growth' || lower === 'GROWTH'.toLowerCase() || lower === '성장') {
-            return 'Growth';
-          }
-          if (lower === 'member' || lower === 'MEMBER'.toLowerCase() || lower === '멤버') {
-            return 'Member';
-          }
-          return null;
-        };
-
-        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기 (인덱스는 0부터 시작)
-        if (parts.length >= 7) {
-          const field6 = parts[6];  // 7번째 필드
-          const field7 = parts.length >= 8 ? parts[7] : undefined;  // 8번째 필드
-          
-          const field6Auth = normalizeAuthKeyword(field6);
-          const field7Auth = field7 ? normalizeAuthKeyword(field7) : null;
-          
-          console.log(`🔍 Field analysis for ${parts[0]}:`, {
-            partsLength: parts.length,
-            field6: field6,
-            field7: field7,
-            field6Auth: field6Auth,
-            field7Auth: field7Auth
-          });
-          
-          // 두 필드 중 권한이 있는 것을 찾아서 할당
-          if (field6Auth && field7Auth) {
-            // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
-            auth = field6Auth;
-            password = field7 || '1234';
-          } else if (field6Auth) {
-            // 7번째가 권한이면
-            auth = field6Auth;
-            if (field7) password = field7;
-          } else if (field7Auth) {
-            // 8번째가 권한이면
-            auth = field7Auth;
-            password = field6;
-          } else {
-            // 둘 다 권한이 아니면 7번째를 비밀번호로 처리
-            password = field6;
-            // field7이 없으면 auth는 기본값 'Member' 유지
-          }
-        }
-        
-        // 7개 필드만 있는 경우를 위한 추가 체크 (6번째 필드가 권한일 수도 있음)
-        if (parts.length === 7) {
-          const field5 = parts[5];  // 6번째 필드
-          const field5Auth = normalizeAuthKeyword(field5);
-          
-          console.log(`🔍 Additional check for 7-field case ${parts[0]}:`, {
-            field5: field5,
-            field5Auth: field5Auth
-          });
-          
-          if (field5Auth) {
-            auth = field5Auth;
-            password = parts[6];  // 7번째 필드를 비밀번호로
-          }
-        }
-
-        const user = {
-          email: parts[0],
-          region: parts[1] || '',
-          chapter: parts[2] || '',
-          memberName: parts[3],
-          specialty: parts[4] || '',
-          targetCustomer: parts[5] || '',
-          password: password,
-          auth: auth
-        };
-        
-        console.log(`👤 Parsed user ${index + 1}:`, {
-          email: user.email,
-          password: user.password,
-          auth: user.auth
-        });
-        
-        return user;
-      });
-
-      bulkAddUserMutation.mutate(users);
-    } catch (error: any) {
-      toast({
-        title: "파싱 오류",
-        description: error.message,
-        variant: "destructive",
-        className: "bg-white text-gray-900"
-      });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -823,22 +699,18 @@ export default function AdminPage() {
       <AlertDialog open={showBulkAddDialog} onOpenChange={setShowBulkAddDialog}>
         <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>일괄 사용자 추가</AlertDialogTitle>
+            <AlertDialogTitle>CSV 파일로 일괄 사용자 추가</AlertDialogTitle>
             <AlertDialogDescription>
-              CSV 형식으로 여러 사용자를 한번에 추가할 수 있습니다. 각 줄에 하나씩 입력해주세요.
+              CSV 파일을 업로드하여 여러 사용자를 한번에 추가할 수 있습니다.
               <br />
-              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]
+              <strong>파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]
               <br />
               <small className="text-gray-500">* 타겟고객(나의 핵심 고객층)은 사용자가 직접 입력하므로 관리자 추가에서는 제외됩니다.</small>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-6">
-            {/* 방법 1: CSV 파일 업로드 */}
+            {/* CSV 파일 업로드 */}
             <div>
-              <h3 className="text-lg font-medium mb-3 flex items-center">
-                <FileText className="mr-2 w-5 h-5 text-blue-600" />
-                방법 1: CSV 파일 업로드
-              </h3>
               <div className="bg-blue-50 p-4 rounded-lg space-y-3">
                 <p className="text-sm text-blue-800">
                   <strong>정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.</strong>
@@ -870,40 +742,15 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <Separator />
 
-            {/* 방법 2: 텍스트 직접 입력 */}
-            <div>
-              <h3 className="text-lg font-medium mb-3 flex items-center">
-                <UserPlus className="mr-2 w-5 h-5 text-green-600" />
-                방법 2: 텍스트 직접 입력
-              </h3>
-              <div>
-                <label className="text-sm font-medium mb-2 block">사용자 목록 (CSV 형식)</label>
-                <textarea
-                  className="w-full h-40 p-3 border rounded-md resize-none"
-                  placeholder={`예시:
-user1@example.com, 서울, 하이, 홍길동, 디자인, admin, 1234
-user2@example.com, 부산, 굿, 김철수, 개발, Growth, 5678
-user3@example.com, 대구, 베스트, 이영희, 마케팅, 멤버, 9999`}
-                  value={bulkAddUsers}
-                  onChange={(e) => setBulkAddUsers(e.target.value)}
-                />
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                • 각 필드는 쉼표(,)로 구분해주세요
-                • 7~8번째 필드: 권한과 비밀번호를 순서에 관계없이 입력 가능
-              </div>
-            </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleBulkAddUsers}
-              disabled={bulkAddUserMutation.isPending}
+              onClick={() => setShowBulkAddDialog(false)}
               className="bg-red-600 hover:bg-red-700"
             >
-              {bulkAddUserMutation.isPending ? "추가 중..." : "일괄 추가"}
+              확인
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
