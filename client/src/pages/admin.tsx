@@ -597,7 +597,7 @@ export default function AdminPage() {
 
       {/* 단일 사용자 추가 다이얼로그 */}
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <AlertDialogContent className="max-w-6xl">
+        <AlertDialogContent className="max-w-6xl bg-white border border-gray-200 shadow-2xl z-[100]">
           <AlertDialogHeader>
             <AlertDialogTitle>사용자 추가</AlertDialogTitle>
             <AlertDialogDescription>
@@ -699,10 +699,10 @@ export default function AdminPage() {
                     <SelectTrigger className="bg-white border-gray-300">
                       <SelectValue placeholder="권한 선택" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin (관리자)</SelectItem>
-                      <SelectItem value="Growth">Growth (성장팀)</SelectItem>
-                      <SelectItem value="Member">Member (일반회원)</SelectItem>
+                    <SelectContent className="bg-white border border-gray-300 shadow-lg z-[200]">
+                      <SelectItem value="Admin" className="bg-white hover:bg-gray-100">Admin (관리자)</SelectItem>
+                      <SelectItem value="Growth" className="bg-white hover:bg-gray-100">Growth (성장팀)</SelectItem>
+                      <SelectItem value="Member" className="bg-white hover:bg-gray-100">Member (일반회원)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
