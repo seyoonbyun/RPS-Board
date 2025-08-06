@@ -712,7 +712,7 @@ export default function AdminPage() {
                   disabled={addUserMutation.isPending}
                   className="w-full bg-red-600 hover:bg-red-700 text-white"
                 >
-                  {addUserMutation.isPending ? "추가 중..." : "멤버 추가"}
+                  {addUserMutation.isPending ? "등록 중..." : "멤버 등록"}
                 </Button>
               </div>
             )}
