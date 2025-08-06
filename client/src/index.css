@@ -80,46 +80,82 @@
     color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
   }
 
-  /* Uppy Dashboard 한국어 스타일링 */
+  /* Uppy Dashboard 커스텀 디자인 */
   .uppy-Dashboard-inner {
-    border-radius: 8px !important;
-    border: 2px solid #d12031 !important;
+    border-radius: 12px !important;
+    border: 2px dashed #e5e7eb !important;
+    background-color: #f9fafb !important;
+    min-height: 300px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
   }
 
-  /* 한국어 텍스트 스타일링 */
-  .uppy-Dashboard-dropFilesHereHint {
-    color: #374151 !important;
-    font-size: 16px !important;
-    font-weight: 500 !important;
-  }
-
-  .uppy-Dashboard-browse {
-    color: #d12031 !important;
-    font-weight: 600 !important;
-    text-decoration: underline !important;
-    cursor: pointer !important;
-  }
-
-  .uppy-Dashboard-browse:hover {
-    color: #991b1b !important;
-  }
-
-  .uppy-Dashboard-dropFilesTitle {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-    margin-bottom: 12px !important;
+  .uppy-Dashboard-AddFiles {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   .uppy-Dashboard-AddFiles-title {
-    color: #d12031 !important;
-    font-size: 18px !important;
+    display: none !important;
+  }
+
+  /* CSV 파일 선택 버튼 */
+  .uppy-Dashboard-browse {
+    background-color: #d12031 !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
     font-weight: 600 !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    margin-bottom: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .uppy-Dashboard-browse:hover {
+    background-color: #991b1b !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .uppy-Dashboard-browse::before {
+    content: "+" !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+
+  /* 드래그 앤 드롭 텍스트 */
+  .uppy-Dashboard-dropFilesHereHint {
+    color: #6b7280 !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* 파일이 없을 때의 상태 */
+  .uppy-Dashboard-AddFiles[data-uppy-drag-drop-supported="true"] {
+    border: none !important;
   }
 
   /* 업로드 버튼 스타일링 */
   .uppy-c-btn-primary {
     background-color: #d12031 !important;
     border-color: #d12031 !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
   }
 
   .uppy-c-btn-primary:hover {
@@ -140,8 +176,22 @@
   .uppy-Dashboard-note {
     color: #d12031 !important;
     font-weight: 500 !important;
-    margin-top: 12px !important;
+    margin-top: 16px !important;
     text-align: center !important;
+    font-size: 14px !important;
+  }
+
+  /* 파일 카드가 추가되었을 때 */
+  .uppy-Dashboard-files .uppy-Dashboard-Item {
+    border-radius: 8px !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* 모달 헤더 */
+  .uppy-Dashboard-title {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+    margin-bottom: 20px !important;
   }
 }
 

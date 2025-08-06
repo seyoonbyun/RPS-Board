@@ -63,18 +63,20 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
 
-  // Uppy 모달 텍스트를 한국어로 간단히 변경
+  // Uppy 모달 텍스트를 한국어로 변경
   useEffect(() => {
     if (showModal) {
       const timer = setTimeout(() => {
+        // 드래그 앤 드롭 텍스트 변경
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
         if (dropHint) {
-          dropHint.textContent = 'CSV 파일을 여기에 끌어다 놓거나 파일 선택해주세요';
+          dropHint.textContent = '또는 여기에 CSV 파일 끌어다 놓기';
         }
         
+        // 파일 선택 버튼 텍스트 변경
         const browse = document.querySelector('.uppy-Dashboard-browse');
         if (browse) {
-          browse.textContent = '파일 선택';
+          browse.textContent = 'CSV 파일 선택';
         }
       }, 300);
 
