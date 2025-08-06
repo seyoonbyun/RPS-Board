@@ -542,12 +542,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
       }
 
-      for (const user of users) {
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
         try {
           if (!user.email || !user.memberName) {
             errors.push(`${user.email || 'Unknown'}: 이메일과 멤버명은 필수 항목입니다`);
             continue;
           }
+
+          console.log(`🔄 Processing user ${i + 1}/${users.length}: ${user.email}`, {
+            password: user.password || '1234',
+            auth: user.auth || 'Member'
+          });
 
           await sheetsService.addNewUser({
             email: user.email,

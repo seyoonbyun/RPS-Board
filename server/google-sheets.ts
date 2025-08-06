@@ -439,7 +439,10 @@ class GoogleSheetsService {
     auth?: string;
   }): Promise<void> {
     try {
-      console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`);
+      console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`, {
+        password: userData.password || '1234',
+        auth: userData.auth || 'Member'
+      });
       
       // Get access token
       const accessToken = await this.getAccessToken();
@@ -507,6 +510,12 @@ class GoogleSheetsService {
         '활동중',                 // W: STATUS
         userData.auth || 'Member' // X: AUTH
       ];
+
+      console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
+        email: newUserData[0],
+        password: newUserData[21], // V: PW
+        auth: newUserData[23]      // X: AUTH
+      });
 
       const range = `RPS!A${targetRowIndex + 1}:X${targetRowIndex + 1}`;
       
