@@ -352,10 +352,10 @@ export default function AdminPage() {
   };
 
   const handleAddUser = () => {
-    if (!newUser.email || !newUser.memberName) {
+    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.specialty || !newUser.password || !newUser.auth) {
       toast({
         title: "입력 오류",
-        description: "이메일과 멤버명은 필수 항목입니다",
+        description: "모든 항목은 필수 입력 사항입니다",
         variant: "destructive",
         className: "bg-white text-gray-900"
       });
@@ -863,7 +863,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">지역</label>
+                    <label className="text-sm font-medium">지역 *</label>
                     <Input
                       placeholder="서울"
                       value={newUser.region}
@@ -872,7 +872,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">챕터</label>
+                    <label className="text-sm font-medium">챕터 *</label>
                     <Input
                       placeholder="하이"
                       value={newUser.chapter}
@@ -881,7 +881,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">전문분야</label>
+                    <label className="text-sm font-medium">전문분야 *</label>
                     <Input
                       placeholder="디자인"
                       value={newUser.specialty}
@@ -890,7 +890,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">비밀번호</label>
+                    <label className="text-sm font-medium">비밀번호 (휴대전화 뒷 4자리) *</label>
                     <Input
                       placeholder="1234"
                       value={newUser.password}
@@ -900,7 +900,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">권한</label>
+                  <label className="text-sm font-medium">권한 *</label>
                   <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
                     <SelectTrigger className="bg-white border border-red-600">
                       <SelectValue placeholder="권한 선택" />
