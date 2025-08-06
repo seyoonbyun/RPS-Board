@@ -382,8 +382,8 @@ export default function AdminPage() {
   
   // 필터링된 활성 사용자 목록
   const filteredActiveUsers = activeUsers.filter(user => {
-    const regionMatch = !regionFilter || regionFilter === '__all__' || user.region === regionFilter;
-    const chapterMatch = !chapterFilter || chapterFilter === '__all__' || user.chapter === chapterFilter;
+    const regionMatch = regionFilter === '__all__' || user.region === regionFilter;
+    const chapterMatch = chapterFilter === '__all__' || user.chapter === chapterFilter;
     return regionMatch && chapterMatch;
   });
   
@@ -620,6 +620,16 @@ export default function AdminPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {regionFilter !== '__all__' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setRegionFilter('__all__')}
+                      className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                      ✕
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center space-x-2">
                   <label className="text-sm font-medium text-gray-700">챕터:</label>
@@ -634,9 +644,40 @@ export default function AdminPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {chapterFilter !== '__all__' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setChapterFilter('__all__')}
+                      className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                      ✕
+                    </Button>
+                  )}
                 </div>
-
+                {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setRegionFilter('__all__');
+                      setChapterFilter('__all__');
+                    }}
+                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                  >
+                    모든 필터 해제
+                  </Button>
+                )}
               </div>
+
+              {/* 멤버 목록 안내 메시지 */}
+              {regionFilter === '__all__' && chapterFilter === '__all__' && (
+                <div className="border rounded-lg p-8 text-center bg-gray-50">
+                  <div className="text-gray-500 text-sm">
+                    위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                  </div>
+                </div>
+              )}
 
               {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
               {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
