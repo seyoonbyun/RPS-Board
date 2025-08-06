@@ -619,7 +619,7 @@ export default function AdminPage() {
                 }`}
               >
                 <Plus className="w-4 h-4 inline mr-2" />
-                개별 사용자 추가
+                멤버 개별 추가
               </button>
               <button
                 onClick={() => setAddMode('csv')}
@@ -712,7 +712,7 @@ export default function AdminPage() {
                   disabled={addUserMutation.isPending}
                   className="w-full bg-red-600 hover:bg-red-700 text-white"
                 >
-                  {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
+                  {addUserMutation.isPending ? "추가 중..." : "멤버 추가"}
                 </Button>
               </div>
             )}
