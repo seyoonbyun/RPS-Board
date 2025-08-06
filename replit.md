@@ -49,15 +49,16 @@ Preferred communication style: Simple, everyday language.
   - Dynamic permission checking API: `/api/admin/check-permission`
   - Frontend UI conditionally displays admin features based on user permissions
   - Secure admin panel access with automatic redirect for unauthorized users
-- **User Management System**: ✅ UPDATED (Aug 6, 2025)
+- **User Management System**: ✅ UPDATED (Aug 7, 2025)
   - Single user addition with profile data (email, region, chapter, member name, specialty, password)
   - CSV file upload for bulk user addition with comprehensive error handling and encoding support
-  - UTF-8/EUC-KR encoding detection and proper Korean text handling
+  - UTF-8/EUC-KR/CP949 encoding detection with iconv-lite library for proper Korean text handling
   - Header row detection and automatic skipping for CSV files
   - Real-time Google Sheets integration for immediate data persistence
   - Automatic validation for required fields (email, member name)
   - Smart row allocation system that reuses empty rows from deleted users
-  - Streamlined admin panel UI with CSV file upload only (text input method removed)
+  - **UI Streamlined (Aug 7, 2025)**: Single unified dialog with both options - removed separate "일괄 추가" button
+  - Two-panel interface: left panel for single user form, right panel for CSV upload
   - Full integration with existing withdrawal and permission systems
   - **Target Customer Policy**: Target customer (나의 핵심 고객층) excluded from admin addition - users manage this field directly
 

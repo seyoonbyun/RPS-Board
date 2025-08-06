@@ -43,7 +43,6 @@ export default function AdminPage() {
   const [bulkEmails, setBulkEmails] = useState('');
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
-  const [showBulkAddDialog, setShowBulkAddDialog] = useState(false);
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -371,14 +370,6 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 사용자 추가
               </Button>
-              <Button 
-                onClick={() => setShowBulkAddDialog(true)}
-                className="bg-red-600 hover:bg-red-700 text-white"
-                size="sm"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                일괄 추가
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -605,117 +596,114 @@ export default function AdminPage() {
 
       {/* 단일 사용자 추가 다이얼로그 */}
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-6xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>새 사용자 추가</AlertDialogTitle>
+            <AlertDialogTitle>사용자 추가</AlertDialogTitle>
             <AlertDialogDescription>
-              새로운 사용자의 정보를 입력해주세요. Google Sheets에 바로 반영됩니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">이메일 *</label>
-              <Input
-                placeholder="user@example.com"
-                value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">멤버명 *</label>
-              <Input
-                placeholder="홍길동"
-                value={newUser.memberName}
-                onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">지역</label>
-              <Input
-                placeholder="서울"
-                value={newUser.region}
-                onChange={(e) => setNewUser({...newUser, region: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">챕터</label>
-              <Input
-                placeholder="하이"
-                value={newUser.chapter}
-                onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">전문분야</label>
-              <Input
-                placeholder="디자인"
-                value={newUser.specialty}
-                onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">비밀번호</label>
-              <Input
-                placeholder="1234"
-                value={newUser.password}
-                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">권한</label>
-              <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
-                <SelectTrigger className="bg-white border-gray-300">
-                  <SelectValue placeholder="권한 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">Admin (관리자)</SelectItem>
-                  <SelectItem value="Growth">Growth (성장팀)</SelectItem>
-                  <SelectItem value="Member">Member (일반회원)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleAddUser}
-              disabled={addUserMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* 일괄 사용자 추가 다이얼로그 */}
-      <AlertDialog open={showBulkAddDialog} onOpenChange={setShowBulkAddDialog}>
-        <AlertDialogContent className="max-w-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>CSV 파일로 일괄 사용자 추가</AlertDialogTitle>
-            <AlertDialogDescription>
-              CSV 파일을 업로드하여 여러 사용자를 한번에 추가할 수 있습니다.
-              <br />
-              <strong>파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]
+              단일 사용자 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
               <br />
               <small className="text-gray-500">* 타겟고객(나의 핵심 고객층)은 사용자가 직접 입력하므로 관리자 추가에서는 제외됩니다.</small>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-6">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 단일 사용자 추가 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <Plus className="mr-2 w-5 h-5 text-red-600" />
+                새 사용자 추가
+              </h3>
+              <div className="bg-red-50 p-4 rounded-lg space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">이메일 *</label>
+                    <Input
+                      placeholder="user@example.com"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">멤버명 *</label>
+                    <Input
+                      placeholder="홍길동"
+                      value={newUser.memberName}
+                      onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">지역</label>
+                    <Input
+                      placeholder="서울"
+                      value={newUser.region}
+                      onChange={(e) => setNewUser({...newUser, region: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">챕터</label>
+                    <Input
+                      placeholder="하이"
+                      value={newUser.chapter}
+                      onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">전문분야</label>
+                    <Input
+                      placeholder="디자인"
+                      value={newUser.specialty}
+                      onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">비밀번호</label>
+                    <Input
+                      placeholder="1234"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">권한</label>
+                  <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
+                    <SelectTrigger className="bg-white border-gray-300">
+                      <SelectValue placeholder="권한 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin (관리자)</SelectItem>
+                      <SelectItem value="Growth">Growth (성장팀)</SelectItem>
+                      <SelectItem value="Member">Member (일반회원)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  onClick={handleAddUser}
+                  disabled={addUserMutation.isPending}
+                  className="w-full bg-red-600 hover:bg-red-700"
+                >
+                  {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
+                </Button>
+              </div>
+            </div>
+
             {/* CSV 파일 업로드 */}
-            <div>
-              <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <FileText className="mr-2 w-5 h-5 text-blue-600" />
+                CSV 파일로 일괄 사용자 추가
+              </h3>
+              <div className="bg-blue-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-blue-800">
                   <strong>정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.</strong>
                 </p>
-                <div className="text-xs text-blue-700">
+                <div className="text-xs text-blue-700 space-y-1">
                   <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
                   <p>• 이메일과 멤버명은 필수 항목입니다</p>
                   <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
@@ -725,10 +713,9 @@ export default function AdminPage() {
                 <ObjectUploader
                   maxNumberOfFiles={1}
                   maxFileSize={5242880} // 5MB
-                  allowedFileTypes={['.csv']}
                   onGetUploadParameters={getCSVUploadURL}
                   onComplete={handleCSVUploadComplete}
-                  buttonClassName="bg-blue-600 hover:bg-blue-700 text-white"
+                  buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <FileText className="mr-2 w-4 h-4" />
                   CSV 파일 업로드
@@ -741,20 +728,15 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
-
-
           </div>
+          
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => setShowBulkAddDialog(false)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              확인
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+
     </div>
   );
 }
