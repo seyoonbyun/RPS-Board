@@ -44,6 +44,8 @@ export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
+  const [regionFilter, setRegionFilter] = useState<string>('__all__');
+  const [chapterFilter, setChapterFilter] = useState<string>('__all__');
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -346,6 +348,17 @@ export default function AdminPage() {
 
   const activeUsers = allUsers?.filter(user => user.status !== '탈퇴') || [];
   const withdrawnUsers = allUsers?.filter(user => user.status === '탈퇴') || [];
+  
+  // 필터링된 활성 사용자 목록
+  const filteredActiveUsers = activeUsers.filter(user => {
+    const regionMatch = !regionFilter || regionFilter === '__all__' || user.region === regionFilter;
+    const chapterMatch = !chapterFilter || chapterFilter === '__all__' || user.chapter === chapterFilter;
+    return regionMatch && chapterMatch;
+  });
+  
+  // 고유한 지역 및 챕터 목록 생성
+  const uniqueRegions = Array.from(new Set(activeUsers.map(user => user.region).filter(region => region && region.trim() !== ''))).sort();
+  const uniqueChapters = Array.from(new Set(activeUsers.map(user => user.chapter).filter(chapter => chapter && chapter.trim() !== ''))).sort();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -500,7 +513,7 @@ export default function AdminPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="select-all"
-                    checked={selectedUsers.length === activeUsers.length && activeUsers.length > 0}
+                    checked={selectedUsers.length === filteredActiveUsers.length && filteredActiveUsers.length > 0}
                     onCheckedChange={handleSelectAll}
                   />
                   <label htmlFor="select-all" className="text-sm font-medium">
@@ -539,6 +552,41 @@ export default function AdminPage() {
                 </AlertDialog>
               </div>
 
+              {/* 필터링 옵션 */}
+              <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">지역:</label>
+                  <Select value={regionFilter} onValueChange={setRegionFilter}>
+                    <SelectTrigger className="w-32 bg-white">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="__all__">전체</SelectItem>
+                      {uniqueRegions.map(region => (
+                        <SelectItem key={region} value={region}>{region}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-700">챕터:</label>
+                  <Select value={chapterFilter} onValueChange={setChapterFilter}>
+                    <SelectTrigger className="w-32 bg-white">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="__all__">전체</SelectItem>
+                      {uniqueChapters.map(chapter => (
+                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-gray-600">
+                  총 {filteredActiveUsers.length}명 표시 (전체 {activeUsers.length}명 중)
+                </div>
+              </div>
+
               {/* 멤버 목록 테이블 */}
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b">
@@ -559,7 +607,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
-                  {activeUsers.map((user) => (
+                  {filteredActiveUsers.map((user) => (
                     <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
                       <Checkbox
                         checked={selectedUsers.includes(user.email)}
