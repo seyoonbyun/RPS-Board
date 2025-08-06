@@ -99,7 +99,7 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
             (dropHint as HTMLElement).style.position = 'relative';
-            (dropHint as HTMLElement).style.marginTop = '50px'; // 텍스트를 아래로 밀어내기
+            (dropHint as HTMLElement).style.marginTop = '41px'; // 텍스트를 아래로 밀어내기 (9px 간격을 위해)
             
             // dropHint의 위치 계산하여 아이콘 배치
             const dropHintRect = dropHint.getBoundingClientRect();
@@ -130,11 +130,11 @@ export function ObjectUploader({
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                top: ${50 - 18 - 32}px !important;
+                top: ${41 - 9 - 32}px !important;
               `;
               
               parentContainer.insertBefore(icon, parentContainer.firstChild);
-              console.log('Icon positioned 18px above text at top:', 50 - 18 - 32, 'px');
+              console.log('Icon positioned 9px above text at top:', 41 - 9 - 32, 'px');
               console.log('Icon added with calculated position:', icon.style.top);
             }
             
