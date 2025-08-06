@@ -281,10 +281,17 @@ export default function AdminPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const activeUsers = allUsers?.filter(user => user.status !== '탈퇴').map(user => user.email) || [];
-      setSelectedUsers(activeUsers);
+      // 필터링된 활동중인 사용자들만 선택
+      const filteredEmails = filteredActiveUsers.map(user => user.email);
+      setSelectedUsers(prev => {
+        // 기존 선택된 사용자 + 필터링된 사용자들을 합치되, 중복 제거
+        const combined = [...prev, ...filteredEmails];
+        return Array.from(new Set(combined));
+      });
     } else {
-      setSelectedUsers([]);
+      // 필터링된 사용자들만 선택 해제
+      const filteredEmails = filteredActiveUsers.map(user => user.email);
+      setSelectedUsers(prev => prev.filter(email => !filteredEmails.includes(email)));
     }
   };
 
@@ -644,7 +651,7 @@ export default function AdminPage() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="select-all"
-                        checked={selectedUsers.length === filteredActiveUsers.length && filteredActiveUsers.length > 0}
+                        checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(user => selectedUsers.includes(user.email))}
                         onCheckedChange={handleSelectAll}
                       />
                       <label htmlFor="select-all" className="text-sm font-medium">
