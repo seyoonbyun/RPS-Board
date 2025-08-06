@@ -615,7 +615,7 @@ export default function AdminPage() {
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   addMode === 'single'
                     ? 'bg-red-600 text-white shadow border border-red-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600'
                 }`}
               >
                 <Plus className="w-4 h-4 inline mr-2" />
@@ -626,7 +626,7 @@ export default function AdminPage() {
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   addMode === 'csv'
                     ? 'bg-red-600 text-white shadow border border-red-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600'
                 }`}
               >
                 <Plus className="w-4 h-4 inline mr-2" />
