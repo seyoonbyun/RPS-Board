@@ -74,28 +74,10 @@
     @apply bg-background text-foreground;
   }
   
-  /* 전역 플레이스홀더 스타일링 - 최고 우선순위 */
-  *::placeholder {
-    color: #9ca3af !important;
-    opacity: 1 !important;
-  }
-  
-  /* 강제 플레이스홀더 색상 적용 */
-  input::placeholder,
-  textarea::placeholder {
-    color: #9ca3af !important;
-    opacity: 1 !important;
-  }
-  
-  /* 테스트용 - 배경색으로 확인 */
-  .admin-test-input {
-    background-color: #fef2f2 !important;
-  }
-  
-  .admin-test-input::placeholder {
-    color: #ef4444 !important;
-    opacity: 1 !important;
-    font-weight: bold !important;
+  /* Tailwind placeholder 유틸리티 덮어쓰기 */
+  .placeholder-gray-light::placeholder {
+    --tw-placeholder-opacity: 1;
+    color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
   }
 }
 

@@ -850,7 +850,7 @@ export default function AdminPage() {
                       placeholder="user@example.com"
                       value={newUser.email}
                       onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                      className="bg-white border-gray-300 admin-test-input"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
@@ -859,7 +859,7 @@ export default function AdminPage() {
                       placeholder="홍길동"
                       value={newUser.memberName}
                       onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
-                      className="bg-white border-gray-300 placeholder:text-gray-400"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
@@ -868,7 +868,7 @@ export default function AdminPage() {
                       placeholder="서울"
                       value={newUser.region}
                       onChange={(e) => setNewUser({...newUser, region: e.target.value})}
-                      className="bg-white border-gray-300 placeholder:text-gray-400"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
@@ -877,7 +877,7 @@ export default function AdminPage() {
                       placeholder="하이"
                       value={newUser.chapter}
                       onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
-                      className="bg-white border-gray-300 placeholder:text-gray-400"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
@@ -886,7 +886,7 @@ export default function AdminPage() {
                       placeholder="디자인"
                       value={newUser.specialty}
                       onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
-                      className="bg-white border-gray-300 placeholder:text-gray-400"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
@@ -895,7 +895,7 @@ export default function AdminPage() {
                       placeholder="1234"
                       value={newUser.password}
                       onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                      className="bg-white border-gray-300 placeholder:text-gray-400"
+                      className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                 </div>
