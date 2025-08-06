@@ -95,11 +95,37 @@ export function ObjectUploader({
             dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
             
             // 강제로 스타일 적용
-            (dropHint as HTMLElement).style.fontSize = '11px';
+            (dropHint as HTMLElement).style.fontSize = '9px';
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
             (dropHint as HTMLElement).style.paddingTop = '50px';
             (dropHint as HTMLElement).style.position = 'relative';
+            
+            // 아이콘 추가 - DOM에 직접 생성
+            if (!dropHint.querySelector('.custom-upload-icon')) {
+              const icon = document.createElement('div');
+              icon.className = 'custom-upload-icon';
+              icon.textContent = '↑';
+              icon.style.cssText = `
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                margin-left: -20px;
+                width: 40px;
+                height: 32px;
+                background-color: #374151;
+                border: 2px solid #6b7280;
+                border-radius: 6px;
+                color: #ffffff;
+                font-size: 18px;
+                font-weight: bold;
+                line-height: 28px;
+                text-align: center;
+                z-index: 10;
+              `;
+              dropHint.appendChild(icon);
+              console.log('Icon added to drop hint');
+            }
             
             console.log('Text changed to Korean and style applied');
           }
