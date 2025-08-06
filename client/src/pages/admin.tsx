@@ -719,8 +719,8 @@ export default function AdminPage() {
 
             {/* CSV 파일 업로드 섹션 */}
             {addMode === 'csv' && (
-              <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-                <p className="text-sm text-blue-800 mb-3">
+              <div className="bg-red-50 p-4 rounded-lg space-y-4">
+                <p className="text-sm text-red-800 mb-3">
                   하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 RPS Board가 생성됩니다.
                 </p>
                 <ObjectUploader
@@ -728,34 +728,34 @@ export default function AdminPage() {
                   maxFileSize={5242880} // 5MB
                   onGetUploadParameters={getCSVUploadURL}
                   onComplete={handleCSVUploadComplete}
-                  buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white mb-3"
+                  buttonClassName="w-full bg-red-600 hover:bg-red-700 text-white mb-3"
                 >
                   <FileText className="mr-2 w-4 h-4" />
                   CSV 파일 업로드
                 </ObjectUploader>
                 {csvProcessMutation.isPending && (
-                  <div className="flex items-center text-blue-600 mb-3">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  <div className="flex items-center text-red-600 mb-3">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
                     CSV 파일 처리 중...
                   </div>
                 )}
                 
                 {/* CSV 파일 형식 안내 */}
-                <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                  <p className="text-sm font-medium text-blue-900 mb-2">CSV 파일 형식 안내</p>
-                  <div className="text-xs text-blue-700 space-y-1">
+                <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
+                  <p className="text-sm font-medium text-red-900 mb-2">CSV 파일 형식 안내</p>
+                  <div className="text-xs text-red-700 space-y-1">
                     <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
                     <p>• 이메일과 멤버명은 필수 항목입니다</p>
                     <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
                     <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
                     <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-blue-200">
+                  <div className="mt-3 pt-2 border-t border-red-200">
                     <a 
                       href="https://drive.google.com/file/d/1Y6qME0EuBy1XRocfDZBPe9UgEZ_NDoM8/view?usp=sharing"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      className="inline-flex items-center text-xs text-red-600 hover:text-red-800 hover:underline"
                     >
                       <Download className="w-3 h-3 mr-1" />
                       일괄 등록 예시 파일 다운로드
