@@ -143,6 +143,33 @@ input {
   border: 1px solid #d12031 !important;
 }
 
+/* 체크박스 브랜드 컬러 적용 */
+[data-state="checked"] {
+  background-color: #d12031 !important;
+  border-color: #d12031 !important;
+}
+
+[data-state="checked"]:hover {
+  background-color: #b01e2b !important;
+  border-color: #b01e2b !important;
+}
+
+/* Radix UI 체크박스 전용 스타일 */
+.checkbox-root[data-state="checked"] {
+  background-color: #d12031 !important;
+  border-color: #d12031 !important;
+}
+
+.checkbox-root[data-state="checked"]:hover {
+  background-color: #b01e2b !important;
+  border-color: #b01e2b !important;
+}
+
+/* 체크박스 내부 체크 아이콘 색상 */
+[data-state="checked"] svg {
+  color: white !important;
+}
+
 input:focus,
 input:focus-visible,
 input:active,
