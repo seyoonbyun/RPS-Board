@@ -331,24 +331,38 @@ export default function AdminPage() {
           return null;
         };
 
+        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기
         if (parts.length >= 7) {
-          // 7번째 필드가 권한인지 비밀번호인지 판단
-          const field6Auth = normalizeAuthKeyword(parts[6]);
-          if (field6Auth) {
-            // 7번째 필드가 권한이면
+          const field6 = parts[6];
+          const field7 = parts.length >= 8 ? parts[7] : undefined;
+          
+          const field6Auth = normalizeAuthKeyword(field6);
+          const field7Auth = field7 ? normalizeAuthKeyword(field7) : null;
+          
+          console.log(`🔍 Field analysis for ${parts[0]}:`, {
+            field6: field6,
+            field7: field7,
+            field6Auth: field6Auth,
+            field7Auth: field7Auth
+          });
+          
+          // 두 필드 중 권한이 있는 것을 찾아서 할당
+          if (field6Auth && field7Auth) {
+            // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
             auth = field6Auth;
-            if (parts.length >= 8) {
-              password = parts[7];
-            }
+            password = field7;
+          } else if (field6Auth) {
+            // 6번째가 권한이면
+            auth = field6Auth;
+            if (field7) password = field7;
+          } else if (field7Auth) {
+            // 7번째가 권한이면
+            auth = field7Auth;
+            password = field6;
           } else {
-            // 7번째 필드가 비밀번호면
-            password = parts[6];
-            if (parts.length >= 8) {
-              const field7Auth = normalizeAuthKeyword(parts[7]);
-              if (field7Auth) {
-                auth = field7Auth;
-              }
-            }
+            // 둘 다 권한이 아니면 순서대로 비밀번호, 권한으로 처리하되 기본값 유지
+            password = field6;
+            // field7이 없으면 auth는 기본값 'Member' 유지
           }
         }
 
