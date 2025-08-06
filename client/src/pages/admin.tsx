@@ -750,6 +750,17 @@ export default function AdminPage() {
                     <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
                     <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
                   </div>
+                  <div className="mt-3 pt-2 border-t border-blue-200">
+                    <a 
+                      href="https://drive.google.com/file/d/1Y6qME0EuBy1XRocfDZBPe9UgEZ_NDoM8/view?usp=sharing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      <Download className="w-3 h-3 mr-1" />
+                      일괄 등록 예시 파일 다운로드
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
