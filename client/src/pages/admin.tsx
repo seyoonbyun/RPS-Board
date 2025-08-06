@@ -41,6 +41,30 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [bulkEmails, setBulkEmails] = useState('');
+  
+  // 이메일 유효성 검사 함수
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  // 벌크 이메일 유효성 검사
+  const validateBulkEmails = () => {
+    if (!bulkEmails.trim()) return { isValid: false, invalidEmails: [], validCount: 0 };
+    
+    const emailList = bulkEmails.trim().split('\n').map(email => email.trim()).filter(email => email);
+    const invalidEmails = emailList.filter(email => !isValidEmail(email));
+    const validCount = emailList.length - invalidEmails.length;
+    
+    return {
+      isValid: emailList.length > 0 && invalidEmails.length === 0,
+      invalidEmails,
+      validCount,
+      totalCount: emailList.length
+    };
+  };
+
+  const emailValidation = validateBulkEmails();
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
@@ -467,15 +491,47 @@ export default function AdminPage() {
                   value={bulkEmails}
                   onChange={(e) => setBulkEmails(e.target.value)}
                   placeholder="user1@example.com&#10;user2@example.com&#10;user3@example.com"
-                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className={`w-full h-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                    bulkEmails.trim() && !emailValidation.isValid 
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 />
+                
+                {/* 유효성 검사 메시지 */}
+                {bulkEmails.trim() && (
+                  <div className="mt-2">
+                    {emailValidation.isValid ? (
+                      <div className="flex items-center text-sm text-green-600">
+                        <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        유효한 이메일 {emailValidation.validCount}개가 입력되었습니다.
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm text-red-600">
+                          <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          올바른 이메일 형식으로 입력해주세요 (예: user@example.com)
+                        </div>
+                        {emailValidation.invalidEmails.length > 0 && (
+                          <div className="text-xs text-red-500 pl-5">
+                            잘못된 형식: {emailValidation.invalidEmails.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="destructive" 
-                    disabled={!bulkEmails.trim() || bulkWithdrawalMutation.isPending}
-                    className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
+                    disabled={!emailValidation.isValid || bulkWithdrawalMutation.isPending}
+                    className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
                   >
                     <Upload className="mr-2 w-4 h-4" />
                     이메일 목록으로 일괄 탈퇴 처리
