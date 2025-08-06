@@ -675,8 +675,14 @@ export default function AdminPage() {
               {/* 멤버 목록 안내 메시지 */}
               {regionFilter === '__all__' && chapterFilter === '__all__' && (
                 <div className="border rounded-lg p-8 text-center bg-gray-50">
-                  <div className="text-gray-500 text-sm">
-                    위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                  <div className="flex flex-col items-center space-y-3">
+                    <Users className="w-12 h-12 text-gray-400" />
+                    <div className="text-gray-700 font-medium">
+                      멤버 목록을 보려면 필터를 선택하세요
+                    </div>
+                    <div className="text-gray-500 text-sm">
+                      위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                    </div>
                   </div>
                 </div>
               )}
@@ -744,16 +750,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* 필터 선택 안내 메시지 */}
-              {regionFilter === '__all__' && chapterFilter === '__all__' && (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="mb-2">
-                    <Users className="h-12 w-12 mx-auto text-gray-300" />
-                  </div>
-                  <p className="text-lg font-medium mb-1">멤버 목록을 보려면 필터를 선택하세요</p>
-                  <p className="text-sm">지역 또는 챕터를 선택하면 해당 멤버 목록이 표시됩니다</p>
-                </div>
-              )}
+
             </div>
           </div>
         </CardContent>
