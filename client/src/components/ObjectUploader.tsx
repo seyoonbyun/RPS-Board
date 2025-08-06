@@ -90,11 +90,26 @@ export function ObjectUploader({
         if (dropHint) {
           console.log('Processing drop hint for Korean...');
           
-          // 텍스트만 변경하고 CSS가 아이콘을 처리하도록 함
+          // 텍스트 변경 및 강제 스타일 적용
           if (dropHint.textContent?.includes('Drop files here') || dropHint.textContent?.includes('Drop your files here')) {
             dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
-            console.log('Text changed to Korean');
+            
+            // 강제로 스타일 적용
+            (dropHint as HTMLElement).style.fontSize = '11px';
+            (dropHint as HTMLElement).style.color = '#6b7280';
+            (dropHint as HTMLElement).style.fontWeight = '600';
+            (dropHint as HTMLElement).style.paddingTop = '50px';
+            (dropHint as HTMLElement).style.position = 'relative';
+            
+            console.log('Text changed to Korean and style applied');
           }
+        }
+        
+        // 파일 선택 버튼 스타일 강제 적용
+        const browseButton = document.querySelector('.uppy-Dashboard-browse');
+        if (browseButton) {
+          (browseButton as HTMLElement).style.color = '#ffffff';
+          console.log('Browse button color changed to white');
         }
         
         // 파일 선택 버튼 텍스트 변경

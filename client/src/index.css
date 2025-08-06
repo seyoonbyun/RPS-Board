@@ -147,9 +147,11 @@
     position: relative !important;
   }
 
-  /* 드롭 힌트 텍스트만 11px로 설정 */
+  /* 드롭 힌트 텍스트 스타일 - 더 강력한 선택자 */
   .uppy-Dashboard-dropFilesHereHint,
-  [class*="dropFilesHereHint"] {
+  .uppy-Dashboard .uppy-Dashboard-dropFilesHereHint,
+  div[class*="dropFilesHereHint"],
+  .uppy-Dashboard div[class*="dropFilesHereHint"] {
     font-size: 11px !important;
     color: #6b7280 !important;
     font-weight: 600 !important;
@@ -157,16 +159,19 @@
     text-align: center !important;
     position: relative !important;
     padding-top: 50px !important;
+    margin-bottom: 0 !important;
   }
 
-  /* 아이콘을 텍스트 위에 표시 */
+  /* 아이콘을 텍스트 위에 표시 - 더 강력한 선택자 */
   .uppy-Dashboard-dropFilesHereHint::before,
-  [class*="dropFilesHereHint"]::before {
+  .uppy-Dashboard .uppy-Dashboard-dropFilesHereHint::before,
+  div[class*="dropFilesHereHint"]::before,
+  .uppy-Dashboard div[class*="dropFilesHereHint"]::before {
     content: "↑" !important;
     position: absolute !important;
-    top: 10px !important;
+    top: 8px !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
+    margin-left: -20px !important;
     display: block !important;
     width: 40px !important;
     height: 32px !important;
@@ -178,12 +183,14 @@
     font-weight: bold !important;
     line-height: 28px !important;
     text-align: center !important;
+    z-index: 10 !important;
   }
 
-  /* 파일 선택 버튼은 원래 크기 유지 */
-  .uppy-Dashboard .uppy-Dashboard-browse {
-    color: #d12031 !important;
-    /* 원래 폰트 크기 유지 */
+  /* 파일 선택 버튼 흰색으로 변경 */
+  .uppy-Dashboard .uppy-Dashboard-browse,
+  .uppy-Dashboard button[class*="browse"],
+  button[class*="browse"] {
+    color: #ffffff !important;
   }
 
   /* 파일이 없을 때의 상태 */
