@@ -721,7 +721,7 @@ export default function AdminPage() {
             {addMode === 'csv' && (
               <div className="bg-blue-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-blue-800 mb-3">
-                  정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.
+                  하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 RPS Board가 생성됩니다.
                 </p>
                 <ObjectUploader
                   maxNumberOfFiles={1}
