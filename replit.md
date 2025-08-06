@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
   - Status: ✅ Active and functioning
 - **Authorization System**: ✅ IMPLEMENTED (Aug 6, 2025)
   - Google Sheets AUTH column (24th column) integration for role-based access control
-  - Admin roles: "Admin" and "Growth Coordinator" 
+  - Admin roles: "Admin" and "Growth" 
   - Dynamic permission checking API: `/api/admin/check-permission`
   - Frontend UI conditionally displays admin features based on user permissions
   - Secure admin panel access with automatic redirect for unauthorized users
