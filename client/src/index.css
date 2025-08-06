@@ -487,3 +487,10 @@ input[placeholder*="작성예"]:-moz-placeholder {
   color: #9ca3af !important;
   opacity: 1 !important;
 }
+
+/* AlertDialog 팝업 테두리 1px 강제 적용 */
+[data-radix-dialog-content] {
+  border: 1px solid #d1d5db !important;
+  border-width: 1px !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
