@@ -483,6 +483,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Add single user
+  app.post("/api/admin/add-user", async (req, res) => {
+    try {
+      const { email, region, chapter, memberName, specialty, targetCustomer, password } = req.body;
+      
+      if (!email || !memberName) {
+        return res.status(400).json({ message: "이메일과 멤버명은 필수 항목입니다" });
+      }
+
+      console.log(`🔄 Adding new user: ${email}`);
+      
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+      
+      await sheetsService.addNewUser({
+        email,
+        region: region || '',
+        chapter: chapter || '',
+        memberName,
+        specialty: specialty || '',
+        targetCustomer: targetCustomer || '',
+        password: password || '1234' // 기본 비밀번호
+      });
+      
+      console.log(`✅ New user added successfully: ${email}`);
+      res.json({ message: "사용자가 성공적으로 추가되었습니다", email });
+      
+    } catch (error: any) {
+      console.error(`❌ Error adding user:`, error);
+      if (error.message.includes('already exists')) {
+        res.status(409).json({ message: "이미 존재하는 사용자입니다" });
+      } else {
+        res.status(500).json({ message: "사용자 추가 중 오류가 발생했습니다" });
+      }
+    }
+  });
+
+  // Admin API: Bulk add users
+  app.post("/api/admin/bulk-add-users", async (req, res) => {
+    try {
+      const { users } = req.body;
+      
+      if (!users || !Array.isArray(users) || users.length === 0) {
+        return res.status(400).json({ message: "유효한 사용자 목록을 제공해주세요" });
+      }
+
+      console.log(`🔄 Starting bulk user addition for ${users.length} users`);
+      
+      let processedCount = 0;
+      const errors: string[] = [];
+
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+
+      for (const user of users) {
+        try {
+          if (!user.email || !user.memberName) {
+            errors.push(`${user.email || 'Unknown'}: 이메일과 멤버명은 필수 항목입니다`);
+            continue;
+          }
+
+          await sheetsService.addNewUser({
+            email: user.email,
+            region: user.region || '',
+            chapter: user.chapter || '',
+            memberName: user.memberName,
+            specialty: user.specialty || '',
+            targetCustomer: user.targetCustomer || '',
+            password: user.password || '1234'
+          });
+
+          processedCount++;
+          console.log(`✅ Bulk addition completed for ${user.email}`);
+        } catch (error: any) {
+          console.error(`❌ Bulk addition error for ${user.email}:`, error);
+          if (error.message.includes('already exists')) {
+            errors.push(`${user.email}: 이미 존재하는 사용자입니다`);
+          } else {
+            errors.push(`${user.email}: ${error.message}`);
+          }
+        }
+      }
+
+      const responseMessage = `${processedCount}명 추가 완료`;
+      const response: any = { 
+        message: responseMessage,
+        processedCount,
+        totalRequested: users.length
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
+        response.message += ` (${errors.length}개 오류)`;
+      }
+
+      console.log(`📊 Bulk user addition processed: ${processedCount}/${users.length} users`);
+      res.json(response);
+    } catch (error: any) {
+      console.error("❌ Error in bulk user addition:", error);
+      res.status(500).json({ message: "일괄 사용자 추가 중 오류가 발생했습니다" });
+    }
+  });
+
   // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
   app.get("/api/partner-recommendations/:userId", async (req, res) => {
     try {

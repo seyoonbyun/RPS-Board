@@ -428,6 +428,114 @@ class GoogleSheetsService {
     return fullText; // 기존 V, C, P 값 그대로 반환
   }
 
+  async addNewUser(userData: {
+    email: string;
+    region: string;
+    chapter: string;
+    memberName: string;
+    specialty: string;
+    targetCustomer: string;
+    password?: string;
+  }): Promise<void> {
+    try {
+      console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`);
+      
+      // Get access token
+      const accessToken = await this.getAccessToken();
+      
+      // Check if user already exists
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to read existing data: ${getResponse.status}`);
+      }
+
+      const existingData = await getResponse.json();
+      const existingRows = existingData.values || [];
+      
+      // Check for existing user
+      for (let i = 1; i < existingRows.length; i++) {
+        const row = existingRows[i];
+        if (row && row[0] && row[0].toString().toLowerCase() === userData.email.toLowerCase()) {
+          throw new Error(`User ${userData.email} already exists`);
+        }
+      }
+      
+      // Find first available row
+      let targetRowIndex = existingRows.length;
+      for (let i = 1; i < existingRows.length; i++) {
+        const row = existingRows[i];
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          targetRowIndex = i;
+          break;
+        }
+      }
+      
+      // Create new user row with all required columns
+      const newUserData = [
+        userData.email,           // A: 이메일
+        userData.region,          // B: 지역  
+        userData.chapter,         // C: 챕터
+        userData.memberName,      // D: 멤버명
+        userData.specialty,       // E: 전문분야
+        userData.targetCustomer,  // F: 나의 핵심 고객층
+        '',                       // G: R파트너 1
+        '',                       // H: R파트너 1 전문분야
+        '',                       // I: R파트너 1 V-C-P
+        '',                       // J: R파트너 2
+        '',                       // K: R파트너 2 전문분야
+        '',                       // L: R파트너 2 V-C-P
+        '',                       // M: R파트너 3
+        '',                       // N: R파트너 3 전문분야
+        '',                       // O: R파트너 3 V-C-P
+        '',                       // P: R파트너 4
+        '',                       // Q: R파트너 4 전문분야
+        '',                       // R: R파트너 4 V-C-P
+        '0',                      // S: 총 R파트너 수
+        '0%',                     // T: 달성
+        userData.email,           // U: ID
+        userData.password || '1234', // V: PW
+        '활동중',                 // W: STATUS
+        ''                        // X: AUTH (빈 값으로 시작)
+      ];
+
+      const range = `RPS!A${targetRowIndex + 1}:X${targetRowIndex + 1}`;
+      
+      const updateResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [newUserData]
+          })
+        }
+      );
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(`Failed to add user: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      console.log(`✅ Successfully added user ${userData.email} to row ${targetRowIndex + 1}`);
+      
+    } catch (error) {
+      console.error(`❌ Error adding user ${userData.email}:`, error);
+      throw error;
+    }
+  }
+
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
     try {
       console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
