@@ -85,7 +85,7 @@ export function ObjectUploader({
         // 드래그 앤 드롭 힌트 텍스트 변경
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
         if (dropHint && dropHint.textContent?.includes('Drop files here')) {
-          dropHint.textContent = '여기에 파일 끌어다 놓기 또는 ';
+          dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
         }
         
         // 파일 선택 버튼 텍스트 변경
