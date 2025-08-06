@@ -1,6 +1,7 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
+import * as iconv from "iconv-lite";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
@@ -107,25 +108,40 @@ export class ObjectStorageService {
         const buffer = Buffer.concat(chunks);
         let content: string;
         
+        console.log('📄 Raw buffer sample (first 20 bytes):', buffer.slice(0, 20));
+        
         // Try different encodings to handle Korean text properly
         try {
           // First try UTF-8
-          content = buffer.toString('utf-8');
+          content = iconv.decode(buffer, 'utf-8');
           // Check if it contains replacement characters (indicates encoding issue)
-          if (content.includes('�')) {
+          if (content.includes('�') || content.includes('��')) {
             throw new Error('UTF-8 decode failed');
           }
+          console.log('✅ Successfully decoded as UTF-8');
         } catch (error) {
           try {
-            // Try UTF-8 with BOM removal
-            let bomlessBuffer = buffer;
-            if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
-              bomlessBuffer = buffer.slice(3);
+            // Try EUC-KR for Korean Windows files
+            content = iconv.decode(buffer, 'euc-kr');
+            console.log('✅ Successfully decoded as EUC-KR');
+            // Check if still has issues
+            if (content.includes('�')) {
+              throw new Error('EUC-KR decode failed');
             }
-            content = bomlessBuffer.toString('utf-8');
           } catch (error2) {
-            // Fallback to latin1 and then manually handle Korean encoding
-            content = buffer.toString('latin1');
+            try {
+              // Try CP949 (extended EUC-KR)
+              content = iconv.decode(buffer, 'cp949');
+              console.log('✅ Successfully decoded as CP949');
+            } catch (error3) {
+              // Last resort - try removing BOM and UTF-8
+              let bomlessBuffer = buffer;
+              if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+                bomlessBuffer = buffer.slice(3);
+              }
+              content = iconv.decode(bomlessBuffer, 'utf-8');
+              console.log('⚠️  Fallback to UTF-8 without BOM');
+            }
           }
         }
         
