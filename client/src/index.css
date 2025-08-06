@@ -147,51 +147,7 @@
     position: relative !important;
   }
 
-  /* 강제 아이콘 표시를 위한 CSS - 모든 가능한 선택자 */
-  .uppy-Dashboard-dropFilesHereHint,
-  [class*="uppy-Dashboard-dropFilesHereHint"],
-  .uppy-Dashboard .uppy-Dashboard-AddFiles-info {
-    position: relative !important;
-    padding-top: 50px !important;
-  }
-  
-  .uppy-Dashboard-dropFilesHereHint::before,
-  [class*="uppy-Dashboard-dropFilesHereHint"]::before,
-  .uppy-Dashboard .uppy-Dashboard-AddFiles-info::before {
-    content: "📁↑" !important;
-    position: absolute !important;
-    top: 8px !important;
-    left: 50% !important;
-    margin-left: -25px !important;
-    width: 50px !important;
-    height: 32px !important;
-    background-color: #374151 !important;
-    border: 2px solid #6b7280 !important;
-    border-radius: 6px !important;
-    display: block !important;
-    text-align: center !important;
-    line-height: 28px !important;
-    color: #ffffff !important;
-    font-size: 14px !important;
-    font-weight: bold !important;
-    z-index: 1000 !important;
-  }
-  
-  /* 추가 백업 방법 - Uppy 전체 영역에 아이콘 */
-  .uppy-Dashboard-inner::after {
-    content: "📁 업로드" !important;
-    position: fixed !important;
-    top: 120px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    background: #374151 !important;
-    color: white !important;
-    padding: 8px 16px !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-    z-index: 9999 !important;
-    border: 2px solid #6b7280 !important;
-  }
+  /* JavaScript로 생성된 아이콘을 위한 기본 스타일 */
 
   /* 파일이 없을 때의 상태 */
   .uppy-Dashboard-AddFiles[data-uppy-drag-drop-supported="true"] {

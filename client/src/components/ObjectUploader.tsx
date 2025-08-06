@@ -91,12 +91,24 @@ export function ObjectUploader({
           console.log('Processing drop hint for Korean...');
           dropHint.setAttribute('data-korean-processed', 'true');
           
-          // 아이콘 엘리먼트 생성
+          // 텍스트 엘리먼트 생성 (위쪽 배치)
+          const textElement = document.createElement('div');
+          textElement.style.cssText = `
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            margin: 0 0 8px 0;
+            line-height: 1.5;
+          `;
+          textElement.textContent = '여기에 파일 끌어다 놓기 또는';
+          
+          // 아이콘 엘리먼트 생성 (아래쪽 배치)
           const iconElement = document.createElement('div');
           iconElement.style.cssText = `
             width: 40px;
             height: 32px;
-            margin: 0 auto 12px auto;
+            margin: 0 auto;
             background-color: #374151;
             border: 2px solid #6b7280;
             border-radius: 6px;
@@ -109,22 +121,10 @@ export function ObjectUploader({
           `;
           iconElement.textContent = '↑';
           
-          // 텍스트 엘리먼트 생성
-          const textElement = document.createElement('div');
-          textElement.style.cssText = `
-            color: #6b7280;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-            margin: 0;
-            line-height: 1.5;
-          `;
-          textElement.textContent = '여기에 파일 끌어다 놓기 또는';
-          
-          // 기존 내용을 지우고 새 엘리먼트들 추가
+          // 기존 내용을 지우고 새 엘리먼트들 추가 (텍스트 먼저, 아이콘 나중에)
           dropHint.innerHTML = '';
-          dropHint.appendChild(iconElement);
           dropHint.appendChild(textElement);
+          dropHint.appendChild(iconElement);
           console.log('Icon and text elements added');
         }
         
