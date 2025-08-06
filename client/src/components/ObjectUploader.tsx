@@ -101,30 +101,36 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.paddingTop = '50px';
             (dropHint as HTMLElement).style.position = 'relative';
             
-            // 아이콘 추가 - DOM에 직접 생성
-            if (!dropHint.querySelector('.custom-upload-icon')) {
+            // 아이콘 추가 - DOM에 직접 생성 (부모 컨테이너에)
+            const parentContainer = dropHint.parentElement;
+            if (parentContainer && !parentContainer.querySelector('.custom-upload-icon')) {
               const icon = document.createElement('div');
               icon.className = 'custom-upload-icon';
-              icon.textContent = '↑';
+              icon.innerHTML = '↑';
               icon.style.cssText = `
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                margin-left: -20px;
-                width: 40px;
-                height: 32px;
-                background-color: #374151;
-                border: 2px solid #6b7280;
-                border-radius: 6px;
-                color: #ffffff;
-                font-size: 18px;
-                font-weight: bold;
-                line-height: 28px;
-                text-align: center;
-                z-index: 10;
+                position: absolute !important;
+                top: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: 40px !important;
+                height: 32px !important;
+                background-color: #374151 !important;
+                border: 2px solid #6b7280 !important;
+                border-radius: 6px !important;
+                color: #ffffff !important;
+                font-size: 18px !important;
+                font-weight: bold !important;
+                line-height: 28px !important;
+                text-align: center !important;
+                z-index: 9999 !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
               `;
-              dropHint.appendChild(icon);
-              console.log('Icon added to drop hint');
+              parentContainer.style.position = 'relative';
+              parentContainer.insertBefore(icon, parentContainer.firstChild);
+              console.log('Icon added to parent container:', icon);
+              console.log('Icon styles:', icon.style.cssText);
             }
             
             console.log('Text changed to Korean and style applied');
