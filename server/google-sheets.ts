@@ -394,7 +394,7 @@ class GoogleSheetsService {
             row[authColumnIndex].toString().trim() : '';
           
           const isAdmin = authInSheet === 'Admin' || authInSheet === 'Growth Coordinator';
-          console.log(`🔐 Admin permission for ${email}: ${isAdmin ? '✅ GRANTED' : '❌ DENIED'} (AUTH: ${authInSheet})`);
+          console.log(`🔐 Admin permission for ${email}: ${isAdmin ? '✅ GRANTED' : '❌ DENIED'} (AUTH: "${authInSheet}")`);
           return isAdmin;
         }
       }
