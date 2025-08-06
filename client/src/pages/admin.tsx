@@ -719,7 +719,7 @@ export default function AdminPage() {
 
             {/* CSV 파일 업로드 섹션 */}
             {addMode === 'csv' && (
-              <div className="bg-red-50 p-4 rounded-lg space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-red-800 mb-3">
                   하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 RPS Board가 생성됩니다.
                 </p>
