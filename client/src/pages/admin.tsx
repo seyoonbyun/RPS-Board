@@ -371,7 +371,12 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
               </Button>
-              <Button onClick={exportUserList} variant="outline" size="sm">
+              <Button 
+                onClick={exportUserList} 
+                variant="outline" 
+                size="sm"
+                className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600"
+              >
                 <Download className="mr-2 w-4 h-4" />
                 사용자 목록 내보내기
               </Button>
@@ -379,7 +384,7 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setLocation('/dashboard')}
-                className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
               >
                 <ArrowLeft className="mr-1 w-4 h-4" />
                 대시보드로 돌아가기
@@ -457,6 +462,7 @@ export default function AdminPage() {
                   <Button 
                     variant="destructive" 
                     disabled={!bulkEmails.trim() || bulkWithdrawalMutation.isPending}
+                    className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
                   >
                     <Upload className="mr-2 w-4 h-4" />
                     이메일 목록으로 일괄 탈퇴 처리
@@ -506,6 +512,7 @@ export default function AdminPage() {
                     <Button 
                       variant="destructive" 
                       disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
+                      className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
                     >
                       <Trash2 className="mr-2 w-4 h-4" />
                       선택한 사용자 탈퇴 처리
@@ -710,7 +717,7 @@ export default function AdminPage() {
                 <Button 
                   onClick={handleAddUser}
                   disabled={addUserMutation.isPending}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  className="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
                 >
                   {addUserMutation.isPending ? "등록 중..." : "멤버 등록"}
                 </Button>
@@ -728,7 +735,7 @@ export default function AdminPage() {
                   maxFileSize={5242880} // 5MB
                   onGetUploadParameters={getCSVUploadURL}
                   onComplete={handleCSVUploadComplete}
-                  buttonClassName="w-full bg-red-600 hover:bg-red-700 text-white mb-3"
+                  buttonClassName="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white mb-3"
                 >
                   <FileText className="mr-2 w-4 h-4" />
                   CSV 파일 업로드
