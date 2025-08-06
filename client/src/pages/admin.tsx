@@ -655,7 +655,7 @@ export default function AdminPage() {
                         onCheckedChange={handleSelectAll}
                       />
                       <label htmlFor="select-all" className="text-sm font-medium">
-                        전체 선택 ({selectedUsers.length}명 선택됨)
+                        전체 선택 ({filteredActiveUsers.filter(user => selectedUsers.includes(user.email)).length}명 선택됨)
                       </label>
                     </div>
                   </div>
