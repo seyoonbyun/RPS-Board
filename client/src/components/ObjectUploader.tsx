@@ -63,91 +63,7 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
 
-  // Uppy 모달 텍스트를 한국어로 변경
-  useEffect(() => {
-    if (showModal) {
-      const translateTexts = () => {
-        // "Drop files here or" 텍스트를 찾아서 변경
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(element => {
-          const textNodes = Array.from(element.childNodes).filter(node => 
-            node.nodeType === Node.TEXT_NODE && 
-            node.textContent?.includes('Drop files here or')
-          );
-          
-          textNodes.forEach(node => {
-            if (node.textContent?.includes('Drop files here or')) {
-              node.textContent = '여기에 파일 끌어다 놓기 또는 ';
-            }
-          });
-        });
 
-        // 드래그 앤 드롭 힌트 텍스트 변경
-        const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
-        console.log('Drop hint found:', dropHint);
-        console.log('Drop hint text:', dropHint?.textContent);
-        
-        if (dropHint) {
-          console.log('Processing drop hint for Korean...');
-          
-          // 텍스트 변경만 처리 (한 번만)
-          if (dropHint.textContent?.includes('Drop files here') || dropHint.textContent?.includes('Drop your files here')) {
-            dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
-            
-
-            
-            console.log('Text changed to Korean and style applied');
-          }
-          
-
-        }
-        
-        // 파일 선택 버튼 스타일 강제 적용
-        const browseButton = document.querySelector('.uppy-Dashboard-browse');
-        if (browseButton) {
-          (browseButton as HTMLElement).style.color = '#ffffff';
-          console.log('Browse button color changed to white');
-        }
-        
-        // 파일 선택 버튼 텍스트 변경
-        const browse = document.querySelector('.uppy-Dashboard-browse');
-        if (browse && browse.textContent?.includes('browse files')) {
-          browse.textContent = 'CSV 파일 선택';
-        }
-      };
-
-      // 아이콘과 텍스트 설정 후 interval 중단
-      let isSetup = false;
-      
-      const setupOnce = () => {
-        translateTexts();
-        if (document.querySelector('.custom-upload-icon')) {
-          isSetup = true;
-          clearInterval(interval);
-          console.log('Setup complete - interval stopped');
-        }
-      };
-      
-      const timer = setTimeout(setupOnce, 200);
-      const interval = setInterval(() => {
-        if (!isSetup) {
-          setupOnce();
-        }
-      }, 100);
-      
-      // 5초 후 강제 정리
-      const cleanup = setTimeout(() => {
-        clearInterval(interval);
-        isSetup = true;
-      }, 5000);
-
-      return () => {
-        clearTimeout(timer);
-        clearInterval(interval);
-        clearTimeout(cleanup);
-      };
-    }
-  }, [showModal]);
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -158,10 +74,10 @@ export function ObjectUploader({
       autoProceed: false,
       locale: {
         strings: {
-          dropHereOr: '여기에 파일 끌어다 놓기 또는',
+          dropHereOr: '↑\n여기에 파일 끌어다 놓기 또는',
           browse: 'CSV 파일 선택',
-          dropPasteBoth: '여기에 파일 끌어다 놓기 또는 %{browse}',
-          dropPaste: '여기에 파일 끌어다 놓기',
+          dropPasteBoth: '↑\n여기에 파일 끌어다 놓기 또는 %{browse}',
+          dropPaste: '↑\n여기에 파일 끌어다 놓기',
           addMoreFiles: '파일 더 추가',
           uploadComplete: '업로드 완료!',
           uploadFailed: '업로드 실패',
