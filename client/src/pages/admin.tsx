@@ -684,45 +684,6 @@ export default function AdminPage() {
                   </Select>
                 </div>
 
-                {/* CSV 파일 업로드 섹션 */}
-                <div className="border-t pt-4 mt-6">
-                  <h4 className="text-base font-medium flex items-center mb-3">
-                    <FileText className="mr-2 w-4 h-4 text-blue-600" />
-                    CSV 파일로 일괄 사용자 추가
-                  </h4>
-                  <p className="text-sm text-blue-800 mb-3">
-                    정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.
-                  </p>
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={5242880} // 5MB
-                    onGetUploadParameters={getCSVUploadURL}
-                    onComplete={handleCSVUploadComplete}
-                    buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white mb-3"
-                  >
-                    <FileText className="mr-2 w-4 h-4" />
-                    CSV 파일 업로드
-                  </ObjectUploader>
-                  {csvProcessMutation.isPending && (
-                    <div className="flex items-center text-blue-600 mb-3">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                      CSV 파일 처리 중...
-                    </div>
-                  )}
-                  
-                  {/* CSV 파일 형식 안내 */}
-                  <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                    <p className="text-sm font-medium text-blue-900 mb-2">CSV 파일 형식 안내</p>
-                    <div className="text-xs text-blue-700 space-y-1">
-                      <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
-                      <p>• 이메일과 멤버명은 필수 항목입니다</p>
-                      <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
-                      <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
-                      <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
-                    </div>
-                  </div>
-                </div>
-
                 <Button 
                   onClick={handleAddUser}
                   disabled={addUserMutation.isPending}
@@ -730,6 +691,47 @@ export default function AdminPage() {
                 >
                   {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
                 </Button>
+              </div>
+            </div>
+
+            {/* CSV 파일 업로드 섹션 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <FileText className="mr-2 w-5 h-5 text-blue-600" />
+                CSV 파일로 일괄 사용자 추가
+              </h3>
+              <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+                <p className="text-sm text-blue-800 mb-3">
+                  정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.
+                </p>
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  onGetUploadParameters={getCSVUploadURL}
+                  onComplete={handleCSVUploadComplete}
+                  buttonClassName="w-full bg-blue-600 hover:bg-blue-700 text-white mb-3"
+                >
+                  <FileText className="mr-2 w-4 h-4" />
+                  CSV 파일 업로드
+                </ObjectUploader>
+                {csvProcessMutation.isPending && (
+                  <div className="flex items-center text-blue-600 mb-3">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    CSV 파일 처리 중...
+                  </div>
+                )}
+                
+                {/* CSV 파일 형식 안내 */}
+                <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                  <p className="text-sm font-medium text-blue-900 mb-2">CSV 파일 형식 안내</p>
+                  <div className="text-xs text-blue-700 space-y-1">
+                    <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
+                    <p>• 이메일과 멤버명은 필수 항목입니다</p>
+                    <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
+                    <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
+                    <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
+                  </div>
+                </div>
               </div>
             </div>
 
