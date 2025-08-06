@@ -84,7 +84,13 @@ export function ObjectUploader({
 
         // 드래그 앤 드롭 힌트 텍스트 변경 및 아이콘 추가
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
-        if (dropHint && dropHint.textContent?.includes('Drop files here')) {
+        console.log('Drop hint found:', dropHint);
+        console.log('Drop hint text:', dropHint?.textContent);
+        
+        if (dropHint && !dropHint.hasAttribute('data-korean-processed')) {
+          console.log('Processing drop hint for Korean...');
+          dropHint.setAttribute('data-korean-processed', 'true');
+          
           // 아이콘 엘리먼트 생성
           const iconElement = document.createElement('div');
           iconElement.style.cssText = `
@@ -97,7 +103,7 @@ export function ObjectUploader({
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6b7280;
+            color: #ffffff;
             font-size: 18px;
             font-weight: bold;
           `;
@@ -119,6 +125,7 @@ export function ObjectUploader({
           dropHint.innerHTML = '';
           dropHint.appendChild(iconElement);
           dropHint.appendChild(textElement);
+          console.log('Icon and text elements added');
         }
         
         // 파일 선택 버튼 텍스트 변경
