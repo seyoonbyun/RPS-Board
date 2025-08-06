@@ -565,17 +565,7 @@ export default function AdminPage() {
           <div>
             <h3 className="text-lg font-medium mb-3">방법 2: 멤버 목록에서 선택</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="select-all"
-                    checked={selectedUsers.length === filteredActiveUsers.length && filteredActiveUsers.length > 0}
-                    onCheckedChange={handleSelectAll}
-                  />
-                  <label htmlFor="select-all" className="text-sm font-medium">
-                    전체 선택 ({selectedUsers.length}명 선택됨)
-                  </label>
-                </div>
+              <div className="flex justify-end">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
@@ -646,8 +636,18 @@ export default function AdminPage() {
               {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
               {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-3 border-b">
+                  <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
                     <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="select-all"
+                        checked={selectedUsers.length === filteredActiveUsers.length && filteredActiveUsers.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                      <label htmlFor="select-all" className="text-sm font-medium">
+                        전체 선택 ({selectedUsers.length}명 선택됨)
+                      </label>
+                    </div>
                   </div>
                   {/* 헤더 */}
                   <div className="bg-gray-100 px-4 py-2 border-b">
