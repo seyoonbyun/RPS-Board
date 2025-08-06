@@ -493,7 +493,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             나의 RPS 계정 삭제하기
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="alert-dialog-content max-w-md">
+                        <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="alert-dialog-title">
                               멤버 탈퇴 확인
@@ -503,16 +503,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="py-4 space-y-4">
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                              <h4 className="font-semibold text-red-800 mb-2">
-                                탈퇴 시 다음 작업이 수행됩니다:
+                            <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-gray-800 mb-2">
+                                계정 삭제 시 다음 작업이 수행됩니다:
                               </h4>
-                              <div className="space-y-2 text-sm text-red-700">
-                                <div>• 입력된 모든 R파트너 데이터가 삭제됩니다</div>
-                                <div>• 구글 시트에는 [탈퇴] 표시로 기록됩니다</div>
-                                <div>• 지역: {userProfile?.region} → [탈퇴] {userProfile?.region}</div>
-                                <div>• 챕터: {userProfile?.chapter} → [탈퇴] {userProfile?.chapter}</div>
-                                <div>• 멤버: {userProfile?.memberName} → [탈퇴] {userProfile?.memberName}</div>
+                              <div className="space-y-2 text-sm text-gray-700">
+                                <div>• 지금까지 기록하신 대표님의 모든 R파트너 데이터가 삭제됩니다.</div>
                               </div>
                             </div>
                             <div className="text-center font-semibold text-red-600 bg-red-100 p-3 rounded-lg">
@@ -526,7 +522,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               disabled={withdrawalMutation.isPending}
                               className="alert-dialog-action-destructive"
                             >
-                              {withdrawalMutation.isPending ? "처리 중..." : "탈퇴 처리"}
+                              {withdrawalMutation.isPending ? "처리 중..." : "계정 삭제 계속하기"}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
