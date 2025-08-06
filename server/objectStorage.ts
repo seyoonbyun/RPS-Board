@@ -1,7 +1,7 @@
 import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
-import * as iconv from "iconv-lite";
+import iconv from "iconv-lite";
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
