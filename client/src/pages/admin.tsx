@@ -539,10 +539,24 @@ export default function AdminPage() {
                 </AlertDialog>
               </div>
 
-              {/* 사용자 목록 테이블 */}
+              {/* 멤버 목록 테이블 */}
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b">
-                  <h4 className="font-medium text-gray-900">활동 중인 사용자 목록</h4>
+                  <h4 className="font-medium text-gray-900">활동 중인 멤버 목록</h4>
+                </div>
+                {/* 헤더 */}
+                <div className="bg-gray-100 px-4 py-2 border-b">
+                  <div className="flex items-center">
+                    <div className="w-8 mr-3"></div> {/* 체크박스 공간 */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-2 text-xs font-medium text-gray-600">
+                      <div>ID</div>
+                      <div>지역</div>
+                      <div>챕터</div>
+                      <div>멤버명</div>
+                      <div>전문분야</div>
+                      <div>상태/파트너수</div>
+                    </div>
+                  </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {activeUsers.map((user) => (
