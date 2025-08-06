@@ -98,18 +98,22 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.fontSize = '9px';
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
-            (dropHint as HTMLElement).style.paddingTop = '50px';
             (dropHint as HTMLElement).style.position = 'relative';
+            (dropHint as HTMLElement).style.marginTop = '50px'; // 텍스트를 아래로 밀어내기
             
-            // 아이콘 추가 - DOM에 직접 생성 (부모 컨테이너에)
+            // dropHint의 위치 계산하여 아이콘 배치
+            const dropHintRect = dropHint.getBoundingClientRect();
             const parentContainer = dropHint.parentElement;
+            
             if (parentContainer && !parentContainer.querySelector('.custom-upload-icon')) {
+              // 부모 컨테이너를 relative로 설정
+              parentContainer.style.position = 'relative';
+              
               const icon = document.createElement('div');
               icon.className = 'custom-upload-icon';
               icon.innerHTML = '↑';
               icon.style.cssText = `
                 position: absolute !important;
-                top: 20px !important;
                 left: 50% !important;
                 transform: translateX(-50%) !important;
                 width: 40px !important;
@@ -126,11 +130,12 @@ export function ObjectUploader({
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+                top: ${50 - 18 - 32}px !important;
               `;
-              parentContainer.style.position = 'relative';
+              
               parentContainer.insertBefore(icon, parentContainer.firstChild);
-              console.log('Icon added to parent container:', icon);
-              console.log('Icon styles:', icon.style.cssText);
+              console.log('Icon positioned 18px above text at top:', 50 - 18 - 32, 'px');
+              console.log('Icon added with calculated position:', icon.style.top);
             }
             
             console.log('Text changed to Korean and style applied');
