@@ -331,15 +331,16 @@ export default function AdminPage() {
           return null;
         };
 
-        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기
+        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기 (인덱스는 0부터 시작)
         if (parts.length >= 7) {
-          const field6 = parts[6];
-          const field7 = parts.length >= 8 ? parts[7] : undefined;
+          const field6 = parts[6];  // 7번째 필드
+          const field7 = parts.length >= 8 ? parts[7] : undefined;  // 8번째 필드
           
           const field6Auth = normalizeAuthKeyword(field6);
           const field7Auth = field7 ? normalizeAuthKeyword(field7) : null;
           
           console.log(`🔍 Field analysis for ${parts[0]}:`, {
+            partsLength: parts.length,
             field6: field6,
             field7: field7,
             field6Auth: field6Auth,
@@ -352,17 +353,33 @@ export default function AdminPage() {
             auth = field6Auth;
             password = field7;
           } else if (field6Auth) {
-            // 6번째가 권한이면
+            // 7번째가 권한이면
             auth = field6Auth;
             if (field7) password = field7;
           } else if (field7Auth) {
-            // 7번째가 권한이면
+            // 8번째가 권한이면
             auth = field7Auth;
             password = field6;
           } else {
-            // 둘 다 권한이 아니면 순서대로 비밀번호, 권한으로 처리하되 기본값 유지
+            // 둘 다 권한이 아니면 7번째를 비밀번호로 처리
             password = field6;
             // field7이 없으면 auth는 기본값 'Member' 유지
+          }
+        }
+        
+        // 7개 필드만 있는 경우를 위한 추가 체크 (6번째 필드가 권한일 수도 있음)
+        if (parts.length === 7) {
+          const field5 = parts[5];  // 6번째 필드
+          const field5Auth = normalizeAuthKeyword(field5);
+          
+          console.log(`🔍 Additional check for 7-field case ${parts[0]}:`, {
+            field5: field5,
+            field5Auth: field5Auth
+          });
+          
+          if (field5Auth) {
+            auth = field5Auth;
+            password = parts[6];  // 7번째 필드를 비밀번호로
           }
         }
 
