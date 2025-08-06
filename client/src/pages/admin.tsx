@@ -451,7 +451,7 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Trash2 className="mr-2 w-5 h-5 text-red-600" />
-            나의 RPS 계정 삭제하기
+            일괄 탈퇴 처리
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
