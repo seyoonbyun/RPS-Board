@@ -372,7 +372,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-red-600">BNI Korea 관리자 패널</h1>
-                <span className="text-sm text-gray-500">사용자 관리 및 일괄 탈퇴 처리</span>
+                <span className="text-sm text-gray-500">파워팀 멤버 관리 (입회/탈퇴)</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
