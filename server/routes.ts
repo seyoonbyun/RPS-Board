@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API: Add single user
   app.post("/api/admin/add-user", async (req, res) => {
     try {
-      const { email, region, chapter, memberName, specialty, targetCustomer, password } = req.body;
+      const { email, region, chapter, memberName, specialty, targetCustomer, password, auth } = req.body;
       
       if (!email || !memberName) {
         return res.status(400).json({ message: "이메일과 멤버명은 필수 항목입니다" });
@@ -506,7 +506,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memberName,
         specialty: specialty || '',
         targetCustomer: targetCustomer || '',
-        password: password || '1234' // 기본 비밀번호
+        password: password || '1234', // 기본 비밀번호
+        auth: auth || 'Member' // 기본 권한
       });
       
       console.log(`✅ New user added successfully: ${email}`);
@@ -555,7 +556,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             memberName: user.memberName,
             specialty: user.specialty || '',
             targetCustomer: user.targetCustomer || '',
-            password: user.password || '1234'
+            password: user.password || '1234',
+            auth: user.auth || 'Member'
           });
 
           processedCount++;

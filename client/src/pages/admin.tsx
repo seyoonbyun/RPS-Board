@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +50,8 @@ export default function AdminPage() {
     memberName: '',
     specialty: '',
     targetCustomer: '',
-    password: '1234'
+    password: '1234',
+    auth: 'Member'
   });
   const [bulkAddUsers, setBulkAddUsers] = useState('');
 
@@ -141,7 +143,8 @@ export default function AdminPage() {
         memberName: '',
         specialty: '',
         targetCustomer: '',
-        password: '1234'
+        password: '1234',
+        auth: 'Member'
       });
       toast({
         title: "사용자 추가 완료",
@@ -298,7 +301,7 @@ export default function AdminPage() {
     }
 
     try {
-      // CSV 형식 파싱: 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호
+      // CSV 형식 파싱: 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호, 권한
       const lines = bulkAddUsers.trim().split('\n');
       const users = lines.map((line, index) => {
         const parts = line.split(',').map(part => part.trim());
@@ -312,7 +315,8 @@ export default function AdminPage() {
           memberName: parts[3],
           specialty: parts[4] || '',
           targetCustomer: parts[5] || '',
-          password: parts[6] || '1234'
+          password: parts[6] || '1234',
+          auth: parts[7] || 'Member'
         };
       });
 
@@ -359,7 +363,7 @@ export default function AdminPage() {
             <div className="flex items-center space-x-4">
               <Button 
                 onClick={() => setShowAddUserDialog(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -367,7 +371,7 @@ export default function AdminPage() {
               </Button>
               <Button 
                 onClick={() => setShowBulkAddDialog(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 size="sm"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -613,6 +617,7 @@ export default function AdminPage() {
                 placeholder="user@example.com"
                 value={newUser.email}
                 onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -621,6 +626,7 @@ export default function AdminPage() {
                 placeholder="홍길동"
                 value={newUser.memberName}
                 onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -629,6 +635,7 @@ export default function AdminPage() {
                 placeholder="서울"
                 value={newUser.region}
                 onChange={(e) => setNewUser({...newUser, region: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -637,6 +644,7 @@ export default function AdminPage() {
                 placeholder="하이"
                 value={newUser.chapter}
                 onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -645,6 +653,7 @@ export default function AdminPage() {
                 placeholder="디자인"
                 value={newUser.specialty}
                 onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
             <div className="space-y-2">
@@ -653,15 +662,30 @@ export default function AdminPage() {
                 placeholder="디자이너스"
                 value={newUser.targetCustomer}
                 onChange={(e) => setNewUser({...newUser, targetCustomer: e.target.value})}
+                className="bg-white border-gray-300"
               />
             </div>
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <label className="text-sm font-medium">비밀번호</label>
               <Input
                 placeholder="1234"
                 value={newUser.password}
                 onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                className="bg-white border-gray-300"
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">권한</label>
+              <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
+                <SelectTrigger className="bg-white border-gray-300">
+                  <SelectValue placeholder="권한 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Admin">Admin (관리자)</SelectItem>
+                  <SelectItem value="Growth">Growth (성장팀)</SelectItem>
+                  <SelectItem value="Member">Member (일반회원)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <AlertDialogFooter>
@@ -669,7 +693,7 @@ export default function AdminPage() {
             <AlertDialogAction 
               onClick={handleAddUser}
               disabled={addUserMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-red-600 hover:bg-red-700"
             >
               {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
             </AlertDialogAction>
@@ -685,7 +709,7 @@ export default function AdminPage() {
             <AlertDialogDescription>
               CSV 형식으로 여러 사용자를 한번에 추가할 수 있습니다. 각 줄에 하나씩 입력해주세요.
               <br />
-              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호
+              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호, 권한
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
@@ -694,8 +718,8 @@ export default function AdminPage() {
               <textarea
                 className="w-full h-40 p-3 border rounded-md resize-none"
                 placeholder={`예시:
-user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, 1234
-user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678`}
+user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, 1234, Admin
+user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678, Member`}
                 value={bulkAddUsers}
                 onChange={(e) => setBulkAddUsers(e.target.value)}
               />
@@ -703,6 +727,8 @@ user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678`}
             <div className="text-xs text-gray-500">
               • 이메일과 멤버명은 필수 항목입니다
               • 비밀번호를 입력하지 않으면 기본값 "1234"가 설정됩니다
+              • 권한을 입력하지 않으면 기본값 "Member"가 설정됩니다
+              • 권한 종류: Admin, Growth, Member
               • 각 필드는 쉼표(,)로 구분해주세요
             </div>
           </div>
@@ -711,7 +737,7 @@ user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678`}
             <AlertDialogAction 
               onClick={handleBulkAddUsers}
               disabled={bulkAddUserMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-red-600 hover:bg-red-700"
             >
               {bulkAddUserMutation.isPending ? "추가 중..." : "일괄 추가"}
             </AlertDialogAction>

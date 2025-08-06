@@ -436,6 +436,7 @@ class GoogleSheetsService {
     specialty: string;
     targetCustomer: string;
     password?: string;
+    auth?: string;
   }): Promise<void> {
     try {
       console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`);
@@ -504,7 +505,7 @@ class GoogleSheetsService {
         userData.email,           // U: ID
         userData.password || '1234', // V: PW
         '활동중',                 // W: STATUS
-        ''                        // X: AUTH (빈 값으로 시작)
+        userData.auth || 'Member' // X: AUTH
       ];
 
       const range = `RPS!A${targetRowIndex + 1}:X${targetRowIndex + 1}`;
