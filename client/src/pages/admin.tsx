@@ -696,7 +696,7 @@ export default function AdminPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">권한</label>
                   <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
-                    <SelectTrigger className="bg-white border-gray-300">
+                    <SelectTrigger className="bg-white border border-red-600">
                       <SelectValue placeholder="권한 선택" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-300 shadow-lg z-[200]">
@@ -767,7 +767,7 @@ export default function AdminPage() {
           </div>
           
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogCancel className="border border-red-600 text-red-600 hover:bg-red-50">취소</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
