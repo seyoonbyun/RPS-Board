@@ -149,16 +149,19 @@
 
   /* 업로드 아이콘 추가 */
   .uppy-Dashboard-dropFilesHereHint::before {
-    content: "" !important;
+    content: "↑" !important;
     display: block !important;
-    width: 32px !important;
+    width: 40px !important;
     height: 32px !important;
     margin: 0 auto 12px auto !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7,10 12,15 17,10'/%3E%3Cline x1='12' y1='15' x2='12' y2='3'/%3E%3C/svg%3E") !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    transform: rotate(180deg) !important;
+    font-size: 18px !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+    line-height: 28px !important;
+    border: 2px solid #6b7280 !important;
+    border-radius: 6px !important;
+    background-color: #374151 !important;
+    font-weight: bold !important;
   }
 
   /* 파일이 없을 때의 상태 */
