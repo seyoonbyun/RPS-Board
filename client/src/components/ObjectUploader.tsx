@@ -66,21 +66,49 @@ export function ObjectUploader({
   // Uppy 모달 텍스트를 한국어로 변경
   useEffect(() => {
     if (showModal) {
-      const timer = setTimeout(() => {
-        // 드래그 앤 드롭 텍스트 변경
+      const translateTexts = () => {
+        // "Drop files here or" 텍스트를 찾아서 변경
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+          const textNodes = Array.from(element.childNodes).filter(node => 
+            node.nodeType === Node.TEXT_NODE && 
+            node.textContent?.includes('Drop files here or')
+          );
+          
+          textNodes.forEach(node => {
+            if (node.textContent?.includes('Drop files here or')) {
+              node.textContent = '여기에 파일 끌어다 놓기 또는 ';
+            }
+          });
+        });
+
+        // 드래그 앤 드롭 힌트 텍스트 변경
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
-        if (dropHint) {
-          dropHint.textContent = '또는 여기에 CSV 파일 끌어다 놓기';
+        if (dropHint && dropHint.textContent?.includes('Drop files here')) {
+          dropHint.textContent = '여기에 파일 끌어다 놓기 또는 ';
         }
         
         // 파일 선택 버튼 텍스트 변경
         const browse = document.querySelector('.uppy-Dashboard-browse');
-        if (browse) {
+        if (browse && browse.textContent?.includes('browse files')) {
           browse.textContent = 'CSV 파일 선택';
         }
-      }, 300);
+      };
 
-      return () => clearTimeout(timer);
+      // 반복적으로 확인하여 텍스트 변경
+      const timer = setTimeout(translateTexts, 200);
+      const interval = setInterval(translateTexts, 500);
+      
+      // 5초 후 정리
+      const cleanup = setTimeout(() => {
+        clearInterval(interval);
+      }, 5000);
+
+      return () => {
+        clearTimeout(timer);
+        clearInterval(interval);
+        clearTimeout(cleanup);
+      };
     }
   }, [showModal]);
   const [uppy] = useState(() =>
