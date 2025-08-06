@@ -371,6 +371,10 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 사용자 추가
               </Button>
+              <Button onClick={exportUserList} variant="outline" size="sm">
+                <Download className="mr-2 w-4 h-4" />
+                사용자 목록 내보내기
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -379,10 +383,6 @@ export default function AdminPage() {
               >
                 <ArrowLeft className="mr-1 w-4 h-4" />
                 대시보드로 돌아가기
-              </Button>
-              <Button onClick={exportUserList} variant="outline" size="sm">
-                <Download className="mr-2 w-4 h-4" />
-                사용자 목록 내보내기
               </Button>
             </div>
           </div>
