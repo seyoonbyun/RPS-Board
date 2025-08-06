@@ -427,7 +427,7 @@ export default function AdminPage() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">활동 중</p>
+                <p className="text-sm font-medium text-gray-600">활동중</p>
                 <p className="text-2xl font-bold text-gray-900">{activeUsers.length}명</p>
               </div>
             </div>
@@ -590,7 +590,7 @@ export default function AdminPage() {
               {/* 멤버 목록 테이블 */}
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b">
-                  <h4 className="font-medium text-gray-900">활동 중인 멤버 목록</h4>
+                  <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
                 </div>
                 {/* 헤더 */}
                 <div className="bg-gray-100 px-4 py-2 border-b">
