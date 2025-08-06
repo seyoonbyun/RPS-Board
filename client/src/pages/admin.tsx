@@ -437,9 +437,9 @@ export default function AdminPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* 방법 1: 이메일 직접 입력 */}
+          {/* 방법 1: ID(이메일) 직접 입력 */}
           <div>
-            <h3 className="text-lg font-medium mb-3">방법 1: 이메일 직접 입력</h3>
+            <h3 className="text-lg font-medium mb-3">방법 1: ID(이메일) 직접 입력</h3>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
