@@ -486,9 +486,9 @@ export default function AdminPage() {
 
           <Separator />
 
-          {/* 방법 2: 사용자 목록에서 선택 */}
+          {/* 방법 2: 멤버 목록에서 선택 */}
           <div>
-            <h3 className="text-lg font-medium mb-3">방법 2: 사용자 목록에서 선택</h3>
+            <h3 className="text-lg font-medium mb-3">방법 2: 멤버 목록에서 선택</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
