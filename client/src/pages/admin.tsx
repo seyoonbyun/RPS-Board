@@ -316,22 +316,37 @@ export default function AdminPage() {
         let password = '1234';
         let auth = 'Member';
         
+        // 권한 키워드 매핑 함수
+        const normalizeAuthKeyword = (keyword: string): string | null => {
+          const lower = keyword.toLowerCase();
+          if (lower === 'admin' || lower === 'ADMIN'.toLowerCase() || lower === '어드민') {
+            return 'Admin';
+          }
+          if (lower === 'growth' || lower === 'GROWTH'.toLowerCase() || lower === '성장') {
+            return 'Growth';
+          }
+          if (lower === 'member' || lower === 'MEMBER'.toLowerCase() || lower === '멤버') {
+            return 'Member';
+          }
+          return null;
+        };
+
         if (parts.length >= 7) {
-          // 7번째 필드가 권한(Admin, Growth, Member)인지 비밀번호인지 판단 (대소문자 무관)
-          const field6 = parts[6].toLowerCase();
-          if (field6 === 'admin' || field6 === 'growth' || field6 === 'member') {
+          // 7번째 필드가 권한인지 비밀번호인지 판단
+          const field6Auth = normalizeAuthKeyword(parts[6]);
+          if (field6Auth) {
             // 7번째 필드가 권한이면
-            auth = parts[6].charAt(0).toUpperCase() + parts[6].slice(1).toLowerCase(); // Admin, Growth, Member로 정규화
+            auth = field6Auth;
             if (parts.length >= 8) {
               password = parts[7];
             }
           } else {
             // 7번째 필드가 비밀번호면
-            password = parts[6]; // 원본 값 사용
+            password = parts[6];
             if (parts.length >= 8) {
-              const field7 = parts[7].toLowerCase();
-              if (field7 === 'admin' || field7 === 'growth' || field7 === 'member') {
-                auth = parts[7].charAt(0).toUpperCase() + parts[7].slice(1).toLowerCase();
+              const field7Auth = normalizeAuthKeyword(parts[7]);
+              if (field7Auth) {
+                auth = field7Auth;
               }
             }
           }
@@ -755,16 +770,17 @@ export default function AdminPage() {
               <textarea
                 className="w-full h-40 p-3 border rounded-md resize-none"
                 placeholder={`예시:
-user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, 1234, Admin
-user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678, Member`}
+user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, admin, 1234
+user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, Growth, 5678
+user3@example.com, 대구, 베스트, 이영희, 마케팅, 소상공인, 멤버, 9999`}
                 value={bulkAddUsers}
                 onChange={(e) => setBulkAddUsers(e.target.value)}
               />
             </div>
             <div className="text-xs text-gray-500">
               • 이메일과 멤버명은 필수 항목입니다
-              • 7번째 필드: 권한(Admin/Growth/Member) 또는 비밀번호를 입력
-              • 8번째 필드: 비밀번호 또는 권한을 입력
+              • 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버
+              • 7~8번째 필드: 권한과 비밀번호를 순서에 관계없이 입력 가능
               • 미입력시 기본값: 비밀번호=1234, 권한=Member
               • 각 필드는 쉼표(,)로 구분해주세요
             </div>
