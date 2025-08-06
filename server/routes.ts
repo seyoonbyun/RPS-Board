@@ -5,6 +5,7 @@ import { loginSchema, scoreboardFormSchema, type InsertScoreboardData } from "@s
 import { z } from "zod";
 import { getGoogleSheetsService } from "./google-sheets";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
+import { ObjectStorageService } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -595,6 +596,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("❌ Error in bulk user addition:", error);
       res.status(500).json({ message: "일괄 사용자 추가 중 오류가 발생했습니다" });
+    }
+  });
+
+  // CSV Upload endpoints for bulk user addition
+  app.post("/api/csv/upload-url", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getCSVUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating CSV upload URL:", error);
+      res.status(500).json({ error: "업로드 URL 생성 실패" });
+    }
+  });
+
+  app.post("/api/csv/process", async (req, res) => {
+    try {
+      const { csvURL } = req.body;
+      
+      if (!csvURL) {
+        return res.status(400).json({ error: "CSV URL이 필요합니다" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const csvPath = objectStorageService.normalizeCSVPath(csvURL);
+      
+      const csvFile = await objectStorageService.getCSVFile(csvPath);
+      const csvContent = await objectStorageService.downloadCSVContent(csvFile);
+      
+      // Parse CSV content using the same logic as the text input
+      const lines = csvContent.trim().split('\n');
+      const errors: string[] = [];
+      
+      // 권한 키워드 매핑 함수
+      const normalizeAuthKeyword = (keyword: string): string | null => {
+        const lower = keyword.toLowerCase();
+        if (lower === 'admin' || lower === 'ADMIN'.toLowerCase() || lower === '어드민') {
+          return 'Admin';
+        }
+        if (lower === 'growth' || lower === 'GROWTH'.toLowerCase() || lower === '성장') {
+          return 'Growth';
+        }
+        if (lower === 'member' || lower === 'MEMBER'.toLowerCase() || lower === '멤버') {
+          return 'Member';
+        }
+        return null;
+      };
+
+      const users = lines.map((line, index) => {
+        console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
+        const parts = line.split(',').map(part => part.trim());
+        console.log(`📝 Parts array:`, parts);
+        
+        // 최소 4개 필드 필요: 이메일, 지역, 챕터, 멤버명
+        if (parts.length < 4) {
+          throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
+        }
+        
+        // 필드 개수에 따라 유연하게 처리
+        let password = '1234';
+        let auth = 'Member';
+
+        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기 (인덱스는 0부터 시작)
+        if (parts.length >= 7) {
+          const field6 = parts[6];  // 7번째 필드
+          const field7 = parts.length >= 8 ? parts[7] : undefined;  // 8번째 필드
+          
+          const field6Auth = normalizeAuthKeyword(field6);
+          const field7Auth = field7 ? normalizeAuthKeyword(field7) : null;
+          
+          console.log(`🔍 Field analysis for ${parts[0]}:`, {
+            partsLength: parts.length,
+            field6: field6,
+            field7: field7,
+            field6Auth: field6Auth,
+            field7Auth: field7Auth
+          });
+          
+          // 두 필드 중 권한이 있는 것을 찾아서 할당
+          if (field6Auth && field7Auth) {
+            // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
+            auth = field6Auth;
+            password = field7 || '1234';
+          } else if (field6Auth) {
+            // 7번째가 권한이면
+            auth = field6Auth;
+            if (field7) password = field7;
+          } else if (field7Auth) {
+            // 8번째가 권한이면
+            auth = field7Auth;
+            password = field6;
+          } else {
+            // 둘 다 권한이 아니면 7번째를 비밀번호로 처리
+            password = field6;
+            // field7이 없으면 auth는 기본값 'Member' 유지
+          }
+        }
+        
+        // 7개 필드만 있는 경우를 위한 추가 체크 (6번째 필드가 권한일 수도 있음)
+        if (parts.length === 7) {
+          const field5 = parts[5];  // 6번째 필드
+          const field5Auth = normalizeAuthKeyword(field5);
+          
+          console.log(`🔍 Additional check for 7-field case ${parts[0]}:`, {
+            field5: field5,
+            field5Auth: field5Auth
+          });
+          
+          if (field5Auth) {
+            auth = field5Auth;
+            password = parts[6];  // 7번째 필드를 비밀번호로
+          }
+        }
+
+        const user = {
+          email: parts[0],
+          region: parts[1] || '',
+          chapter: parts[2] || '',
+          memberName: parts[3],
+          specialty: parts[4] || '',
+          targetCustomer: parts[5] || '',
+          password: password,
+          auth: auth
+        };
+        
+        console.log(`👤 Parsed user ${index + 1}:`, {
+          email: user.email,
+          password: user.password,
+          auth: user.auth
+        });
+        
+        return user;
+      });
+
+      // Process users in bulk using existing logic
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      let processedCount = 0;
+      
+      console.log(`🔄 Starting bulk user addition via CSV for ${users.length} users`);
+
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        try {
+          if (!user.email || !user.memberName) {
+            errors.push(`${user.email || 'Unknown'}: 이메일과 멤버명은 필수 항목입니다`);
+            continue;
+          }
+
+          console.log(`🔄 Processing user ${i + 1}/${users.length}: ${user.email}`, {
+            password: user.password || '1234',
+            auth: user.auth || 'Member'
+          });
+
+          await sheetsService.addNewUser({
+            email: user.email,
+            region: user.region || '',
+            chapter: user.chapter || '',
+            memberName: user.memberName,
+            specialty: user.specialty || '',
+            targetCustomer: user.targetCustomer || '',
+            password: user.password || '1234',
+            auth: user.auth || 'Member'
+          });
+
+          processedCount++;
+          console.log(`✅ CSV bulk addition completed for ${user.email}`);
+        } catch (error: any) {
+          console.error(`❌ CSV bulk addition error for ${user.email}:`, error);
+          if (error.message.includes('already exists')) {
+            errors.push(`${user.email}: 이미 존재하는 사용자입니다`);
+          } else {
+            errors.push(`${user.email}: ${error.message}`);
+          }
+        }
+      }
+
+      const responseMessage = `CSV 파일 처리 완료: ${processedCount}명 추가`;
+      const response: any = { 
+        message: responseMessage,
+        processedCount,
+        totalRequested: users.length
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
+        response.message += ` (${errors.length}개 오류)`;
+      }
+
+      console.log(`📊 CSV bulk user addition processed: ${processedCount}/${users.length} users`);
+      res.json(response);
+      
+    } catch (error: any) {
+      console.error("Error processing CSV:", error);
+      res.status(500).json({ error: "CSV 처리 실패", details: error.message });
     }
   });
 

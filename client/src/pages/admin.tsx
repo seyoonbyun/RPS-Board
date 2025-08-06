@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText } from 'lucide-react';
+import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
@@ -186,6 +187,53 @@ export default function AdminPage() {
       });
     }
   });
+
+  // CSV 파일 업로드 처리
+  const csvProcessMutation = useMutation({
+    mutationFn: async (csvURL: string) => {
+      const response = await apiRequest('/api/csv/process', {
+        method: 'POST',
+        body: { csvURL }
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "CSV 파일 처리 완료",
+        description: data.message,
+        className: "bg-white text-gray-900"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "CSV 파일 처리 오류",
+        description: error.message || "CSV 파일 처리 중 오류가 발생했습니다",
+        variant: "destructive",
+        className: "bg-white text-gray-900"
+      });
+    }
+  });
+
+  // CSV 업로드 URL 가져오기
+  const getCSVUploadURL = async () => {
+    const response = await fetch('/api/csv/upload-url', {
+      method: 'POST'
+    });
+    const data = await response.json();
+    return {
+      method: 'PUT' as const,
+      url: data.uploadURL
+    };
+  };
+
+  // CSV 업로드 완료 처리
+  const handleCSVUploadComplete = (result: any) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadURL = result.successful[0].uploadURL;
+      csvProcessMutation.mutate(uploadURL);
+    }
+  };
 
   // 권한 확인 중이거나 권한이 없으면 로딩 또는 리다이렉트
   if (!currentUser || isAdminLoading) {
@@ -795,25 +843,67 @@ export default function AdminPage() {
               <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, [권한 또는 비밀번호], [비밀번호 또는 권한]
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* 방법 1: CSV 파일 업로드 */}
             <div>
-              <label className="text-sm font-medium mb-2 block">사용자 목록 (CSV 형식)</label>
-              <textarea
-                className="w-full h-40 p-3 border rounded-md resize-none"
-                placeholder={`예시:
+              <h3 className="text-lg font-medium mb-3 flex items-center">
+                <FileText className="mr-2 w-5 h-5 text-blue-600" />
+                방법 1: CSV 파일 업로드
+              </h3>
+              <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                <p className="text-sm text-blue-800">
+                  <strong>정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.</strong>
+                </p>
+                <div className="text-xs text-blue-700">
+                  <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
+                  <p>• 이메일과 멤버명은 필수 항목입니다</p>
+                  <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
+                  <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
+                </div>
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB
+                  allowedFileTypes={['.csv']}
+                  onGetUploadParameters={getCSVUploadURL}
+                  onComplete={handleCSVUploadComplete}
+                  buttonClassName="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <FileText className="mr-2 w-4 h-4" />
+                  CSV 파일 업로드
+                </ObjectUploader>
+                {csvProcessMutation.isPending && (
+                  <div className="flex items-center text-blue-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    CSV 파일 처리 중...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* 방법 2: 텍스트 직접 입력 */}
+            <div>
+              <h3 className="text-lg font-medium mb-3 flex items-center">
+                <UserPlus className="mr-2 w-5 h-5 text-green-600" />
+                방법 2: 텍스트 직접 입력
+              </h3>
+              <div>
+                <label className="text-sm font-medium mb-2 block">사용자 목록 (CSV 형식)</label>
+                <textarea
+                  className="w-full h-40 p-3 border rounded-md resize-none"
+                  placeholder={`예시:
 user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, admin, 1234
 user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, Growth, 5678
 user3@example.com, 대구, 베스트, 이영희, 마케팅, 소상공인, 멤버, 9999`}
-                value={bulkAddUsers}
-                onChange={(e) => setBulkAddUsers(e.target.value)}
-              />
-            </div>
-            <div className="text-xs text-gray-500">
-              • 이메일과 멤버명은 필수 항목입니다
-              • 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버
-              • 7~8번째 필드: 권한과 비밀번호를 순서에 관계없이 입력 가능
-              • 미입력시 기본값: 비밀번호=1234, 권한=Member
-              • 각 필드는 쉼표(,)로 구분해주세요
+                  value={bulkAddUsers}
+                  onChange={(e) => setBulkAddUsers(e.target.value)}
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                • 각 필드는 쉼표(,)로 구분해주세요
+                • 7~8번째 필드: 권한과 비밀번호를 순서에 관계없이 입력 가능
+              </div>
             </div>
           </div>
           <AlertDialogFooter>
