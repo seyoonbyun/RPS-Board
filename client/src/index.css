@@ -147,8 +147,7 @@
     position: relative !important;
   }
 
-  /* Uppy 텍스트 크기 강제 변경 */
-  .uppy-Dashboard-AddFiles-info,
+  /* 드롭 힌트 텍스트만 11px로 설정 */
   .uppy-Dashboard-dropFilesHereHint,
   [class*="dropFilesHereHint"] {
     font-size: 11px !important;
@@ -157,22 +156,23 @@
     line-height: 1.5 !important;
     text-align: center !important;
     position: relative !important;
-    display: block !important;
-    margin-bottom: 12px !important;
+    padding-top: 50px !important;
   }
 
-  /* 아이콘 표시 - 텍스트 아래에 */
-  .uppy-Dashboard-AddFiles-info::after,
-  .uppy-Dashboard-dropFilesHereHint::after,
-  [class*="dropFilesHereHint"]::after {
+  /* 아이콘을 텍스트 위에 표시 */
+  .uppy-Dashboard-dropFilesHereHint::before,
+  [class*="dropFilesHereHint"]::before {
     content: "↑" !important;
+    position: absolute !important;
+    top: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     display: block !important;
     width: 40px !important;
     height: 32px !important;
     background-color: #374151 !important;
     border: 2px solid #6b7280 !important;
     border-radius: 6px !important;
-    margin: 8px auto 0 auto !important;
     color: #ffffff !important;
     font-size: 18px !important;
     font-weight: bold !important;
@@ -180,14 +180,10 @@
     text-align: center !important;
   }
 
-  /* 모든 Uppy 텍스트 요소 강제 스타일링 */
-  .uppy-Dashboard * {
-    font-size: 11px !important;
-  }
-
+  /* 파일 선택 버튼은 원래 크기 유지 */
   .uppy-Dashboard .uppy-Dashboard-browse {
-    font-size: 11px !important;
     color: #d12031 !important;
+    /* 원래 폰트 크기 유지 */
   }
 
   /* 파일이 없을 때의 상태 */
