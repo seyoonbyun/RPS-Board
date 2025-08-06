@@ -506,7 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chapter: chapter || '',
         memberName,
         specialty: specialty || '',
-        targetCustomer: targetCustomer || '',
+        targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정 (사용자가 직접 입력)
         password: password || '1234', // 기본 비밀번호
         auth: auth || 'Member' // 기본 권한
       });
@@ -649,9 +649,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const parts = line.split(',').map(part => part.trim());
         console.log(`📝 Parts array:`, parts);
         
-        // 최소 4개 필드 필요: 이메일, 지역, 챕터, 멤버명
-        if (parts.length < 4) {
-          throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
+        // 최소 5개 필드 필요: 이메일, 지역, 챕터, 멤버명, 전문분야
+        if (parts.length < 5) {
+          throw new Error(`Line ${index + 1}: 최소 5개 필드(이메일, 지역, 챕터, 멤버명, 전문분야)가 필요합니다`);
         }
         
         // 필드 개수에 따라 유연하게 처리
@@ -659,54 +659,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let auth = 'Member';
 
         // 6번째와 7번째 필드에서 권한과 비밀번호 찾기 (인덱스는 0부터 시작)
-        if (parts.length >= 7) {
-          const field6 = parts[6];  // 7번째 필드
-          const field7 = parts.length >= 8 ? parts[7] : undefined;  // 8번째 필드
+        if (parts.length >= 6) {
+          const field5 = parts[5];  // 6번째 필드
+          const field6 = parts.length >= 7 ? parts[6] : undefined;  // 7번째 필드
           
-          const field6Auth = normalizeAuthKeyword(field6);
-          const field7Auth = field7 ? normalizeAuthKeyword(field7) : null;
+          const field5Auth = normalizeAuthKeyword(field5);
+          const field6Auth = field6 ? normalizeAuthKeyword(field6) : null;
           
           console.log(`🔍 Field analysis for ${parts[0]}:`, {
             partsLength: parts.length,
+            field5: field5,
             field6: field6,
-            field7: field7,
-            field6Auth: field6Auth,
-            field7Auth: field7Auth
+            field5Auth: field5Auth,
+            field6Auth: field6Auth
           });
           
           // 두 필드 중 권한이 있는 것을 찾아서 할당
-          if (field6Auth && field7Auth) {
+          if (field5Auth && field6Auth) {
             // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
-            auth = field6Auth;
-            password = field7 || '1234';
+            auth = field5Auth;
+            password = field6 || '1234';
+          } else if (field5Auth) {
+            // 6번째가 권한이면
+            auth = field5Auth;
+            if (field6) password = field6;
           } else if (field6Auth) {
             // 7번째가 권한이면
             auth = field6Auth;
-            if (field7) password = field7;
-          } else if (field7Auth) {
-            // 8번째가 권한이면
-            auth = field7Auth;
-            password = field6;
+            password = field5;
           } else {
-            // 둘 다 권한이 아니면 7번째를 비밀번호로 처리
-            password = field6;
-            // field7이 없으면 auth는 기본값 'Member' 유지
-          }
-        }
-        
-        // 7개 필드만 있는 경우를 위한 추가 체크 (6번째 필드가 권한일 수도 있음)
-        if (parts.length === 7) {
-          const field5 = parts[5];  // 6번째 필드
-          const field5Auth = normalizeAuthKeyword(field5);
-          
-          console.log(`🔍 Additional check for 7-field case ${parts[0]}:`, {
-            field5: field5,
-            field5Auth: field5Auth
-          });
-          
-          if (field5Auth) {
-            auth = field5Auth;
-            password = parts[6];  // 7번째 필드를 비밀번호로
+            // 둘 다 권한이 아니면 6번째를 비밀번호로 처리
+            password = field5;
+            // field6이 없으면 auth는 기본값 'Member' 유지
           }
         }
 
@@ -716,7 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           chapter: parts[2] || '',
           memberName: parts[3],
           specialty: parts[4] || '',
-          targetCustomer: parts[5] || '',
+          targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정
           password: password,
           auth: auth
         };

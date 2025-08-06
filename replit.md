@@ -50,13 +50,15 @@ Preferred communication style: Simple, everyday language.
   - Frontend UI conditionally displays admin features based on user permissions
   - Secure admin panel access with automatic redirect for unauthorized users
 - **User Management System**: ✅ IMPLEMENTED (Aug 6, 2025)
-  - Single user addition with complete profile data (email, region, chapter, member name, specialty, target customer, password)
+  - Single user addition with profile data (email, region, chapter, member name, specialty, password)
   - Bulk user addition via CSV format parsing with comprehensive error handling
+  - CSV file upload functionality with Object Storage integration
   - Real-time Google Sheets integration for immediate data persistence
   - Automatic validation for required fields (email, member name)
   - Smart row allocation system that reuses empty rows from deleted users
-  - Admin panel UI with dedicated buttons for user addition workflows
+  - Admin panel UI with file upload and text input options for bulk addition
   - Full integration with existing withdrawal and permission systems
+  - **Target Customer Policy**: Target customer (나의 핵심 고객층) excluded from admin addition - users manage this field directly
 
 ### Key Features
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal

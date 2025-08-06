@@ -50,7 +50,6 @@ export default function AdminPage() {
     chapter: '',
     memberName: '',
     specialty: '',
-    targetCustomer: '',
     password: '1234',
     auth: 'Member'
   });
@@ -143,7 +142,6 @@ export default function AdminPage() {
         chapter: '',
         memberName: '',
         specialty: '',
-        targetCustomer: '',
         password: '1234',
         auth: 'Member'
       });
@@ -784,15 +782,7 @@ export default function AdminPage() {
                 className="bg-white border-gray-300"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">타겟고객</label>
-              <Input
-                placeholder="디자이너스"
-                value={newUser.targetCustomer}
-                onChange={(e) => setNewUser({...newUser, targetCustomer: e.target.value})}
-                className="bg-white border-gray-300"
-              />
-            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium">비밀번호</label>
               <Input
@@ -837,7 +827,9 @@ export default function AdminPage() {
             <AlertDialogDescription>
               CSV 형식으로 여러 사용자를 한번에 추가할 수 있습니다. 각 줄에 하나씩 입력해주세요.
               <br />
-              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, [권한 또는 비밀번호], [비밀번호 또는 권한]
+              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]
+              <br />
+              <small className="text-gray-500">* 타겟고객(나의 핵심 고객층)은 사용자가 직접 입력하므로 관리자 추가에서는 제외됩니다.</small>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-6">
@@ -852,10 +844,11 @@ export default function AdminPage() {
                   <strong>정해진 양식의 CSV 파일을 업로드하면 자동으로 Google 시트에 반영됩니다.</strong>
                 </p>
                 <div className="text-xs text-blue-700">
-                  <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
+                  <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
                   <p>• 이메일과 멤버명은 필수 항목입니다</p>
                   <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
                   <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
+                  <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
                 </div>
                 <ObjectUploader
                   maxNumberOfFiles={1}
@@ -890,9 +883,9 @@ export default function AdminPage() {
                 <textarea
                   className="w-full h-40 p-3 border rounded-md resize-none"
                   placeholder={`예시:
-user1@example.com, 서울, 하이, 홍길동, 디자인, 디자이너스, admin, 1234
-user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, Growth, 5678
-user3@example.com, 대구, 베스트, 이영희, 마케팅, 소상공인, 멤버, 9999`}
+user1@example.com, 서울, 하이, 홍길동, 디자인, admin, 1234
+user2@example.com, 부산, 굿, 김철수, 개발, Growth, 5678
+user3@example.com, 대구, 베스트, 이영희, 마케팅, 멤버, 9999`}
                   value={bulkAddUsers}
                   onChange={(e) => setBulkAddUsers(e.target.value)}
                 />
