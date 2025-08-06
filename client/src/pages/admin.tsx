@@ -629,8 +629,8 @@ export default function AdminPage() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                <FileText className="w-4 h-4 inline mr-2" />
-                CSV 파일 업로드
+                <Plus className="w-4 h-4 inline mr-2" />
+                일괄 등록
               </button>
             </div>
 
