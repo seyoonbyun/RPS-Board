@@ -656,17 +656,19 @@ export default function AdminPage() {
                   )}
                 </div>
                 {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setRegionFilter('__all__');
-                      setChapterFilter('__all__');
-                    }}
-                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                  >
-                    모든 필터 해제
-                  </Button>
+                  <div className="flex items-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setRegionFilter('__all__');
+                        setChapterFilter('__all__');
+                      }}
+                      className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                    >
+                      모든 필터 해제
+                    </Button>
+                  </div>
                 )}
               </div>
 
