@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
@@ -62,6 +62,38 @@ export function ObjectUploader({
   allowedFileTypes = [],
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
+
+  // Uppy 모달의 텍스트를 한국어로 변경
+  useEffect(() => {
+    if (showModal) {
+      const interval = setInterval(() => {
+        // "Drop files here or browse files" 텍스트 변경
+        const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
+        if (dropHint && dropHint.textContent?.includes('Drop files here')) {
+          dropHint.innerHTML = 'CSV 파일을 여기에 끌어다 놓거나 <span class="uppy-Dashboard-browse" style="color: #d12031; font-weight: 600; text-decoration: underline; cursor: pointer;">파일 선택</span>해주세요';
+        }
+
+        // "browse files" 링크 이벤트 처리
+        const browseLink = dropHint?.querySelector('.uppy-Dashboard-browse');
+        if (browseLink && !browseLink.hasAttribute('data-korean-processed')) {
+          browseLink.setAttribute('data-korean-processed', 'true');
+          browseLink.addEventListener('click', () => {
+            const fileInput = document.querySelector('.uppy-Dashboard-input') as HTMLInputElement;
+            fileInput?.click();
+          });
+        }
+
+        // 필요에 따라 다른 텍스트도 변경
+        const addFilesTitle = document.querySelector('.uppy-Dashboard-AddFiles-title');
+        if (addFilesTitle && addFilesTitle.textContent?.includes('files')) {
+          addFilesTitle.textContent = 'CSV 파일 업로드';
+        }
+      }, 100);
+
+      // 컴포넌트 언마운트 시 interval 정리
+      return () => clearInterval(interval);
+    }
+  }, [showModal]);
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
