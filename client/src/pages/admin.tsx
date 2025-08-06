@@ -365,11 +365,11 @@ export default function AdminPage() {
             <div className="flex items-center space-x-4">
               <Button 
                 onClick={() => setShowAddUserDialog(true)}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600"
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                사용자 추가
+                멤버 추가하기
               </Button>
               <Button onClick={exportUserList} variant="outline" size="sm">
                 <Download className="mr-2 w-4 h-4" />
