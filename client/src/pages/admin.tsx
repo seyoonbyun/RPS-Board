@@ -317,19 +317,22 @@ export default function AdminPage() {
         let auth = 'Member';
         
         if (parts.length >= 7) {
-          // 7번째 필드가 권한(Admin, Growth, Member)인지 비밀번호인지 판단
-          const field6 = parts[6];
-          if (field6 === 'Admin' || field6 === 'Growth' || field6 === 'Member') {
+          // 7번째 필드가 권한(Admin, Growth, Member)인지 비밀번호인지 판단 (대소문자 무관)
+          const field6 = parts[6].toLowerCase();
+          if (field6 === 'admin' || field6 === 'growth' || field6 === 'member') {
             // 7번째 필드가 권한이면
-            auth = field6;
+            auth = parts[6].charAt(0).toUpperCase() + parts[6].slice(1).toLowerCase(); // Admin, Growth, Member로 정규화
             if (parts.length >= 8) {
               password = parts[7];
             }
           } else {
             // 7번째 필드가 비밀번호면
-            password = field6;
+            password = parts[6]; // 원본 값 사용
             if (parts.length >= 8) {
-              auth = parts[7];
+              const field7 = parts[7].toLowerCase();
+              if (field7 === 'admin' || field7 === 'growth' || field7 === 'member') {
+                auth = parts[7].charAt(0).toUpperCase() + parts[7].slice(1).toLowerCase();
+              }
             }
           }
         }
