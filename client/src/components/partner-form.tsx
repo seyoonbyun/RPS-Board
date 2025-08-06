@@ -505,10 +505,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                           <div className="py-4 space-y-4">
                             <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
                               <h4 className="font-semibold text-gray-800 mb-2">
-                                계정 삭제 시 다음 작업이 수행됩니다:
+                                계정 삭제 시 다음 작업이 수행됩니다 :
                               </h4>
-                              <div className="space-y-2 text-sm text-gray-700">
-                                <div>• 지금까지 기록하신 대표님의 모든 R파트너 데이터가 삭제됩니다.</div>
+                              <div className="text-sm text-gray-700">
+                                지금까지 기록하신 대표님의 모든 R파트너 데이터가 삭제됩니다.
                               </div>
                             </div>
                             <div className="text-center font-semibold text-red-600 bg-red-100 p-3 rounded-lg">
