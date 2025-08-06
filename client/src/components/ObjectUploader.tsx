@@ -99,10 +99,9 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
             (dropHint as HTMLElement).style.position = 'relative';
-            (dropHint as HTMLElement).style.marginTop = '41px'; // 텍스트를 아래로 밀어내기 (9px 간격을 위해)
+            (dropHint as HTMLElement).style.marginTop = '50px'; // 텍스트를 아래로 밀어내기
             
-            // dropHint의 위치 계산하여 아이콘 배치
-            const dropHintRect = dropHint.getBoundingClientRect();
+            // 아이콘 추가 - 더 간단한 방식
             const parentContainer = dropHint.parentElement;
             
             if (parentContainer && !parentContainer.querySelector('.custom-upload-icon')) {
@@ -130,12 +129,13 @@ export function ObjectUploader({
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                top: ${41 - 32 - 9}px !important;
+                top: 9px !important;
               `;
               
               parentContainer.insertBefore(icon, parentContainer.firstChild);
-              console.log('Icon positioned 9px above text at top:', 41 - 32 - 9, 'px');
-              console.log('Icon added with calculated position:', icon.style.top);
+              console.log('Icon positioned at top: 9px - creating 9px gap above text');
+              console.log('Text margin: 50px, Icon top: 9px, Icon height: 32px');
+              console.log('Gap calculation: 50px (text) - (9px + 32px) = 9px gap');
             }
             
             console.log('Text changed to Korean and style applied');
