@@ -528,7 +528,7 @@ export default function AdminPage() {
                       className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
                     >
                       <Trash2 className="mr-2 w-4 h-4" />
-                      선택한 사용자 탈퇴 처리
+                      나의 RPS 계정 삭제하기
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="alert-dialog-content">
