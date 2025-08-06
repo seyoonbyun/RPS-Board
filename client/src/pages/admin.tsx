@@ -643,51 +643,64 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* 멤버 목록 테이블 */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-3 border-b">
-                  <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
-                </div>
-                {/* 헤더 */}
-                <div className="bg-gray-100 px-4 py-2 border-b">
-                  <div className="flex items-center">
-                    <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
-                    <div className="flex-1 grid gap-3 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
-                      <div className="text-left">ID</div>
-                      <div className="text-left">지역</div>
-                      <div className="text-left">챕터</div>
-                      <div className="text-left">멤버명</div>
-                      <div className="text-left">전문분야</div>
-                      <div className="text-left">상태/파트너수</div>
+              {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
+              {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b">
+                    <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
+                  </div>
+                  {/* 헤더 */}
+                  <div className="bg-gray-100 px-4 py-2 border-b">
+                    <div className="flex items-center">
+                      <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
+                      <div className="flex-1 grid gap-3 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                        <div className="text-left">ID</div>
+                        <div className="text-left">지역</div>
+                        <div className="text-left">챕터</div>
+                        <div className="text-left">멤버명</div>
+                        <div className="text-left">전문분야</div>
+                        <div className="text-left">상태/파트너수</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {filteredActiveUsers.map((user) => (
-                    <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
-                      <div className="w-[44px] flex-shrink-0 flex justify-start">
-                        <Checkbox
-                          checked={selectedUsers.includes(user.email)}
-                          onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
-                        />
-                      </div>
-                      <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
-                        <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
-                        <div className="truncate text-left" title={user.region}>{user.region}</div>
-                        <div className="truncate text-left" title={user.chapter}>{user.chapter}</div>
-                        <div className="truncate text-left" title={user.memberName}>{user.memberName}</div>
-                        <div className="truncate text-left" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex items-center text-left space-x-2">
-                          <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
-                            {user.status}
-                          </Badge>
-                          <span className="text-gray-500">{user.totalPartners}명</span>
+                  <div className="max-h-96 overflow-y-auto">
+                    {filteredActiveUsers.map((user) => (
+                      <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
+                        <div className="w-[44px] flex-shrink-0 flex justify-start">
+                          <Checkbox
+                            checked={selectedUsers.includes(user.email)}
+                            onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
+                          />
+                        </div>
+                        <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                          <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
+                          <div className="truncate text-left" title={user.region}>{user.region}</div>
+                          <div className="truncate text-left" title={user.chapter}>{user.chapter}</div>
+                          <div className="truncate text-left" title={user.memberName}>{user.memberName}</div>
+                          <div className="truncate text-left" title={user.specialty}>{user.specialty}</div>
+                          <div className="flex items-center text-left space-x-2">
+                            <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
+                              {user.status}
+                            </Badge>
+                            <span className="text-gray-500">{user.totalPartners}명</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* 필터 선택 안내 메시지 */}
+              {regionFilter === '__all__' && chapterFilter === '__all__' && (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="mb-2">
+                    <Users className="h-12 w-12 mx-auto text-gray-300" />
+                  </div>
+                  <p className="text-lg font-medium mb-1">멤버 목록을 보려면 필터를 선택하세요</p>
+                  <p className="text-sm">지역 또는 챕터를 선택하면 해당 멤버 목록이 표시됩니다</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
