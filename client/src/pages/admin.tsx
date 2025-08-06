@@ -312,6 +312,28 @@ export default function AdminPage() {
           throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
         }
         
+        // 필드 개수에 따라 유연하게 처리
+        let password = '1234';
+        let auth = 'Member';
+        
+        if (parts.length >= 7) {
+          // 7번째 필드가 권한(Admin, Growth, Member)인지 비밀번호인지 판단
+          const field6 = parts[6];
+          if (field6 === 'Admin' || field6 === 'Growth' || field6 === 'Member') {
+            // 7번째 필드가 권한이면
+            auth = field6;
+            if (parts.length >= 8) {
+              password = parts[7];
+            }
+          } else {
+            // 7번째 필드가 비밀번호면
+            password = field6;
+            if (parts.length >= 8) {
+              auth = parts[7];
+            }
+          }
+        }
+
         const user = {
           email: parts[0],
           region: parts[1] || '',
@@ -319,8 +341,8 @@ export default function AdminPage() {
           memberName: parts[3],
           specialty: parts[4] || '',
           targetCustomer: parts[5] || '',
-          password: parts[6] || '1234',
-          auth: parts[7] || 'Member'
+          password: password,
+          auth: auth
         };
         
         console.log(`👤 Parsed user ${index + 1}:`, {
@@ -721,7 +743,7 @@ export default function AdminPage() {
             <AlertDialogDescription>
               CSV 형식으로 여러 사용자를 한번에 추가할 수 있습니다. 각 줄에 하나씩 입력해주세요.
               <br />
-              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, 비밀번호, 권한
+              <strong>형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, 타겟고객, [권한 또는 비밀번호], [비밀번호 또는 권한]
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
@@ -738,9 +760,9 @@ user2@example.com, 부산, 굿, 김철수, 개발, 개발자들, 5678, Member`}
             </div>
             <div className="text-xs text-gray-500">
               • 이메일과 멤버명은 필수 항목입니다
-              • 비밀번호를 입력하지 않으면 기본값 "1234"가 설정됩니다
-              • 권한을 입력하지 않으면 기본값 "Member"가 설정됩니다
-              • 권한 종류: Admin, Growth, Member
+              • 7번째 필드: 권한(Admin/Growth/Member) 또는 비밀번호를 입력
+              • 8번째 필드: 비밀번호 또는 권한을 입력
+              • 미입력시 기본값: 비밀번호=1234, 권한=Member
               • 각 필드는 쉼표(,)로 구분해주세요
             </div>
           </div>
