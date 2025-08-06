@@ -598,11 +598,11 @@ export default function AdminPage() {
                     <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
                     <div className="flex-1 grid grid-cols-6 gap-4 text-xs font-medium text-gray-600 uppercase tracking-wide">
                       <div className="text-left">ID</div>
-                      <div className="text-center">지역</div>
-                      <div className="text-center">챕터</div>
-                      <div className="text-center">멤버명</div>
-                      <div className="text-center">전문분야</div>
-                      <div className="text-center">상태/파트너수</div>
+                      <div className="text-left">지역</div>
+                      <div className="text-left">챕터</div>
+                      <div className="text-left">멤버명</div>
+                      <div className="text-left">전문분야</div>
+                      <div className="text-left">상태/파트너수</div>
                     </div>
                   </div>
                 </div>
@@ -617,11 +617,11 @@ export default function AdminPage() {
                       </div>
                       <div className="flex-1 grid grid-cols-6 gap-4 text-sm">
                         <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
-                        <div className="truncate text-center" title={user.region}>{user.region}</div>
-                        <div className="truncate text-center" title={user.chapter}>{user.chapter}</div>
-                        <div className="truncate text-center" title={user.memberName}>{user.memberName}</div>
-                        <div className="truncate text-center" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="truncate text-left" title={user.region}>{user.region}</div>
+                        <div className="truncate text-left" title={user.chapter}>{user.chapter}</div>
+                        <div className="truncate text-left" title={user.memberName}>{user.memberName}</div>
+                        <div className="truncate text-left" title={user.specialty}>{user.specialty}</div>
+                        <div className="flex items-center text-left space-x-2">
                           <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
                             {user.status}
                           </Badge>
@@ -651,11 +651,11 @@ export default function AdminPage() {
                   <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
                   <div className="flex-1 grid grid-cols-6 gap-4 text-xs font-medium text-red-800 uppercase tracking-wide">
                     <div className="text-left">ID</div>
-                    <div className="text-center">지역</div>
-                    <div className="text-center">챕터</div>
-                    <div className="text-center">멤버명</div>
-                    <div className="text-center">전문분야</div>
-                    <div className="text-center">상태</div>
+                    <div className="text-left">지역</div>
+                    <div className="text-left">챕터</div>
+                    <div className="text-left">멤버명</div>
+                    <div className="text-left">전문분야</div>
+                    <div className="text-left">상태</div>
                   </div>
                 </div>
               </div>
@@ -665,11 +665,11 @@ export default function AdminPage() {
                     <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
                     <div className="flex-1 grid grid-cols-6 gap-4 text-sm">
                       <div className="font-medium text-red-700 truncate text-left" title={user.email}>{user.email}</div>
-                      <div className="text-red-600 truncate text-center" title={user.region}>{user.region}</div>
-                      <div className="text-red-600 truncate text-center" title={user.chapter}>{user.chapter}</div>
-                      <div className="text-red-600 truncate text-center" title={user.memberName}>{user.memberName}</div>
-                      <div className="text-red-600 truncate text-center" title={user.specialty}>{user.specialty}</div>
-                      <div className="flex justify-center">
+                      <div className="text-red-600 truncate text-left" title={user.region}>{user.region}</div>
+                      <div className="text-red-600 truncate text-left" title={user.chapter}>{user.chapter}</div>
+                      <div className="text-red-600 truncate text-left" title={user.memberName}>{user.memberName}</div>
+                      <div className="text-red-600 truncate text-left" title={user.specialty}>{user.specialty}</div>
+                      <div className="flex text-left">
                         <Badge variant="destructive">탈퇴</Badge>
                       </div>
                     </div>
