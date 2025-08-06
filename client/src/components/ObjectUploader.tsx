@@ -94,56 +94,12 @@ export function ObjectUploader({
           if (dropHint.textContent?.includes('Drop files here') || dropHint.textContent?.includes('Drop your files here')) {
             dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
             
-            // 강제로 스타일 적용
-            (dropHint as HTMLElement).style.fontSize = '9px';
-            (dropHint as HTMLElement).style.color = '#6b7280';
-            (dropHint as HTMLElement).style.fontWeight = '600';
-            (dropHint as HTMLElement).style.position = 'relative';
-            // 기존 디자인: 텍스트는 버튼 아래 적당한 간격에 위치
-            (dropHint as HTMLElement).style.marginTop = '0px';
+
             
             console.log('Text changed to Korean and style applied');
           }
           
-          // 아이콘을 텍스트 바로 위에 배치 (marginTop 제거로 텍스트가 위로 올라감)
-          const parentContainer = dropHint.parentElement;
-          if (parentContainer) {
-            // 기존 아이콘 제거
-            const existingIcon = document.querySelector('.custom-upload-icon');
-            if (existingIcon) {
-              existingIcon.remove();
-            }
-            
-            parentContainer.style.position = 'relative';
-            
-            const icon = document.createElement('div');
-            icon.className = 'custom-upload-icon';
-            icon.innerHTML = '↑';
-            
-            icon.style.cssText = `
-              position: absolute !important;
-              left: 50% !important;
-              transform: translateX(-50%) !important;
-              width: 40px !important;
-              height: 32px !important;
-              background-color: #374151 !important;
-              border: 2px solid #6b7280 !important;
-              border-radius: 6px !important;
-              color: #ffffff !important;
-              font-size: 18px !important;
-              font-weight: bold !important;
-              line-height: 28px !important;
-              text-align: center !important;
-              z-index: 9999 !important;
-              display: block !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-              top: -20px !important;
-            `;
-            
-            parentContainer.insertBefore(icon, parentContainer.firstChild);
-            console.log('Icon positioned at top: -20px (restored to original position)');
-          }
+
         }
         
         // 파일 선택 버튼 스타일 강제 적용

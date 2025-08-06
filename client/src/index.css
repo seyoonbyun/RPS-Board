@@ -662,3 +662,29 @@ input[placeholder*="작성예"]:-moz-placeholder {
   border-width: 1px !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
 }
+
+/* Uppy 업로더에 아이콘 추가 - 기존 디자인 유지 */
+.uppy-Dashboard-dropFilesHereHint::before {
+  content: '↑';
+  display: block;
+  width: 40px;
+  height: 32px;
+  background-color: #374151;
+  border: 2px solid #6b7280;
+  border-radius: 6px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 28px;
+  text-align: center;
+  margin: 0 auto 10px auto;
+  position: relative;
+  top: -10px;
+}
+
+/* 한국어 텍스트 스타일링 */
+.uppy-Dashboard-dropFilesHereHint {
+  font-size: 12px !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+}
