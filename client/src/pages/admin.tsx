@@ -191,11 +191,8 @@ export default function AdminPage() {
   // CSV 파일 업로드 처리
   const csvProcessMutation = useMutation({
     mutationFn: async (csvURL: string) => {
-      const response = await apiRequest('/api/csv/process', {
-        method: 'POST',
-        body: { csvURL }
-      });
-      return response;
+      const response = await apiRequest('POST', '/api/csv/process', { csvURL });
+      return await response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -399,7 +396,7 @@ export default function AdminPage() {
           if (field6Auth && field7Auth) {
             // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
             auth = field6Auth;
-            password = field7;
+            password = field7 || '1234';
           } else if (field6Auth) {
             // 7번째가 권한이면
             auth = field6Auth;
