@@ -73,6 +73,13 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* 플레이스홀더 스타일 */
+  input::placeholder,
+  textarea::placeholder {
+    color: rgb(156, 163, 175) !important; /* gray-400 색상 */
+    opacity: 1 !important;
+  }
 }
 
 /* AlertDialog 개선된 스타일링 */
