@@ -74,10 +74,10 @@ export function ObjectUploader({
       autoProceed: false,
       locale: {
         strings: {
-          dropHereOr: '↑\n여기에 파일 끌어다 놓기 또는',
+          dropHereOr: '여기에 파일 끌어다 놓기 또는',
           browse: 'CSV 파일 선택',
-          dropPasteBoth: '↑\n여기에 파일 끌어다 놓기 또는 %{browse}',
-          dropPaste: '↑\n여기에 파일 끌어다 놓기',
+          dropPasteBoth: '여기에 파일 끌어다 놓기 또는 %{browse}',
+          dropPaste: '여기에 파일 끌어다 놓기',
           addMoreFiles: '파일 더 추가',
           uploadComplete: '업로드 완료!',
           uploadFailed: '업로드 실패',
