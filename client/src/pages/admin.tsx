@@ -954,7 +954,7 @@ export default function AdminPage() {
                     <p>• 이메일과 멤버명은 필수 항목입니다</p>
                     <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
                     <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
-                    <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
+                    <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 입력하므로 관리자가 계정 생성 추가하는 정보에서 제외됩니다</p>
                   </div>
                   <div className="mt-3 pt-2 border-t border-red-200">
                     <a 
