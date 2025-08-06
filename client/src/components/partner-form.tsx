@@ -496,10 +496,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="alert-dialog-title">
-                              멤버 탈퇴 확인
+                              파워팀 계정 삭제 확인
                             </AlertDialogTitle>
                             <AlertDialogDescription className="alert-dialog-description">
-                              정말로 탈퇴 처리하시겠습니까?
+                              정말로 계정을 삭제하시겠습니까?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="py-4 space-y-4">
