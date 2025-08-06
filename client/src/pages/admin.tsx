@@ -80,26 +80,11 @@ export default function AdminPage() {
     }
   }, [currentUser, adminPermission, setLocation, toast]);
 
-  // 권한 확인 중이거나 권한이 없으면 로딩 또는 리다이렉트
-  if (!currentUser || isAdminLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">권한을 확인하는 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (adminPermission && !adminPermission.isAdmin) {
-    return null; // useEffect에서 리다이렉트 처리
-  }
-
-  // 전체 사용자 목록 조회
+  // 전체 사용자 목록 조회 - Hook은 항상 조건문 이전에 호출
   const { data: allUsers, isLoading } = useQuery<UserData[]>({
     queryKey: ['/api/admin/users'],
     retry: false,
+    enabled: !!currentUser && !!adminPermission?.isAdmin, // 권한이 있을 때만 쿼리 실행
   });
 
   // 일괄 탈퇴 처리 mutation
@@ -127,6 +112,22 @@ export default function AdminPage() {
       });
     },
   });
+
+  // 권한 확인 중이거나 권한이 없으면 로딩 또는 리다이렉트
+  if (!currentUser || isAdminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">권한을 확인하는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (adminPermission && !adminPermission.isAdmin) {
+    return null; // useEffect에서 리다이렉트 처리
+  }
 
   const handleUserSelection = (email: string, checked: boolean) => {
     if (checked) {
