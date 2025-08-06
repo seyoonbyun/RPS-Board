@@ -73,41 +73,42 @@
   body {
     @apply bg-background text-foreground;
   }
-  
-  /* Tailwind placeholder 유틸리티 덮어쓰기 */
-  .placeholder-gray-light::placeholder {
-    --tw-placeholder-opacity: 1;
-    color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
-  }
+}
 
-  /* Uppy Dashboard 커스텀 디자인 */
-  .uppy-Dashboard-inner {
-    border-radius: 12px !important;
-    border: 2px dashed #e5e7eb !important;
-    background-color: #f9fafb !important;
-    min-height: 300px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 40px 20px !important;
-  }
+/* Tailwind placeholder 유틸리티 덮어쓰기 */
+.placeholder-gray-light::placeholder {
+  --tw-placeholder-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
+}
 
-  .uppy-Dashboard-AddFiles {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    height: 100% !important;
-  }
+/* Uppy Dashboard 커스텀 디자인 */
+.uppy-Dashboard-inner {
+  border-radius: 12px !important;
+  border: 2px dashed #e5e7eb !important;
+  background-color: #f9fafb !important;
+  min-height: 300px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 40px 20px !important;
+}
 
-  .uppy-Dashboard-AddFiles-title {
-    display: none !important;
-  }
+.uppy-Dashboard-AddFiles {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
 
-  /* CSV 파일 선택 버튼 */
-  .uppy-Dashboard-browse {
+.uppy-Dashboard-AddFiles-title {
+  display: none !important;
+}
+
+/* CSV 파일 선택 버튼 */
+.uppy-Dashboard-browse {
     background-color: #d12031 !important;
     color: white !important;
     border: none !important;
@@ -235,12 +236,11 @@
     border: 1px solid #e5e7eb !important;
   }
 
-  /* 모달 헤더 */
-  .uppy-Dashboard-title {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-    margin-bottom: 20px !important;
-  }
+/* 모달 헤더 */
+.uppy-Dashboard-title {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+  margin-bottom: 20px !important;
 }
 
 /* AlertDialog 개선된 스타일링 */

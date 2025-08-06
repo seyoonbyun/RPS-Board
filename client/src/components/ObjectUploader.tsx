@@ -82,7 +82,7 @@ export function ObjectUploader({
           });
         });
 
-        // 드래그 앤 드롭 힌트 텍스트 변경 및 아이콘 추가
+        // 드래그 앤 드롭 힌트 텍스트 변경
         const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
         console.log('Drop hint found:', dropHint);
         console.log('Drop hint text:', dropHint?.textContent);
@@ -90,7 +90,7 @@ export function ObjectUploader({
         if (dropHint) {
           console.log('Processing drop hint for Korean...');
           
-          // 텍스트 변경 및 강제 스타일 적용
+          // 텍스트 변경만 처리 (한 번만)
           if (dropHint.textContent?.includes('Drop files here') || dropHint.textContent?.includes('Drop your files here')) {
             dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
             
@@ -99,46 +99,50 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
             (dropHint as HTMLElement).style.position = 'relative';
-            (dropHint as HTMLElement).style.marginTop = '34px'; // 텍스트를 아래로 밀어내기 (바로 위에)
-            
-            // 아이콘을 텍스트 바로 위에 배치
-            const parentContainer = dropHint.parentElement;
-            
-            if (parentContainer && !parentContainer.querySelector('.custom-upload-icon')) {
-              // 부모 컨테이너를 relative로 설정
-              parentContainer.style.position = 'relative';
-              
-              const icon = document.createElement('div');
-              icon.className = 'custom-upload-icon';
-              icon.innerHTML = '↑';
-              icon.style.cssText = `
-                position: absolute !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                width: 40px !important;
-                height: 32px !important;
-                background-color: #374151 !important;
-                border: 2px solid #6b7280 !important;
-                border-radius: 6px !important;
-                color: #ffffff !important;
-                font-size: 18px !important;
-                font-weight: bold !important;
-                line-height: 28px !important;
-                text-align: center !important;
-                z-index: 9999 !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                top: 2px !important;
-              `;
-              
-              parentContainer.insertBefore(icon, parentContainer.firstChild);
-              console.log('Icon positioned directly above text');
-              console.log('Text margin: 34px, Icon top: 2px, Icon height: 32px');
-              console.log('Gap calculation: 34px (text) - (2px + 32px) = 0px gap (바로 위)');
-            }
+            // 텍스트를 아래로 밀어내서 아이콘 공간 확보
+            (dropHint as HTMLElement).style.marginTop = '32px';
             
             console.log('Text changed to Korean and style applied');
+          }
+          
+          // 아이콘을 텍스트 바로 위에 배치 (marginTop 제거로 텍스트가 위로 올라감)
+          const parentContainer = dropHint.parentElement;
+          if (parentContainer) {
+            // 기존 아이콘 제거
+            const existingIcon = document.querySelector('.custom-upload-icon');
+            if (existingIcon) {
+              existingIcon.remove();
+            }
+            
+            parentContainer.style.position = 'relative';
+            
+            const icon = document.createElement('div');
+            icon.className = 'custom-upload-icon';
+            icon.innerHTML = '↑';
+            
+            icon.style.cssText = `
+              position: absolute !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              width: 40px !important;
+              height: 32px !important;
+              background-color: #374151 !important;
+              border: 2px solid #6b7280 !important;
+              border-radius: 6px !important;
+              color: #ffffff !important;
+              font-size: 18px !important;
+              font-weight: bold !important;
+              line-height: 28px !important;
+              text-align: center !important;
+              z-index: 9999 !important;
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              top: 0px !important;
+            `;
+            
+            parentContainer.insertBefore(icon, parentContainer.firstChild);
+            console.log('Icon positioned at top: -34px (directly above text with no margin)');
           }
         }
         
@@ -156,13 +160,29 @@ export function ObjectUploader({
         }
       };
 
-      // 반복적으로 확인하여 텍스트 변경
-      const timer = setTimeout(translateTexts, 200);
-      const interval = setInterval(translateTexts, 500);
+      // 아이콘과 텍스트 설정 후 interval 중단
+      let isSetup = false;
       
-      // 5초 후 정리
+      const setupOnce = () => {
+        translateTexts();
+        if (document.querySelector('.custom-upload-icon')) {
+          isSetup = true;
+          clearInterval(interval);
+          console.log('Setup complete - interval stopped');
+        }
+      };
+      
+      const timer = setTimeout(setupOnce, 200);
+      const interval = setInterval(() => {
+        if (!isSetup) {
+          setupOnce();
+        }
+      }, 100);
+      
+      // 5초 후 강제 정리
       const cleanup = setTimeout(() => {
         clearInterval(interval);
+        isSetup = true;
       }, 5000);
 
       return () => {
