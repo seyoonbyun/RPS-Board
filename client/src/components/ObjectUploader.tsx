@@ -63,6 +63,37 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
 
+  // 모달이 열릴 때 아이콘 추가
+  useEffect(() => {
+    if (showModal) {
+      const addIcon = () => {
+        const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
+        if (dropHint && !document.querySelector('.upload-icon')) {
+          const icon = document.createElement('div');
+          icon.className = 'upload-icon';
+          icon.innerHTML = '↑';
+          icon.style.cssText = `
+            width: 40px;
+            height: 32px;
+            background-color: #374151;
+            border-radius: 6px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px auto;
+          `;
+          dropHint.parentElement?.insertBefore(icon, dropHint);
+        }
+      };
+      
+      // DOM이 준비될 때까지 기다림
+      setTimeout(addIcon, 300);
+    }
+  }, [showModal]);
+
 
   const [uppy] = useState(() =>
     new Uppy({
