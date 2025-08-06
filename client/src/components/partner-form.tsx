@@ -493,7 +493,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             나의 RPS 계정 삭제하기
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300">
+                        <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="alert-dialog-title">
                               파워팀 계정 삭제 확인
