@@ -636,7 +636,7 @@ export default function AdminPage() {
 
             {/* 개별 사용자 추가 폼 */}
             {addMode === 'single' && (
-              <div className="bg-red-50 p-4 rounded-lg space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">이메일 *</label>
@@ -710,7 +710,7 @@ export default function AdminPage() {
                 <Button 
                   onClick={handleAddUser}
                   disabled={addUserMutation.isPending}
-                  className="w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
                 >
                   {addUserMutation.isPending ? "추가 중..." : "사용자 추가"}
                 </Button>
