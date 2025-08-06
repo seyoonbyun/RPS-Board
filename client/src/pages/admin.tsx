@@ -601,7 +601,7 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>새로운 멤버 추가하기</AlertDialogTitle>
             <AlertDialogDescription>
-              단일 사용자 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
+              단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
               <br />
               <small className="text-gray-500">* 타겟고객(나의 핵심 고객층)은 사용자가 직접 입력하므로 관리자 추가에서는 제외됩니다.</small>
             </AlertDialogDescription>
