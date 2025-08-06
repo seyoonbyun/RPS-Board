@@ -70,6 +70,20 @@ export function ObjectUploader({
         allowedFileTypes: allowedFileTypes.length > 0 ? allowedFileTypes : undefined,
       },
       autoProceed: false,
+      locale: {
+        strings: {
+          // 가장 중요한 메시지들만 한국어로 번역
+          dropHereOr: 'CSV 파일을 여기에 끌어다 놓거나 %{browse}해주세요',
+          browse: '파일 선택',
+          addMoreFiles: '파일 더 추가',
+          uploadComplete: '업로드 완료!',
+          uploadFailed: '업로드 실패',
+          cancel: '취소',
+          removeFile: '파일 제거',
+          exceedsSize: '파일이 최대 허용 크기를 초과합니다'
+        },
+        pluralize: (count: number) => count === 1 ? 0 : 1
+      }
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
@@ -92,6 +106,12 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        showProgressDetails={true}
+        note="CSV 형식의 파일만 업로드 가능합니다"
+        closeModalOnClickOutside={true}
+        disableStatusBar={false}
+        disableInformer={false}
+        disableThumbnailGenerator={true}
       />
     </div>
   );

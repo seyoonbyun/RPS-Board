@@ -79,6 +79,60 @@
     --tw-placeholder-opacity: 1;
     color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
   }
+
+  /* Uppy Dashboard 한국어 스타일링 */
+  .uppy-Dashboard-inner {
+    border-radius: 8px !important;
+    border: 2px solid #d12031 !important;
+  }
+
+  .uppy-Dashboard-dropFilesHereHint {
+    color: #374151 !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+  }
+
+  .uppy-Dashboard-browse {
+    color: #d12031 !important;
+    font-weight: 600 !important;
+    text-decoration: underline !important;
+  }
+
+  .uppy-Dashboard-browse:hover {
+    color: #991b1b !important;
+  }
+
+  .uppy-Dashboard-dropFilesTitle {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+    margin-bottom: 12px !important;
+  }
+
+  .uppy-Dashboard-AddFiles-title {
+    color: #d12031 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+
+  /* 업로드 버튼 스타일링 */
+  .uppy-c-btn-primary {
+    background-color: #d12031 !important;
+    border-color: #d12031 !important;
+  }
+
+  .uppy-c-btn-primary:hover {
+    background-color: #991b1b !important;
+    border-color: #991b1b !important;
+  }
+
+  /* 진행률 바 스타일링 */
+  .uppy-ProgressBar-percentage {
+    color: #d12031 !important;
+  }
+
+  .uppy-ProgressBar-fill {
+    background-color: #d12031 !important;
+  }
 }
 
 /* AlertDialog 개선된 스타일링 */
