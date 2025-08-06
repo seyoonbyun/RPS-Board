@@ -496,7 +496,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
                           <AlertDialogHeader>
                             <AlertDialogTitle className="alert-dialog-title">
-                              파워팀 계정 삭제 확인
+                              파워팀 계정 삭제
                             </AlertDialogTitle>
                             <AlertDialogDescription className="alert-dialog-description">
                               정말로 계정을 삭제하시겠습니까?
