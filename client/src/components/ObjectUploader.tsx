@@ -99,8 +99,8 @@ export function ObjectUploader({
             (dropHint as HTMLElement).style.color = '#6b7280';
             (dropHint as HTMLElement).style.fontWeight = '600';
             (dropHint as HTMLElement).style.position = 'relative';
-            // 원래 디자인 복원 - marginTop 제거
-            (dropHint as HTMLElement).style.marginTop = '50px';
+            // 기존 디자인: 텍스트는 버튼 아래 적당한 간격에 위치
+            (dropHint as HTMLElement).style.marginTop = '0px';
             
             console.log('Text changed to Korean and style applied');
           }
@@ -138,11 +138,11 @@ export function ObjectUploader({
               display: block !important;
               visibility: visible !important;
               opacity: 1 !important;
-              top: 9px !important;
+              top: -20px !important;
             `;
             
             parentContainer.insertBefore(icon, parentContainer.firstChild);
-            console.log('Icon positioned at top: 9px (original design restored)');
+            console.log('Icon positioned at top: -20px (restored to original position)');
           }
         }
         
