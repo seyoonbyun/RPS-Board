@@ -416,7 +416,7 @@ export default function AdminPage() {
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">멤버 ALL( 탈퇴 포함)</p>
+                <p className="text-sm font-medium text-gray-600">멤버 ALL(탈퇴 포함)</p>
                 <p className="text-2xl font-bold text-gray-900">{allUsers?.length || 0}명</p>
               </div>
             </div>
