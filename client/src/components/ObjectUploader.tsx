@@ -67,8 +67,11 @@ export function ObjectUploader({
   useEffect(() => {
     if (showModal) {
       const addIcon = () => {
-        const dropHint = document.querySelector('.uppy-Dashboard-dropFilesHereHint');
-        if (dropHint && !document.querySelector('.upload-icon')) {
+        // 더 구체적인 선택자를 사용해서 드롭 영역 찾기
+        const dropArea = document.querySelector('.uppy-Dashboard-AddFiles');
+        const existingIcon = document.querySelector('.upload-icon');
+        
+        if (dropArea && !existingIcon) {
           const icon = document.createElement('div');
           icon.className = 'upload-icon';
           icon.innerHTML = '↑';
@@ -83,14 +86,21 @@ export function ObjectUploader({
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 10px auto;
+            margin: 20px auto 10px auto;
+            position: relative;
+            z-index: 10;
           `;
-          dropHint.parentElement?.insertBefore(icon, dropHint);
+          // 드롭 영역의 첫 번째 자식으로 삽입
+          dropArea.insertBefore(icon, dropArea.firstChild);
+          console.log('Upload icon added successfully');
         }
       };
       
-      // DOM이 준비될 때까지 기다림
-      setTimeout(addIcon, 300);
+      // DOM이 준비될 때까지 여러 번 시도
+      const attempts = [300, 600, 1000];
+      attempts.forEach(delay => {
+        setTimeout(addIcon, delay);
+      });
     }
   }, [showModal]);
 
