@@ -130,11 +130,11 @@ export function ObjectUploader({
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                top: ${41 - 9 - 32}px !important;
+                top: ${41 - 32 - 9}px !important;
               `;
               
               parentContainer.insertBefore(icon, parentContainer.firstChild);
-              console.log('Icon positioned 9px above text at top:', 41 - 9 - 32, 'px');
+              console.log('Icon positioned 9px above text at top:', 41 - 32 - 9, 'px');
               console.log('Icon added with calculated position:', icon.style.top);
             }
             
