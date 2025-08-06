@@ -167,7 +167,7 @@ export default function AdminPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setShowBulkAddDialog(false);
+      setShowAddUserDialog(false);
       toast({
         title: "일괄 사용자 추가 완료",
         description: data.message,
@@ -709,6 +709,18 @@ export default function AdminPage() {
                       CSV 파일 처리 중...
                     </div>
                   )}
+                  
+                  {/* CSV 파일 형식 안내 */}
+                  <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                    <p className="text-sm font-medium text-blue-900 mb-2">CSV 파일 형식 안내</p>
+                    <div className="text-xs text-blue-700 space-y-1">
+                      <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
+                      <p>• 이메일과 멤버명은 필수 항목입니다</p>
+                      <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
+                      <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
+                      <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
+                    </div>
+                  </div>
                 </div>
 
                 <Button 
@@ -721,19 +733,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 도움말 섹션 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-600">CSV 파일 형식 안내</h3>
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="text-xs text-gray-700 space-y-1">
-                  <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
-                  <p>• 이메일과 멤버명은 필수 항목입니다</p>
-                  <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
-                  <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
-                  <p>• 타겟고객(나의 핵심 고객층)은 사용자 직접 입력 항목이므로 제외</p>
-                </div>
-              </div>
-            </div>
+
           </div>
           
           <AlertDialogFooter>
