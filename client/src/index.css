@@ -147,7 +147,50 @@
     position: relative !important;
   }
 
-  /* JavaScript로 생성된 아이콘을 위한 기본 스타일 */
+  /* Uppy 업로드 영역 강제 스타일링 */
+  .uppy-Dashboard-dropFilesHereHint {
+    font-size: 11px !important;
+    color: #6b7280 !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    padding: 20px 0 !important;
+    position: relative !important;
+  }
+
+  /* 아이콘을 CSS로 강제 표시 */
+  .uppy-Dashboard-dropFilesHereHint::after {
+    content: "" !important;
+    display: block !important;
+    width: 40px !important;
+    height: 32px !important;
+    background-color: #374151 !important;
+    border: 2px solid #6b7280 !important;
+    border-radius: 6px !important;
+    margin: 8px auto 0 auto !important;
+    position: relative !important;
+  }
+
+  /* 아이콘 내부의 화살표 */
+  .uppy-Dashboard-dropFilesHereHint::before {
+    content: "↑" !important;
+    position: absolute !important;
+    bottom: 40px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 40px !important;
+    height: 32px !important;
+    background-color: #374151 !important;
+    border: 2px solid #6b7280 !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #ffffff !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    z-index: 100 !important;
+  }
 
   /* 파일이 없을 때의 상태 */
   .uppy-Dashboard-AddFiles[data-uppy-drag-drop-supported="true"] {

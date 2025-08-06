@@ -87,45 +87,14 @@ export function ObjectUploader({
         console.log('Drop hint found:', dropHint);
         console.log('Drop hint text:', dropHint?.textContent);
         
-        if (dropHint && !dropHint.hasAttribute('data-korean-processed')) {
+        if (dropHint) {
           console.log('Processing drop hint for Korean...');
-          dropHint.setAttribute('data-korean-processed', 'true');
           
-          // 텍스트 엘리먼트 생성 (위쪽 배치)
-          const textElement = document.createElement('div');
-          textElement.style.cssText = `
-            color: #6b7280;
-            font-size: 11px;
-            font-weight: 600;
-            text-align: center;
-            margin: 0 0 8px 0;
-            line-height: 1.5;
-          `;
-          textElement.textContent = '여기에 파일 끌어다 놓기 또는';
-          
-          // 아이콘 엘리먼트 생성 (아래쪽 배치)
-          const iconElement = document.createElement('div');
-          iconElement.style.cssText = `
-            width: 40px;
-            height: 32px;
-            margin: 0 auto;
-            background-color: #374151;
-            border: 2px solid #6b7280;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: bold;
-          `;
-          iconElement.textContent = '↑';
-          
-          // 기존 내용을 지우고 새 엘리먼트들 추가 (텍스트 먼저, 아이콘 나중에)
-          dropHint.innerHTML = '';
-          dropHint.appendChild(textElement);
-          dropHint.appendChild(iconElement);
-          console.log('Icon and text elements added');
+          // 텍스트만 변경하고 CSS가 아이콘을 처리하도록 함
+          if (dropHint.textContent?.includes('Drop files here') || dropHint.textContent?.includes('Drop your files here')) {
+            dropHint.textContent = '여기에 파일 끌어다 놓기 또는';
+            console.log('Text changed to Korean');
+          }
         }
         
         // 파일 선택 버튼 텍스트 변경
