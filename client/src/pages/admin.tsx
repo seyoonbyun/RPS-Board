@@ -614,7 +614,7 @@ export default function AdminPage() {
                 onClick={() => setAddMode('single')}
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   addMode === 'single'
-                    ? 'bg-white text-red-600 shadow border-2 border-red-600'
+                    ? 'bg-white text-red-600 shadow border border-red-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -625,7 +625,7 @@ export default function AdminPage() {
                 onClick={() => setAddMode('csv')}
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   addMode === 'csv'
-                    ? 'bg-white text-red-600 shadow border-2 border-red-600'
+                    ? 'bg-white text-red-600 shadow border border-red-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
