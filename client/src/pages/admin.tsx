@@ -945,11 +945,11 @@ export default function AdminPage() {
                 <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
                   <p className="text-sm font-medium text-red-900 mb-2">CSV 파일 형식 안내</p>
                   <div className="text-xs text-red-700 space-y-1">
-                    <p><strong>CSV 파일 형식 :</strong> 이메일(ID),지역,챕터,멤버명,전문분야,권한,PW</p>
+                    <p><strong>CSV 파일 형식 :</strong> 이메일(ID) | 지역 | 챕터 | 멤버명 | 전문분야 | 권한 | PW(숫자 4자리)</p>
                     <p>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</p>
-                    <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보로 기본으로 합니다.</p>
-                    <p>• 권한(3) : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계의 구분되어 운영됩니다.</p>
-                    <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 입력하므로 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</p>
+                    <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</p>
+                    <p>• 권한(3) : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계로 구분되어 운영됩니다.</p>
+                    <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 설정하는 정보로, 관리자가 계정 생성 시 추가하는 정보에서 제외됩니다.</p>
                     <p>• 일괄 등록용 CSV 파일은 별도 제공(하단 링크)해드립니다. 다운로드&gt;작성&gt;업로드 하시면 됩니다.</p>
                   </div>
                   <div className="mt-3 pt-2 border-t border-red-200">
