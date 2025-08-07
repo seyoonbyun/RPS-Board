@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogContent, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogTrigger, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 
 interface ObjectUploaderProps {
@@ -85,6 +85,9 @@ export function ObjectUploader({
 
       <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
         <AlertDialogContent className="max-w-md p-0 bg-white">
+          <AlertDialogTitle className="sr-only">CSV 파일 업로드</AlertDialogTitle>
+          <AlertDialogDescription className="sr-only">CSV 파일을 업로드하여 사용자 정보를 일괄 등록할 수 있습니다.</AlertDialogDescription>
+          
           <div className="relative p-6">
             {/* 닫기 버튼 */}
             <button

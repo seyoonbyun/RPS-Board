@@ -1,11 +1,28 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
 import { storage } from "./storage";
 import { loginSchema, scoreboardFormSchema, type InsertScoreboardData } from "@shared/schema";
 import { z } from "zod";
 import { getGoogleSheetsService } from "./google-sheets";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
 import { ObjectStorageService } from "./objectStorage";
+import * as iconv from 'iconv-lite';
+
+// Multer 설정 - 메모리에 파일 저장
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('CSV 파일만 업로드 가능합니다.'));
+    }
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -611,19 +628,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/csv/process", async (req, res) => {
+  app.post("/api/csv/process", upload.single('file'), async (req, res) => {
     try {
-      const { csvURL } = req.body;
-      
-      if (!csvURL) {
-        return res.status(400).json({ error: "CSV URL이 필요합니다" });
+      if (!req.file) {
+        return res.status(400).json({ error: "CSV 파일이 필요합니다" });
       }
 
-      const objectStorageService = new ObjectStorageService();
-      const csvPath = objectStorageService.normalizeCSVPath(csvURL);
-      
-      const csvFile = await objectStorageService.getCSVFile(csvPath);
-      const csvContent = await objectStorageService.downloadCSVContent(csvFile);
+      // 파일 버퍼에서 텍스트 추출 (인코딩 감지 및 변환)
+      let csvContent: string;
+      try {
+        // UTF-8로 시도
+        csvContent = req.file.buffer.toString('utf8');
+        
+        // 한글이 깨져 보이면 다른 인코딩 시도
+        if (csvContent.includes('�') || !/[\u3131-\u314e\u314f-\u3163\uac00-\ud7a3]/.test(csvContent)) {
+          console.log('🔄 UTF-8 감지 실패, EUC-KR/CP949 시도...');
+          csvContent = iconv.decode(req.file.buffer, 'euc-kr');
+          
+          // 여전히 실패하면 CP949 시도
+          if (csvContent.includes('�') || !/[\u3131-\u314e\u314f-\u3163\uac00-\ud7a3]/.test(csvContent)) {
+            console.log('🔄 EUC-KR 감지 실패, CP949 시도...');
+            csvContent = iconv.decode(req.file.buffer, 'cp949');
+          }
+        }
+        
+        console.log('✅ CSV 인코딩 감지 및 변환 완료');
+      } catch (error) {
+        console.error('❌ CSV 인코딩 변환 실패:', error);
+        csvContent = req.file.buffer.toString('utf8'); // 기본값으로 폴백
+      }
       
       // Parse CSV content using the same logic as the text input
       const lines = csvContent.trim().split('\n');
