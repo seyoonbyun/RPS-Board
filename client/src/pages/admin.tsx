@@ -213,8 +213,15 @@ export default function AdminPage() {
 
   // CSV 파일 업로드 처리
   const csvProcessMutation = useMutation({
-    mutationFn: async (csvURL: string) => {
-      const response = await apiRequest('POST', '/api/csv/process', { csvURL });
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch('/api/csv/process', {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'CSV 파일 처리 실패');
+      }
       return await response.json();
     },
     onSuccess: (data) => {
@@ -235,24 +242,13 @@ export default function AdminPage() {
     }
   });
 
-  // CSV 업로드 URL 가져오기
-  const getCSVUploadURL = async () => {
-    const response = await fetch('/api/csv/upload-url', {
-      method: 'POST'
-    });
-    const data = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: data.uploadURL
-    };
-  };
-
-  // CSV 업로드 완료 처리
-  const handleCSVUploadComplete = (result: any) => {
-    if (result.successful && result.successful.length > 0) {
-      const uploadURL = result.successful[0].uploadURL;
-      csvProcessMutation.mutate(uploadURL);
-    }
+  // CSV 파일 선택 완료 처리
+  const handleCSVFileSelected = (file: File) => {
+    // 파일을 FormData로 변환해서 서버로 전송
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    csvProcessMutation.mutate(formData);
   };
 
   // 권한 확인 중이거나 권한이 없으면 로딩 또는 리다이렉트
@@ -930,11 +926,10 @@ export default function AdminPage() {
                   하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 RPS Board가 생성됩니다.
                 </p>
                 <ObjectUploader
-                  maxNumberOfFiles={1}
                   maxFileSize={5242880} // 5MB
-                  onGetUploadParameters={getCSVUploadURL}
-                  onComplete={handleCSVUploadComplete}
+                  onComplete={handleCSVFileSelected}
                   buttonClassName="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white mb-3"
+                  allowedFileTypes={['.csv']}
                 >
                   <FileText className="mr-2 w-4 h-4" />
                   CSV 파일 업로드

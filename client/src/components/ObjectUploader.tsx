@@ -1,123 +1,146 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import type { ReactNode } from "react";
-import Uppy from "@uppy/core";
-import { DashboardModal } from "@uppy/react";
-import "@uppy/core/dist/style.min.css";
-import "@uppy/dashboard/dist/style.min.css";
-import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
-    method: "PUT";
-    url: string;
-  }>;
-  onComplete?: (
-    result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  onComplete?: (file: File) => void;
   buttonClassName?: string;
   children: ReactNode;
   allowedFileTypes?: string[];
 }
 
-/**
- * A file upload component that renders as a button and provides a modal interface for
- * file management.
- * 
- * Features:
- * - Renders as a customizable button that opens a file upload modal
- * - Provides a modal interface for:
- *   - File selection
- *   - File preview
- *   - Upload progress tracking
- *   - Upload status display
- * 
- * The component uses Uppy under the hood to handle all file upload functionality.
- * All file management features are automatically handled by the Uppy dashboard modal.
- * 
- * @param props - Component props
- * @param props.maxNumberOfFiles - Maximum number of files allowed to be uploaded
- *   (default: 1)
- * @param props.maxFileSize - Maximum file size in bytes (default: 10MB)
- * @param props.onGetUploadParameters - Function to get upload parameters (method and URL).
- *   Typically used to fetch a presigned URL from the backend server for direct-to-S3
- *   uploads.
- * @param props.onComplete - Callback function called when upload is complete. Typically
- *   used to make post-upload API calls to update server state and set object ACL
- *   policies.
- * @param props.buttonClassName - Optional CSS class name for the button
- * @param props.children - Content to be rendered inside the button
- * @param props.allowedFileTypes - Array of allowed file types (e.g., ['.csv', '.xlsx'])
- */
 export function ObjectUploader({
-  maxNumberOfFiles = 1,
   maxFileSize = 10485760, // 10MB default
-  onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
-  allowedFileTypes = [],
+  allowedFileTypes = ['.csv'],
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const handleFileSelect = (file: File) => {
+    // 파일 크기 검증
+    if (file.size > maxFileSize) {
+      alert(`파일 크기가 너무 큽니다. 최대 ${Math.round(maxFileSize / 1024 / 1024)}MB까지 업로드 가능합니다.`);
+      return;
+    }
 
-
-
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-        allowedFileTypes: allowedFileTypes.length > 0 ? allowedFileTypes : undefined,
-      },
-      autoProceed: false,
-      locale: {
-        strings: {
-          dropHereOr: '여기에 파일 끌어다 놓기 또는',
-          browse: 'CSV 파일 선택',
-          dropPasteBoth: '여기에 파일 끌어다 놓기 또는 %{browse}',
-          dropPaste: '여기에 파일 끌어다 놓기',
-          addMoreFiles: '파일 더 추가',
-          uploadComplete: '업로드 완료!',
-          uploadFailed: '업로드 실패',
-          cancel: '취소',
-          removeFile: '파일 제거',
-          exceedsSize: '파일이 최대 허용 크기를 초과합니다'
-        },
-        pluralize: (count: number) => count === 1 ? 0 : 1
+    // 파일 타입 검증
+    if (allowedFileTypes.length > 0) {
+      const isValidType = allowedFileTypes.some(type => 
+        file.name.toLowerCase().endsWith(type.toLowerCase())
+      );
+      if (!isValidType) {
+        alert(`허용된 파일 형식이 아닙니다. ${allowedFileTypes.join(', ')} 파일만 업로드 가능합니다.`);
+        return;
       }
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
-      })
-      .on("complete", (result) => {
-        onComplete?.(result);
-        setShowModal(false); // Close modal after completion
-      })
-  );
+    }
+
+    onComplete?.(file);
+    setIsOpen(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+    // input 값 리셋
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   return (
-    <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
+    <>
+      <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
         {children}
       </Button>
 
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-        showProgressDetails={true}
-        note="CSV 형식의 파일만 업로드 가능합니다"
-        closeModalOnClickOutside={true}
-        disableStatusBar={false}
-        disableInformer={false}
-        disableThumbnailGenerator={true}
-      />
-    </div>
+      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialogContent className="max-w-md p-0 bg-white">
+          <div className="relative p-6">
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 p-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* 업로드 영역 */}
+            <div className="text-center">
+              {/* 아이콘 */}
+              <div className="mx-auto mb-6 w-10 h-8 bg-gray-600 rounded-md flex items-center justify-center">
+                <span className="text-white text-lg font-bold">↑</span>
+              </div>
+
+              {/* 드롭 영역 */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 transition-colors ${
+                  isDragOver 
+                    ? 'border-red-500 bg-red-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <p className="text-gray-600 mb-4">
+                  여기에 파일 끌어다 놓기 또는
+                </p>
+                
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md"
+                >
+                  + CSV 파일 선택
+                </Button>
+              </div>
+
+              {/* 안내 메시지 */}
+              <p className="text-sm text-gray-500 mt-4">
+                CSV 형식의 파일만 업로드 가능합니다
+              </p>
+
+              {/* 숨겨진 파일 입력 */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={allowedFileTypes.join(',')}
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
+            </div>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
