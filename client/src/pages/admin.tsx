@@ -923,7 +923,7 @@ export default function AdminPage() {
             {addMode === 'csv' && (
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-red-800 mb-3">
-                  하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 RPS Board가 생성됩니다.
+                  하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 멤버의 RPS Board가 생성됩니다.
                 </p>
                 <ObjectUploader
                   maxFileSize={5242880} // 5MB
