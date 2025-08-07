@@ -945,11 +945,11 @@ export default function AdminPage() {
                 <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
                   <p className="text-sm font-medium text-red-900 mb-2">CSV 파일 형식 안내</p>
                   <div className="text-xs text-red-700 space-y-1">
-                    <p><strong>CSV 파일 형식:</strong> 이메일, 지역, 챕터, 멤버명, 전문분야, [권한 또는 비밀번호], [비밀번호 또는 권한]</p>
-                    <p>• 이메일과 멤버명은 필수 항목입니다</p>
-                    <p>• 권한: Admin/admin/ADMIN/어드민, Growth/growth/GROWTH/성장, Member/member/MEMBER/멤버</p>
-                    <p>• 미입력시 기본값: 비밀번호=1234, 권한=Member</p>
-                    <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 입력하므로 관리자가 계정 생성 추가하는 정보에서 제외됩니다</p>
+                    <p><strong>CSV 파일 형식 :</strong> 이메일(ID),지역,챕터,멤버명,전문분야,권한,PW</p>
+                    <p></p>
+                    <p>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</p>
+                    <p>• 권한(3) : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계의 구분되어 운영됩니다.</p>
+                    <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 입력하므로 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</p>
                   </div>
                   <div className="mt-3 pt-2 border-t border-red-200">
                     <a 
