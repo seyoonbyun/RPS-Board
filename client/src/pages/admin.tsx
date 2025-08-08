@@ -542,7 +542,7 @@ export default function AdminPage() {
                 </AlertDialogTrigger>
                 <AlertDialogContent className="alert-dialog-content">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="alert-dialog-title">일괄 탈퇴 처리 확인</AlertDialogTitle>
+                    <AlertDialogTitle className="alert-dialog-title">일괄 탈퇴 진행</AlertDialogTitle>
                     <AlertDialogDescription className="alert-dialog-description">
                       입력한 이메일 목록의 모든 사용자를 탈퇴 처리하시겠습니까?
                       이 작업은 되돌릴 수 없습니다.
@@ -554,7 +554,7 @@ export default function AdminPage() {
                       onClick={handleBulkEmailsSubmit}
                       className="alert-dialog-action-destructive"
                     >
-                      탈퇴 처리 실행
+                      탈퇴 처리 계속하기
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
