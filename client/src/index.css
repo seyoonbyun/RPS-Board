@@ -90,6 +90,11 @@ textarea:-ms-input-placeholder {
   opacity: 1 !important;
 }
 
+/* 이메일 목록 textarea 입력 텍스트 색상 */
+textarea[placeholder*="member"] {
+  color: rgb(107 114 128) !important;
+}
+
 /* 더 구체적인 placeholder 색상 규칙 */
 .placeholder\:text-gray-500::placeholder,
 .placeholder\:text-gray-500::-webkit-input-placeholder,
