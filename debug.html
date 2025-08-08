@@ -1,44 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Letter Spacing Debug</title>
+    <title>Placeholder Debug</title>
     <style>
         .test-input {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            letter-spacing: normal;
-            padding: 8px;
-            border: 1px solid #ccc;
-            margin: 10px 0;
             width: 300px;
-        }
-        .debug-info {
-            font-family: monospace;
-            background: #f0f0f0;
             padding: 10px;
-            margin: 10px 0;
+            margin: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        /* 하단 텍스트와 동일한 색상 */
+        .test-input::placeholder {
+            color: rgb(107, 114, 128) !important;
+            opacity: 1 !important;
+        }
+        
+        .reference-text {
+            color: rgb(107, 114, 128);
+            font-size: 12px;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Letter Spacing Debug Test</h1>
+    <h2>Placeholder 색상 테스트</h2>
     
-    <div class="debug-info">
-        Expected: joy.byun@bnikorea.com (normal spacing)
-    </div>
+    <input class="test-input" placeholder="이메일을 입력하세요" />
+    <input class="test-input" placeholder="4자리 숫자를 입력하세요" />
     
-    <input type="email" class="test-input" value="joy.byun@bnikorea.com" />
-    <input type="text" class="test-input" value="joy.byun@bnikorea.com" />
+    <div class="reference-text">※ 로그인 정보는 BNI Connect에 등록된 이메일주소를 포함합니다.</div>
+    <div class="reference-text">로그인 오류 문의는 각 지역의 오피스를 통해 문의 부탁드립니다.</div>
     
     <script>
-        const inputs = document.querySelectorAll('.test-input');
-        inputs.forEach((input, index) => {
-            const computedStyle = window.getComputedStyle(input);
-            console.log(`Input ${index + 1} computed styles:`, {
-                letterSpacing: computedStyle.letterSpacing,
-                fontFamily: computedStyle.fontFamily,
-                wordSpacing: computedStyle.wordSpacing
-            });
-        });
+        console.log('Computed placeholder color:', window.getComputedStyle(document.querySelector('.test-input'), '::placeholder').color);
+        console.log('Reference text color:', window.getComputedStyle(document.querySelector('.reference-text')).color);
     </script>
 </body>
 </html>

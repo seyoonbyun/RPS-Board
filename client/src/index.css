@@ -56,6 +56,18 @@
     color: rgb(107, 114, 128) !important;
     opacity: 1 !important;
   }
+
+  /* 극강 우선순위 placeholder 색상 강제 적용 - 모든 경우에 대해 */
+  * input::placeholder,
+  * input::-webkit-input-placeholder,
+  * input::-moz-placeholder,
+  * input:-ms-input-placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="text"]::placeholder {
+    color: rgb(107, 114, 128) !important;
+    opacity: 1 !important;
+  }
  
   .dark {
     --background: 222.2 84% 4.9%;
