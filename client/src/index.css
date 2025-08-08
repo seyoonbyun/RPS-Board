@@ -283,32 +283,23 @@ input:-webkit-autofill:active {
   background-color: white !important;
 }
 
-/* 다이얼로그 z-index 낮춤 - 토스트가 위에 오도록 */
+/* 다이얼로그 적절한 z-index 설정 */
 [data-radix-dialog-overlay],
-[data-radix-alert-dialog-overlay],
-.admin-member-dialog[data-radix-alert-dialog-content] {
-  z-index: 1000 !important;
+[data-radix-alert-dialog-overlay] {
+  z-index: 50 !important;
   position: fixed !important;
 }
 
 [data-radix-dialog-content],
 [data-radix-alert-dialog-content],
 .admin-member-dialog {
-  z-index: 1001 !important;
+  z-index: 51 !important;
   position: fixed !important;
 }
 
-/* 관리자 다이얼로그의 부모 포털 */
-[data-radix-portal]:has(.admin-member-dialog) {
-  z-index: 999 !important;
-  position: relative !important;
-}
-
-/* 토스트 최종 우선순위 설정 */
-[data-sonner-toaster],
-[data-radix-toast-viewport],
-[data-radix-toast-root] {
-  z-index: 9999999 !important;
+/* 토스트는 다이얼로그보다 높게 */
+[data-radix-toast-viewport] {
+  z-index: 100 !important;
   position: fixed !important;
 }
 
