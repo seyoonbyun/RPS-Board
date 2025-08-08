@@ -101,7 +101,7 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>이메일</FormLabel>
+                    <FormLabel>이메일 (ID)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
