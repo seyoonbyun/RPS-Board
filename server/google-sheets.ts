@@ -193,26 +193,26 @@ class GoogleSheetsService {
             region: row[1] || '',
             chapter: row[2] || '',
             memberName: row[3] || '',
-            industry: row[4] || '', // 산업군 (read-only from Google Sheets)
-            company: row[5] || '', // 회사 (read-only from Google Sheets) 
-            specialty: row[4] || '', // 전문분야 (bidirectional sync)
-            targetCustomer: row[5] || '',
+            industry: row[4] || '', // 산업군 (read-only from Google Sheets) - index 4: "디자인"
+            company: row[5] || '', // 회사 (read-only from Google Sheets) - index 5: "조이풀"
+            specialty: row[6] || '', // 전문분야 (bidirectional sync) - index 6: "전문분야"
+            targetCustomer: row[7] || '', // 나의 핵심 고객층 (bidirectional sync) - index 7: "나의 핵심 고객층"
             // R파트너 정보 추가 - 전체 텍스트를 V-C-P로 변환
-            rpartner1: row[6] || '',
-            rpartner1Specialty: row[7] || '',
-            rpartner1Stage: this.convertFullTextToStage(row[8] || ''),
-            rpartner2: row[9] || '',
-            rpartner2Specialty: row[10] || '',
-            rpartner2Stage: this.convertFullTextToStage(row[11] || ''),
-            rpartner3: row[12] || '',
-            rpartner3Specialty: row[13] || '',
-            rpartner3Stage: this.convertFullTextToStage(row[14] || ''),
-            rpartner4: row[15] || '',
-            rpartner4Specialty: row[16] || '',
-            rpartner4Stage: this.convertFullTextToStage(row[17] || ''),
-            totalPartners: row[18] || '',
-            achievement: row[19] || '',
-            auth: row[23] || '' // AUTH 컬럼 추가 (24번째 컬럼, index 23)
+            rpartner1: row[8] || '', // index 8: " R파트너 1"
+            rpartner1Specialty: row[9] || '', // index 9: " R파트너 1 : 전문분야 "
+            rpartner1Stage: this.convertFullTextToStage(row[10] || ''), // index 10: " R파트너 1 : V-C-P"
+            rpartner2: row[11] || '', // index 11: "R파트너 2"
+            rpartner2Specialty: row[12] || '', // index 12: " R파트너 2 :  전문분야 "
+            rpartner2Stage: this.convertFullTextToStage(row[13] || ''), // index 13: " R파트너 2 : V-C-P"
+            rpartner3: row[14] || '', // index 14: "R파트너 3"
+            rpartner3Specialty: row[15] || '', // index 15: " R파트너 3 : 전문분야 "
+            rpartner3Stage: this.convertFullTextToStage(row[16] || ''), // index 16: " R파트너 3 : V-C-P"
+            rpartner4: row[17] || '', // index 17: "R파트너 4"
+            rpartner4Specialty: row[18] || '', // index 18: " R파트너 4 : 전문분야 "
+            rpartner4Stage: this.convertFullTextToStage(row[19] || ''), // index 19: " R파트너 4 : V-C-P"
+            totalPartners: row[20] || '', // index 20: "3"
+            achievement: row[21] || '', // index 21: "75%"
+            auth: row[25] || '' // AUTH 컬럼 추가 (26번째 컬럼, index 25)
           };
         }
       }
@@ -622,20 +622,22 @@ class GoogleSheetsService {
         data.region || '', // B열: 지역
         data.partner || '', // C열: 챕터
         data.memberName || '', // D열: 멤버명
-        data.specialty || '', // E열: 전문분야
-        data.targetCustomer || '', // F열: 나의 핵심 고객층
-        data.rpartner1 || '', // G열: R파트너 1
-        data.rpartner1Specialty || '', // H열: R파트너 1 전문분야
-        this.convertStageToFullText(data.rpartner1Stage || ''), // I열: R파트너 1 V-C-P
-        data.rpartner2 || '', // J열: R파트너 2
-        data.rpartner2Specialty || '', // K열: R파트너 2 전문분야
-        this.convertStageToFullText(data.rpartner2Stage || ''), // L열: R파트너 2 V-C-P
-        data.rpartner3 || '', // M열: R파트너 3
-        data.rpartner3Specialty || '', // N열: R파트너 3 전문분야
-        this.convertStageToFullText(data.rpartner3Stage || ''), // O열: R파트너 3 V-C-P
-        data.rpartner4 || '', // P열: R파트너 4
-        data.rpartner4Specialty || '', // Q열: R파트너 4 전문분야
-        this.convertStageToFullText(data.rpartner4Stage || ''), // R열: R파트너 4 V-C-P
+        data.industry || '', // E열: 산업군 (read-only from Google Sheets)
+        data.company || '', // F열: 회사 (read-only from Google Sheets)
+        data.specialty || '', // G열: 전문분야 (bidirectional sync)
+        data.targetCustomer || '', // H열: 나의 핵심 고객층 (bidirectional sync)
+        data.rpartner1 || '', // I열: R파트너 1 (index 8)
+        data.rpartner1Specialty || '', // J열: R파트너 1 전문분야 (index 9)
+        this.convertStageToFullText(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
+        data.rpartner2 || '', // L열: R파트너 2 (index 11)
+        data.rpartner2Specialty || '', // M열: R파트너 2 전문분야 (index 12)
+        this.convertStageToFullText(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
+        data.rpartner3 || '', // O열: R파트너 3 (index 14)
+        data.rpartner3Specialty || '', // P열: R파트너 3 전문분야 (index 15)
+        this.convertStageToFullText(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
+        data.rpartner4 || '', // R열: R파트너 4 (index 17)
+        data.rpartner4Specialty || '', // S열: R파트너 4 전문분야 (index 18)
+        this.convertStageToFullText(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
       ];
 
       // Calculate total R-Partners (non-empty names)
@@ -659,14 +661,14 @@ class GoogleSheetsService {
         partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`)
       });
       
-      // Add total partners and achievement (S열, T열)
-      values.push(profitPartners.toString()); // S열: 총 R파트너 수 - P 단계만 (index 18)
-      values.push(`${achievement}%`); // T열: 달성 (index 19)
+      // Add total partners and achievement (U열, V열)
+      values.push(profitPartners.toString()); // U열: 총 R파트너 수 - P 단계만 (index 20)
+      values.push(`${achievement}%`); // V열: 달성 (index 21)
       
-      // Add ID, PW and STATUS columns (U열, V열, W열) - 기존 값 유지  
-      values.push(data.userEmail); // U열: ID (index 20)
-      values.push(''); // V열: PW (index 21) - 기존 값 유지
-      values.push('활동중'); // W열: STATUS (index 22) - 기본값
+      // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
+      values.push(data.userEmail); // W열: ID (index 22)
+      values.push(''); // X열: PW (index 23) - 기존 값 유지
+      values.push('활동중'); // Y열: STATUS (index 24) - 기본값
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
@@ -728,20 +730,22 @@ class GoogleSheetsService {
           values[1] = existingRow[1] || data.region || ''; // 지역 (구글 시트 우선)
           values[2] = existingRow[2] || data.partner || ''; // 챕터 (구글 시트 우선)
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명 (구글 시트 우선)
-          values[4] = data.specialty || existingRow[4] || ''; // 전문분야 - 앱 데이터 우선 (양방향 연동)
-          values[5] = data.targetCustomer || existingRow[5] || ''; // 나의 핵심 고객층 - 앱 데이터 우선 (양방향 연동)
+          values[4] = existingRow[4] || data.industry || ''; // 산업군 - 구글 시트 우선 (read-only)
+          values[5] = existingRow[5] || data.company || ''; // 회사 - 구글 시트 우선 (read-only)
+          values[6] = data.specialty || existingRow[6] || ''; // 전문분야 - 앱 데이터 우선 (양방향 연동)
+          values[7] = data.targetCustomer || existingRow[7] || ''; // 나의 핵심 고객층 - 앱 데이터 우선 (양방향 연동)
           
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
           
-          // PW와 STATUS 값 유지 (V열, W열, index 21, 22)
-          const existingPW = existingRow[21] ? existingRow[21] : '';
-          const existingStatus = existingRow[22] ? existingRow[22] : '활동중';
-          values[21] = existingPW;
-          values[22] = existingStatus;
+          // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
+          const existingPW = existingRow[23] ? existingRow[23] : '';
+          const existingStatus = existingRow[24] ? existingRow[24] : '활동중';
+          values[23] = existingPW;
+          values[24] = existingStatus;
         }
         
-        const range = `RPS!A${userRowIndex + 1}:W${userRowIndex + 1}`;
+        const range = `RPS!A${userRowIndex + 1}:Y${userRowIndex + 1}`;
         console.log(`Updating existing user ${data.userEmail} in row ${userRowIndex + 1} with range ${range}`);
         console.log(`Values to update:`, values);
         
