@@ -346,7 +346,7 @@ class GoogleSheetsService {
   async getUserAuth(email: string): Promise<string | null> {
     try {
       const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:X?access_token=${this.accessToken}`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
         {
           method: 'GET',
           headers: {
@@ -408,7 +408,7 @@ class GoogleSheetsService {
       console.log(`🔐 Checking admin permission for ${email}...`);
       
       const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:X?access_token=${this.accessToken}`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
         {
           method: 'GET',
           headers: {

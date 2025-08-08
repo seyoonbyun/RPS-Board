@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
-import { loginSchema, scoreboardFormSchema, type InsertScoreboardData } from "@shared/schema";
+import { loginSchema, scoreboardFormSchema, scoreboardPartialUpdateSchema, type InsertScoreboardData } from "@shared/schema";
 import { z } from "zod";
 import { getGoogleSheetsService } from "./google-sheets";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
@@ -176,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/scoreboard/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      const formData = scoreboardFormSchema.parse(req.body);
+      const formData = scoreboardPartialUpdateSchema.parse(req.body);
       
       // Get existing data for change tracking
       const existingData = await storage.getScoreboardData(userId);
@@ -405,13 +405,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin API: Get all users
   // Admin permission check route
-  app.get("/api/admin/check-permission", async (req, res) => {
+  app.post("/api/admin/check-permission", async (req, res) => {
     try {
-      const userEmail = req.query.email as string;
-      
-      if (!userEmail) {
+      // Get user email from request body
+      const { email } = req.body;
+      if (!email) {
         return res.status(400).json({ message: "이메일이 필요합니다", isAdmin: false });
       }
+      
+      const userEmail = email;
 
       const { getGoogleSheetsService } = await import('./google-sheets.js');
       const googleSheetsService = getGoogleSheetsService();

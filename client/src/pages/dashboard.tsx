@@ -54,7 +54,11 @@ export default function Dashboard() {
     queryKey: ["/api/admin/check-permission", user?.email],
     queryFn: async () => {
       if (!user?.email) return { isAdmin: false };
-      const response = await fetch(`/api/admin/check-permission?email=${encodeURIComponent(user.email)}`);
+      const response = await fetch('/api/admin/check-permission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
+      });
       if (!response.ok) {
         return { isAdmin: false };
       }

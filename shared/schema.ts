@@ -86,4 +86,28 @@ export const scoreboardFormSchema = insertScoreboardSchema.extend({
   targetCustomer: z.string().optional(), // 핵심 고객층 (bidirectional sync)
 });
 
+// Partial update schema for scoreboard data - allows updating individual fields
+export const scoreboardPartialUpdateSchema = z.object({
+  region: z.string().optional(),
+  partner: z.string().optional(),
+  userIdField: z.string().optional(),
+  memberName: z.string().optional(),
+  industry: z.string().optional(),
+  company: z.string().optional(),
+  specialty: z.string().optional(),
+  targetCustomer: z.string().optional(),
+  rpartner1: z.string().optional(),
+  rpartner1Specialty: z.string().optional(),
+  rpartner1Stage: z.string().optional(),
+  rpartner2: z.string().optional(),
+  rpartner2Specialty: z.string().optional(),
+  rpartner2Stage: z.string().optional(),
+  rpartner3: z.string().optional(),
+  rpartner3Specialty: z.string().optional(),
+  rpartner3Stage: z.string().optional(),
+  rpartner4: z.string().optional(),
+  rpartner4Specialty: z.string().optional(),
+  rpartner4Stage: z.string().optional(),
+});
+
 export type ScoreboardForm = z.infer<typeof scoreboardFormSchema>;
