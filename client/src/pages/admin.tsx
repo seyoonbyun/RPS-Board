@@ -785,54 +785,78 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             {/* 탈퇴 사용자 필터 */}
-            <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label htmlFor="withdrawn-region-filter">지역:</Label>
-                  <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">전체</SelectItem>
-                      {withdrawnUniqueRegions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="flex items-end gap-2">
+                  <div>
+                    <Label htmlFor="withdrawn-region-filter">지역:</Label>
+                    <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
+                      <SelectTrigger className="w-36">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">전체</SelectItem>
+                        {withdrawnUniqueRegions.map((region) => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {withdrawnRegionFilter !== '__all__' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setWithdrawnRegionFilter('__all__')}
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                    >
+                      ×
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <Label htmlFor="withdrawn-chapter-filter">챕터:</Label>
-                  <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">전체</SelectItem>
-                      {withdrawnUniqueChapters.map((chapter) => (
-                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+
+                <div className="flex items-end gap-2">
+                  <div>
+                    <Label htmlFor="withdrawn-chapter-filter">챕터:</Label>
+                    <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
+                      <SelectTrigger className="w-36">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">전체</SelectItem>
+                        {withdrawnUniqueChapters.map((chapter) => (
+                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {withdrawnChapterFilter !== '__all__' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setWithdrawnChapterFilter('__all__')}
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                    >
+                      ×
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setWithdrawnRegionFilter('__all__');
-                      setWithdrawnChapterFilter('__all__');
-                    }}
-                    className="border-red-300 text-red-600 hover:bg-red-100"
-                  >
-                    필터 해제
-                  </Button>
-                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWithdrawnRegionFilter('__all__');
+                    setWithdrawnChapterFilter('__all__');
+                  }}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  모든 필터 해제
+                </Button>
               </div>
             </div>
 
             {/* 필터링된 결과 표시 */}
-            {filteredWithdrawnUsers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-red-500">
+            {(withdrawnRegionFilter === '__all__' && withdrawnChapterFilter === '__all__') ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                 <Users className="w-16 h-16 mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">멤버 목록을 보려면 필터를 선택하세요</h3>
                 <p className="text-sm text-center">
@@ -840,39 +864,46 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
-              {/* 탈퇴 사용자 헤더 */}
-              <div className="bg-red-100 px-4 py-2 border-b">
-                <div className="flex items-center">
-                  <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
-                  <div className="flex-1 grid gap-3 text-xs font-medium text-red-800 uppercase tracking-wide" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
-                    <div className="text-left">ID</div>
-                    <div className="text-left">지역</div>
-                    <div className="text-left">챕터</div>
-                    <div className="text-left">멤버명</div>
-                    <div className="text-left">전문분야</div>
-                    <div className="text-left">상태</div>
-                  </div>
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-sm font-medium">
+                    탈퇴된 멤버 목록 총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
+                  </h4>
                 </div>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {filteredWithdrawnUsers.map((user) => (
-                  <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 bg-red-50">
-                    <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
-                    <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
-                      <div className="font-medium text-red-700 truncate text-left" title={user.email}>{user.email}</div>
-                      <div className="text-red-600 truncate text-left" title={user.region}>{user.region}</div>
-                      <div className="text-red-600 truncate text-left" title={user.chapter}>{user.chapter}</div>
-                      <div className="text-red-600 truncate text-left" title={user.memberName}>{user.memberName}</div>
-                      <div className="text-red-600 truncate text-left" title={user.specialty}>{user.specialty}</div>
-                      <div className="flex text-left">
-                        <Badge variant="destructive">탈퇴</Badge>
+                <div className="border rounded-lg overflow-hidden">
+                  {/* 탈퇴 사용자 헤더 */}
+                  <div className="bg-red-100 px-4 py-2 border-b">
+                    <div className="flex items-center">
+                      <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
+                      <div className="flex-1 grid gap-3 text-xs font-medium text-red-800 uppercase tracking-wide" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                        <div className="text-left">ID</div>
+                        <div className="text-left">지역</div>
+                        <div className="text-left">챕터</div>
+                        <div className="text-left">멤버명</div>
+                        <div className="text-left">전문분야</div>
+                        <div className="text-left">상태</div>
                       </div>
                     </div>
                   </div>
-                ))}
+                  <div className="max-h-64 overflow-y-auto">
+                    {filteredWithdrawnUsers.map((user) => (
+                      <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 bg-red-50">
+                        <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
+                        <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                          <div className="font-medium text-red-700 truncate text-left" title={user.email}>{user.email}</div>
+                          <div className="text-red-600 truncate text-left" title={user.region}>{user.region}</div>
+                          <div className="text-red-600 truncate text-left" title={user.chapter}>{user.chapter}</div>
+                          <div className="text-red-600 truncate text-left" title={user.memberName}>{user.memberName}</div>
+                          <div className="text-red-600 truncate text-left" title={user.specialty}>{user.specialty}</div>
+                          <div className="flex text-left">
+                            <Badge variant="destructive">탈퇴</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
             )}
           </CardContent>
         </Card>
