@@ -841,27 +841,31 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setWithdrawnRegionFilter('__all__');
-                    setWithdrawnChapterFilter('__all__');
-                  }}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  모든 필터 해제
-                </Button>
+                {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setWithdrawnRegionFilter('__all__');
+                      setWithdrawnChapterFilter('__all__');
+                    }}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    모든 필터 해제
+                  </Button>
+                )}
               </div>
             </div>
 
             {/* 필터링된 결과 표시 */}
             {(withdrawnRegionFilter === '__all__' && withdrawnChapterFilter === '__all__') ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <Users className="w-16 h-16 mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">멤버 목록을 보려면 필터를 선택하세요</h3>
-                <p className="text-sm text-center">
-                  위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
-                </p>
+              <div className="border rounded-lg p-8">
+                <div className="flex flex-col items-center justify-center py-4 text-gray-500">
+                  <Users className="w-16 h-16 mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">멤버 목록을 보려면 필터를 선택하세요</h3>
+                  <p className="text-sm text-center">
+                    위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                  </p>
+                </div>
               </div>
             ) : (
               <div>
