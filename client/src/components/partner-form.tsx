@@ -152,30 +152,48 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       return response.json();
     },
     onSuccess: (data) => {
-      console.log('✅ Save successful, refreshing UI with data:', data);
+      console.log('✅ Save successful! Response data:', {
+        specialty: data.specialty,
+        targetCustomer: data.targetCustomer,
+        updatedAt: data.updatedAt
+      });
       
-      // 강화된 캐시 무효화 - 모든 관련 쿼리 즉시 새로고침
+      // 포괄적인 캐시 무효화 및 강제 새로고침
       queryClient.invalidateQueries({ queryKey: ["/api/scoreboard"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user-profile"] });
-      queryClient.refetchQueries({ queryKey: ["/api/user-profile", userId] });
-      queryClient.refetchQueries({ queryKey: ["/api/scoreboard", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-profile"] }); 
       
-      // 즉시 캐시 업데이트로 UI 반영 가속화
+      // 즉시 데이터 다시 가져오기 (강제 업데이트)
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/user-profile", userId],
+        type: 'active'
+      });
+      queryClient.refetchQueries({ 
+        queryKey: ["/api/scoreboard", userId],
+        type: 'active' 
+      });
+      
+      // 캐시에 새 데이터 직접 설정
       queryClient.setQueryData(["/api/scoreboard", userId], data);
+      
+      // 폼 데이터도 새로운 값으로 강제 업데이트
+      form.setValue("specialty", data.specialty);
+      form.setValue("targetCustomer", data.targetCustomer);
       
       toast({
         title: "저장 완료",
-        description: "구글 시트와 실시간 동기화가 완료되었습니다.",
+        description: `전문분야: ${data.specialty}\n구글 시트 동기화 완료`,
         duration: 3000,
       });
+      
       onDataSaved();
       
-      // 강화된 추가 새로고침 - 확실한 UI 업데이트
+      // 추가 지연 새로고침으로 완전한 동기화 보장
       setTimeout(() => {
-        console.log('🔄 Performing delayed refresh for UI consistency');
+        console.log('🔄 Final refresh cycle - ensuring UI consistency');
         queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
+        queryClient.removeQueries({ queryKey: ["/api/user-profile", userId] });
         queryClient.refetchQueries({ queryKey: ["/api/user-profile", userId] });
-      }, 2000);
+      }, 1500);
     },
     onError: (error: any) => {
       const errorMessage = error.message || "데이터 저장에 실패했습니다";
