@@ -83,7 +83,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4 border shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105" style={{ borderColor: '#d12031' }}>
+      <Card className="w-full max-w-md mx-4 border shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
         <CardContent className="pt-6">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bni-blue rounded-full flex items-center justify-center mx-auto mb-4">
