@@ -306,8 +306,9 @@ input:-webkit-autofill:active {
   position: relative !important;
 }
 
-/* 토스트는 최상위 */
-[data-sonner-toaster] {
+/* 토스트는 절대 최상위 */
+[data-sonner-toaster],
+[data-radix-toast-viewport] {
   z-index: 2147483647 !important;
 }
 
