@@ -826,6 +826,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 선택한 멤버 복원 API
+  app.post("/api/admin/restore-users", async (req, res) => {
+    try {
+      const { userEmails } = req.body;
+      
+      if (!Array.isArray(userEmails) || userEmails.length === 0) {
+        return res.status(400).json({ message: "복원할 사용자 이메일 목록이 필요합니다" });
+      }
+
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      let restoredCount = 0;
+      const errors: string[] = [];
+
+      console.log(`🔄 Starting bulk user restoration for ${userEmails.length} users`);
+
+      for (const email of userEmails) {
+        try {
+          await sheetsService.updateUserStatus(email, '활동중');
+          restoredCount++;
+          console.log(`✅ User ${email} restored successfully`);
+        } catch (error: any) {
+          console.error(`❌ Error restoring user ${email}:`, error);
+          errors.push(`${email}: ${error.message}`);
+        }
+      }
+
+      const responseMessage = `${restoredCount}명의 멤버가 성공적으로 복원되었습니다`;
+      const response: any = { 
+        message: responseMessage,
+        restoredCount,
+        totalRequested: userEmails.length
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
+        response.message += ` (${errors.length}개 오류)`;
+      }
+
+      console.log(`📊 Bulk user restoration completed: ${restoredCount}/${userEmails.length} users restored`);
+      res.json(response);
+      
+    } catch (error: any) {
+      console.error("Error restoring users:", error);
+      res.status(500).json({ message: "멤버 복원 중 오류가 발생했습니다", details: error.message });
+    }
+  });
+
   // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
   app.get("/api/partner-recommendations/:userId", async (req, res) => {
     try {

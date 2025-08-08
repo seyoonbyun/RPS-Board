@@ -73,6 +73,7 @@ export default function AdminPage() {
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
+  const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -161,6 +162,31 @@ export default function AdminPage() {
       toast({
         title: '일괄 탈퇴 처리 실패',
         description: error.message || '처리 중 오류가 발생했습니다.',
+        variant: 'destructive',
+        duration: 5000
+      });
+    },
+  });
+
+  // 멤버 복원 mutation
+  const restoreUsersMutation = useMutation({
+    mutationFn: async (userEmails: string[]) => {
+      const response = await apiRequest('POST', '/api/admin/restore-users', { userEmails });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: '멤버 복원 완료',
+        description: `${data.restoredCount}명의 멤버가 복원되었습니다.`,
+        duration: 5000
+      });
+      setSelectedWithdrawnUsers([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: '멤버 복원 실패',
+        description: error.message || '복원 중 오류가 발생했습니다.',
         variant: 'destructive',
         duration: 5000
       });
@@ -374,7 +400,42 @@ export default function AdminPage() {
     addUserMutation.mutate(newUser);
   };
 
+  // 탈퇴된 멤버 선택 관련 핸들러
+  const handleWithdrawnUserSelection = (email: string, checked: boolean) => {
+    if (checked) {
+      setSelectedWithdrawnUsers(prev => [...prev, email]);
+    } else {
+      setSelectedWithdrawnUsers(prev => prev.filter(e => e !== email));
+    }
+  };
 
+  const handleSelectAllWithdrawnUsers = (checked: boolean | string) => {
+    if (checked) {
+      // 현재 필터링된 탈퇴 사용자들을 모두 선택
+      const filteredEmails = filteredWithdrawnUsers.map(user => user.email);
+      setSelectedWithdrawnUsers(prev => {
+        const combined = [...prev, ...filteredEmails];
+        return Array.from(new Set(combined));
+      });
+    } else {
+      // 필터링된 사용자들만 선택 해제
+      const filteredEmails = filteredWithdrawnUsers.map(user => user.email);
+      setSelectedWithdrawnUsers(prev => prev.filter(email => !filteredEmails.includes(email)));
+    }
+  };
+
+  const handleSelectedUsersRestore = () => {
+    if (selectedWithdrawnUsers.length === 0) {
+      toast({
+        title: '선택 오류',
+        description: '복원할 멤버를 선택해주세요.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    restoreUsersMutation.mutate(selectedWithdrawnUsers);
+  };
 
   if (isLoading) {
     return (
@@ -873,6 +934,48 @@ export default function AdminPage() {
                       총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
                     </div>
                   </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="select-all-withdrawn"
+                        checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
+                        onCheckedChange={handleSelectAllWithdrawnUsers}
+                      />
+                      <label htmlFor="select-all-withdrawn" className="text-sm font-medium">
+                        전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
+                      </label>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
+                          className="bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="mr-2 w-4 h-4" />
+                          선택한 멤버 복원하기
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="alert-dialog-content">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
+                          <AlertDialogDescription className="alert-dialog-description">
+                            선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
+                            이 작업으로 해당 멤버들이 다시 활성화됩니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleSelectedUsersRestore}
+                            className="alert-dialog-action bg-green-600 hover:bg-green-700"
+                          >
+                            복원 실행
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
                 {/* 헤더 */}
                 <div className="bg-gray-100 px-4 py-2 border-b">
@@ -891,7 +994,12 @@ export default function AdminPage() {
                 <div className="max-h-96 overflow-y-auto">
                   {filteredWithdrawnUsers.map((user) => (
                     <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-gray-50">
-                      <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
+                      <div className="w-[44px] flex-shrink-0 flex justify-start">
+                        <Checkbox
+                          checked={selectedWithdrawnUsers.includes(user.email)}
+                          onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
+                        />
+                      </div>
                       <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
                         <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
                         <div className="truncate text-left" title={user.region}>{user.region}</div>

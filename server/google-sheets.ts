@@ -851,6 +851,73 @@ class GoogleSheetsService {
     }
   }
 
+  // 사용자 상태 업데이트 (복원용)
+  async updateUserStatus(userEmail: string, newStatus: string): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // 사용자 행 찾기
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!getResponse.ok) {
+        throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+      }
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 검색
+      let userRowIndex = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && 
+            rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+          userRowIndex = i;
+          break;
+        }
+      }
+      
+      if (userRowIndex === -1) {
+        throw new Error(`User ${userEmail} not found in Google Sheets`);
+      }
+      
+      // STATUS 컬럼 업데이트 (W열, 인덱스 22)
+      const range = `RPS!W${userRowIndex + 1}`;
+      console.log(`🔄 Updating user ${userEmail} status to "${newStatus}" in row ${userRowIndex + 1}`);
+      
+      const updateResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [[newStatus]]
+          })
+        }
+      );
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`Failed to update user status: ${updateResponse.status} ${errorText}`);
+      }
+
+      console.log(`✅ User ${userEmail} status updated to "${newStatus}"`);
+    } catch (error: any) {
+      console.error(`❌ Error updating user ${userEmail} status:`, error);
+      throw new Error(`상태 업데이트 실패: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
   // 관리자용: 모든 사용자 데이터 가져오기
   async getAllUsers(): Promise<any[]> {
     try {
