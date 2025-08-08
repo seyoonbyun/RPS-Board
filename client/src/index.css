@@ -81,6 +81,24 @@
   color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
 }
 
+/* Textarea placeholder 색상 강제 적용 */
+textarea::placeholder,
+textarea::-webkit-input-placeholder,
+textarea::-moz-placeholder,
+textarea:-ms-input-placeholder {
+  color: rgb(107 114 128) !important;
+  opacity: 1 !important;
+}
+
+/* 더 구체적인 placeholder 색상 규칙 */
+.placeholder\:text-gray-500::placeholder,
+.placeholder\:text-gray-500::-webkit-input-placeholder,
+.placeholder\:text-gray-500::-moz-placeholder,
+.placeholder\:text-gray-500:-ms-input-placeholder {
+  color: rgb(107 114 128) !important;
+  opacity: 1 !important;
+}
+
 /* Uppy Dashboard 커스텀 디자인 */
 .uppy-Dashboard-inner {
   border-radius: 12px !important;
