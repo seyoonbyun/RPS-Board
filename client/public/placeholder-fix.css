@@ -1,4 +1,4 @@
-/* 전역 placeholder 색상 강제 수정 CSS */
+/* 전역 placeholder 색상 강제 수정 CSS - 테스트용 빨간색 */
 input::placeholder,
 input::-webkit-input-placeholder,
 input::-moz-placeholder,
@@ -7,9 +7,9 @@ textarea::placeholder,
 textarea::-webkit-input-placeholder,
 textarea::-moz-placeholder,
 textarea:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
+  color: red !important;
   opacity: 1 !important;
-  font-weight: normal !important;
+  font-weight: bold !important;
 }
 
 /* 모든 input 타입에 대해 */
