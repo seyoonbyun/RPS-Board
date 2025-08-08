@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({
     email: '',
@@ -100,6 +101,23 @@ export default function AdminPage() {
     enabled: !!currentUser?.email,
     staleTime: 60000, // 1분간 캐시
   });
+
+  // 드롭다운 바깥 영역 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (authDropdownRef.current && !authDropdownRef.current.contains(event.target as Node)) {
+        setAuthDropdownOpen(false);
+      }
+    };
+
+    if (authDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [authDropdownOpen]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
@@ -1128,7 +1146,7 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">권한 *</label>
-                  <div className="relative">
+                  <div className="relative" ref={authDropdownRef}>
                     <button
                       type="button"
                       onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
