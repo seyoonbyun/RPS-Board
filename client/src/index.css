@@ -283,6 +283,24 @@ input:-webkit-autofill:active {
   background-color: white !important;
 }
 
+/* 관리자 패널 다이얼로그 z-index 최고 우선순위 */
+[data-radix-popper-content-wrapper],
+[data-radix-portal] {
+  z-index: 9999 !important;
+}
+
+/* Dialog 오버레이와 컨텐츠 z-index */
+.dialog-overlay,
+[role="dialog"],
+[data-state="open"][role="dialog"] {
+  z-index: 9998 !important;
+}
+
+/* 토스트 알림도 높은 우선순위 */
+[data-sonner-toaster] {
+  z-index: 10000 !important;
+}
+
 
 
 
