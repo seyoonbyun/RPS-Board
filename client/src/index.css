@@ -310,6 +310,17 @@ input:-webkit-autofill:active {
   z-index: 999999 !important;
 }
 
+/* Radix Select 포털 컨테이너도 강제 조정 */
+[data-radix-select-content] {
+  z-index: 999999 !important;
+}
+
+/* AlertDialog 내부의 Select 특별 처리 */
+[data-radix-alert-dialog-content] [data-radix-select-content] {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
 
 
 

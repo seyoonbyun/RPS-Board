@@ -1127,16 +1127,16 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">권한 *</label>
-                  <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
-                    <SelectTrigger className="bg-white border border-red-600">
-                      <SelectValue placeholder="권한 선택" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-300 shadow-lg" style={{ zIndex: 9999, position: 'relative' }}>
-                      <SelectItem value="Admin">Admin (관리자)</SelectItem>
-                      <SelectItem value="Growth">Growth (성장팀)</SelectItem>
-                      <SelectItem value="Member">Member (일반회원)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={newUser.auth || ''}
+                    onChange={(e) => setNewUser({...newUser, auth: e.target.value})}
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="" disabled>권한 선택</option>
+                    <option value="Admin">Admin (관리자)</option>
+                    <option value="Growth">Growth (성장팀)</option>
+                    <option value="Member">Member (일반회원)</option>
+                  </select>
                 </div>
 
                 <Button 
