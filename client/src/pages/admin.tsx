@@ -1073,7 +1073,8 @@ export default function AdminPage() {
                       placeholder="user@example.com"
                       value={newUser.email}
                       onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
+                      className="bg-white border-gray-300 placeholder-gray-light admin-input-field"
+                      style={{ "--placeholder-color": "rgb(107, 114, 128)" } as any}
                     />
                   </div>
                   <div className="space-y-2">

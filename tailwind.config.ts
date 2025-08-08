@@ -86,5 +86,44 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [
+    require("tailwindcss-animate"), 
+    require("@tailwindcss/typography"),
+    function({ addBase }) {
+      addBase({
+        'input::placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'textarea::placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'input::-webkit-input-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'textarea::-webkit-input-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'input::-moz-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'textarea::-moz-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'input:-ms-input-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+        'textarea:-ms-input-placeholder': {
+          color: 'rgb(107 114 128) !important',
+          opacity: '1 !important',
+        },
+      });
+    }
+  ],
 } satisfies Config;
