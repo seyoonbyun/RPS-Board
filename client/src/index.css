@@ -300,6 +300,16 @@ input:-webkit-autofill:active {
   position: fixed !important;
 }
 
+/* 관리자 패널 Select 드롭다운 z-index 강제 조정 */
+.admin-member-dialog [data-radix-select-content] {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+.admin-member-dialog [data-radix-popper-content-wrapper] {
+  z-index: 999999 !important;
+}
+
 
 
 

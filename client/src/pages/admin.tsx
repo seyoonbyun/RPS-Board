@@ -1075,7 +1075,7 @@ export default function AdminPage() {
                       placeholder="user@example.com"
                       value={newUser.email}
                       onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light admin-input-field"
+                      className="bg-white border border-red-600 placeholder-gray-light admin-input-field"
                       style={{ "--placeholder-color": "rgb(107, 114, 128)" } as any}
                     />
                   </div>
@@ -1131,7 +1131,7 @@ export default function AdminPage() {
                     <SelectTrigger className="bg-white border border-red-600">
                       <SelectValue placeholder="권한 선택" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-300 shadow-lg z-[999]">
+                    <SelectContent className="bg-white border border-gray-300 shadow-lg" style={{ zIndex: 9999, position: 'relative' }}>
                       <SelectItem value="Admin">Admin (관리자)</SelectItem>
                       <SelectItem value="Growth">Growth (성장팀)</SelectItem>
                       <SelectItem value="Member">Member (일반회원)</SelectItem>
