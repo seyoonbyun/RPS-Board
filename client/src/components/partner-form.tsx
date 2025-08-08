@@ -396,9 +396,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="industry"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>산업군 <span className="text-xs text-gray-500">(구글 시트 연동)</span></FormLabel>
+                      <FormLabel>산업군</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="산업군" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} value={field.value || ""} placeholder="BNI Connect 산업 대분류" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -410,7 +410,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="company"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>회사 <span className="text-xs text-gray-500">(구글 시트 연동)</span></FormLabel>
+                      <FormLabel>회사</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="회사명" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
@@ -426,9 +426,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>전문분야 <span className="text-xs text-gray-500">(양방향 연동)</span></FormLabel>
+                      <FormLabel>전문분야</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="작성예) 디자인" />
+                        <Input {...field} value={field.value || ""} placeholder="챕터 경청표_나의 전문분야" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -440,7 +440,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="targetCustomer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>나의 핵심 고객층 <span className="text-xs text-gray-500">(양방향 연동)</span></FormLabel>
+                      <FormLabel>나의 핵심 고객층</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="나의 핵심 고객 전문분야" />
                       </FormControl>
