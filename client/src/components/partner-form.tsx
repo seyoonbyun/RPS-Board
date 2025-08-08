@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -53,6 +53,27 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stageDropdowns, setStageDropdowns] = useState<{[key: string]: boolean}>({});
+  const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+
+  // 드롭다운 바깥 영역 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      Object.keys(stageDropdowns).forEach((key) => {
+        if (stageDropdowns[key] && dropdownRefs.current[key] && !dropdownRefs.current[key]?.contains(event.target as Node)) {
+          setStageDropdowns(prev => ({ ...prev, [key]: false }));
+        }
+      });
+    };
+
+    const hasOpenDropdown = Object.values(stageDropdowns).some(isOpen => isOpen);
+    if (hasOpenDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [stageDropdowns]);
 
   // Fetch user profile from Google Sheets
   const { data: userProfile, isLoading: isProfileLoading } = useQuery<UserProfile>({
@@ -251,7 +272,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             <FormItem>
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
               <FormControl>
-                <div className="relative">
+                <div className="relative" ref={(el) => dropdownRefs.current[`stage${partnerNumber}`] = el}>
                   <button
                     type="button"
                     onClick={() => setStageDropdowns(prev => ({...prev, [`stage${partnerNumber}`]: !prev[`stage${partnerNumber}`]}))}
