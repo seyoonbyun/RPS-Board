@@ -112,9 +112,11 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Print-only Header */}
       <div className="print-only print-header">
-        <div></div>
-        <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">BNI Korea My Powerteam RPS Report</h1>
-        <div className="text-sm text-gray-600">{formatPrintDateTime()}</div>
+        <div className="flex-1"></div>
+        <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap text-center">BNI Korea My Powerteam RPS Report</h1>
+        <div className="flex-1 flex justify-end">
+          <div className="text-sm text-gray-600">{formatPrintDateTime()}</div>
+        </div>
       </div>
 
       {/* Header */}
