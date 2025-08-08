@@ -81,7 +81,7 @@ export default function AdminPage() {
     chapter: '',
     memberName: '',
     specialty: '',
-    password: '1234',
+    password: '',
     auth: 'Member'
   });
 
@@ -1122,7 +1122,7 @@ export default function AdminPage() {
                       placeholder="1234"
                       value={newUser.password}
                       onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
+                      className="bg-white border-gray-300 placeholder:text-gray-400 text-gray-900"
                     />
                   </div>
                 </div>
