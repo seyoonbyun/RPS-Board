@@ -858,8 +858,8 @@ export default function AdminPage() {
 
             {/* 필터링된 결과 표시 */}
             {(withdrawnRegionFilter === '__all__' && withdrawnChapterFilter === '__all__') ? (
-              <div className="border rounded-lg p-8">
-                <div className="flex flex-col items-center justify-center py-4 text-gray-500">
+              <div className="border rounded-lg">
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                   <Users className="w-16 h-16 mb-4 opacity-50" />
                   <h3 className="text-lg font-medium mb-2">멤버 목록을 보려면 필터를 선택하세요</h3>
                   <p className="text-sm text-center">
