@@ -20,7 +20,7 @@
     --secondary-foreground: 222.2 84% 4.9%;
  
     --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 214 15% 46%; /* gray-500 equivalent for placeholder */
  
     --accent: 210 40% 96%;
     --accent-foreground: 222.2 84% 4.9%;
@@ -47,6 +47,15 @@
     color: rgb(107, 114, 128) !important;
     opacity: 1 !important;
   }
+
+  /* Tailwind placeholder 유틸리티 클래스 덮어쓰기 */
+  .placeholder\:text-muted-foreground::placeholder,
+  .placeholder\:text-muted-foreground::-webkit-input-placeholder,
+  .placeholder\:text-muted-foreground::-moz-placeholder,
+  .placeholder\:text-muted-foreground:-ms-input-placeholder {
+    color: rgb(107, 114, 128) !important;
+    opacity: 1 !important;
+  }
  
   .dark {
     --background: 222.2 84% 4.9%;
@@ -65,7 +74,7 @@
     --secondary-foreground: 210 40% 98%;
  
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 214 15% 46%; /* gray-500 equivalent for placeholder */
  
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
