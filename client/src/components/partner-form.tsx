@@ -147,6 +147,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
   const saveMutation = useMutation({
     mutationFn: async (data: ScoreboardForm) => {
+      console.log('🔄 Saving form data:', data);
       const response = await apiRequest("POST", `/api/scoreboard/${userId}`, data);
       return response.json();
     },
