@@ -418,7 +418,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isAdmin = await googleSheetsService.checkAdminPermission(userEmail);
-      res.json({ isAdmin });
+      const userAuth = await googleSheetsService.getUserAuth(userEmail);
+      res.json({ isAdmin, auth: userAuth });
       
     } catch (error) {
       console.error('Admin permission check error:', error);

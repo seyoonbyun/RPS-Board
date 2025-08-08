@@ -86,14 +86,13 @@ export default function AdminPage() {
 
 
   // 관리자 권한 확인
-  // 관리자 권한 확인
   const { data: adminPermission, isLoading: isAdminLoading } = useQuery({
     queryKey: ["/api/admin/check-permission", currentUser?.email],
     queryFn: async () => {
-      if (!currentUser?.email) return { isAdmin: false };
+      if (!currentUser?.email) return { isAdmin: false, auth: null };
       const response = await fetch(`/api/admin/check-permission?email=${encodeURIComponent(currentUser.email)}`);
       if (!response.ok) {
-        return { isAdmin: false };
+        return { isAdmin: false, auth: null };
       }
       return response.json();
     },
@@ -498,15 +497,17 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
               </Button>
-              <Button 
-                onClick={exportUserList} 
-                variant="outline" 
-                size="sm"
-                className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600"
-              >
-                <Download className="mr-2 w-4 h-4" />
-                RPS 목록 내보내기
-              </Button>
+              {adminPermission?.auth === 'National' && (
+                <Button 
+                  onClick={exportUserList} 
+                  variant="outline" 
+                  size="sm"
+                  className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600"
+                >
+                  <Download className="mr-2 w-4 h-4" />
+                  RPS 목록 내보내기
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

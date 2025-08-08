@@ -341,6 +341,66 @@ class GoogleSheetsService {
     }
   }
 
+  async getUserAuth(email: string): Promise<string | null> {
+    try {
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:X?access_token=${this.accessToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      // 헤더 행에서 AUTH 컬럼 찾기
+      const headerRow = rows[0] || [];
+      let authColumnIndex = -1;
+      
+      for (let j = 0; j < headerRow.length; j++) {
+        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
+        if (header === 'AUTH') {
+          authColumnIndex = j;
+          break;
+        }
+      }
+      
+      if (authColumnIndex === -1) {
+        return null;
+      }
+      
+      // 사용자 검색하여 AUTH 값 반환
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (!row || !row[0] || !row[0].toString().trim()) {
+          continue;
+        }
+        
+        const emailInSheet = row[0].toString().trim().toLowerCase();
+        if (emailInSheet === email.toLowerCase()) {
+          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
+            row[authColumnIndex].toString().trim() : '';
+          
+          return authInSheet || null;
+        }
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.error('Error getting user auth:', error);
+      return null;
+    }
+  }
+
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);
