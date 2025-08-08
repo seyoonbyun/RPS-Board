@@ -61,6 +61,11 @@ Preferred communication style: Simple, everyday language.
   - Two-panel interface: left panel for single user form, right panel for CSV upload
   - Full integration with existing withdrawal and permission systems
   - **Target Customer Policy**: Target customer (나의 핵심 고객층) excluded from admin addition - users manage this field directly
+- **Toast Notification Z-Index Fix (Aug 8, 2025)**: ✅ RESOLVED
+  - Fixed toast notifications appearing behind AlertDialog components
+  - Updated ToastViewport z-index to maximum value (2147483647)
+  - Enhanced CSS specificity for Radix UI toast components
+  - Toast error messages now properly display above admin member addition forms
 
 ### Key Features
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
