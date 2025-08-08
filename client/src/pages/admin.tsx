@@ -785,75 +785,70 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             {/* 탈퇴 사용자 필터 */}
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex flex-wrap gap-4 items-end">
-                <div className="flex items-end gap-2">
-                  <div>
-                    <Label htmlFor="withdrawn-region-filter">지역:</Label>
-                    <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
-                      <SelectTrigger className="w-36">
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">전체</SelectItem>
-                        {withdrawnUniqueRegions.map((region) => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {withdrawnRegionFilter !== '__all__' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setWithdrawnRegionFilter('__all__')}
-                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-end gap-2">
-                  <div>
-                    <Label htmlFor="withdrawn-chapter-filter">챕터:</Label>
-                    <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
-                      <SelectTrigger className="w-36">
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">전체</SelectItem>
-                        {withdrawnUniqueChapters.map((chapter) => (
-                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {withdrawnChapterFilter !== '__all__' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setWithdrawnChapterFilter('__all__')}
-                      className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </Button>
-                  )}
-                </div>
-
-                {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
+            <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">지역:</label>
+                <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
+                  <SelectTrigger className="w-32 bg-white">
+                    <SelectValue placeholder="전체" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="__all__">전체</SelectItem>
+                    {withdrawnUniqueRegions.map((region) => (
+                      <SelectItem key={region} value={region}>{region}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {withdrawnRegionFilter !== '__all__' && (
                   <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setWithdrawnRegionFilter('__all__')}
+                    className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">챕터:</label>
+                <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
+                  <SelectTrigger className="w-32 bg-white">
+                    <SelectValue placeholder="전체" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="__all__">전체</SelectItem>
+                    {withdrawnUniqueChapters.map((chapter) => (
+                      <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {withdrawnChapterFilter !== '__all__' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setWithdrawnChapterFilter('__all__')}
+                    className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
+              {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
+                <div className="flex items-center">
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => {
                       setWithdrawnRegionFilter('__all__');
                       setWithdrawnChapterFilter('__all__');
                     }}
-                    className="text-gray-600 hover:text-gray-800"
+                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
                   >
                     모든 필터 해제
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* 필터링된 결과 표시 */}
