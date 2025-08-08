@@ -110,7 +110,6 @@ export default function LoginPage() {
 
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -129,7 +128,6 @@ export default function LoginPage() {
                         placeholder="4자리 숫자를 입력하세요"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
