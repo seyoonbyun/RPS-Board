@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -70,6 +71,8 @@ export default function AdminPage() {
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
+  const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
+  const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -394,9 +397,20 @@ export default function AdminPage() {
     return regionMatch && chapterMatch;
   });
   
-  // 고유한 지역 및 챕터 목록 생성
+  // 필터링된 탈퇴 사용자 목록
+  const filteredWithdrawnUsers = withdrawnUsers.filter(user => {
+    const regionMatch = withdrawnRegionFilter === '__all__' || user.region === withdrawnRegionFilter;
+    const chapterMatch = withdrawnChapterFilter === '__all__' || user.chapter === withdrawnChapterFilter;
+    return regionMatch && chapterMatch;
+  });
+  
+  // 고유한 지역 및 챕터 목록 생성 (활성 사용자용)
   const uniqueRegions = Array.from(new Set(activeUsers.map(user => user.region).filter(region => region && region.trim() !== ''))).sort();
   const uniqueChapters = Array.from(new Set(activeUsers.map(user => user.chapter).filter(chapter => chapter && chapter.trim() !== ''))).sort();
+  
+  // 고유한 지역 및 챕터 목록 생성 (탈퇴 사용자용)
+  const withdrawnUniqueRegions = Array.from(new Set(withdrawnUsers.map(user => user.region).filter(region => region && region.trim() !== ''))).sort();
+  const withdrawnUniqueChapters = Array.from(new Set(withdrawnUsers.map(user => user.chapter).filter(chapter => chapter && chapter.trim() !== ''))).sort();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -770,7 +784,63 @@ export default function AdminPage() {
             <CardTitle className="text-red-600">탈퇴 처리된 사용자 목록</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg overflow-hidden">
+            {/* 탈퇴 사용자 필터 */}
+            <div className="mb-4 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label htmlFor="withdrawn-region-filter">지역:</Label>
+                  <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">전체</SelectItem>
+                      {withdrawnUniqueRegions.map((region) => (
+                        <SelectItem key={region} value={region}>{region}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="withdrawn-chapter-filter">챕터:</Label>
+                  <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">전체</SelectItem>
+                      {withdrawnUniqueChapters.map((chapter) => (
+                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setWithdrawnRegionFilter('__all__');
+                      setWithdrawnChapterFilter('__all__');
+                    }}
+                    className="border-red-300 text-red-600 hover:bg-red-100"
+                  >
+                    필터 해제
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* 필터링된 결과 표시 */}
+            {filteredWithdrawnUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-red-500">
+                <Users className="w-16 h-16 mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">멤버 목록을 보려면 필터를 선택하세요</h3>
+                <p className="text-sm text-center">
+                  위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                </p>
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
               {/* 탈퇴 사용자 헤더 */}
               <div className="bg-red-100 px-4 py-2 border-b">
                 <div className="flex items-center">
@@ -786,7 +856,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                {withdrawnUsers.map((user) => (
+                {filteredWithdrawnUsers.map((user) => (
                   <div key={user.email} className="flex items-center px-4 py-3 border-b last:border-b-0 bg-red-50">
                     <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 공간 일치 */}
                     <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
@@ -803,6 +873,7 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
+            )}
           </CardContent>
         </Card>
       )}
