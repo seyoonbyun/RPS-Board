@@ -133,7 +133,8 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bni-blue hover:bni-dark text-white transition-all duration-200 transform hover:scale-105"
+                className="w-full text-white transition-all duration-200 transform hover:scale-105"
+                style={{ backgroundColor: '#d12031' }}
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (
