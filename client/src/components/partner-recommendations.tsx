@@ -307,6 +307,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       ...prev, 
                       excludeCurrentPartners: checked 
                     }))}
+                    className="data-[state=checked]:bg-red-600 data-[state=unchecked]:bg-gray-200"
                   />
                   <Label>현재 파트너 제외</Label>
                 </div>
