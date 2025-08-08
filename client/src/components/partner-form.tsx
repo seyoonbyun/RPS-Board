@@ -160,42 +160,15 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         updatedAt: data.updatedAt
       });
       
-      // 포괄적인 캐시 무효화 및 강제 새로고침
-      queryClient.invalidateQueries({ queryKey: ["/api/scoreboard"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user-profile"] }); 
-      
-      // 즉시 데이터 다시 가져오기 (강제 업데이트)
-      queryClient.refetchQueries({ 
-        queryKey: ["/api/user-profile", userId],
-        type: 'active'
-      });
-      queryClient.refetchQueries({ 
-        queryKey: ["/api/scoreboard", userId],
-        type: 'active' 
-      });
-      
-      // 캐시에 새 데이터 직접 설정
-      queryClient.setQueryData(["/api/scoreboard", userId], data);
-      
-      // 폼 데이터도 새로운 값으로 강제 업데이트
-      form.setValue("specialty", data.specialty);
-      form.setValue("targetCustomer", data.targetCustomer);
-      
+      // 즉시 저장 완료 팝업 표시
       toast({
         title: "저장 완료",
-        description: `전문분야: ${data.specialty}\n구글 시트 동기화 완료`,
+        description: "변경사항이 구글 시트에 반영되었습니다.",
         duration: 3000,
       });
       
+      // 백그라운드에서 데이터 새로고침 (팝업 표시에 영향주지 않음)
       onDataSaved();
-      
-      // 추가 지연 새로고침으로 완전한 동기화 보장
-      setTimeout(() => {
-        console.log('🔄 Final refresh cycle - ensuring UI consistency');
-        queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
-        queryClient.removeQueries({ queryKey: ["/api/user-profile", userId] });
-        queryClient.refetchQueries({ queryKey: ["/api/user-profile", userId] });
-      }, 1500);
     },
     onError: (error: any) => {
       const errorMessage = error.message || "데이터 저장에 실패했습니다";
@@ -276,8 +249,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
       // 2초 지연 후 자동 저장 (사용자가 타이핑을 완료할 시간 제공)
       const autoSaveTimer = setTimeout(() => {
-        saveMutation.mutate(formValues);
+        // 즉시 lastSavedValues 업데이트로 중복 저장 방지
         setLastSavedValues({ ...formValues });
+        saveMutation.mutate(formValues);
       }, 2000);
 
       return () => clearTimeout(autoSaveTimer);
