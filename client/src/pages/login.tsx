@@ -86,12 +86,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md mx-4 border shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
         <CardContent className="pt-6">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bni-blue rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#d12031' }}>
               <Handshake className="text-white text-2xl w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">BNI 코리아</h1>
             <h2 className="text-lg mb-4" style={{ color: '#d12031' }}>파워팀 리퍼럴 파트너 스코어보드</h2>
-            <div className="w-16 h-1 bni-blue mx-auto rounded"></div>
+            <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
           </div>
 
           <Form {...form}>
