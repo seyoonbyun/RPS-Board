@@ -70,18 +70,42 @@
   }
 }
 
-/* 최종 강력한 placeholder 적용 - @layer base 외부에서 */
-input::placeholder,
-input::-webkit-input-placeholder,
-input::-moz-placeholder,
-input:-ms-input-placeholder,
-textarea::placeholder,
-textarea::-webkit-input-placeholder,
-textarea::-moz-placeholder,
-textarea:-ms-input-placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder,
-input[type="text"]::placeholder {
+/* 최종 강력한 placeholder 적용 - @layer base 외부에서 최대 우선순위 */
+html input::placeholder,
+html input::-webkit-input-placeholder,
+html input::-moz-placeholder,
+html input:-ms-input-placeholder,
+html textarea::placeholder,
+html textarea::-webkit-input-placeholder,
+html textarea::-moz-placeholder,
+html textarea:-ms-input-placeholder,
+html input[type="email"]::placeholder,
+html input[type="password"]::placeholder,
+html input[type="text"]::placeholder,
+body input::placeholder,
+body input::-webkit-input-placeholder,
+body input::-moz-placeholder,
+body input:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
+
+/* 극단적 우선순위 - 구체성 증가 */
+html body div input::placeholder,
+html body form input::placeholder,
+html body .form-control::placeholder,
+html body [class*="input"]::placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
+
+/* Tailwind placeholder 클래스 완전 덮어쓰기 */
+.placeholder-gray-500::placeholder,
+.placeholder-gray-500::-webkit-input-placeholder,
+.placeholder-gray-500::-moz-placeholder,
+.placeholder-gray-500:-ms-input-placeholder {
   color: rgb(107, 114, 128) !important;
   opacity: 1 !important;
   -webkit-text-fill-color: rgb(107, 114, 128) !important;

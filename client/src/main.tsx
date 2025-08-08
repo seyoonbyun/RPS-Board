@@ -42,13 +42,28 @@ const forcePlaceholderColors = () => {
   document.head.appendChild(styleSheet);
   console.log('✅ placeholder 색상 스타일 강제 적용 완료');
   
-  // 개별 input 요소에 직접 스타일 적용
+  // 개별 input 요소에 직접 스타일 적용 + 디버깅
   setTimeout(() => {
     const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
+    inputs.forEach((input, index) => {
       input.style.setProperty('--placeholder-color', 'rgb(107, 114, 128)', 'important');
-      console.log('Input placeholder 직접 적용:', input.placeholder);
+      
+      // 디버깅: 실제 적용된 색상 확인
+      const computedStyle = window.getComputedStyle(input, '::placeholder');
+      console.log(`📍 Input ${index + 1} (${input.placeholder}):`);
+      console.log('  - Computed placeholder color:', computedStyle.color);
+      console.log('  - All applied styles:', computedStyle.cssText);
+      
+      // 강제로 속성 재설정
+      input.style.cssText += ';--placeholder-color: rgb(107, 114, 128) !important;';
     });
+    
+    // 참조 텍스트 색상도 확인
+    const refText = document.querySelector('.text-gray-500');
+    if (refText) {
+      const refStyle = window.getComputedStyle(refText);
+      console.log('📍 Reference text color:', refStyle.color);
+    }
   }, 100);
 };
 

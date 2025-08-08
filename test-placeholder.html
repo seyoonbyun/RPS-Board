@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Placeholder Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        
+        .test-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        /* Method 1: Direct CSS */
+        .method1::placeholder { color: rgb(107, 114, 128) !important; }
+        
+        /* Method 2: All browser prefixes */
+        .method2::placeholder,
+        .method2::-webkit-input-placeholder,
+        .method2::-moz-placeholder,
+        .method2:-ms-input-placeholder {
+            color: rgb(107, 114, 128) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Method 3: Using CSS variable */
+        .method3 {
+            --placeholder-color: rgb(107, 114, 128);
+        }
+        .method3::placeholder {
+            color: var(--placeholder-color) !important;
+        }
+        
+        .reference-text {
+            color: rgb(107, 114, 128);
+            font-size: 12px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Placeholder Color Debug Test</h1>
+    
+    <div class="test-container">
+        <h3>Method 1: Direct CSS</h3>
+        <input class="test-input method1" placeholder="이메일을 입력하세요" />
+        <input class="test-input method1" type="password" placeholder="4자리 숫자를 입력하세요" />
+    </div>
+    
+    <div class="test-container">
+        <h3>Method 2: All Browser Prefixes</h3>
+        <input class="test-input method2" placeholder="이메일을 입력하세요" />
+        <input class="test-input method2" type="password" placeholder="4자리 숫자를 입력하세요" />
+    </div>
+    
+    <div class="test-container">
+        <h3>Method 3: CSS Variable</h3>
+        <input class="test-input method3" placeholder="이메일을 입력하세요" />
+        <input class="test-input method3" type="password" placeholder="4자리 숫자를 입력하세요" />
+    </div>
+    
+    <div class="test-container">
+        <h3>Reference Text (Target Color)</h3>
+        <div class="reference-text">※ 로그인 정보는 BNI Connect에 등록된 이메일주소를 포함합니다.</div>
+        <div class="reference-text">로그인 오류 문의는 각 지역의 오피스를 통해 문의 부탁드립니다.</div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', () => {
+            const inputs = document.querySelectorAll('.test-input');
+            inputs.forEach((input, index) => {
+                const computedStyle = window.getComputedStyle(input, '::placeholder');
+                console.log(`Input ${index + 1} placeholder color:`, computedStyle.color);
+            });
+            
+            const referenceText = document.querySelector('.reference-text');
+            const refStyle = window.getComputedStyle(referenceText);
+            console.log('Reference text color:', refStyle.color);
+        });
+    </script>
+</body>
+</html>
