@@ -732,17 +732,18 @@ class GoogleSheetsService {
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명 (구글 시트 우선)
           values[4] = existingRow[4] || data.industry || ''; // 산업군 - 구글 시트 우선 (read-only)
           values[5] = existingRow[5] || data.company || ''; // 회사 - 구글 시트 우선 (read-only)
-          values[6] = data.specialty || existingRow[6] || ''; // 전문분야 - 앱 데이터 우선 (양방향 연동)
-          values[7] = data.targetCustomer || existingRow[7] || ''; // 나의 핵심 고객층 - 앱 데이터 우선 (양방향 연동)
+          // 양방향 연동 필드는 이미 초기 설정에서 올바르게 처리됨 - 여기서 덮어쓰지 않음
+          
+          // 양방향 연동 필드 처리 완료
           
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
           
-          // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
-          const existingPW = existingRow[23] ? existingRow[23] : '';
-          const existingStatus = existingRow[24] ? existingRow[24] : '활동중';
-          values[23] = existingPW;
-          values[24] = existingStatus;
+          // PW와 STATUS 값 유지 (V열, W열, index 21, 22)
+          const existingPW = existingRow[21] ? existingRow[21] : '';
+          const existingStatus = existingRow[22] ? existingRow[22] : '활동중';
+          values[21] = existingPW;
+          values[22] = existingStatus;
         }
         
         const range = `RPS!A${userRowIndex + 1}:Y${userRowIndex + 1}`;

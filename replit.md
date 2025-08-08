@@ -66,6 +66,12 @@ Preferred communication style: Simple, everyday language.
   - Updated ToastViewport z-index to maximum value (2147483647)
   - Enhanced CSS specificity for Radix UI toast components
   - Toast error messages now properly display above admin member addition forms
+- **Bidirectional Sync Data Deletion Fix (Aug 8, 2025)**: ✅ RESOLVED
+  - Fixed critical issue where deleted data in bidirectional fields wasn't being saved to Google Sheets
+  - Modified syncScoreboardData function to properly handle local data deletions
+  - Distinguished between undefined (no change) and empty string (intentional deletion) for bidirectional fields
+  - Users can now freely edit and delete data in "전문분야" and "나의 핵심 고객층" fields with proper Google Sheets sync
+  - Maintained data integrity with proper field priority: Google Sheets for read-only, user input for bidirectional
 
 ### Key Features
 - **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
