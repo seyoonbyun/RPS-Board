@@ -152,9 +152,13 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       return response.json();
     },
     onSuccess: (data) => {
-      // 스코어보드와 프로필 데이터 모두 새로고침하고 즉시 리렌더링 트리거
-      queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
+      console.log('✅ Save successful, refreshing UI with data:', data);
+      
+      // 강화된 캐시 무효화 - 모든 관련 쿼리 즉시 새로고침
+      queryClient.invalidateQueries({ queryKey: ["/api/scoreboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user-profile"] });
+      queryClient.refetchQueries({ queryKey: ["/api/user-profile", userId] });
+      queryClient.refetchQueries({ queryKey: ["/api/scoreboard", userId] });
       
       // 즉시 캐시 업데이트로 UI 반영 가속화
       queryClient.setQueryData(["/api/scoreboard", userId], data);
@@ -166,11 +170,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       });
       onDataSaved();
       
-      // 추가 데이터 새로고침으로 확실한 동기화 보장
+      // 강화된 추가 새로고침 - 확실한 UI 업데이트
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/scoreboard", userId] });
+        console.log('🔄 Performing delayed refresh for UI consistency');
         queryClient.invalidateQueries({ queryKey: ["/api/user-profile", userId] });
-      }, 1000);
+        queryClient.refetchQueries({ queryKey: ["/api/user-profile", userId] });
+      }, 2000);
     },
     onError: (error: any) => {
       const errorMessage = error.message || "데이터 저장에 실패했습니다";
