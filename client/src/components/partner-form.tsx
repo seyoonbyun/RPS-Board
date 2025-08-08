@@ -516,7 +516,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* RPI 확인하기 버튼 */}
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-4 space-y-3 footer-buttons">
                       <Button
                         type="button"
                         variant="outline"

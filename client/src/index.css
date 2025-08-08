@@ -98,7 +98,9 @@
   [data-sonner-toaster],
   [role="dialog"],
   .fixed,
-  .absolute {
+  .absolute,
+  .tabs-list,
+  .footer-buttons {
     display: none !important;
   }
   

@@ -218,7 +218,7 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="scoreboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-6 tabs-list">
             <TabsTrigger value="scoreboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               스코어보드
