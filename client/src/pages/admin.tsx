@@ -1132,7 +1132,7 @@ export default function AdminPage() {
                     onChange={(e) => setNewUser({...newUser, auth: e.target.value})}
                     className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 admin-auth-select"
                   >
-                    <option value="" disabled>권한 선택</option>
+                    <option value="">권한 선택</option>
                     <option value="Admin">Admin (관리자)</option>
                     <option value="Growth">Growth (성장팀)</option>
                     <option value="Member">Member (일반회원)</option>
