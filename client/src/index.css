@@ -34,126 +34,6 @@
  
     --radius: 0.5rem;
   }
-
-  /* Placeholder 색상 전역 설정 - Tailwind base layer 안에서 정의 */
-  input::placeholder,
-  input::-webkit-input-placeholder,
-  input::-moz-placeholder,
-  input:-ms-input-placeholder,
-  textarea::placeholder,
-  textarea::-webkit-input-placeholder,
-  textarea::-moz-placeholder,
-  textarea:-ms-input-placeholder {
-    color: rgb(107, 114, 128) !important;
-    opacity: 1 !important;
-  }
-
-  /* Tailwind placeholder 유틸리티 클래스 덮어쓰기 */
-  .placeholder\:text-muted-foreground::placeholder,
-  .placeholder\:text-muted-foreground::-webkit-input-placeholder,
-  .placeholder\:text-muted-foreground::-moz-placeholder,
-  .placeholder\:text-muted-foreground:-ms-input-placeholder {
-    color: rgb(107, 114, 128) !important;
-    opacity: 1 !important;
-  }
-
-  /* 극강 우선순위 placeholder 색상 강제 적용 - 모든 경우에 대해 */
-  * input::placeholder,
-  * input::-webkit-input-placeholder,
-  * input::-moz-placeholder,
-  * input:-ms-input-placeholder,
-  input[type="email"]::placeholder,
-  input[type="password"]::placeholder,
-  input[type="text"]::placeholder {
-    color: rgb(107, 114, 128) !important;
-    opacity: 1 !important;
-  }
-}
-
-/* 최종 강력한 placeholder 적용 - @layer base 외부에서 최대 우선순위 */
-html input::placeholder,
-html input::-webkit-input-placeholder,
-html input::-moz-placeholder,
-html input:-ms-input-placeholder,
-html textarea::placeholder,
-html textarea::-webkit-input-placeholder,
-html textarea::-moz-placeholder,
-html textarea:-ms-input-placeholder,
-html input[type="email"]::placeholder,
-html input[type="password"]::placeholder,
-html input[type="text"]::placeholder,
-body input::placeholder,
-body input::-webkit-input-placeholder,
-body input::-moz-placeholder,
-body input:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* 극단적 우선순위 - 구체성 증가 */
-html body div input::placeholder,
-html body form input::placeholder,
-html body .form-control::placeholder,
-html body [class*="input"]::placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* Tailwind placeholder 클래스 완전 덮어쓰기 */
-.placeholder-gray-500::placeholder,
-.placeholder-gray-500::-webkit-input-placeholder,
-.placeholder-gray-500::-moz-placeholder,
-.placeholder-gray-500:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* Password input 특별 처리 - 브라우저별 강제 적용 */
-input[type="password"]::placeholder,
-input[type="password"]::-webkit-input-placeholder,
-input[type="password"]::-moz-placeholder,
-input[type="password"]:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* 최고 우선순위 - password 필드 극강 덮어쓰기 */
-html body input[type="password"]::placeholder,
-html body input[type="password"]::-webkit-input-placeholder,
-html body input[type="password"]::-moz-placeholder,
-html body input[type="password"]:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* 절대 최고 우선순위 - 모든 가능한 선택자 조합 */
-html body div form div input[type="password"]::placeholder,
-html body div form div input[type="password"]::-webkit-input-placeholder,
-html body div form div input[type="password"]::-moz-placeholder,
-html body div form div input[type="password"]:-ms-input-placeholder,
-html body div form input[type="password"].placeholder-gray-500::placeholder,
-html body div form input[type="password"].placeholder-gray-500::-webkit-input-placeholder,
-html body div form input[type="password"].placeholder-gray-500::-moz-placeholder,
-html body div form input[type="password"].placeholder-gray-500:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-/* Tailwind arbitrary value 클래스 지원 */
-.\[\&\:\:placeholder\]\:\!text-gray-500::placeholder,
-.\[\&\:\:placeholder\]\:\!text-gray-500::-webkit-input-placeholder,
-.\[\&\:\:placeholder\]\:\!text-gray-500::-moz-placeholder,
-.\[\&\:\:placeholder\]\:\!text-gray-500:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
  
   .dark {
     --background: 222.2 84% 4.9%;
@@ -184,7 +64,8 @@ html body div form input[type="password"].placeholder-gray-500:-ms-input-placeho
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
- 
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -194,617 +75,154 @@ html body div form input[type="password"].placeholder-gray-500:-ms-input-placeho
   }
 }
 
-
-
-/* 이메일 목록 textarea 입력 텍스트 색상 - 최종 회색 적용 */
-textarea.admin-email-textarea {
-  color: rgb(107, 114, 128) !important;
-  font-weight: normal !important;
-}
-
-textarea.admin-email-textarea:focus {
-  color: rgb(107, 114, 128) !important;
-}
-
-textarea.admin-email-textarea:active {
-  color: rgb(107, 114, 128) !important;
-}
-
-/* 모든 Tailwind 클래스보다 높은 우선순위 */
-.admin-email-textarea[class*="text-"] {
-  color: rgb(107, 114, 128) !important;
-}
-
-/* 브라우저 기본 스타일 재정의 */
-textarea.admin-email-textarea {
-  -webkit-text-fill-color: rgb(107, 114, 128) !important;
-}
-
-
-
-/* Uppy Dashboard 커스텀 디자인 */
-.uppy-Dashboard-inner {
-  border-radius: 12px !important;
-  border: 2px dashed #e5e7eb !important;
-  background-color: #f9fafb !important;
-  min-height: 300px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 40px 20px !important;
-}
-
-.uppy-Dashboard-AddFiles {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.uppy-Dashboard-AddFiles-title {
-  display: none !important;
-}
-
-/* CSV 파일 선택 버튼 */
-.uppy-Dashboard-browse {
-    background-color: #d12031 !important;
-    color: white !important;
-    border: none !important;
-    padding: 12px 24px !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    cursor: pointer !important;
-    text-decoration: none !important;
-    margin-bottom: 20px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    transition: all 0.2s ease !important;
-  }
-
-  .uppy-Dashboard-browse:hover {
-    background-color: #991b1b !important;
-    transform: translateY(-1px) !important;
-  }
-
-  .uppy-Dashboard-browse::before {
-    content: "+" !important;
-    font-size: 20px !important;
-    line-height: 1 !important;
-  }
-
-  /* 드래그 앤 드롭 텍스트 */
-  .uppy-Dashboard-dropFilesHereHint {
-    color: #6b7280 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-align: center !important;
-    margin: 0 !important;
-    margin-top: 16px !important;
-    line-height: 1.5 !important;
-    position: relative !important;
-  }
-
-  /* 드롭 힌트 텍스트 스타일 - 더 강력한 선택자 */
-  .uppy-Dashboard-dropFilesHereHint,
-  .uppy-Dashboard .uppy-Dashboard-dropFilesHereHint,
-  div[class*="dropFilesHereHint"],
-  .uppy-Dashboard div[class*="dropFilesHereHint"] {
-    font-size: 9px !important;
-    color: #6b7280 !important;
-    font-weight: 600 !important;
-    line-height: 1.5 !important;
-    text-align: center !important;
-    position: relative !important;
-    padding-top: 50px !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* 아이콘을 텍스트 위에 표시 - 더 강력한 선택자 */
-  .uppy-Dashboard-dropFilesHereHint::before,
-  .uppy-Dashboard .uppy-Dashboard-dropFilesHereHint::before,
-  div[class*="dropFilesHereHint"]::before,
-  .uppy-Dashboard div[class*="dropFilesHereHint"]::before {
-    content: "↑" !important;
-    position: absolute !important;
-    top: 8px !important;
-    left: 50% !important;
-    margin-left: -20px !important;
-    display: block !important;
-    width: 40px !important;
-    height: 32px !important;
-    background-color: #374151 !important;
-    border: 2px solid #6b7280 !important;
-    border-radius: 6px !important;
-    color: #ffffff !important;
-    font-size: 18px !important;
-    font-weight: bold !important;
-    line-height: 28px !important;
-    text-align: center !important;
-    z-index: 10 !important;
-  }
-
-  /* 파일 선택 버튼 흰색으로 변경 */
-  .uppy-Dashboard .uppy-Dashboard-browse,
-  .uppy-Dashboard button[class*="browse"],
-  button[class*="browse"] {
-    color: #ffffff !important;
-  }
-
-  /* 파일이 없을 때의 상태 */
-  .uppy-Dashboard-AddFiles[data-uppy-drag-drop-supported="true"] {
-    border: none !important;
-  }
-
-  /* 업로드 버튼 스타일링 */
-  .uppy-c-btn-primary {
-    background-color: #d12031 !important;
-    border-color: #d12031 !important;
-    border-radius: 6px !important;
-    font-weight: 600 !important;
-  }
-
-  .uppy-c-btn-primary:hover {
-    background-color: #991b1b !important;
-    border-color: #991b1b !important;
-  }
-
-  /* 진행률 바 스타일링 */
-  .uppy-ProgressBar-percentage {
-    color: #d12031 !important;
-  }
-
-  .uppy-ProgressBar-fill {
-    background-color: #d12031 !important;
-  }
-
-  /* 노트 메시지 스타일링 */
-  .uppy-Dashboard-note {
-    color: #d12031 !important;
-    font-weight: 500 !important;
-    margin-top: 16px !important;
-    text-align: center !important;
-    font-size: 14px !important;
-  }
-
-  /* 파일 카드가 추가되었을 때 */
-  .uppy-Dashboard-files .uppy-Dashboard-Item {
-    border-radius: 8px !important;
-    border: 1px solid #e5e7eb !important;
-  }
-
-/* 모달 헤더 */
-.uppy-Dashboard-title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-  margin-bottom: 20px !important;
-}
-
-/* AlertDialog 개선된 스타일링 */
-@layer components {
-  .alert-dialog-overlay {
-    background: rgba(0, 0, 0, 0.75) !important;
-    backdrop-filter: blur(4px);
-  }
-  
-  .alert-dialog-content {
-    background: white !important;
-    border: 2px solid #d12031 !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-    border-radius: 12px !important;
-    max-width: 500px !important;
-  }
-  
-  .alert-dialog-title {
-    color: #d12031 !important;
-    font-weight: 700 !important;
-    font-size: 1.25rem !important;
-  }
-  
-  .alert-dialog-description {
-    color: #374151 !important;
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-  }
-  
-  .alert-dialog-action-destructive {
-    background-color: #d12031 !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
-  }
-  
-  .alert-dialog-action-destructive:hover {
-    background-color: #b01e2b !important;
-  }
-  
-  .alert-dialog-cancel {
-    background-color: #f3f4f6 !important;
-    color: #374151 !important;
-    border: 1px solid #d1d5db !important;
-    font-weight: 600 !important;
-  }
-  
-  .alert-dialog-cancel:hover {
-    background-color: #e5e7eb !important;
-  }
-}
-
-/* BNI 브랜드 색상 정의 */
-.bni-blue {
-  background-color: #d12031 !important;
-}
-
-.bni-dark {
-  background-color: #b01c29 !important;
-}
-
-/* Clean and minimal form styling with BNI brand colors */
-input::placeholder {
-  color: #f3f4f6 !important; /* 아주 연한 회색으로 변경 */
-}
-
-input {
-  border: 1px solid #d12031 !important;
-}
-
-/* 체크박스 브랜드 컬러 적용 - 깔끔한 스타일 */
-button[role="checkbox"][data-state="checked"] {
-  background-color: #d12031 !important;
-  border-color: #d12031 !important;
-  border-width: 2px !important;
-  box-shadow: none !important;
-}
-
-button[role="checkbox"][data-state="checked"]:hover {
-  background-color: #b01e2b !important;
-  border-color: #b01e2b !important;
-}
-
-button[role="checkbox"][data-state="checked"]:focus {
-  outline: none !important;
-  ring: 2px solid #d12031 !important;
-  ring-offset: 2px !important;
-}
-
-button[role="checkbox"][data-state="unchecked"] {
-  background-color: white !important;
-  border-color: #d1d5db !important;
-  border-width: 2px !important;
-}
-
-button[role="checkbox"][data-state="unchecked"]:hover {
-  border-color: #d12031 !important;
-}
-
-/* 체크박스 내부 체크 아이콘 색상 */
-button[role="checkbox"][data-state="checked"] svg {
-  color: white !important;
-  stroke-width: 3 !important;
-}
-
-input:focus,
-input:focus-visible,
-input:active,
-input:hover,
-input[data-focus],
-input[data-focused] {
-  border-color: #d12031 !important;
-  box-shadow: 0 0 0 1px #d12031 !important;
-  outline: none !important;
-  outline-color: #d12031 !important;
-}
-
-/* Select component styling fixes */
-[data-radix-select-trigger] {
-  background-color: white !important;
-  border: 1px solid #d12031 !important;
-  color: rgb(17 24 39) !important;
-}
-
-[data-radix-select-trigger][data-placeholder] {
-  color: #f3f4f6 !important; /* 아주 연한 회색으로 변경 */
-}
-
-[data-radix-select-trigger] span[data-radix-select-value] {
-  color: rgb(17 24 39) !important;
-}
-
-[data-radix-select-trigger]:focus {
-  border-color: #d12031 !important;
-  outline: none !important;
-  box-shadow: 0 0 0 1px #d12031 !important;
-}
-
-[data-radix-select-content] {
-  background-color: white !important;
-  border: 1px solid rgb(229 231 235) !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-  z-index: 50 !important;
-}
-
-[data-radix-select-item] {
-  color: rgb(17 24 39) !important;
-}
-
-[data-radix-select-item]:hover {
-  background-color: rgb(243 244 246) !important;
-}
-
-/* Force consistent placeholder styling across all form elements */
-input::placeholder,
-[data-radix-select-trigger][data-placeholder],
-[data-radix-select-trigger] span[data-radix-select-value][data-placeholder] {
-  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
-}
-
-/* More specific Radix Select placeholder styling */
-.select-placeholder,
-[data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
-[data-radix-select-trigger] > span:not([data-value]),
-[data-radix-select-trigger] > span[data-radix-select-value]:empty::before {
-  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
-}
-
-/* Target the SelectValue component specifically */
-[data-radix-select-value]:empty::before {
-  content: attr(data-placeholder);
-  color: #f3f4f6 !important; /* 아주 연한 회색으로 통일 */
-}
-
-/* Select component with clean styling */
-[data-radix-select-trigger] span {
-  color: rgb(17 24 39) !important;
-}
-
-/* Force all input fields to have consistent black text in all states */
-input,
-input:focus,
-input:active,
-input:not(:placeholder-shown),
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea,
-textarea:focus,
-textarea:active,
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  color: rgb(17 24 39) !important;
-  caret-color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
-}
-
-/* Nuclear override for all input styling issues */
-* {
-  -webkit-text-fill-color: inherit !important;
-}
-
-input * {
-  color: rgb(17 24 39) !important;
-}
-
-/* Remove browser default blue selection and focus colors */
-input:focus,
-input:active,
-input:hover {
-  color: rgb(17 24 39) !important;
-  -webkit-text-fill-color: rgb(17 24 39) !important;
-}
-
-/* ULTIMATE PLACEHOLDER COLOR OVERRIDE - 최우선 적용 */
-*::placeholder,
-input::placeholder,
-textarea::placeholder,
-[data-radix-select-trigger][data-placeholder],
-[data-radix-select-trigger] span[data-radix-select-value][data-placeholder],
-.select-placeholder,
-[data-radix-select-trigger][data-state="closed"]:not([data-value]) span,
-[data-radix-select-trigger] > span:not([data-value]),
-[data-radix-select-value]:empty::before {
-  color: #e5e7eb !important;
-  opacity: 1 !important;
-}
-
-/* 최고 우선순위 placeholder 스타일링 */
-input::-webkit-input-placeholder { color: #e5e7eb !important; }
-input::-moz-placeholder { color: #e5e7eb !important; }
-input:-ms-input-placeholder { color: #e5e7eb !important; }
-input:-moz-placeholder { color: #e5e7eb !important; }
-
-/* Ultimate override for input border colors and background - this should override all browser defaults */
-input,
-input:focus,
-input:focus-visible,
-input:active,
-input:hover,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea,
-textarea:focus,
-textarea:active,
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  border: 1px solid #d12031 !important;
-  border-color: #d12031 !important;
-  box-shadow: 0 0 0 1px #d12031 !important;
-  outline: 2px solid transparent !important;
-  outline-offset: 2px !important;
-  background-color: white !important;
-  -webkit-box-shadow: 0 0 0 1000px white inset !important;
-}
-
-/* Toast notification styling fix */
-[data-radix-toast-viewport] {
-  position: fixed !important;
-  z-index: 100 !important;
-}
-
-[data-radix-toast-root] {
-  background-color: white !important;
-  background: white !important;
-  border: 1px solid rgb(229 231 235) !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-  border-radius: 8px !important;
-  padding: 16px !important;
-  opacity: 1 !important;
-}
-
-/* Additional toast background fixes */
-.toast,
-[role="status"],
-[data-state="open"][data-radix-toast-root] {
-  background-color: white !important;
-  background: white !important;
-}
-
-[data-radix-toast-title] {
-  color: rgb(17 24 39) !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  margin-bottom: 4px !important;
-}
-
-[data-radix-toast-description] {
-  color: rgb(107 114 128) !important;
-  font-size: 14px !important;
-}
-
-/* Print styles */
+/* Print layout styles */
 @media print {
-  .no-print {
+  @page {
+    margin: 0;
+    size: A4;
+  }
+  
+  .no-print,
+  .toast,
+  .toaster,
+  .dialog-overlay,
+  .dialog-content,
+  [data-sonner-toaster],
+  [role="dialog"],
+  .fixed,
+  .absolute {
     display: none !important;
   }
   
   body {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-  
-  /* Hide browser's default print headers and footers */
-  @page {
-    margin: 0.5in;
-    size: A4;
-    /* This removes the default header with title and footer with URL/date */
-    margin-top: 0.5in;
-    margin-bottom: 0.5in;
-    /* Additional attempts to hide headers/footers */
-    @top-left { content: ""; }
-    @top-right { content: ""; }
-    @top-center { content: ""; }
-    @bottom-left { content: ""; }
-    @bottom-right { content: ""; }
-    @bottom-center { content: ""; }
-  }
-  
-  /* Force clean print layout */
-  html, body {
-    margin: 0 !important;
-    padding: 0 !important;
     background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 2px solid #d12031;
+    margin-bottom: 20px;
+  }
+  
+  .print-footer {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+  }
+}
+
+/* Admin panel styles */
+.admin-email-textarea {
+  color: rgb(107, 114, 128) !important;
+  font-weight: normal !important;
+}
+
+.admin-email-textarea:focus {
+  color: rgb(17, 24, 39) !important;
+}
+
+/* Consistent styling for withdrawn member cards */
+.withdrawn-member-card {
+  opacity: 0.6;
+  background-color: rgb(249, 250, 251);
+  border: 1px dashed rgb(209, 213, 219);
+}
+
+.withdrawn-member-card .member-name {
+  text-decoration: line-through;
+  color: rgb(107, 114, 128);
+}
+
+.withdrawn-member-card .restore-button {
+  background-color: rgb(34, 197, 94);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.withdrawn-member-card .restore-button:hover {
+  background-color: rgb(21, 128, 61);
+}
+
+/* Enhanced toast styles */
+.toast {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.toast[data-type="success"] {
+  border-left: 4px solid #10b981 !important;
+}
+
+.toast[data-type="error"] {
+  border-left: 4px solid #ef4444 !important;
+}
+
+/* Login card enhancement */
+.login-card {
+  border: 1px solid #d12031;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .achievement-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .achievement-chart,
+  .achievement-stats {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* Accessibility improvements */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #d12031;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bg-background {
+    background-color: white !important;
+  }
+  
+  .text-foreground {
     color: black !important;
   }
   
-  /* Hide any potential replit banners or overlays during print */
-  [data-replit-banner],
-  .replit-banner,
-  #replit-banner {
-    display: none !important;
-  }
-  
-  /* Hide toast notifications and popups during print */
-  [data-radix-toast-viewport],
-  [data-radix-toast-root],
-  .toast,
-  [role="status"],
-  [data-state="open"][data-radix-toast-root],
-  [data-radix-dialog-overlay],
-  [data-radix-dialog-content] {
-    display: none !important;
-    visibility: hidden !important;
-  }
-  
-  /* Show print footer only when printing */
-  .print-only {
-    display: block !important;
+  .border {
+    border-color: black !important;
   }
 }
 
-/* Hide print footer by default */
-.print-only {
-  display: none;
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-/* 최고 우선순위 placeholder 색상 강제 적용 */
-input[placeholder]::placeholder,
-textarea[placeholder]::placeholder {
-  color: #d1d5db !important;
-  opacity: 1 !important;
-}
-
-/* 극강 우선순위 - 모든 브라우저 대응 */
-input::-webkit-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-input::-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-input:-ms-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-input:-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-textarea::-webkit-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-textarea::-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-textarea:-ms-input-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-textarea:-moz-placeholder { color: #d1d5db !important; opacity: 1 !important; }
-
-/* 절대 최우선 적용 */
-.form-input::placeholder,
-.form-input::-webkit-input-placeholder,
-.form-input::-moz-placeholder,
-.form-input:-ms-input-placeholder,
-.form-input:-moz-placeholder {
-  color: #d1d5db !important;
-  opacity: 1 !important;
-}
-
-/* 최강 우선순위 - 인라인 스타일보다도 우선 */
-input.form-input::placeholder {
-  color: #d1d5db !important;
-  opacity: 1 !important;
-}
-
-/* 핵폭탄급 최우선 적용 - 모든 것을 무시하고 강제 적용 */
-input[placeholder*="작성예"]::placeholder,
-input[placeholder*="작성예"]::-webkit-input-placeholder,
-input[placeholder*="작성예"]::-moz-placeholder,
-input[placeholder*="작성예"]:-ms-input-placeholder,
-input[placeholder*="작성예"]:-moz-placeholder {
-  color: #9ca3af !important;
-  opacity: 1 !important;
-}
-
-/* 최종 폭탄급 - Tailwind 무시하고 강제 적용 */
-.placeholder-gray-400::placeholder,
-.placeholder-gray-400::-webkit-input-placeholder,
-.placeholder-gray-400::-moz-placeholder,
-.placeholder-gray-400:-ms-input-placeholder,
-.placeholder-gray-400:-moz-placeholder {
-  color: #9ca3af !important;
-  opacity: 1 !important;
-}
-
-/* AlertDialog 팝업 테두리 1px 강제 적용 */
-[data-radix-dialog-content] {
-  border: 1px solid #d1d5db !important;
-  border-width: 1px !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-}
-
-
-
-
-
