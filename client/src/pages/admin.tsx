@@ -987,7 +987,7 @@ export default function AdminPage() {
                       <div className="text-left">챕터</div>
                       <div className="text-left">멤버명</div>
                       <div className="text-left">전문분야</div>
-                      <div className="text-left">상태</div>
+                      <div className="text-left">상태/파트너수</div>
                     </div>
                   </div>
                 </div>
@@ -1006,8 +1006,9 @@ export default function AdminPage() {
                         <div className="truncate text-left" title={user.chapter}>{user.chapter}</div>
                         <div className="truncate text-left" title={user.memberName}>{user.memberName}</div>
                         <div className="truncate text-left" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex text-left">
+                        <div className="flex items-center text-left space-x-2">
                           <Badge variant="destructive">탈퇴</Badge>
+                          <span className="text-gray-500">{user.totalPartners}명</span>
                         </div>
                       </div>
                     </div>
