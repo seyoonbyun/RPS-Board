@@ -475,10 +475,32 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             className="drop-shadow-sm"
                           />
                         </svg>
-                        <div className="absolute inset-0 flex items-center justify-center print-achievement-text">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-black">{achievementData.percentage}%</div>
-                            <div className="text-xs text-black">
+                        <div 
+                          className="absolute inset-0 flex items-center justify-center print-achievement-text"
+                          style={{ zIndex: 999, color: 'black' }}
+                        >
+                          <div className="text-center" style={{ color: 'black' }}>
+                            <div 
+                              className="text-2xl font-bold text-black"
+                              style={{ 
+                                color: 'black', 
+                                WebkitPrintColorAdjust: 'exact',
+                                printColorAdjust: 'exact',
+                                fontWeight: 'bold',
+                                fontSize: '1.5rem'
+                              }}
+                            >
+                              {achievementData.percentage}%
+                            </div>
+                            <div 
+                              className="text-xs text-black"
+                              style={{ 
+                                color: 'black',
+                                WebkitPrintColorAdjust: 'exact', 
+                                printColorAdjust: 'exact',
+                                fontSize: '0.75rem'
+                              }}
+                            >
                               {achievementData.profitable}/4
                             </div>
                           </div>

@@ -113,10 +113,27 @@
   
   /* 인쇄시 달성률 텍스트 강제 표시 */
   .print-achievement-text,
-  .print-achievement-text * {
+  .print-achievement-text *,
+  .print-achievement-text div,
+  .text-black {
+    color: black !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* SVG 위 텍스트 특별 처리 */
+  svg ~ div,
+  svg ~ div *,
+  svg + div,
+  svg + div * {
     color: black !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    z-index: 999 !important;
+    position: relative !important;
   }
   
   .print-header {
