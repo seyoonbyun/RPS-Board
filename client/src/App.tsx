@@ -23,8 +23,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router />
         <Toaster />
+        <Router />
       </TooltipProvider>
     </QueryClientProvider>
   );

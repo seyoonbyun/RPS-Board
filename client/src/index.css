@@ -283,23 +283,20 @@ input:-webkit-autofill:active {
   background-color: white !important;
 }
 
-/* 다이얼로그 적절한 z-index 설정 */
+/* 기본 다이얼로그 설정 복원 */
 [data-radix-dialog-overlay],
 [data-radix-alert-dialog-overlay] {
-  z-index: 50 !important;
-  position: fixed !important;
+  z-index: 50;
 }
 
 [data-radix-dialog-content],
-[data-radix-alert-dialog-content],
-.admin-member-dialog {
-  z-index: 51 !important;
-  position: fixed !important;
+[data-radix-alert-dialog-content] {
+  z-index: 50;
 }
 
-/* 토스트는 다이얼로그보다 높게 */
+/* 토스트만 더 높은 z-index 설정 */
 [data-radix-toast-viewport] {
-  z-index: 100 !important;
+  z-index: 999999 !important;
   position: fixed !important;
 }
 
