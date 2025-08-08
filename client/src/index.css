@@ -321,52 +321,61 @@ input:-webkit-autofill:active {
   position: fixed !important;
 }
 
-/* 관리자 권한 select 드롭다운 브랜드 컬러 적용 - 핵폭탄급 강제 적용 */
+/* 브라우저별 네이티브 select 스타일링 - 근본 해결책 */
+
+/* 1. 모든 브라우저 기본 accent-color 오버라이드 */
 select.admin-auth-select {
   accent-color: #d12031 !important;
   color-scheme: light !important;
 }
 
-/* 모든 브라우저 대응 - WebKit 기반 */
-select.admin-auth-select::-webkit-scrollbar {
-  background: #d12031 !important;
+/* 2. Chrome/Safari/Edge (WebKit/Blink) 전용 */
+@supports (-webkit-appearance: none) {
+  select.admin-auth-select option {
+    background-color: white !important;
+    color: #333 !important;
+  }
+  
+  select.admin-auth-select option:hover {
+    background-color: #d12031 !important;
+    background: #d12031 !important;
+    color: white !important;
+  }
+  
+  select.admin-auth-select option:checked:hover {
+    background-color: #d12031 !important;
+    background: #d12031 !important;
+    color: white !important;
+  }
 }
 
-/* 모든 옵션 기본 스타일 강제 적용 */
-select.admin-auth-select option,
-select.admin-auth-select > option {
+/* 3. Firefox 전용 */
+@-moz-document url-prefix() {
+  select.admin-auth-select option {
+    background-color: white !important;
+    color: #333 !important;
+  }
+  
+  select.admin-auth-select option:hover {
+    background-color: #d12031 !important;
+    color: white !important;
+  }
+}
+
+/* 4. 모든 브라우저 강제 적용 - 마지막 보루 */
+select.admin-auth-select option {
   background: white !important;
   background-color: white !important;
   color: #333 !important;
-  border: none !important;
 }
 
-/* 호버 상태 모든 브라우저 강제 적용 */
 select.admin-auth-select option:hover,
-select.admin-auth-select > option:hover,
 select.admin-auth-select option:focus,
-select.admin-auth-select > option:focus {
+select.admin-auth-select option:active {
   background: #d12031 !important;
   background-color: #d12031 !important;
   color: white !important;
   outline: none !important;
-  box-shadow: none !important;
-}
-
-/* 선택된 상태 */
-select.admin-auth-select option:checked,
-select.admin-auth-select > option:checked {
-  background: white !important;
-  background-color: white !important;
-  color: #333 !important;
-}
-
-/* 선택된 상태에서 호버 */
-select.admin-auth-select option:checked:hover,
-select.admin-auth-select > option:checked:hover {
-  background: #d12031 !important;
-  background-color: #d12031 !important;
-  color: white !important;
 }
 
 
