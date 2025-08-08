@@ -86,13 +86,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingData = await storage.getScoreboardData(userId);
           
           // Google Sheets 데이터를 로컬 데이터베이스 형태로 변환
+          // 양방향 연동 필드는 로컬 데이터를 우선시함
           const googleSheetsData = {
             region: profile.region || '',
             userIdField: '',
             partner: profile.chapter || '',
             memberName: profile.memberName || '',
-            specialty: profile.specialty || '',
-            targetCustomer: profile.targetCustomer || '',
+            industry: profile.industry || '',
+            company: profile.company || '',
+            specialty: existingData?.specialty || profile.specialty || '',
+            targetCustomer: existingData?.targetCustomer || profile.targetCustomer || '',
             rpartner1: profile.rpartner1 || '',
             rpartner1Specialty: profile.rpartner1Specialty || '',
             rpartner1Stage: profile.rpartner1Stage || '',
