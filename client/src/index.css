@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 전역 placeholder 색상 강제 적용 - 최우선 */
+* {
+  --tw-placeholder-opacity: 1 !important;
+}
+
+input::placeholder,
+input::-webkit-input-placeholder,
+input::-moz-placeholder,
+input:-ms-input-placeholder,
+textarea::placeholder,
+textarea::-webkit-input-placeholder,
+textarea::-moz-placeholder,
+textarea:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  font-weight: normal !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
