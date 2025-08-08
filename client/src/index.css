@@ -331,23 +331,43 @@ input:-webkit-autofill:active {
 /* TabsTrigger 활성화 상태 스타일링 */
 [role="tab"][data-state="active"] {
   color: #d12031 !important;
-  border-bottom: 2px solid #d12031 !important;
+  border: 2px solid #d12031 !important;
+  border-bottom: none !important;
   background-color: white !important;
   font-weight: 600 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  margin-bottom: -2px !important;
 }
 
 /* TabsTrigger 비활성화 상태 스타일링 */
 [role="tab"][data-state="inactive"] {
   color: rgb(107, 114, 128) !important;
-  border-bottom: 2px solid transparent !important;
+  border: 2px solid transparent !important;
+  border-bottom: 2px solid rgb(229, 231, 235) !important;
   background-color: rgb(249, 250, 251) !important;
   font-weight: normal !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 /* TabsTrigger 호버 효과 */
 [role="tab"]:hover {
   color: #d12031 !important;
   background-color: rgb(254, 242, 242) !important;
+}
+
+/* Tabs 컨테이너 스타일링 */
+[role="tablist"] {
+  border-bottom: 2px solid rgb(229, 231, 235) !important;
+  position: relative !important;
+}
+
+/* TabsContent 스타일링 */
+[role="tabpanel"] {
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 1.5rem !important;
 }
 
 /* 브라우저별 네이티브 select 스타일링 - 근본 해결책 */
