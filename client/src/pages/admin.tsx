@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -842,7 +842,10 @@ export default function AdminPage() {
       {withdrawnUsers.length > 0 && (
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-medium mb-3">탈퇴 처리된 멤버 목록</h3>
+            <div className="flex items-center space-x-2 mb-3">
+              <UserX className="w-5 h-5 text-red-600" />
+              <h3 className="text-lg font-medium">탈퇴 처리된 멤버 목록</h3>
+            </div>
           </CardHeader>
           <CardContent>
             {/* 탈퇴 사용자 필터 */}
