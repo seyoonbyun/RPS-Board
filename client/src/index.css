@@ -90,20 +90,28 @@ textarea:-ms-input-placeholder {
   opacity: 1 !important;
 }
 
-/* 이메일 목록 textarea 입력 텍스트 색상 - 가장 강력한 선택자 */
-.admin-email-textarea,
-.admin-email-textarea:focus,
-.admin-email-textarea:active,
-textarea.admin-email-textarea,
-textarea[placeholder*="member"],
-textarea[value*="member"] {
-  color: rgb(107 114 128) !important;
+/* 이메일 목록 textarea 입력 텍스트 색상 - 최종 회색 적용 */
+textarea.admin-email-textarea {
+  color: rgb(107, 114, 128) !important;
   font-weight: normal !important;
 }
 
-/* 더 구체적인 클래스 기반 선택자 */
-.text-gray-500 {
-  color: rgb(107 114 128) !important;
+textarea.admin-email-textarea:focus {
+  color: rgb(107, 114, 128) !important;
+}
+
+textarea.admin-email-textarea:active {
+  color: rgb(107, 114, 128) !important;
+}
+
+/* 모든 Tailwind 클래스보다 높은 우선순위 */
+.admin-email-textarea[class*="text-"] {
+  color: rgb(107, 114, 128) !important;
+}
+
+/* 브라우저 기본 스타일 재정의 */
+textarea.admin-email-textarea {
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
 
 /* 더 구체적인 placeholder 색상 규칙 */
