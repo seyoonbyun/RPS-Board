@@ -2,24 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 전역 placeholder 색상 강제 적용 - 최우선 */
-* {
-  --tw-placeholder-opacity: 1 !important;
-}
-
-input::placeholder,
-input::-webkit-input-placeholder,
-input::-moz-placeholder,
-input:-ms-input-placeholder,
-textarea::placeholder,
-textarea::-webkit-input-placeholder,
-textarea::-moz-placeholder,
-textarea:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  font-weight: normal !important;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -51,6 +33,19 @@ textarea:-ms-input-placeholder {
     --ring: 222.2 84% 4.9%;
  
     --radius: 0.5rem;
+  }
+
+  /* Placeholder 색상 전역 설정 - Tailwind base layer 안에서 정의 */
+  input::placeholder,
+  input::-webkit-input-placeholder,
+  input::-moz-placeholder,
+  input:-ms-input-placeholder,
+  textarea::placeholder,
+  textarea::-webkit-input-placeholder,
+  textarea::-moz-placeholder,
+  textarea:-ms-input-placeholder {
+    color: rgb(107, 114, 128) !important;
+    opacity: 1 !important;
   }
  
   .dark {
@@ -93,20 +88,7 @@ textarea:-ms-input-placeholder {
   }
 }
 
-/* Tailwind placeholder 유틸리티 덮어쓰기 */
-.placeholder-gray-light::placeholder {
-  --tw-placeholder-opacity: 1;
-  color: rgb(156 163 175 / var(--tw-placeholder-opacity)) !important;
-}
 
-/* Textarea placeholder 색상 강제 적용 */
-textarea::placeholder,
-textarea::-webkit-input-placeholder,
-textarea::-moz-placeholder,
-textarea:-ms-input-placeholder {
-  color: rgb(107 114 128) !important;
-  opacity: 1 !important;
-}
 
 /* 이메일 목록 textarea 입력 텍스트 색상 - 최종 회색 적용 */
 textarea.admin-email-textarea {
@@ -132,74 +114,7 @@ textarea.admin-email-textarea {
   -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
 
-/* 새로운 멤버 추가 폼의 input placeholder 색상 */
-.placeholder-gray-light::placeholder,
-.placeholder-gray-light::-webkit-input-placeholder,
-.placeholder-gray-light::-moz-placeholder,
-.placeholder-gray-light:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-}
 
-/* Input 필드 placeholder 전역 설정 - 테스트용 빨간색 */
-* input::placeholder,
-* input::-webkit-input-placeholder,
-* input::-moz-placeholder,
-* input:-ms-input-placeholder,
-input::placeholder,
-input::-webkit-input-placeholder,
-input::-moz-placeholder,
-input:-ms-input-placeholder,
-.form-control::placeholder,
-.form-control::-webkit-input-placeholder,
-.form-control::-moz-placeholder,
-.form-control:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  font-weight: normal !important;
-}
-
-/* 모든 가능한 input 상태에 대한 placeholder 색상 강제 적용 */
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder,
-input[type="text"]::-webkit-input-placeholder,
-input[type="email"]::-webkit-input-placeholder,
-input[type="password"]::-webkit-input-placeholder,
-input[type="text"]::-moz-placeholder,
-input[type="email"]::-moz-placeholder,
-input[type="password"]::-moz-placeholder,
-input[type="text"]:-ms-input-placeholder,
-input[type="email"]:-ms-input-placeholder,
-input[type="password"]:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-}
-
-/* 특별한 admin 입력 필드 */
-.admin-input-field::placeholder,
-.admin-input-field::-webkit-input-placeholder,
-.admin-input-field::-moz-placeholder,
-.admin-input-field:-ms-input-placeholder {
-  color: rgb(107, 114, 128) !important;
-  opacity: 1 !important;
-  font-weight: normal !important;
-}
-
-/* CSS 변수를 활용한 placeholder 색상 설정 */
-.admin-input-field {
-  --tw-placeholder-opacity: 1 !important;
-  --placeholder-color: rgb(107, 114, 128) !important;
-}
-
-/* 더 구체적인 placeholder 색상 규칙 */
-.placeholder\:text-gray-500::placeholder,
-.placeholder\:text-gray-500::-webkit-input-placeholder,
-.placeholder\:text-gray-500::-moz-placeholder,
-.placeholder\:text-gray-500:-ms-input-placeholder {
-  color: rgb(107 114 128) !important;
-  opacity: 1 !important;
-}
 
 /* Uppy Dashboard 커스텀 디자인 */
 .uppy-Dashboard-inner {
