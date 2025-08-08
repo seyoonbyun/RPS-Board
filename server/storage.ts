@@ -91,6 +91,8 @@ export class MemStorage implements IStorage {
       userIdField: data.userIdField || null,
       partner: data.partner || null,
       memberName: data.memberName || null,
+      industry: data.industry || null,
+      company: data.company || null,
       specialty: data.specialty || null,
       targetCustomer: data.targetCustomer || null,
       rpartner1: data.rpartner1 || null,

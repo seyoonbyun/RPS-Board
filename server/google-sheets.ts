@@ -193,7 +193,9 @@ class GoogleSheetsService {
             region: row[1] || '',
             chapter: row[2] || '',
             memberName: row[3] || '',
-            specialty: row[4] || '',
+            industry: row[4] || '', // 산업군 (read-only from Google Sheets)
+            company: row[5] || '', // 회사 (read-only from Google Sheets) 
+            specialty: row[4] || '', // 전문분야 (bidirectional sync)
             targetCustomer: row[5] || '',
             // R파트너 정보 추가 - 전체 텍스트를 V-C-P로 변환
             rpartner1: row[6] || '',
@@ -723,11 +725,11 @@ class GoogleSheetsService {
         if (existingRow) {
           // 기본 정보는 구글 시트 값 유지하되 앱에서 업데이트된 파트너 정보는 반영
           values[0] = existingRow[0] || data.userEmail; // 이메일
-          values[1] = existingRow[1] || data.region || ''; // 지역
-          values[2] = existingRow[2] || data.partner || ''; // 챕터
-          values[3] = existingRow[3] || data.memberName || ''; // 멤버명
-          values[4] = existingRow[4] || data.specialty || ''; // 전문분야
-          values[5] = data.targetCustomer || existingRow[5] || ''; // 나의 핵심 고객층 - 앱 데이터 우선
+          values[1] = existingRow[1] || data.region || ''; // 지역 (구글 시트 우선)
+          values[2] = existingRow[2] || data.partner || ''; // 챕터 (구글 시트 우선)
+          values[3] = existingRow[3] || data.memberName || ''; // 멤버명 (구글 시트 우선)
+          values[4] = data.specialty || existingRow[4] || ''; // 전문분야 - 앱 데이터 우선 (양방향 연동)
+          values[5] = data.targetCustomer || existingRow[5] || ''; // 나의 핵심 고객층 - 앱 데이터 우선 (양방향 연동)
           
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)

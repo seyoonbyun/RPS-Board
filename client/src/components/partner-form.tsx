@@ -383,6 +383,36 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   )}
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>산업군 <span className="text-xs text-gray-500">(구글 시트 연동)</span></FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ""} placeholder="산업군" readOnly className="bg-gray-50 cursor-not-allowed" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>회사 <span className="text-xs text-gray-500">(구글 시트 연동)</span></FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ""} placeholder="회사명" readOnly className="bg-gray-50 cursor-not-allowed" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -390,9 +420,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>전문분야</FormLabel>
+                      <FormLabel>전문분야 <span className="text-xs text-gray-500">(양방향 연동)</span></FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="작성예) 디자인" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} value={field.value || ""} placeholder="작성예) 디자인" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -404,7 +434,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="targetCustomer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>나의 핵심 고객층</FormLabel>
+                      <FormLabel>나의 핵심 고객층 <span className="text-xs text-gray-500">(양방향 연동)</span></FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="나의 핵심 고객 전문분야" />
                       </FormControl>

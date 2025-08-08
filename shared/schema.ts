@@ -17,6 +17,8 @@ export const scoreboardData = pgTable("scoreboard_data", {
   userIdField: text("user_id_field"),
   partner: text("partner"),
   memberName: text("member_name"),
+  industry: text("industry"), // 산업군 (read-only from Google Sheets)
+  company: text("company"), // 회사 (read-only from Google Sheets)
   specialty: text("specialty"),
   targetCustomer: text("target_customer"),
   rpartner1: text("rpartner1"),
@@ -78,8 +80,10 @@ export const scoreboardFormSchema = insertScoreboardSchema.extend({
   region: z.string().min(1, "지역을 입력해주세요"),
   userIdField: z.string().optional(), // ID 필드는 선택사항으로 변경
   memberName: z.string().min(1, "멤버명을 입력해주세요"),
-  specialty: z.string().min(1, "전문분야를 입력해주세요"),
-  targetCustomer: z.string().optional(), // 핵심 고객층도 선택사항으로 변경
+  industry: z.string().optional(), // 산업군 (read-only from Google Sheets)
+  company: z.string().optional(), // 회사 (read-only from Google Sheets)
+  specialty: z.string().optional(), // 전문분야 (bidirectional sync)
+  targetCustomer: z.string().optional(), // 핵심 고객층 (bidirectional sync)
 });
 
 export type ScoreboardForm = z.infer<typeof scoreboardFormSchema>;
