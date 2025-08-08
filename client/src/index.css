@@ -111,12 +111,21 @@
   
   .print-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 25px 20px;
-    border-bottom: 2px solid #d12031;
-    margin-bottom: 25px;
+    padding: 30px 20px;
+    border-bottom: 1px solid #d12031;
+    margin-bottom: 10px;
     min-height: 80px;
+    position: relative;
+  }
+  
+  .print-date {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 20px;
+    font-size: 12px;
+    color: #666;
   }
   
   .print-footer {
