@@ -579,7 +579,7 @@ export default function AdminPage() {
                 <textarea
                   value={bulkEmails}
                   onChange={(e) => setBulkEmails(e.target.value)}
-                  placeholder="user1@example.com&#10;user2@example.com&#10;user3@example.com"
+                  placeholder="member1@example.com&#10;member2@example.com&#10;member3@example.com"
                   className={`w-full h-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 placeholder:text-gray-400 ${
                     bulkEmails.trim() && !emailValidation.isValid 
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
