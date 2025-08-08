@@ -1027,7 +1027,7 @@ export default function AdminPage() {
 
       {/* 단일 사용자 추가 다이얼로그 */}
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <AlertDialogContent className="max-w-6xl bg-white border border-gray-200 shadow-2xl" style={{zIndex: 10000}}>
+        <AlertDialogContent className="max-w-6xl bg-white border border-gray-200 shadow-2xl admin-member-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>새로운 멤버 추가하기</AlertDialogTitle>
             <AlertDialogDescription>
