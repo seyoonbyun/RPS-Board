@@ -667,14 +667,15 @@ class GoogleSheetsService {
       
       // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
       values.push(data.userEmail); // W열: ID (index 22)
-      values.push(''); // X열: PW (index 23) - 기존 값 유지
+      // PW 필드는 나중에 기존 값으로 교체할 것이므로 일단 placeholder 추가
+      values.push('PRESERVE_EXISTING_PW'); // X열: PW (index 23) - 기존 값 유지
       values.push('활동중'); // Y열: STATUS (index 24) - 기본값
       
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
-      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (최대 5000행)
+      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (PW와 STATUS 포함해서 Y열까지, 최대 5000행)
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Y5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -739,11 +740,21 @@ class GoogleSheetsService {
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
           
-          // PW와 STATUS 값 유지 (V열, W열, index 21, 22)
-          const existingPW = existingRow[21] ? existingRow[21] : '';
-          const existingStatus = existingRow[22] ? existingRow[22] : '활동중';
-          values[21] = existingPW;
-          values[22] = existingStatus;
+          // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
+          let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
+          const existingStatus = existingRow[24] ? existingRow[24] : '활동중';
+          
+          // Joy 사용자의 경우 PW가 빈 값이면 기본 PW 설정
+          if (!existingPW && data.userEmail === 'joy.byun@bnikorea.com') {
+            existingPW = '1234'; // Joy 사용자 기본 PW
+            console.log(`🔑 Setting default PW for Joy user: "${existingPW}"`);
+          }
+          
+          values[23] = existingPW; // PW 필드 (X열, index 23)
+          values[24] = existingStatus; // STATUS 필드 (Y열, index 24)
+          
+          console.log(`🔐 PW field preserved: "${existingPW}" (length: ${existingPW.length})`);
+          console.log(`🔍 Existing row data (length: ${existingRow.length}):`, existingRow.slice(20, 26));
         }
         
         const range = `RPS!A${userRowIndex + 1}:Y${userRowIndex + 1}`;
