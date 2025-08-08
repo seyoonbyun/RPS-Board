@@ -446,7 +446,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             
             {/* Achievement Section */}
             {achievementData && (
-              <div className="mt-6 pt-6 border-t">
+              <div className="mt-4">
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
                   
