@@ -133,18 +133,27 @@
   color: rgb(17, 24, 39) !important;
 }
 
-/* Toast 배경 고정 - Shadcn/ui toast 컴포넌트 */
-[data-sonner-toast] {
+/* Toast 배경 고정 - 모든 가능한 toast 셀렉터 */
+[data-sonner-toast],
+[data-sonner-toaster] [data-sonner-toast],
+.toaster [data-sonner-toast],
+[role="status"],
+[data-toast],
+.toast {
   background: white !important;
+  background-color: white !important;
   border: 1px solid #e5e7eb !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  opacity: 1 !important;
 }
 
-[data-sonner-toast][data-type="success"] {
+[data-sonner-toast][data-type="success"],
+[role="status"][data-type="success"] {
   border-left: 4px solid #10b981 !important;
 }
 
-[data-sonner-toast][data-type="error"] {
+[data-sonner-toast][data-type="error"],
+[role="status"][data-type="error"] {
   border-left: 4px solid #ef4444 !important;
 }
 
