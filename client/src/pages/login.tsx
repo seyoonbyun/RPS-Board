@@ -107,9 +107,7 @@ export default function LoginPage() {
                         {...field}
                         type="email"
                         placeholder="이메일을 입력하세요"
-                        style={{
-                          '--placeholder-color': 'rgb(107, 114, 128)'
-                        } as any}
+                        className="[&::placeholder]:!text-gray-500"
                       />
                     </FormControl>
                   </FormItem>
@@ -128,11 +126,7 @@ export default function LoginPage() {
                         type="password"
                         maxLength={4}
                         placeholder="4자리 숫자를 입력하세요"
-                        style={{
-                          '--placeholder-color': 'rgb(107, 114, 128)',
-                          '--input-placeholder-color': 'rgb(107, 114, 128)'
-                        } as any}
-                        className="placeholder-gray-500"
+                        className="[&::placeholder]:!text-gray-500"
                       />
                     </FormControl>
                   </FormItem>

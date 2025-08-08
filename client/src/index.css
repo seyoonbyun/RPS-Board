@@ -144,6 +144,16 @@ html body div form input[type="password"].placeholder-gray-500:-ms-input-placeho
   opacity: 1 !important;
   -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
+
+/* Tailwind arbitrary value 클래스 지원 */
+.\[\&\:\:placeholder\]\:\!text-gray-500::placeholder,
+.\[\&\:\:placeholder\]\:\!text-gray-500::-webkit-input-placeholder,
+.\[\&\:\:placeholder\]\:\!text-gray-500::-moz-placeholder,
+.\[\&\:\:placeholder\]\:\!text-gray-500:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
  
   .dark {
     --background: 222.2 84% 4.9%;
