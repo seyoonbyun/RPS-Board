@@ -112,7 +112,35 @@
   }
   
   /* 인쇄시 달성률 서클 텍스트 강제 표시 */
-  .achievement-text {
+  .achievement-text,
+  .achievement-text *,
+  div[class*="text-gray"],
+  div[class*="text-2xl"],
+  div[class*="text-xs"] {
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* SVG 중앙 텍스트 강제 표시 */
+  svg + div div,
+  svg + div div * {
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  /* 달성률 섹션 특정 요소 강제 표시 */
+  .achievement-overlay,
+  .achievement-center,
+  .achievement-percentage,
+  .achievement-ratio {
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .achievement-overlay * {
     color: black !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

@@ -475,10 +475,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             className="drop-shadow-sm"
                           />
                         </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-800 achievement-text">{achievementData.percentage}%</div>
-                            <div className="text-xs text-gray-500 mt-1 achievement-text">
+                        <div className="absolute inset-0 flex items-center justify-center achievement-overlay">
+                          <div className="text-center achievement-center">
+                            <div className="text-2xl font-bold achievement-percentage" style={{ color: '#1f2937' }}>{achievementData.percentage}%</div>
+                            <div className="text-xs mt-1 achievement-ratio" style={{ color: '#6b7280' }}>
                               {achievementData.profitable}/4
                             </div>
                           </div>
