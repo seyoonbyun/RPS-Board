@@ -114,6 +114,36 @@ textarea.admin-email-textarea {
   -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
 
+/* 새로운 멤버 추가 폼의 input placeholder 색상 */
+.placeholder-gray-light::placeholder,
+.placeholder-gray-light::-webkit-input-placeholder,
+.placeholder-gray-light::-moz-placeholder,
+.placeholder-gray-light:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+}
+
+/* Input 필드 placeholder 전역 설정 */
+input[placeholder]::placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+}
+
+input[placeholder]::-webkit-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+}
+
+input[placeholder]::-moz-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+}
+
+input[placeholder]:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+}
+
 /* 더 구체적인 placeholder 색상 규칙 */
 .placeholder\:text-gray-500::placeholder,
 .placeholder\:text-gray-500::-webkit-input-placeholder,
