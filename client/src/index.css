@@ -174,11 +174,7 @@
   border-left: 4px solid #ef4444 !important;
 }
 
-/* Login card enhancement */
-.login-card {
-  border: 1px solid #d12031;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
+
 
 /* Responsive design improvements */
 @media (max-width: 768px) {
