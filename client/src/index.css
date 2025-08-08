@@ -75,8 +75,16 @@
   }
 }
 
+/* Screen-only elements - hidden during print */
+.print-only {
+  display: none !important;
+}
+
 /* Print layout styles */
 @media print {
+  .print-only {
+    display: block !important;
+  }
   @page {
     margin: 0;
     size: A4;
