@@ -283,33 +283,42 @@ input:-webkit-autofill:active {
   background-color: white !important;
 }
 
-/* 핵폭탄 z-index 해결 - 절대 최고 우선순위 */
+/* 다이얼로그 z-index 낮춤 - 토스트가 위에 오도록 */
 [data-radix-dialog-overlay],
 [data-radix-alert-dialog-overlay],
 .admin-member-dialog[data-radix-alert-dialog-content] {
-  z-index: 2147483647 !important;
+  z-index: 1000 !important;
   position: fixed !important;
-  isolation: isolate !important;
 }
 
 [data-radix-dialog-content],
 [data-radix-alert-dialog-content],
 .admin-member-dialog {
-  z-index: 2147483647 !important;
+  z-index: 1001 !important;
   position: fixed !important;
-  isolation: isolate !important;
 }
 
-/* 관리자 다이얼로그의 부모 포털도 최고 우선순위 */
+/* 관리자 다이얼로그의 부모 포털 */
 [data-radix-portal]:has(.admin-member-dialog) {
-  z-index: 2147483647 !important;
+  z-index: 999 !important;
   position: relative !important;
 }
 
-/* 토스트는 절대 최상위 */
+/* 토스트는 절대 최상위 - 다이얼로그보다 훨씬 높게 */
 [data-sonner-toaster],
-[data-radix-toast-viewport] {
+[data-radix-toast-viewport],
+[data-radix-toast-root] {
   z-index: 2147483647 !important;
+  position: fixed !important;
+}
+
+/* 모든 토스트 관련 요소 강제 최상위 */
+.toaster,
+.toast,
+[role="status"],
+[data-state="open"][data-swipe="cancel"] {
+  z-index: 2147483647 !important;
+  position: relative !important;
 }
 
 
