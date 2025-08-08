@@ -238,6 +238,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   });
 
   const onSubmit = (data: ScoreboardForm) => {
+    console.log('🔄 Form onSubmit triggered with data:', {
+      specialty: data.specialty,
+      targetCustomer: data.targetCustomer,
+      formData: data
+    });
     saveMutation.mutate(data);
   };
 
