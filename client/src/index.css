@@ -321,12 +321,7 @@ input:-webkit-autofill:active {
   position: fixed !important;
 }
 
-/* 탭 활성화 상태 브랜드 컬러 스타일링 */
-[data-state="active"] {
-  color: #d12031 !important;
-  border-color: #d12031 !important;
-  background-color: white !important;
-}
+/* 탭 활성화 상태 브랜드 컬러 스타일링 - 제거됨 (너무 광범위함) */
 
 /* TabsTrigger 활성화 상태 스타일링 */
 [role="tab"][data-state="active"] {
