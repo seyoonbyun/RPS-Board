@@ -454,33 +454,24 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   <div className="flex items-start gap-8 mb-6">
                     {/* Left: Achievement Ring (a이미지) */}
                     <div className="flex-shrink-0">
-                      <div className="relative w-32 h-32">
-                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
-                          <path
-                            d="M18 2.0845
-                              a 15.9155 15.9155 0 0 1 0 31.831
-                              a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#f3f4f6"
-                            strokeWidth="2"
-                          />
-                          <path
-                            d="M18 2.0845
-                              a 15.9155 15.9155 0 0 1 0 31.831
-                              a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#d12031"
-                            strokeWidth="2"
-                            strokeDasharray={`${achievementData.percentage}, 100`}
-                            className="drop-shadow-sm"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center achievement-overlay">
-                          <div className="text-center achievement-center">
-                            <div className="text-2xl font-bold achievement-percentage" style={{ color: '#1f2937' }}>{achievementData.percentage}%</div>
-                            <div className="text-xs mt-1 achievement-ratio" style={{ color: '#6b7280' }}>
-                              {achievementData.profitable}/4
-                            </div>
+                      <div className="relative w-32 h-32 flex items-center justify-center">
+                        {/* Background Circle */}
+                        <div className="absolute w-32 h-32 rounded-full border-4 border-gray-200"></div>
+                        {/* Progress Circle */}
+                        <div 
+                          className="absolute w-32 h-32 rounded-full border-4 border-transparent"
+                          style={{
+                            background: `conic-gradient(#d12031 0deg ${achievementData.percentage * 3.6}deg, transparent ${achievementData.percentage * 3.6}deg 360deg)`,
+                            borderRadius: '50%',
+                            mask: 'radial-gradient(closest-side, transparent 79%, black 80%)',
+                            WebkitMask: 'radial-gradient(closest-side, transparent 79%, black 80%)'
+                          }}
+                        ></div>
+                        {/* Center Text - Static positioning for reliable print */}
+                        <div className="relative z-10 text-center print-achievement-text">
+                          <div className="text-2xl font-bold" style={{ color: 'black' }}>{achievementData.percentage}%</div>
+                          <div className="text-xs" style={{ color: 'black' }}>
+                            {achievementData.profitable}/4
                           </div>
                         </div>
                       </div>
