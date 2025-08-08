@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
-import { Save, Edit, User, ExternalLink, Trash2 } from "lucide-react";
+import { Save, Edit, User, ExternalLink, Trash2, ChevronDown } from "lucide-react";
 
 interface PartnerFormProps {
   userId: string;
@@ -52,6 +52,7 @@ interface UserProfile {
 export default function PartnerForm({ userId, initialData, achievementData, onDataSaved }: PartnerFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [stageDropdowns, setStageDropdowns] = useState<{[key: string]: boolean}>({});
 
   // Fetch user profile from Google Sheets
   const { data: userProfile, isLoading: isProfileLoading } = useQuery<UserProfile>({
@@ -249,27 +250,49 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
-                <FormControl>
-                  <SelectTrigger 
-                    className={`h-9 bg-white select-trigger-text ${field.value ? 'has-value' : ''}`} 
+              <FormControl>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setStageDropdowns(prev => ({...prev, [`stage${partnerNumber}`]: !prev[`stage${partnerNumber}`]}))}
+                    className="flex h-9 w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                     style={{borderColor: '#d12031'}}
-                    data-has-value={field.value ? 'true' : 'false'}
                   >
-                    <SelectValue placeholder="" className="select-placeholder" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
-                  <SelectItem value="none" className="text-gray-500 hover:bg-gray-100">
-                    선택 안함
-                  </SelectItem>
-                  {stageOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-gray-900 hover:bg-gray-100">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    <span className={field.value ? 'text-gray-900' : 'text-gray-400'}>
+                      {field.value ? 
+                        (field.value === 'none' ? '선택 안함' :
+                         stageOptions.find(opt => opt.value === field.value)?.label || field.value) 
+                        : ''}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </button>
+                  {stageDropdowns[`stage${partnerNumber}`] && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div 
+                        className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-500"
+                        onClick={() => {
+                          field.onChange('none');
+                          setStageDropdowns(prev => ({...prev, [`stage${partnerNumber}`]: false}));
+                        }}
+                      >
+                        선택 안함
+                      </div>
+                      {stageOptions.map((option) => (
+                        <div 
+                          key={option.value}
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            field.onChange(option.value);
+                            setStageDropdowns(prev => ({...prev, [`stage${partnerNumber}`]: false}));
+                          }}
+                        >
+                          {option.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
