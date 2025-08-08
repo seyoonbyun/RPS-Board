@@ -215,8 +215,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <Input 
                   {...field} 
                   value={field.value || ""}
-                  placeholder="작성예) 홍길동" 
-                  className="h-9 placeholder-gray-400"
+                  placeholder="홍길동" 
+                  className="h-9 placeholder-gray-400 bg-white"
                 />
               </FormControl>
               <FormMessage />
@@ -234,8 +234,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <Input 
                   {...field} 
                   value={field.value || ""}
-                  placeholder="작성예) 디자이너" 
-                  className="h-9 placeholder-gray-400"
+                  placeholder="디자이너" 
+                  className="h-9 placeholder-gray-400 bg-white"
                 />
               </FormControl>
               <FormMessage />
