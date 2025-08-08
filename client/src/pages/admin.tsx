@@ -1132,6 +1132,7 @@ export default function AdminPage() {
                       <SelectValue placeholder="권한 선택" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-300 shadow-lg z-[200]">
+                      <SelectItem value="National" className="bg-white hover:bg-gray-100">National (최고관리자)</SelectItem>
                       <SelectItem value="Admin" className="bg-white hover:bg-gray-100">Admin (관리자)</SelectItem>
                       <SelectItem value="Growth" className="bg-white hover:bg-gray-100">Growth (성장팀)</SelectItem>
                       <SelectItem value="Member" className="bg-white hover:bg-gray-100">Member (일반회원)</SelectItem>
