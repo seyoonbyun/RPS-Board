@@ -321,6 +321,35 @@ input:-webkit-autofill:active {
   position: fixed !important;
 }
 
+/* 탭 활성화 상태 브랜드 컬러 스타일링 */
+[data-state="active"] {
+  color: #d12031 !important;
+  border-color: #d12031 !important;
+  background-color: white !important;
+}
+
+/* TabsTrigger 활성화 상태 스타일링 */
+[role="tab"][data-state="active"] {
+  color: #d12031 !important;
+  border-bottom: 2px solid #d12031 !important;
+  background-color: white !important;
+  font-weight: 600 !important;
+}
+
+/* TabsTrigger 비활성화 상태 스타일링 */
+[role="tab"][data-state="inactive"] {
+  color: rgb(107, 114, 128) !important;
+  border-bottom: 2px solid transparent !important;
+  background-color: rgb(249, 250, 251) !important;
+  font-weight: normal !important;
+}
+
+/* TabsTrigger 호버 효과 */
+[role="tab"]:hover {
+  color: #d12031 !important;
+  background-color: rgb(254, 242, 242) !important;
+}
+
 /* 브라우저별 네이티브 select 스타일링 - 근본 해결책 */
 
 /* 1. 모든 브라우저 기본 accent-color 오버라이드 */
