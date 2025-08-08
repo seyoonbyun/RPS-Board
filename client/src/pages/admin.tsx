@@ -134,11 +134,22 @@ export default function AdminPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: '일괄 탈퇴 처리 완료',
-        description: `${data.processedCount}명의 사용자가 탈퇴 처리되었습니다.`,
-        duration: 5000
-      });
+      if (data.processedCount === 0) {
+        // Case 2: 탈퇴 대상이 없는 경우
+        toast({
+          title: '탈퇴 대상 없음',
+          description: '이미 삭제되었거나 존재하지 않는 사용자입니다.',
+          variant: 'destructive',
+          duration: 5000
+        });
+      } else {
+        // Case 1: 탈퇴 처리가 진행된 경우
+        toast({
+          title: '일괄 탈퇴 처리 완료',
+          description: `${data.processedCount}명의 사용자가 탈퇴 처리되었습니다.`,
+          duration: 5000
+        });
+      }
       setSelectedUsers([]);
       setBulkEmails('');
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
