@@ -283,36 +283,18 @@ input:-webkit-autofill:active {
   background-color: white !important;
 }
 
-/* 관리자 패널 다이얼로그 z-index 최고 우선순위 */
-[data-radix-popper-content-wrapper],
-[data-radix-portal] {
-  z-index: 99999 !important;
+/* 깔끔한 z-index 해결 - Dialog만 높은 우선순위 */
+[data-radix-dialog-overlay] {
+  z-index: 9999 !important;
 }
 
-/* Dialog 오버레이와 컨텐츠 z-index - 매우 높은 우선순위 */
-.dialog-overlay,
-[role="dialog"],
-[data-state="open"][role="dialog"],
-[data-radix-dialog-overlay],
 [data-radix-dialog-content] {
-  z-index: 99998 !important;
+  z-index: 10000 !important;
 }
 
-/* 관리자 다이얼로그 특별 처리 */
-.admin-dialog-overlay {
-  z-index: 99997 !important;
-  position: fixed !important;
-  inset: 0 !important;
-}
-
-.admin-dialog-content {
-  z-index: 99998 !important;
-  position: fixed !important;
-}
-
-/* 토스트 알림도 높은 우선순위 */
+/* 토스트는 최상위 */
 [data-sonner-toaster] {
-  z-index: 100000 !important;
+  z-index: 10001 !important;
 }
 
 
