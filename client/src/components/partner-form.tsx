@@ -481,10 +481,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                           {/* SVG text elements - guaranteed to print */}
                           <text 
                             x="18" 
-                            y="16" 
+                            y="16.5" 
                             textAnchor="middle" 
+                            dominantBaseline="central"
                             fill="black" 
-                            fontSize="5" 
+                            fontSize="7.5" 
                             fontWeight="bold"
                             style={{ 
                               fill: 'black',
@@ -496,10 +497,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                           </text>
                           <text 
                             x="18" 
-                            y="21" 
+                            y="21.5" 
                             textAnchor="middle" 
+                            dominantBaseline="central"
                             fill="black" 
-                            fontSize="2.5"
+                            fontSize="3.75"
                             style={{ 
                               fill: 'black',
                               WebkitPrintColorAdjust: 'exact',
