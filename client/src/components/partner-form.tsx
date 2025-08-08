@@ -503,6 +503,14 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 type="submit"
                 disabled={saveMutation.isPending}
                 className="bni-blue hover:bni-dark text-white"
+                onClick={(e) => {
+                  console.log('🔴 Button clicked!', {
+                    formValid: form.formState.isValid,
+                    formErrors: form.formState.errors,
+                    formValues: form.getValues(),
+                    submitCount: form.formState.submitCount
+                  });
+                }}
               >
                 <Save className="mr-2 w-4 h-4" />
                 {saveMutation.isPending ? "저장 중..." : "저장하기"}
