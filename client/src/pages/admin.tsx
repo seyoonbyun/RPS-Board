@@ -580,7 +580,10 @@ export default function AdminPage() {
                   value={bulkEmails}
                   onChange={(e) => setBulkEmails(e.target.value)}
                   placeholder="member1@example.com&#10;member2@example.com&#10;member3@example.com"
-                  className={`w-full h-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 placeholder:text-gray-500 ${
+                  style={{
+                    color: 'rgb(107, 114, 128)',
+                  }}
+                  className={`admin-email-textarea w-full h-32 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 placeholder:text-gray-500 ${
                     bulkEmails.trim() && !emailValidation.isValid 
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300 focus:ring-red-500'
