@@ -326,13 +326,13 @@ input:-webkit-autofill:active {
 /* TabsTrigger 활성화 상태 스타일링 */
 [role="tab"][data-state="active"] {
   color: #d12031 !important;
-  border: 2px solid #d12031 !important;
+  border: 1px solid #d12031 !important;
   border-bottom: none !important;
   background-color: white !important;
   font-weight: 600 !important;
   position: relative !important;
   z-index: 10 !important;
-  margin-bottom: -2px !important;
+  margin-bottom: -1px !important;
   outline: none !important;
   box-shadow: none !important;
 }
@@ -340,8 +340,8 @@ input:-webkit-autofill:active {
 /* TabsTrigger 비활성화 상태 스타일링 */
 [role="tab"][data-state="inactive"] {
   color: rgb(107, 114, 128) !important;
-  border: 2px solid transparent !important;
-  border-bottom: 2px solid rgb(229, 231, 235) !important;
+  border: 1px solid transparent !important;
+  border-bottom: 1px solid rgb(229, 231, 235) !important;
   background-color: rgb(249, 250, 251) !important;
   font-weight: normal !important;
   position: relative !important;
@@ -362,7 +362,7 @@ input:-webkit-autofill:active {
 [role="tab"]:active {
   outline: none !important;
   box-shadow: none !important;
-  border: 2px solid #d12031 !important;
+  border: 1px solid #d12031 !important;
 }
 
 [role="tab"][data-state="inactive"]:focus,
@@ -370,13 +370,13 @@ input:-webkit-autofill:active {
 [role="tab"][data-state="inactive"]:active {
   outline: none !important;
   box-shadow: none !important;
-  border: 2px solid transparent !important;
-  border-bottom: 2px solid rgb(229, 231, 235) !important;
+  border: 1px solid transparent !important;
+  border-bottom: 1px solid rgb(229, 231, 235) !important;
 }
 
 /* Tabs 컨테이너 스타일링 */
 [role="tablist"] {
-  border-bottom: 2px solid rgb(229, 231, 235) !important;
+  border-bottom: 1px solid rgb(229, 231, 235) !important;
   position: relative !important;
 }
 
