@@ -68,6 +68,24 @@
     color: rgb(107, 114, 128) !important;
     opacity: 1 !important;
   }
+}
+
+/* 최종 강력한 placeholder 적용 - @layer base 외부에서 */
+input::placeholder,
+input::-webkit-input-placeholder,
+input::-moz-placeholder,
+input:-ms-input-placeholder,
+textarea::placeholder,
+textarea::-webkit-input-placeholder,
+textarea::-moz-placeholder,
+textarea:-ms-input-placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="text"]::placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
  
   .dark {
     --background: 222.2 84% 4.9%;
@@ -98,7 +116,6 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
-}
  
 @layer base {
   * {
