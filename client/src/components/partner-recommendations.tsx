@@ -128,7 +128,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           <Button
             size="sm"
             onClick={() => refetchRecommendations()}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             새로고침
           </Button>
