@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Lightbulb, Users, BarChart3, Filter, TrendingUp, MapPin, Building2 } from 'lucide-react';
+import { Lightbulb, Users, BarChart3, Filter, TrendingUp, MapPin, Building2, ChevronDown } from 'lucide-react';
 
 interface PartnerRecommendation {
   memberName: string;
@@ -42,6 +42,25 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 드롭다운 바깥 영역 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
+        setRegionDropdownOpen(false);
+      }
+    };
+
+    if (regionDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [regionDropdownOpen]);
 
   // 파트너 추천 데이터 조회
   const { 
@@ -163,23 +182,94 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>지역 필터</Label>
-                  <Select value={filters.region || 'all'} onValueChange={(value) => 
-                    setFilters(prev => ({ ...prev, region: value === 'all' ? undefined : value }))
-                  }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="모든 지역" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">모든 지역</SelectItem>
-                      <SelectItem value="서울">서울</SelectItem>
-                      <SelectItem value="경기">경기</SelectItem>
-                      <SelectItem value="인천">인천</SelectItem>
-                      <SelectItem value="부산">부산</SelectItem>
-                      <SelectItem value="대구">대구</SelectItem>
-                      <SelectItem value="광주">광주</SelectItem>
-                      <SelectItem value="대전">대전</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="relative" ref={regionDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setRegionDropdownOpen(!regionDropdownOpen)}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                    >
+                      <span className={filters.region ? 'text-gray-900' : 'text-gray-400'}>
+                        {filters.region || '모든 지역'}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </button>
+                    {regionDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: undefined }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          모든 지역
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '서울' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          서울
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '경기' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          경기
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '인천' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          인천
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '부산' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          부산
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '대구' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          대구
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '광주' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          광주
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, region: '대전' }));
+                            setRegionDropdownOpen(false);
+                          }}
+                        >
+                          대전
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
