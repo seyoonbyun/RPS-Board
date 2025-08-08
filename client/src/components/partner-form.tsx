@@ -481,7 +481,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                           {/* SVG text elements - guaranteed to print */}
                           <text 
                             x="18" 
-                            y="16.5" 
+                            y="15" 
                             textAnchor="middle" 
                             dominantBaseline="central"
                             fill="black" 
@@ -497,7 +497,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                           </text>
                           <text 
                             x="18" 
-                            y="21.5" 
+                            y="22" 
                             textAnchor="middle" 
                             dominantBaseline="central"
                             fill="black" 
