@@ -781,7 +781,7 @@ export default function AdminPage() {
       {withdrawnUsers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-600">탈퇴 처리된 사용자 목록</CardTitle>
+            <h3 className="text-lg font-medium mb-3">탈퇴 처리된 사용자 목록</h3>
           </CardHeader>
           <CardContent>
             {/* 탈퇴 사용자 필터 */}
