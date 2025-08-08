@@ -1181,7 +1181,7 @@ export default function AdminPage() {
                   </div>
                   <div className="mt-3 pt-2 border-t border-red-200">
                     <a 
-                      href="https://drive.google.com/file/d/1Y6qME0EuBy1XRocfDZBPe9UgEZ_NDoM8/view?usp=sharing"
+                      href="https://drive.google.com/drive/folders/12VdFuq5i7OiCxwr_y_EuNsGcU4EPhbuP?usp=sharing"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center text-xs text-red-600 hover:text-red-800 hover:underline"
