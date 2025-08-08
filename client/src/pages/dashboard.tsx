@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import PartnerForm from "@/components/partner-form";
 import { PartnerRecommendations } from "@/components/partner-recommendations";
+import type { ScoreboardData } from "@shared/schema";
 // import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
@@ -25,13 +26,24 @@ export default function Dashboard() {
     setUser(JSON.parse(savedUser));
   }, [setLocation]);
 
-  const { data: scoreboardData, refetch } = useQuery({
+  const { data: scoreboardData, refetch } = useQuery<ScoreboardData>({
     queryKey: ["/api/scoreboard", user?.id],
     enabled: !!user?.id,
     refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
-  const { data: userProfile, refetch: refetchProfile } = useQuery({
+  const { data: userProfile, refetch: refetchProfile } = useQuery<{
+    partner?: string;
+    memberName?: string;
+    rpartner1?: string;
+    rpartner1Stage?: string;
+    rpartner2?: string;
+    rpartner2Stage?: string;
+    rpartner3?: string;
+    rpartner3Stage?: string;
+    rpartner4?: string;
+    rpartner4Stage?: string;
+  }>({
     queryKey: ["/api/user-profile", user?.id],
     enabled: !!user?.id,
     refetchInterval: 5000, // 5초마다 자동 새로고침
@@ -41,6 +53,7 @@ export default function Dashboard() {
   const { data: adminPermission } = useQuery({
     queryKey: ["/api/admin/check-permission", user?.email],
     queryFn: async () => {
+      if (!user?.email) return { isAdmin: false };
       const response = await fetch(`/api/admin/check-permission?email=${encodeURIComponent(user.email)}`);
       if (!response.ok) {
         return { isAdmin: false };
