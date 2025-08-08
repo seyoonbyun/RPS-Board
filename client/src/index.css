@@ -338,6 +338,8 @@ input:-webkit-autofill:active {
   position: relative !important;
   z-index: 10 !important;
   margin-bottom: -2px !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* TabsTrigger 비활성화 상태 스타일링 */
@@ -349,12 +351,32 @@ input:-webkit-autofill:active {
   font-weight: normal !important;
   position: relative !important;
   z-index: 1 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* TabsTrigger 호버 효과 */
 [role="tab"]:hover {
   color: #d12031 !important;
   background-color: rgb(254, 242, 242) !important;
+}
+
+/* TabsTrigger focus 및 active 상태에서 바깥 테두리 제거 */
+[role="tab"]:focus,
+[role="tab"]:focus-visible,
+[role="tab"]:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 2px solid #d12031 !important;
+}
+
+[role="tab"][data-state="inactive"]:focus,
+[role="tab"][data-state="inactive"]:focus-visible,
+[role="tab"][data-state="inactive"]:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 2px solid transparent !important;
+  border-bottom: 2px solid rgb(229, 231, 235) !important;
 }
 
 /* Tabs 컨테이너 스타일링 */
