@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -73,6 +73,7 @@ export default function AdminPage() {
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
+  const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({
     email: '',
@@ -1127,15 +1128,53 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">권한 *</label>
-                  <select
-                    value={newUser.auth || ''}
-                    onChange={(e) => setNewUser({...newUser, auth: e.target.value})}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 admin-auth-select"
-                  >
-                    <option value="Admin">Admin (관리자)</option>
-                    <option value="Growth">Growth (성장팀)</option>
-                    <option value="Member">Member (일반회원)</option>
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                    >
+                      <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
+                        {newUser.auth ? 
+                          (newUser.auth === 'Admin' ? 'Admin (관리자)' :
+                           newUser.auth === 'Growth' ? 'Growth (성장팀)' :
+                           newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
+                          : '권한을 선택하세요'}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </button>
+                    {authDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                          onClick={() => {
+                            setNewUser({...newUser, auth: 'Admin'});
+                            setAuthDropdownOpen(false);
+                          }}
+                        >
+                          Admin (관리자)
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                          onClick={() => {
+                            setNewUser({...newUser, auth: 'Growth'});
+                            setAuthDropdownOpen(false);
+                          }}
+                        >
+                          Growth (성장팀)
+                        </div>
+                        <div 
+                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                          onClick={() => {
+                            setNewUser({...newUser, auth: 'Member'});
+                            setAuthDropdownOpen(false);
+                          }}
+                        >
+                          Member (일반회원)
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <Button 
