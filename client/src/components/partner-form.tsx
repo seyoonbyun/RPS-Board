@@ -406,7 +406,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>나의 핵심 고객층</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="나의 핵심 고객의 전문분야" />
+                        <Input {...field} value={field.value || ""} placeholder="나의 핵심 고객 전문분야" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
