@@ -31,6 +31,8 @@ interface UserProfile {
   region: string;
   chapter: string;
   memberName: string;
+  industry: string;
+  company: string;
   specialty: string;
   targetCustomer: string;
   rpartner1: string;
@@ -88,6 +90,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       userIdField: "",
       partner: "",
       memberName: "",
+      industry: "",
+      company: "",
       specialty: "",
       targetCustomer: "",
       rpartner1: "",
@@ -121,6 +125,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         userIdField: userProfile.targetCustomer || "",
         partner: userProfile.chapter || "",
         memberName: userProfile.memberName || "",
+        industry: userProfile.industry || "",
+        company: userProfile.company || "",
         specialty: userProfile.specialty || "",
         targetCustomer: userProfile.targetCustomer || "",
         rpartner1: userProfile.rpartner1 || "",
