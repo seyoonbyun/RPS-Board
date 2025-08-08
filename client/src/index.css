@@ -236,6 +236,30 @@
   background: #b91c1c !important;
 }
 
+/* 입력창 배경색 화이트 유지 */
+input[type="text"],
+input[type="email"], 
+input[type="password"],
+.bg-white {
+  background-color: white !important;
+}
+
+/* 포커스 상태에서도 화이트 배경 유지 */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+.bg-white:focus {
+  background-color: white !important;
+}
+
+/* 값이 입력된 상태에서도 화이트 배경 유지 */
+input[type="text"]:not(:placeholder-shown),
+input[type="email"]:not(:placeholder-shown),
+input[type="password"]:not(:placeholder-shown),
+.bg-white:not(:placeholder-shown) {
+  background-color: white !important;
+}
+
 
 
 
