@@ -191,6 +191,51 @@
   background-color: rgb(21, 128, 61);
 }
 
+/* Alert Dialog 스타일링 - 심플 화이트 디자인 */
+.alert-dialog-content {
+  background: white !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  max-width: 28rem !important;
+}
+
+.alert-dialog-title {
+  color: rgb(17, 24, 39) !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important;
+}
+
+.alert-dialog-description {
+  color: rgb(107, 114, 128) !important;
+  font-size: 0.875rem !important;
+}
+
+.alert-dialog-cancel {
+  background: white !important;
+  color: rgb(107, 114, 128) !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.alert-dialog-cancel:hover {
+  background: rgb(249, 250, 251) !important;
+  border-color: #9ca3af !important;
+}
+
+.alert-dialog-action-destructive {
+  background: #dc2626 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.alert-dialog-action-destructive:hover {
+  background: #b91c1c !important;
+}
+
 
 
 
