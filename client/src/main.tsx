@@ -37,6 +37,16 @@ const forcePlaceholderColors = () => {
       opacity: 1 !important;
       -webkit-text-fill-color: rgb(107, 114, 128) !important;
     }
+    
+    /* Password 특별 처리 - 추가 강제 규칙 */
+    input[type="password"]::placeholder,
+    input[type="password"]::-webkit-input-placeholder,
+    input[type="password"]::-moz-placeholder,
+    input[type="password"]:-ms-input-placeholder {
+      color: rgb(107, 114, 128) !important;
+      opacity: 1 !important;
+      -webkit-text-fill-color: rgb(107, 114, 128) !important;
+    }
   `;
   
   document.head.appendChild(styleSheet);
@@ -50,12 +60,29 @@ const forcePlaceholderColors = () => {
       
       // 디버깅: 실제 적용된 색상 확인
       const computedStyle = window.getComputedStyle(input, '::placeholder');
-      console.log(`📍 Input ${index + 1} (${input.placeholder}):`);
+      console.log(`📍 Input ${index + 1} (${input.placeholder}, type: ${input.type}):`);
       console.log('  - Computed placeholder color:', computedStyle.color);
       console.log('  - All applied styles:', computedStyle.cssText);
       
       // 강제로 속성 재설정
       input.style.cssText += ';--placeholder-color: rgb(107, 114, 128) !important;';
+      
+      // Password 타입 특별 처리
+      if (input.type === 'password') {
+        console.log('🔒 Password input 특별 처리 중...');
+        input.style.setProperty('color', 'inherit', 'important');
+        
+        // Password placeholder만을 위한 특별 스타일 추가
+        const passwordStyle = document.createElement('style');
+        passwordStyle.textContent = `
+          input[type="password"][placeholder="${input.placeholder}"]::placeholder {
+            color: rgb(107, 114, 128) !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: rgb(107, 114, 128) !important;
+          }
+        `;
+        document.head.appendChild(passwordStyle);
+      }
     });
     
     // 참조 텍스트 색상도 확인

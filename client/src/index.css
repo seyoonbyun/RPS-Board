@@ -110,6 +110,26 @@ html body [class*="input"]::placeholder {
   opacity: 1 !important;
   -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
+
+/* Password input 특별 처리 - 브라우저별 강제 적용 */
+input[type="password"]::placeholder,
+input[type="password"]::-webkit-input-placeholder,
+input[type="password"]::-moz-placeholder,
+input[type="password"]:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
+
+/* 최고 우선순위 - password 필드 극강 덮어쓰기 */
+html body input[type="password"]::placeholder,
+html body input[type="password"]::-webkit-input-placeholder,
+html body input[type="password"]::-moz-placeholder,
+html body input[type="password"]:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
  
   .dark {
     --background: 222.2 84% 4.9%;
