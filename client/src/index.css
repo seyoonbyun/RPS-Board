@@ -321,42 +321,49 @@ input:-webkit-autofill:active {
   position: fixed !important;
 }
 
-/* 관리자 권한 select 드롭다운 브랜드 컬러 적용 - 모든 브라우저 대응 */
-.admin-auth-select {
+/* 관리자 권한 select 드롭다운 브랜드 컬러 적용 - 핵폭탄급 강제 적용 */
+select.admin-auth-select {
   accent-color: #d12031 !important;
+  color-scheme: light !important;
 }
 
-.admin-auth-select option {
+/* 모든 브라우저 대응 - WebKit 기반 */
+select.admin-auth-select::-webkit-scrollbar {
+  background: #d12031 !important;
+}
+
+/* 모든 옵션 기본 스타일 강제 적용 */
+select.admin-auth-select option,
+select.admin-auth-select > option {
   background: white !important;
+  background-color: white !important;
   color: #333 !important;
-  padding: 8px 12px !important;
+  border: none !important;
 }
 
-.admin-auth-select option:hover,
-.admin-auth-select option:focus {
+/* 호버 상태 모든 브라우저 강제 적용 */
+select.admin-auth-select option:hover,
+select.admin-auth-select > option:hover,
+select.admin-auth-select option:focus,
+select.admin-auth-select > option:focus {
   background: #d12031 !important;
   background-color: #d12031 !important;
   color: white !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* disabled 옵션도 호버 가능하게 */
-.admin-auth-select option:disabled:hover {
-  background: #d12031 !important;
-  background-color: #d12031 !important;
-  color: white !important;
-}
-
-/* 모든 상태에서 브랜드 컬러 강제 적용 */
-.admin-auth-select option:checked,
-.admin-auth-select option:active,
-.admin-auth-select option[selected] {
+/* 선택된 상태 */
+select.admin-auth-select option:checked,
+select.admin-auth-select > option:checked {
   background: white !important;
+  background-color: white !important;
   color: #333 !important;
 }
 
-.admin-auth-select option:checked:hover,
-.admin-auth-select option:active:hover,
-.admin-auth-select option[selected]:hover {
+/* 선택된 상태에서 호버 */
+select.admin-auth-select option:checked:hover,
+select.admin-auth-select > option:checked:hover {
   background: #d12031 !important;
   background-color: #d12031 !important;
   color: white !important;
