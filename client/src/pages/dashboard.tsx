@@ -59,6 +59,7 @@ export default function Dashboard() {
     toast({
       title: "로그아웃",
       description: "로그아웃되었습니다",
+      duration: 3000,
     });
   };
 

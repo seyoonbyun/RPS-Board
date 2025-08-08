@@ -151,7 +151,7 @@ export default function AdminPage() {
         toast({
           title: '일괄 탈퇴 처리 완료',
           description: `${data.processedCount}명의 사용자가 탈퇴 처리되었습니다.`,
-          duration: 5000
+          duration: 3000
         });
       }
       setSelectedUsers([]);
@@ -163,7 +163,7 @@ export default function AdminPage() {
         title: '일괄 탈퇴 처리 실패',
         description: error.message || '처리 중 오류가 발생했습니다.',
         variant: 'destructive',
-        duration: 5000
+        duration: 3000
       });
     },
   });
@@ -178,7 +178,7 @@ export default function AdminPage() {
       toast({
         title: '멤버 복원 완료',
         description: `${data.restoredCount}명의 멤버가 복원되었습니다.`,
-        duration: 5000
+        duration: 3000
       });
       setSelectedWithdrawnUsers([]);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
@@ -188,7 +188,7 @@ export default function AdminPage() {
         title: '멤버 복원 실패',
         description: error.message || '복원 중 오류가 발생했습니다.',
         variant: 'destructive',
-        duration: 5000
+        duration: 3000
       });
     },
   });
@@ -214,7 +214,8 @@ export default function AdminPage() {
       toast({
         title: "사용자 추가 완료",
         description: data.message,
-        className: "bg-white text-gray-900"
+        className: "bg-white text-gray-900",
+        duration: 3000
       });
     },
     onError: (error: any) => {

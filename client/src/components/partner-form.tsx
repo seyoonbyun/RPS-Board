@@ -133,6 +133,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       toast({
         title: "저장 완료",
         description: "구글 시트와 실시간 동기화가 완료되었습니다.",
+        duration: 3000,
       });
       onDataSaved();
       
@@ -150,6 +151,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           ? "데이터는 저장되었지만 구글 시트 동기화에 실패했습니다" 
           : errorMessage,
         variant: "destructive",
+        duration: 3000,
       });
     },
   });
