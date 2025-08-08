@@ -130,6 +130,20 @@ html body input[type="password"]:-ms-input-placeholder {
   opacity: 1 !important;
   -webkit-text-fill-color: rgb(107, 114, 128) !important;
 }
+
+/* 절대 최고 우선순위 - 모든 가능한 선택자 조합 */
+html body div form div input[type="password"]::placeholder,
+html body div form div input[type="password"]::-webkit-input-placeholder,
+html body div form div input[type="password"]::-moz-placeholder,
+html body div form div input[type="password"]:-ms-input-placeholder,
+html body div form input[type="password"].placeholder-gray-500::placeholder,
+html body div form input[type="password"].placeholder-gray-500::-webkit-input-placeholder,
+html body div form input[type="password"].placeholder-gray-500::-moz-placeholder,
+html body div form input[type="password"].placeholder-gray-500:-ms-input-placeholder {
+  color: rgb(107, 114, 128) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: rgb(107, 114, 128) !important;
+}
  
   .dark {
     --background: 222.2 84% 4.9%;

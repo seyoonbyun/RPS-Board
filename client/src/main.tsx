@@ -70,18 +70,42 @@ const forcePlaceholderColors = () => {
       // Password 타입 특별 처리
       if (input.type === 'password') {
         console.log('🔒 Password input 특별 처리 중...');
-        input.style.setProperty('color', 'inherit', 'important');
         
-        // Password placeholder만을 위한 특별 스타일 추가
+        // 직접 placeholder 색상 확인 및 강제 설정
+        const passwordComputedStyle = window.getComputedStyle(input, '::placeholder');
+        console.log('  - Password placeholder 현재 색상:', passwordComputedStyle.color);
+        
+        // 극강 우선순위 스타일 직접 삽입
+        const passwordStyleId = 'password-placeholder-force-' + index;
+        let existingPasswordStyle = document.getElementById(passwordStyleId);
+        if (existingPasswordStyle) existingPasswordStyle.remove();
+        
         const passwordStyle = document.createElement('style');
+        passwordStyle.id = passwordStyleId;
         passwordStyle.textContent = `
-          input[type="password"][placeholder="${input.placeholder}"]::placeholder {
+          input[type="password"][placeholder="${input.placeholder}"]::placeholder,
+          input[type="password"][placeholder="${input.placeholder}"]::-webkit-input-placeholder,
+          input[type="password"][placeholder="${input.placeholder}"]::-moz-placeholder,
+          input[type="password"][placeholder="${input.placeholder}"]:-ms-input-placeholder {
+            color: rgb(107, 114, 128) !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: rgb(107, 114, 128) !important;
+          }
+          
+          /* 추가 우선순위 증가 */
+          html body input[type="password"][placeholder="${input.placeholder}"]::placeholder {
             color: rgb(107, 114, 128) !important;
             opacity: 1 !important;
             -webkit-text-fill-color: rgb(107, 114, 128) !important;
           }
         `;
         document.head.appendChild(passwordStyle);
+        
+        // 재확인
+        setTimeout(() => {
+          const recheck = window.getComputedStyle(input, '::placeholder');
+          console.log('  - Password placeholder 수정 후 색상:', recheck.color);
+        }, 50);
       }
     });
     
