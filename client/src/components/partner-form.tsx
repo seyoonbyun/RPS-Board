@@ -455,7 +455,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     {/* Left: Achievement Ring (a이미지) */}
                     <div className="flex-shrink-0">
                       <div className="relative w-32 h-32">
-                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                        <svg className="w-32 h-32" viewBox="0 0 36 36">
+                          {/* Background circle */}
                           <path
                             d="M18 2.0845
                               a 15.9155 15.9155 0 0 1 0 31.831
@@ -463,7 +464,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             fill="none"
                             stroke="#f3f4f6"
                             strokeWidth="2"
+                            transform="rotate(-90 18 18)"
                           />
+                          {/* Progress circle */}
                           <path
                             d="M18 2.0845
                               a 15.9155 15.9155 0 0 1 0 31.831
@@ -472,39 +475,40 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             stroke="#d12031"
                             strokeWidth="2"
                             strokeDasharray={`${achievementData.percentage}, 100`}
+                            transform="rotate(-90 18 18)"
                             className="drop-shadow-sm"
                           />
+                          {/* SVG text elements - guaranteed to print */}
+                          <text 
+                            x="18" 
+                            y="16" 
+                            textAnchor="middle" 
+                            fill="black" 
+                            fontSize="5" 
+                            fontWeight="bold"
+                            style={{ 
+                              fill: 'black',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact'
+                            }}
+                          >
+                            {achievementData.percentage}%
+                          </text>
+                          <text 
+                            x="18" 
+                            y="21" 
+                            textAnchor="middle" 
+                            fill="black" 
+                            fontSize="2.5"
+                            style={{ 
+                              fill: 'black',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact'
+                            }}
+                          >
+                            {achievementData.profitable}/4
+                          </text>
                         </svg>
-                        <div 
-                          className="absolute inset-0 flex items-center justify-center print-achievement-text"
-                          style={{ zIndex: 999, color: 'black' }}
-                        >
-                          <div className="text-center" style={{ color: 'black' }}>
-                            <div 
-                              className="text-2xl font-bold text-black"
-                              style={{ 
-                                color: 'black', 
-                                WebkitPrintColorAdjust: 'exact',
-                                printColorAdjust: 'exact',
-                                fontWeight: 'bold',
-                                fontSize: '1.5rem'
-                              }}
-                            >
-                              {achievementData.percentage}%
-                            </div>
-                            <div 
-                              className="text-xs text-black"
-                              style={{ 
-                                color: 'black',
-                                WebkitPrintColorAdjust: 'exact', 
-                                printColorAdjust: 'exact',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              {achievementData.profitable}/4
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                     
