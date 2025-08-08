@@ -260,6 +260,29 @@ input[type="password"]:not(:placeholder-shown),
   background-color: white !important;
 }
 
+/* 로그인 화면 특별 처리 */
+.login-input {
+  background-color: white !important;
+}
+
+.login-input:focus {
+  background-color: white !important;
+}
+
+.login-input:not(:placeholder-shown) {
+  background-color: white !important;
+}
+
+/* 브라우저 자동완성 스타일 오버라이드 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  background-color: white !important;
+}
+
 
 
 
