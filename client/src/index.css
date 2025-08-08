@@ -322,20 +322,31 @@ input:-webkit-autofill:active {
 }
 
 /* 관리자 권한 select 드롭다운 브랜드 컬러 적용 */
-.admin-auth-select option:checked,
+.admin-auth-select option {
+  background-color: white !important;
+  color: black !important;
+}
+
 .admin-auth-select option:hover {
   background-color: #d12031 !important;
   color: white !important;
 }
 
-.admin-auth-select:focus option:checked {
+/* 포커스 상태에서 호버 */
+.admin-auth-select:focus option:hover {
   background-color: #d12031 !important;
   color: white !important;
 }
 
-/* 선택된 옵션 브랜드 컬러 */
+/* 선택된 옵션은 기본 상태로 유지 (드롭다운에서) */
 .admin-auth-select option:checked {
-  background: linear-gradient(0deg, #d12031 0%, #d12031 100%) !important;
+  background-color: white !important;
+  color: black !important;
+}
+
+/* 호버 시만 브랜드 컬러 */
+.admin-auth-select option:checked:hover {
+  background-color: #d12031 !important;
   color: white !important;
 }
 
