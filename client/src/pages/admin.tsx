@@ -1189,7 +1189,7 @@ export default function AdminPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
                         {isChaptersLoading ? (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="loading" disabled>
                             챕터 목록을 불러오는 중...
                           </SelectItem>
                         ) : chapters.length > 0 ? (
@@ -1199,7 +1199,7 @@ export default function AdminPage() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-chapters" disabled>
                             챕터 목록이 없습니다
                           </SelectItem>
                         )}
