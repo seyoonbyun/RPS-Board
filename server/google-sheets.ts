@@ -167,7 +167,7 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z100`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,

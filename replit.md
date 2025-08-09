@@ -66,6 +66,11 @@ Preferred communication style: Simple, everyday language.
   - Updated ToastViewport z-index to maximum value (2147483647)
   - Enhanced CSS specificity for Radix UI toast components
   - Toast error messages now properly display above admin member addition forms
+- **Chapter Dropdown & Member Withdrawal Fix (Aug 9, 2025)**: ✅ RESOLVED
+  - Implemented custom chapter dropdown for individual member addition with Google Sheets integration
+  - Fixed member withdrawal processing by expanding Google Sheets search range from 100 to 5000 rows
+  - Updated withdrawal popup message format: "선택한 멤버 탈퇴 처리" with proper terminology consistency
+  - Custom dropdown solution resolves AlertDialog compatibility issues with Radix UI Select components
 - **Bidirectional Sync Data Deletion Fix (Aug 8, 2025)**: ✅ RESOLVED
   - Fixed critical issue where deleted data in bidirectional fields wasn't being saved to Google Sheets
   - Modified syncScoreboardData function to properly handle local data deletions
