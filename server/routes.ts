@@ -737,6 +737,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Fix user auth manually
+  app.put("/api/admin/fix-user-auth", async (req, res) => {
+    try {
+      const { email, auth } = req.body;
+      
+      if (!email || !auth) {
+        return res.status(400).json({ message: "이메일과 권한이 필요합니다" });
+      }
+      
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+      
+      // AUTH 필드만 업데이트 (Z열, index 25)
+      const accessToken = await googleSheetsService.getAccessToken();
+      
+      // 사용자 행 찾기
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/RPS!A1:Z5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 검색
+      let userRowIndex = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && 
+            rows[i][0].toString().trim().toLowerCase() === email.toLowerCase()) {
+          userRowIndex = i;
+          break;
+        }
+      }
+      
+      if (userRowIndex === -1) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      
+      // AUTH 컬럼만 업데이트 (Z열, index 25)
+      const range = `RPS!Z${userRowIndex + 1}`;
+      const updateResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [[auth]]
+          })
+        }
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error('AUTH 업데이트 실패');
+      }
+      
+      res.json({ message: `${email} 사용자의 권한이 ${auth}로 수정되었습니다` });
+      
+    } catch (error: any) {
+      console.error("❌ Error fixing user auth:", error);
+      res.status(500).json({ message: "권한 수정 중 오류가 발생했습니다" });
+    }
+  });
+
+  // Admin API: Fix user auth manually
+  app.put("/api/admin/fix-user-auth", async (req, res) => {
+    try {
+      const { email, auth } = req.body;
+      
+      if (!email || !auth) {
+        return res.status(400).json({ message: "이메일과 권한이 필요합니다" });
+      }
+      
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+      
+      // AUTH 필드만 업데이트 (Z열, index 25)
+      const accessToken = await googleSheetsService.getAccessToken();
+      
+      // 사용자 행 찾기
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/RPS!A1:Z5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 검색
+      let userRowIndex = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && 
+            rows[i][0].toString().trim().toLowerCase() === email.toLowerCase()) {
+          userRowIndex = i;
+          break;
+        }
+      }
+      
+      if (userRowIndex === -1) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      
+      // AUTH 컬럼만 업데이트 (Z열, index 25)
+      const range = `RPS!Z${userRowIndex + 1}`;
+      const updateResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [[auth]]
+          })
+        }
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error('AUTH 업데이트 실패');
+      }
+      
+      res.json({ message: `${email} 사용자의 권한이 ${auth}로 수정되었습니다` });
+      
+    } catch (error: any) {
+      console.error("❌ Error fixing user auth:", error);
+      res.status(500).json({ message: "권한 수정 중 오류가 발생했습니다" });
+    }
+  });
+
   // CSV Upload endpoints for bulk user addition
   app.post("/api/csv/upload-url", async (req, res) => {
     try {
