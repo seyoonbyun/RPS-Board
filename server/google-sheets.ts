@@ -882,26 +882,26 @@ class GoogleSheetsService {
       
       // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지는 기존 값 유지
       const withdrawalValues = [...existingRow];
-      while (withdrawalValues.length < 23) {
-        withdrawalValues.push(''); // 빈 열 채우기
+      while (withdrawalValues.length < 26) {
+        withdrawalValues.push(''); // 26개 컬럼까지 빈 열 채우기 (A-Z)
       }
       
       // 데이터 삭제 (R파트너 정보 클리어)
-      withdrawalValues[6] = '';  // R파트너 1
-      withdrawalValues[7] = '';  // R파트너 1 전문분야
-      withdrawalValues[8] = '';  // R파트너 1 단계
-      withdrawalValues[9] = '';  // R파트너 2
-      withdrawalValues[10] = ''; // R파트너 2 전문분야
-      withdrawalValues[11] = ''; // R파트너 2 단계
-      withdrawalValues[12] = ''; // R파트너 3
-      withdrawalValues[13] = ''; // R파트너 3 전문분야
-      withdrawalValues[14] = ''; // R파트너 3 단계
-      withdrawalValues[15] = ''; // R파트너 4
-      withdrawalValues[16] = ''; // R파트너 4 전문분야
-      withdrawalValues[17] = ''; // R파트너 4 단계
-      withdrawalValues[18] = '0'; // 총 R파트너 수
-      withdrawalValues[19] = '0%'; // 달성률
-      withdrawalValues[24] = '탈퇴'; // STATUS를 "탈퇴"로 변경 (25번째 컬럼, index 24)
+      withdrawalValues[8] = '';   // R파트너 1 (index 8)
+      withdrawalValues[9] = '';   // R파트너 1 전문분야 (index 9)
+      withdrawalValues[10] = '';  // R파트너 1 단계 (index 10)
+      withdrawalValues[11] = '';  // R파트너 2 (index 11)
+      withdrawalValues[12] = '';  // R파트너 2 전문분야 (index 12)
+      withdrawalValues[13] = '';  // R파트너 2 단계 (index 13)
+      withdrawalValues[14] = '';  // R파트너 3 (index 14)
+      withdrawalValues[15] = '';  // R파트너 3 전문분야 (index 15)
+      withdrawalValues[16] = '';  // R파트너 3 단계 (index 16)
+      withdrawalValues[17] = '';  // R파트너 4 (index 17)
+      withdrawalValues[18] = '';  // R파트너 4 전문분야 (index 18)
+      withdrawalValues[19] = '';  // R파트너 4 단계 (index 19)
+      withdrawalValues[20] = '0'; // 총 R파트너 수 (index 20)
+      withdrawalValues[21] = '0%'; // 달성률 (index 21)
+      withdrawalValues[24] = '탈퇴'; // STATUS를 "탈퇴"로 변경 (Y열, index 24)
       
       const range = `RPS!A${userRowIndex + 1}:Z${userRowIndex + 1}`;
       console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
