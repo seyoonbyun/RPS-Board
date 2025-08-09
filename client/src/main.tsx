@@ -118,14 +118,35 @@ const forcePlaceholderColors = () => {
   }, 100);
 };
 
+// 페이지 제목 변경 함수
+const setPageTitle = () => {
+  document.title = "My RPS Board Report - BNI KOREA";
+};
+
 // 여러 시점에서 실행
 forcePlaceholderColors();
-document.addEventListener('DOMContentLoaded', forcePlaceholderColors);
-window.addEventListener('load', forcePlaceholderColors);
+setPageTitle();
+document.addEventListener('DOMContentLoaded', () => {
+  forcePlaceholderColors();
+  setPageTitle();
+});
+window.addEventListener('load', () => {
+  forcePlaceholderColors();
+  setPageTitle();
+});
 
 // React 앱 렌더링 후에도 실행
-setTimeout(forcePlaceholderColors, 100);
-setTimeout(forcePlaceholderColors, 500);
-setTimeout(forcePlaceholderColors, 1000);
+setTimeout(() => {
+  forcePlaceholderColors();
+  setPageTitle();
+}, 100);
+setTimeout(() => {
+  forcePlaceholderColors();
+  setPageTitle();
+}, 500);
+setTimeout(() => {
+  forcePlaceholderColors();
+  setPageTitle();
+}, 1000);
 
 createRoot(document.getElementById("root")!).render(<App />);
