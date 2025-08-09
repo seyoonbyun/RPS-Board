@@ -637,7 +637,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               <div className="text-sm text-gray-700 mb-3">
                                 지금까지 기록하신 대표님의 모든 R파트너 데이터가 삭제됩니다.
                               </div>
-                              <div className="font-semibold" style={{ color: '#d12031' }}>
+                              <div className="font-semibold text-center" style={{ color: '#d12031' }}>
                                 ⚠️ 이 작업은 되돌릴 수 없습니다
                               </div>
                             </div>
