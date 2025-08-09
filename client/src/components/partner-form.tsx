@@ -611,8 +611,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                       </Button>
                       
                       {/* 탈퇴 버튼 */}
-                      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                        <DialogTrigger asChild>
+                      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                        <AlertDialogTrigger asChild>
                           <Button
                             type="button"
                             variant="outline"
@@ -621,16 +621,16 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             <Trash2 className="mr-2 w-4 h-4" />
                             나의 RPS 계정 삭제하기
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
-                          <DialogHeader>
-                            <DialogTitle>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="alert-dialog-title">
                               파워팀 계정 삭제
-                            </DialogTitle>
-                            <DialogDescription>
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="alert-dialog-description">
                               정말로 계정을 삭제하시겠습니까?
-                            </DialogDescription>
-                          </DialogHeader>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
                           <div className="py-4">
                             <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
                               <h4 className="font-semibold text-gray-800 mb-2">
@@ -644,23 +644,26 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               </div>
                             </div>
                           </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel 
+                              className="alert-dialog-cancel"
+                              onClick={() => setDeleteDialogOpen(false)}
+                            >
                               취소
-                            </Button>
-                            <Button
+                            </AlertDialogCancel>
+                            <AlertDialogAction
                               onClick={() => {
                                 withdrawalMutation.mutate();
                                 setDeleteDialogOpen(false);
                               }}
                               disabled={withdrawalMutation.isPending}
-                              className="bg-red-600 hover:bg-red-700 text-white"
+                              className="alert-dialog-action-destructive"
                             >
                               {withdrawalMutation.isPending ? "처리 중..." : "계정 삭제 계속하기"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>
