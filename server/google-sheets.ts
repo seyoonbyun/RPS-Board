@@ -880,30 +880,15 @@ class GoogleSheetsService {
       
       const existingRow = rows[userRowIndex];
       
-      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지 정보는 모두 유지
+      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지 정보는 절대 변경하지 않음
       const withdrawalValues = [...existingRow];
       
-      // 기존 데이터 보존하면서 26개 컬럼 확보 (기존 값이 있으면 유지, 없으면 빈 문자열)
+      // 배열 길이를 26으로 맞추되, 기존 값들은 절대 변경하지 않음
       while (withdrawalValues.length < 26) {
         withdrawalValues.push('');
       }
       
-      // 중요: PW와 STATUS가 누락된 경우 기본값 설정 (기존 값이 있으면 유지)
-      if (!withdrawalValues[23] || withdrawalValues[23].toString().trim() === '') {
-        // PW가 없는 경우 이메일에서 기본 패스워드 추출 또는 기본값 설정
-        const emailPrefix = userEmail.split('@')[0];
-        const defaultPW = emailPrefix.slice(-4).padStart(4, '0'); // 이메일 앞부분 뒤 4자리 또는 0000
-        withdrawalValues[23] = defaultPW;
-        console.log(`⚠️ Missing PW for ${userEmail}, setting default: ${defaultPW}`);
-      }
-      
-      // STATUS 설정 (기존 값이 없거나 빈 값인 경우만 활동중으로 설정 후 탈퇴로 변경)
-      if (!withdrawalValues[24] || withdrawalValues[24].toString().trim() === '') {
-        withdrawalValues[24] = '활동중'; // 기본값 먼저 설정
-        console.log(`⚠️ Missing STATUS for ${userEmail}, setting to 활동중 first`);
-      }
-      
-      // STATUS를 "탈퇴"로 변경 (Y열, index 24)
+      // STATUS만 "탈퇴"로 변경 (Y열, index 24) - 다른 어떤 필드도 수정하지 않음
       withdrawalValues[24] = '탈퇴';
       
       const range = `RPS!A${userRowIndex + 1}:Z${userRowIndex + 1}`;
