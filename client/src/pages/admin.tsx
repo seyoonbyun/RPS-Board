@@ -416,6 +416,27 @@ export default function AdminPage() {
     document.body.removeChild(link);
   };
 
+  const downloadCSVTemplate = () => {
+    const csvContent = [
+      'ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,전문분야,권한,PW_H.P. 뒷 4자리',
+      'example@test.com,서울,테스트챕터,홍길동,IT,테스트회사,개발자,Member,1234'
+    ].join('\n');
+
+    // BOM을 추가하여 Excel에서 한글이 제대로 표시되도록 함
+    const BOM = '\uFEFF';
+    const csvWithBOM = BOM + csvContent;
+
+    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'CSV_템플릿_사용자추가.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleAddUser = () => {
     if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.specialty || !newUser.password || !newUser.auth) {
       toast({
@@ -1259,23 +1280,21 @@ export default function AdminPage() {
                 <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
                   <p className="text-sm font-medium text-red-900 mb-2">CSV 파일 형식 안내</p>
                   <div className="text-xs text-red-700 space-y-1">
-                    <p><strong>CSV 파일 형식 :</strong> 이메일(ID) | 지역 | 챕터 | 멤버명 | 전문분야 | 권한 | PW(숫자 4자리)</p>
+                    <p><strong>CSV 파일 형식 :</strong> 이메일 | 지역 | 챕터 | 멤버명 | 산업군 | 회사 | 전문분야 | 권한 | PW(숫자 4자리)</p>
                     <p>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</p>
                     <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</p>
-                    <p>• 권한(3) : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계로 구분되어 운영됩니다.</p>
+                    <p>• 권한 : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계로 구분되어 운영됩니다.</p>
                     <p>• 타겟고객(나의 핵심 고객층)은 멤버가 직접 설정하는 정보로, 관리자가 계정 생성 시 추가하는 정보에서 제외됩니다.</p>
-                    <p>• 일괄 등록용 CSV 파일은 별도 제공(하단 링크)해드립니다. 다운로드&gt;작성&gt;업로드 하시면 됩니다.</p>
+                    <p>• 첫 번째 행은 헤더이므로, 두 번째 행부터 사용자 정보를 입력하세요.</p>
                   </div>
                   <div className="mt-3 pt-2 border-t border-red-200">
-                    <a 
-                      href="https://drive.google.com/drive/folders/12VdFuq5i7OiCxwr_y_EuNsGcU4EPhbuP?usp=sharing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-xs text-red-600 hover:text-red-800 hover:underline"
+                    <button 
+                      onClick={downloadCSVTemplate}
+                      className="inline-flex items-center text-xs text-red-600 hover:text-red-800 hover:underline bg-transparent border-none cursor-pointer"
                     >
                       <Download className="w-3 h-3 mr-1" />
-                      일괄 등록 예시 파일 다운로드
-                    </a>
+                      CSV 템플릿 파일 다운로드
+                    </button>
                   </div>
                 </div>
               </div>
