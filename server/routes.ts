@@ -443,7 +443,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("🔄 Force refreshing user data from Google Sheets...");
       const allUsersData = await storage.getAllUsersFromGoogleSheets();
-      res.json(allUsersData);
+      
+      // 활성 사용자와 탈퇴 사용자 필터링
+      const activeUsers = allUsersData.filter(user => user.status !== '탈퇴');
+      const withdrawnUsers = allUsersData.filter(user => user.status === '탈퇴');
+      
+      console.log(`📊 User summary: ${activeUsers.length} active, ${withdrawnUsers.length} withdrawn`);
+      
+      res.json(allUsersData); // 모든 사용자 반환 (프론트엔드에서 필터링)
     } catch (error: any) {
       console.error("❌ Error fetching all users:", error);
       res.status(500).json({ message: "사용자 목록 조회 실패" });

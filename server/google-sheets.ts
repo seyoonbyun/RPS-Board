@@ -969,8 +969,8 @@ class GoogleSheetsService {
         throw new Error(`User ${userEmail} not found in Google Sheets`);
       }
       
-      // STATUS 컬럼 업데이트 (W열, 인덱스 22)
-      const range = `RPS!W${userRowIndex + 1}`;
+      // STATUS 컬럼 업데이트 (Y열, 인덱스 24)
+      const range = `RPS!Y${userRowIndex + 1}`;
       console.log(`🔄 Updating user ${userEmail} status to "${newStatus}" in row ${userRowIndex + 1}`);
       
       const updateResponse = await fetch(
@@ -1038,12 +1038,6 @@ class GoogleSheetsService {
         }
         
         const status = row[24] || '활동중'; // STATUS 컬럼 (index 24, 25번째 컬럼)
-        
-        // 탈퇴한 사용자는 목록에서 제외
-        if (status === '탈퇴') {
-          console.log(`⚠️ Skipping withdrawn user: ${row[0]}`);
-          continue;
-        }
         
         const userData = {
           email: row[0] || '',
