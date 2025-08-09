@@ -59,19 +59,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
 
-  // 바깥 영역 클릭 감지를 위한 useEffect
+  // ESC 키 감지를 위한 useEffect
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (deleteDialogOpen) {
-        const target = event.target as HTMLElement;
-        // AlertDialog 콘텐츠 영역인지 확인
-        const dialogContent = document.querySelector('[data-radix-alert-dialog-content]');
-        if (dialogContent && !dialogContent.contains(target)) {
-          setDeleteDialogOpen(false);
-        }
-      }
-    };
-
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (deleteDialogOpen && event.key === 'Escape') {
         setDeleteDialogOpen(false);
@@ -79,15 +68,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
     };
 
     if (deleteDialogOpen) {
-      // 약간의 지연을 두고 이벤트 리스너 추가 (팝업이 완전히 열린 후)
-      setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleEscapeKey);
-      }, 100);
+      document.addEventListener('keydown', handleEscapeKey);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [deleteDialogOpen]);
@@ -658,6 +642,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <AlertDialogContent 
                           className="alert-dialog-content max-w-md border border-gray-300" 
                           style={{borderWidth: '1px'}}
+                          onOverlayClick={() => setDeleteDialogOpen(false)}
                         >
                           <AlertDialogHeader>
                             <AlertDialogTitle className="alert-dialog-title">
