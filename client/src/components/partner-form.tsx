@@ -492,7 +492,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     RPS 보드에 기록 중...
                   </>
                 ) : (
-                  "제출하기"
+                  <>
+                    <Save className="mr-2 w-4 h-4" />
+                    제출하기
+                  </>
                 )}
               </Button>
             </div>
