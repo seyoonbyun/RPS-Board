@@ -434,6 +434,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/users", async (req, res) => {
     try {
+      // 캐시 방지 헤더 추가
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      console.log("🔄 Force refreshing user data from Google Sheets...");
       const allUsersData = await storage.getAllUsersFromGoogleSheets();
       res.json(allUsersData);
     } catch (error: any) {

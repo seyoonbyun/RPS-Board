@@ -1004,12 +1004,15 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
+      // 캐시 방지를 위한 타임스탬프 추가
+      const timestamp = Date.now();
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000?t=${timestamp}`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
           }
         }
       );
@@ -1034,28 +1037,38 @@ class GoogleSheetsService {
           continue;
         }
         
+        const status = row[24] || '활동중'; // STATUS 컬럼 (index 24, 25번째 컬럼)
+        
+        // 탈퇴한 사용자는 목록에서 제외
+        if (status === '탈퇴') {
+          console.log(`⚠️ Skipping withdrawn user: ${row[0]}`);
+          continue;
+        }
+        
         const userData = {
           email: row[0] || '',
           region: row[1] || '',
           chapter: row[2] || '',
           memberName: row[3] || '',
-          specialty: row[4] || '',
-          targetCustomer: row[5] || '',
-          rpartner1: row[6] || '',
-          rpartner1Specialty: row[7] || '',
-          rpartner1Stage: this.convertFullTextToStage(row[8] || ''),
-          rpartner2: row[9] || '',
-          rpartner2Specialty: row[10] || '',
-          rpartner2Stage: this.convertFullTextToStage(row[11] || ''),
-          rpartner3: row[12] || '',
-          rpartner3Specialty: row[13] || '',
-          rpartner3Stage: this.convertFullTextToStage(row[14] || ''),
-          rpartner4: row[15] || '',
-          rpartner4Specialty: row[16] || '',
-          rpartner4Stage: this.convertFullTextToStage(row[17] || ''),
-          totalPartners: row[18] || '0',
-          achievement: row[19] || '0%',
-          status: row[22] || '활동중' // STATUS 컬럼
+          industry: row[4] || '', // 산업군 추가 (index 4)
+          company: row[5] || '', // 회사 추가 (index 5)
+          specialty: row[6] || '', // 전문분야 (index 6)
+          targetCustomer: row[7] || '', // 나의 핵심 고객층 (index 7)
+          rpartner1: row[8] || '', // R파트너 1 (index 8)
+          rpartner1Specialty: row[9] || '', // R파트너 1 전문분야 (index 9)
+          rpartner1Stage: this.convertFullTextToStage(row[10] || ''), // R파트너 1 V-C-P (index 10)
+          rpartner2: row[11] || '', // R파트너 2 (index 11)
+          rpartner2Specialty: row[12] || '', // R파트너 2 전문분야 (index 12)
+          rpartner2Stage: this.convertFullTextToStage(row[13] || ''), // R파트너 2 V-C-P (index 13)
+          rpartner3: row[14] || '', // R파트너 3 (index 14)
+          rpartner3Specialty: row[15] || '', // R파트너 3 전문분야 (index 15)
+          rpartner3Stage: this.convertFullTextToStage(row[16] || ''), // R파트너 3 V-C-P (index 16)
+          rpartner4: row[17] || '', // R파트너 4 (index 17)
+          rpartner4Specialty: row[18] || '', // R파트너 4 전문분야 (index 18)
+          rpartner4Stage: this.convertFullTextToStage(row[19] || ''), // R파트너 4 V-C-P (index 19)
+          totalPartners: row[20] || '0', // 총 R파트너 수 (index 20)
+          achievement: row[21] || '0%', // 달성 (index 21)
+          status: status
         };
         
         users.push(userData);

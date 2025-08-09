@@ -77,6 +77,12 @@ Preferred communication style: Simple, everyday language.
   - Improved table layout consistency with proper grid alignment and responsive design
   - Enhanced React Query cache invalidation with forced refetch for real-time status updates
   - Toast message updated to user-friendly format: "탈퇴 처리 완료 - 선택한 멤버 탈퇴가 정상적으로 완료되었습니다"
+- **Real-time Data Sync & Withdrawal Filtering (Aug 9, 2025)**: ✅ RESOLVED
+  - Added cache prevention headers and timestamps to prevent Google Sheets data caching
+  - Implemented automatic filtering of withdrawn users (STATUS='탈퇴') from member list display
+  - Enhanced getAllUsers method with proper column mapping for industry and company fields
+  - Real-time synchronization ensures immediate reflection of Google Sheets changes in web interface
+  - Withdrawn members now disappear from admin panel immediately after status change in Google Sheets
 - **Bidirectional Sync Data Deletion Fix (Aug 8, 2025)**: ✅ RESOLVED
   - Fixed critical issue where deleted data in bidirectional fields wasn't being saved to Google Sheets
   - Modified syncScoreboardData function to properly handle local data deletions
