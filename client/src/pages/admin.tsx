@@ -218,6 +218,9 @@ export default function AdminPage() {
       }
       setSelectedUsers([]);
       setBulkEmails('');
+      // 탈퇴 처리 완료 후 모든 필터 초기화
+      setRegionFilter('__all__');
+      setChapterFilter('__all__');
       // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
@@ -245,6 +248,9 @@ export default function AdminPage() {
         duration: 3000
       });
       setSelectedWithdrawnUsers([]);
+      // 멤버 복원 완료 후 탈퇴된 멤버 필터 초기화
+      setWithdrawnRegionFilter('__all__');
+      setWithdrawnChapterFilter('__all__');
       // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
