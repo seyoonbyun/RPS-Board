@@ -160,10 +160,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         updatedAt: data.updatedAt
       });
       
-      // 즉시 저장 완료 팝업 표시
+      // 저장 완료 팝업 표시
       toast({
         title: "저장 완료",
-        description: "변경사항이 구글 시트에 반영되었습니다.",
+        description: "RPS 보드에 성공적으로 기록되었습니다.",
         duration: 3000,
       });
       
@@ -212,51 +212,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
     },
   });
 
-  // 자동 저장 기능 - 폼 값 변경 감지 및 즉시 저장
-  const formValues = form.watch();
-  const [lastSavedValues, setLastSavedValues] = React.useState<any>(null);
-
-  React.useEffect(() => {
-    // 초기 로딩 중이거나 저장 중일 때는 자동 저장하지 않음
-    if (isProfileLoading || saveMutation.isPending) return;
-    
-    // 첫 번째 로드 시에는 저장하지 않음
-    if (!lastSavedValues) {
-      setLastSavedValues(formValues);
-      return;
-    }
-
-    // 양방향 동기화 필드만 변경사항 감지 (specialty, targetCustomer, R파트너 정보)
-    const bidirectionalFields = [
-      'specialty', 'targetCustomer', 
-      'rpartner1', 'rpartner1Specialty', 'rpartner1Stage',
-      'rpartner2', 'rpartner2Specialty', 'rpartner2Stage', 
-      'rpartner3', 'rpartner3Specialty', 'rpartner3Stage',
-      'rpartner4', 'rpartner4Specialty', 'rpartner4Stage'
-    ];
-
-    const hasChanges = bidirectionalFields.some(field => 
-      formValues[field] !== lastSavedValues[field]
-    );
-
-    if (hasChanges) {
-      console.log('🔄 Auto-save triggered - Changes detected:', {
-        specialty: formValues.specialty !== lastSavedValues.specialty ? 
-          `${lastSavedValues.specialty} → ${formValues.specialty}` : 'no change',
-        targetCustomer: formValues.targetCustomer !== lastSavedValues.targetCustomer ?
-          `${lastSavedValues.targetCustomer} → ${formValues.targetCustomer}` : 'no change'
-      });
-
-      // 2초 지연 후 자동 저장 (사용자가 타이핑을 완료할 시간 제공)
-      const autoSaveTimer = setTimeout(() => {
-        // 즉시 lastSavedValues 업데이트로 중복 저장 방지
-        setLastSavedValues({ ...formValues });
-        saveMutation.mutate(formValues);
-      }, 2000);
-
-      return () => clearTimeout(autoSaveTimer);
-    }
-  }, [formValues, lastSavedValues, isProfileLoading, saveMutation]);
+  // 수동 저장 방식으로 변경
 
   const onSubmit = (data: ScoreboardForm) => {
     console.log('🔄 Form onSubmit triggered with data:', {
@@ -519,15 +475,26 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               </div>
             </div>
             
-            {/* 자동 저장 기능 활성화로 수동 저장 버튼 불필요 */}
-            <div className="text-center pt-4 border-t">
-              <p className="text-sm text-gray-500">
+            {/* 수동 저장 버튼 */}
+            <div className="flex justify-center pt-4 border-t">
+              <Button
+                type="submit"
+                disabled={saveMutation.isPending}
+                className="w-full max-w-xs px-8 py-3 text-white font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
+                style={{ 
+                  backgroundColor: '#d12031',
+                  boxShadow: '0 4px 14px 0 rgba(209, 32, 49, 0.39)'
+                }}
+              >
                 {saveMutation.isPending ? (
-                  <span className="text-blue-600">💾 자동 저장 중...</span>
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    RPS 보드에 기록 중...
+                  </>
                 ) : (
-                  <span>입력 시 자동으로 저장됩니다</span>
+                  "제출하기"
                 )}
-              </p>
+              </Button>
             </div>
             
             {/* Achievement Section */}
