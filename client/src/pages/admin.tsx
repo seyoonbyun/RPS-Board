@@ -609,24 +609,6 @@ export default function AdminPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Button 
-                onClick={() => {
-                  queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-                  queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
-                  toast({
-                    title: "데이터 새로고침",
-                    description: "최신 구글 시트 데이터를 불러오는 중...",
-                    duration: 2000,
-                    className: "bg-white text-gray-900"
-                  });
-                }}
-                variant="outline"
-                size="sm"
-                className="border-blue-500 text-blue-600 hover:bg-blue-50"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                데이터 새로고침
-              </Button>
-              <Button 
                 onClick={() => setShowAddUserDialog(true)}
                 className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600"
                 size="sm"
