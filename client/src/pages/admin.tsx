@@ -756,10 +756,10 @@ export default function AdminPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent className="alert-dialog-content">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="alert-dialog-title">선택한 사용자 탈퇴 처리</AlertDialogTitle>
+                      <AlertDialogTitle className="alert-dialog-title">선택한 멤버 탈퇴 처리</AlertDialogTitle>
                       <AlertDialogDescription className="alert-dialog-description">
-                        선택한 {selectedUsers.length}명의 사용자를 탈퇴 처리하시겠습니까?
-                        이 작업은 되돌릴 수 없습니다.
+                        선택한 {selectedUsers.length}명의 멤버를 탈퇴 처리 하시겠습니까?
+                        <br />이 작업은 되돌릴 수 없습니다.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
