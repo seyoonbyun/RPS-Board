@@ -201,7 +201,9 @@ export default function AdminPage() {
       }
       setSelectedUsers([]);
       setBulkEmails('');
+      // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
     },
     onError: (error: any) => {
       toast({
@@ -226,7 +228,9 @@ export default function AdminPage() {
         duration: 3000
       });
       setSelectedWithdrawnUsers([]);
+      // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
     },
     onError: (error: any) => {
       toast({
@@ -245,7 +249,9 @@ export default function AdminPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
       setShowAddUserDialog(false);
       setNewUser({
         email: '',
@@ -281,7 +287,9 @@ export default function AdminPage() {
       return response.json();
     },
     onSuccess: (data) => {
+      // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
       setShowAddUserDialog(false);
       
       const hasErrors = data.errors && data.errors.length > 0;
@@ -882,11 +890,13 @@ export default function AdminPage() {
                   <div className="bg-gray-100 px-4 py-2 border-b">
                     <div className="flex items-center">
                       <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
-                      <div className="flex-1 grid gap-3 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                      <div className="flex-1 grid gap-2 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '2fr 0.7fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr'}}>
                         <div className="text-left">ID</div>
                         <div className="text-left">지역</div>
                         <div className="text-left">챕터</div>
                         <div className="text-left">멤버명</div>
+                        <div className="text-left">산업군</div>
+                        <div className="text-left">회사</div>
                         <div className="text-left">전문분야</div>
                         <div className="text-left">상태/파트너수</div>
                       </div>
@@ -901,17 +911,19 @@ export default function AdminPage() {
                             onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
                           />
                         </div>
-                        <div className="flex-1 grid gap-3 text-sm" style={{gridTemplateColumns: '2.5fr 0.8fr 1fr 1fr 1.2fr 1.5fr'}}>
+                        <div className="flex-1 grid gap-2 text-sm" style={{gridTemplateColumns: '2fr 0.7fr 0.8fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr'}}>
                           <div className="font-medium truncate text-left" title={user.email}>{user.email}</div>
                           <div className="truncate text-left" title={user.region}>{user.region}</div>
                           <div className="truncate text-left" title={user.chapter}>{user.chapter}</div>
                           <div className="truncate text-left" title={user.memberName}>{user.memberName}</div>
+                          <div className="truncate text-left" title={user.industry}>{user.industry}</div>
+                          <div className="truncate text-left" title={user.company}>{user.company}</div>
                           <div className="truncate text-left" title={user.specialty}>{user.specialty}</div>
-                          <div className="flex items-center text-left space-x-2">
-                            <Badge variant={user.status === '활동중' ? 'default' : 'secondary'}>
+                          <div className="flex items-center text-left space-x-1">
+                            <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs">
                               {user.status}
                             </Badge>
-                            <span className="text-gray-500">{user.totalPartners}명</span>
+                            <span className="text-gray-500 text-xs">{user.totalPartners}명</span>
                           </div>
                         </div>
                       </div>

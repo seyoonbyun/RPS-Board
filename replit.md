@@ -71,6 +71,12 @@ Preferred communication style: Simple, everyday language.
   - Fixed member withdrawal processing by expanding Google Sheets search range from 100 to 5000 rows
   - Updated withdrawal popup message format: "선택한 멤버 탈퇴 처리" with proper terminology consistency
   - Custom dropdown solution resolves AlertDialog compatibility issues with Radix UI Select components
+- **Member Table Enhancement & Status Sync Fix (Aug 9, 2025)**: ✅ RESOLVED
+  - Fixed STATUS column index error (22→24) - withdrawal status now correctly updates in Google Sheets
+  - Added missing 산업군(industry) and 회사(company) columns to member table display
+  - Improved table layout consistency with proper grid alignment and responsive design
+  - Enhanced React Query cache invalidation with forced refetch for real-time status updates
+  - Toast message updated to user-friendly format: "탈퇴 처리 완료 - 선택한 멤버 탈퇴가 정상적으로 완료되었습니다"
 - **Bidirectional Sync Data Deletion Fix (Aug 8, 2025)**: ✅ RESOLVED
   - Fixed critical issue where deleted data in bidirectional fields wasn't being saved to Google Sheets
   - Modified syncScoreboardData function to properly handle local data deletions
