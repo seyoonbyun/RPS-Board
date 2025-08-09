@@ -884,7 +884,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Partner recommendation endpoints - 산업 호환성 기반 추천 엔진  
+  // Business Synergy Partner Recommendations - 비즈니스 시너지 기반 추천 엔진  
   app.get("/api/partner-recommendations/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
@@ -912,12 +912,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxResults: maxResults ? parseInt(maxResults as string) : 10
       };
 
-      const recommendations = await recommendationEngine.getPartnerRecommendations(user.email, filters);
+      const recommendations = await recommendationEngine.getBusinessSynergyRecommendations(user.email, filters);
       
       res.json({ recommendations });
     } catch (error) {
-      console.error("Partner recommendation error:", error);
-      res.status(500).json({ message: "파트너 추천 중 오류가 발생했습니다" });
+      console.error("Business synergy recommendation error:", error);
+      res.status(500).json({ message: "비즈니스 시너지 파트너 추천 중 오류가 발생했습니다" });
     }
   });
 

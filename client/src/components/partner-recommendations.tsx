@@ -10,15 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Lightbulb, Users, BarChart3, Filter, TrendingUp, MapPin, Building2, ChevronDown } from 'lucide-react';
 
-interface PartnerRecommendation {
+interface BusinessSynergyRecommendation {
   memberName: string;
   email: string;
+  industry: string;
+  company: string;
   specialty: string;
+  targetCustomer: string;
   region: string;
   chapter: string;
-  compatibilityScore: number;
-  synergyType: 'high' | 'medium' | 'low';
-  reasons: string[];
+  synergyScore: number;
+  synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market';
+  businessValue: string;
+  collaborationOpportunities: string[];
+  targetMarketAlignment: number;
   currentStage?: 'V' | 'C' | 'P' | 'none';
 }
 
@@ -102,20 +107,22 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     }
   });
 
-  const getSynergyColor = (synergyType: 'high' | 'medium' | 'low') => {
+  const getSynergyColor = (synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market') => {
     switch (synergyType) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'perfect-match': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high-potential': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'growth-opportunity': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'new-market': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getSynergyText = (synergyType: 'high' | 'medium' | 'low') => {
+  const getSynergyText = (synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market') => {
     switch (synergyType) {
-      case 'high': return '강력 추천';
-      case 'medium': return '추천';
-      case 'low': return '고려';
+      case 'perfect-match': return '완벽 매치';
+      case 'high-potential': return '높은 잠재력';
+      case 'growth-opportunity': return '성장 기회';
+      case 'new-market': return '신규 시장';
       default: return '기본';
     }
   };
@@ -123,7 +130,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-red-600 font-bold';
     if (score >= 60) return 'text-orange-600 font-semibold';
-    return 'text-blue-600';
+    if (score >= 40) return 'text-blue-600 font-medium';
+    return 'text-green-600';
   };
 
   return (
@@ -132,7 +140,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="w-6 h-6 text-red-600" />
-          <h2 className="text-2xl font-bold">AI 파트너 추천</h2>
+          <h2 className="text-2xl font-bold">비즈니스 시너지 파트너 추천</h2>
         </div>
         <div className="flex items-center gap-2">
           <Button
