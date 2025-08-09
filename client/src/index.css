@@ -117,6 +117,12 @@
     break-before: page !important;
   }
   
+  /* R파트너 3 섹션을 3페이지로 넘김 */
+  .rpartner-3-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
   body {
     background: white !important;
     color: black !important;

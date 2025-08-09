@@ -249,7 +249,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (
-    <div className="bg-red-50 p-4 rounded-lg border mb-4" style={{ borderColor: '#f5c2c7' }}>
+    <div className={`bg-red-50 p-4 rounded-lg border mb-4 ${partnerNumber === 3 ? 'rpartner-3-section' : ''}`} style={{ borderColor: '#f5c2c7' }}>
       <div className="flex items-center mb-3">
         <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: '#d12031' }}>
           {partnerNumber}
