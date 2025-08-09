@@ -81,36 +81,7 @@ export default function Dashboard() {
   };
 
   const handlePrint = () => {
-    // 인쇄 안내 토스트 메시지
-    toast({
-      title: "인쇄 안내",
-      description: "인쇄 대화상자에서 '프린터'를 선택하여 용지로 인쇄해 주세요.",
-      duration: 4000,
-    });
-    
-    // 기존 화면 그대로 유지하면서 제목만 변경
-    const originalTitle = document.title;
-    const titleElement = document.querySelector('title');
-    const originalTitleText = titleElement?.textContent;
-    
-    // 제목 변경
-    document.title = "My RPS Board Report - BNI KOREA";
-    if (titleElement) {
-      titleElement.textContent = "My RPS Board Report - BNI KOREA";
-    }
-    
-    // 짧은 지연 후 인쇄 실행 (토스트 메시지가 보이도록)
-    setTimeout(() => {
-      window.print();
-    }, 500);
-    
-    // 인쇄 후 제목을 원하는 제목으로 유지 (복원하지 않음)
-    setTimeout(() => {
-      document.title = "My RPS Board Report - BNI KOREA";
-      if (titleElement) {
-        titleElement.textContent = "My RPS Board Report - BNI KOREA";
-      }
-    }, 1000);
+    window.print();
   };
 
   if (!user) {
@@ -195,7 +166,7 @@ export default function Dashboard() {
                 className="hover:bg-red-50"
               >
                 <Printer className="mr-1 w-4 h-4" />
-                프린터로 인쇄
+                인쇄
               </Button>
               <Button
                 variant="outline"
