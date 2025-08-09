@@ -6,6 +6,12 @@ This is a full-stack web application for BNI Korea's Power Team referral partner
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes and Fixes
+- **2025-08-10**: Fixed critical withdrawal processing bug where columns were being mapped incorrectly
+  - Issue: STATUS column was correctly identified at index 24 (Y column), but email was duplicated at both index 0 (A column) and index 22 (W column)
+  - Solution: Updated `markUserAsWithdrawn` function to read full range (A1:Z5000) and correctly target only STATUS column
+  - Result: Withdrawal now only changes STATUS from "활동중" to "탈퇴" without affecting other fields
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -47,9 +53,9 @@ Preferred communication style: Simple, everyday language.
 - **Auto-registration**: New users registered on first login.
 - **Session Management**: Client-side data persistence in localStorage.
 - **Google Sheets Authentication**: Service account-based OAuth2 with `googleapis` library.
-- **Authorization System**: Google Sheets AUTH column (24th column) for role-based access. Admin roles: "Admin" and "Growth". Dynamic permission checking via `/api/admin/check-permission`.
+- **Authorization System**: Google Sheets AUTH column (26th column, Z) for role-based access. Admin roles: "Admin" and "Growth". Dynamic permission checking via `/api/admin/check-permission`.
 - **User Management**: Single user addition and CSV upload for bulk user addition with error handling and encoding support (UTF-8/EUC-KR/CP4949). Real-time Google Sheets integration for data persistence. Smart row allocation reuses empty rows. Single unified dialog for user addition.
-- **Withdrawal Process**: Users marked as "탈퇴" (withdrawn) in the STATUS field, preserving all other data.
+- **Withdrawal Process**: Users marked as "탈퇴" (withdrawn) in the STATUS field (25th column, Y), preserving all other data. **Fixed**: Withdrawal now correctly targets only STATUS column without affecting email, password, or auth fields.
 - **Data Preservation**: Existing PW/STATUS values are preserved, missing fields get safe defaults.
 - **Real-time Data Sync**: Cache prevention headers and timestamps for Google Sheets. Withdrawn users are automatically filtered from the member list. Bidirectional sync for certain fields (e.g., "전문분야," "나의 핵심 고객층").
 

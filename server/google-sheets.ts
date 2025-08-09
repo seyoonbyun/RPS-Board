@@ -846,9 +846,9 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      // 사용자 행 찾기
+      // 사용자 행 찾기 - STATUS 컬럼(Y열)까지 포함하여 읽기
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:W5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -880,9 +880,29 @@ class GoogleSheetsService {
       
       const existingRow = rows[userRowIndex];
       
-      // STATUS 컬럼만 업데이트 (Y열, 인덱스 24) - 다른 어떤 필드도 건드리지 않음
+      // 실제 STATUS 컬럼 위치 확인 - 로그에서 보면 24번째 인덱스에 활동중이 있음
+      console.log(`🔍 Row data analysis for ${userEmail}:`, {
+        email_index_0: existingRow[0],
+        status_index_24: existingRow[24],
+        total_columns: existingRow.length,
+        last_few_columns: existingRow.slice(-5)
+      });
+      
+      // STATUS 컬럼 위치 정확히 찾기 - 실제로는 25번째 컬럼(Y열)이지만 배열에서는 24번째 인덱스
+      let statusColumnIndex = 24; // Y열 (1-based: 25, 0-based: 24)
+      
+      // 만약 현재 값이 "활동중"이면 정확한 위치임을 확인
+      if (existingRow[24] && (existingRow[24].toString() === '활동중' || existingRow[24].toString() === '탈퇴')) {
+        statusColumnIndex = 24;
+        console.log(`✅ STATUS column confirmed at index ${statusColumnIndex} (Y열)`);
+      } else {
+        console.log(`⚠️ STATUS column not found at expected index 24, current value: ${existingRow[24]}`);
+        throw new Error(`STATUS 컬럼을 찾을 수 없습니다. 예상 위치: 24, 실제 값: ${existingRow[24]}`);
+      }
+      
+      // Y열(25번째 컬럼, 인덱스 24)에만 "탈퇴" 업데이트
       const range = `RPS!Y${userRowIndex + 1}`;
-      console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
+      console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1}, column Y (index ${statusColumnIndex})`);
       
       const updateResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
