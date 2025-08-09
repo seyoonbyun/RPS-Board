@@ -129,20 +129,10 @@
     break-before: avoid !important;
   }
   
-  /* 폼 섹션별 간격 조정 */
-  .space-y-4 {
-    margin-bottom: 15px !important;
-  }
-  
-  .space-y-2 {
-    margin-bottom: 10px !important;
-  }
-  
   /* R파트너 섹션 간격 최적화 */
   .partner-section {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin-bottom: 12px !important;
   }
   
   body {
