@@ -334,6 +334,18 @@ input:-webkit-autofill:active {
   z-index: 50;
 }
 
+/* AlertDialog 오버레이 클릭 감지 개선 */
+.alert-dialog-overlay {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* AlertDialog Content는 클릭 방지 */
+.alert-dialog-content {
+  pointer-events: auto !important;
+  cursor: default !important;
+}
+
 /* 토스트만 더 높은 z-index 설정 */
 [data-radix-toast-viewport] {
   z-index: 999999 !important;
