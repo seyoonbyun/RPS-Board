@@ -699,55 +699,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return null;
       };
 
-      const users = dataLines.map((line, index) => {
+      const users = dataLines.filter(line => {
+        // 빈 행이나 모든 필드가 빈 행 필터링
+        const parts = line.split(',').map(part => part.trim());
+        return parts.length > 0 && parts.some(part => part.length > 0);
+      }).map((line, index) => {
         console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
         const parts = line.split(',').map(part => part.trim());
         console.log(`📝 Parts array:`, parts);
         
-        // 최소 5개 필드 필요: 이메일, 지역, 챕터, 멤버명, 전문분야
-        if (parts.length < 5) {
-          throw new Error(`Line ${index + 1}: 최소 5개 필드(이메일, 지역, 챕터, 멤버명, 전문분야)가 필요합니다`);
+        // 새로운 필드 구조: 이메일, 지역, 챕터, 멤버명, 산업군, 회사, 전문분야, 권한, 비밀번호
+        // 최소 4개 필드 필요: 이메일, 지역, 챕터, 멤버명
+        if (parts.length < 4) {
+          throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
         }
         
         // 필드 개수에 따라 유연하게 처리
         let password = '1234';
         let auth = 'Member';
 
-        // 6번째와 7번째 필드에서 권한과 비밀번호 찾기 (인덱스는 0부터 시작)
-        if (parts.length >= 6) {
-          const field5 = parts[5];  // 6번째 필드
-          const field6 = parts.length >= 7 ? parts[6] : undefined;  // 7번째 필드
-          
-          const field5Auth = normalizeAuthKeyword(field5);
-          const field6Auth = field6 ? normalizeAuthKeyword(field6) : null;
-          
-          console.log(`🔍 Field analysis for ${parts[0]}:`, {
-            partsLength: parts.length,
-            field5: field5,
-            field6: field6,
-            field5Auth: field5Auth,
-            field6Auth: field6Auth
-          });
-          
-          // 두 필드 중 권한이 있는 것을 찾아서 할당
-          if (field5Auth && field6Auth) {
-            // 둘 다 권한이면 첫 번째를 권한으로, 두 번째를 비밀번호로 (하지만 이는 이상한 경우)
-            auth = field5Auth;
-            password = field6 || '1234';
-          } else if (field5Auth) {
-            // 6번째가 권한이면
-            auth = field5Auth;
-            if (field6) password = field6;
-          } else if (field6Auth) {
-            // 7번째가 권한이면
-            auth = field6Auth;
-            password = field5;
-          } else {
-            // 둘 다 권한이 아니면 6번째를 비밀번호로 처리
-            password = field5;
-            // field6이 없으면 auth는 기본값 'Member' 유지
+        // 8번째 필드에서 권한 찾기 (인덱스 7)
+        if (parts.length >= 8) {
+          const authField = parts[7];  // 8번째 필드 (권한)
+          const authValue = normalizeAuthKeyword(authField);
+          if (authValue) {
+            auth = authValue;
           }
         }
+
+        // 9번째 필드에서 비밀번호 찾기 (인덱스 8)
+        if (parts.length >= 9 && parts[8]) {
+          password = parts[8];
+        }
+        
+        console.log(`🔍 Field analysis for ${parts[0]}:`, {
+          partsLength: parts.length,
+          auth: auth,
+          password: password
+        });
 
         const user = {
           email: parts[0],
