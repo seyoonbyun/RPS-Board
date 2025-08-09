@@ -808,16 +808,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const responseMessage = `CSV 파일 처리 완료: ${processedCount}명 추가`;
+      // 성공/오류에 따른 메시지 형식 변경
+      const hasErrors = errors.length > 0;
+      const responseMessage = hasErrors 
+        ? `멤버 일괄 추가 성공 : ${processedCount}명 추가 (${errors.length}명 오류)`
+        : `멤버 일괄 추가 성공 : ${processedCount}명 추가`;
+        
       const response: any = { 
         message: responseMessage,
         processedCount,
         totalRequested: users.length
       };
 
-      if (errors.length > 0) {
+      if (hasErrors) {
         response.errors = errors;
-        response.message += ` (${errors.length}개 오류)`;
       }
 
       console.log(`📊 CSV bulk user addition processed: ${processedCount}/${users.length} users`);
