@@ -172,8 +172,25 @@ export default function AdminPage() {
   // 전체 사용자 목록 조회 - Hook은 항상 조건문 이전에 호출
   const { data: allUsers, isLoading } = useQuery<UserData[]>({
     queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      const timestamp = Date.now();
+      const response = await fetch(`/api/admin/users?t=${timestamp}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (!response.ok) {
+        throw new Error('사용자 목록을 가져올 수 없습니다');
+      }
+      return response.json();
+    },
     retry: false,
     enabled: !!currentUser && !!adminPermission?.isAdmin, // 권한이 있을 때만 쿼리 실행
+    staleTime: 0, // 항상 새로운 데이터 가져오기
+    refetchInterval: 3000, // 3초마다 자동 새로고침
+    refetchOnWindowFocus: true, // 윈도우 포커스 시 새로고침
+    refetchOnMount: true // 마운트 시 새로고침
   });
 
   // 일괄 탈퇴 처리 mutation
@@ -583,6 +600,24 @@ export default function AdminPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button 
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+                  queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
+                  toast({
+                    title: "데이터 새로고침",
+                    description: "최신 구글 시트 데이터를 불러오는 중...",
+                    duration: 2000,
+                    className: "bg-white text-gray-900"
+                  });
+                }}
+                variant="outline"
+                size="sm"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                데이터 새로고침
+              </Button>
               <Button 
                 onClick={() => setShowAddUserDialog(true)}
                 className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600"
