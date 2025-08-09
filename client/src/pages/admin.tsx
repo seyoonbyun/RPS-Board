@@ -930,19 +930,20 @@ export default function AdminPage() {
                     </div>
                   </div>
                   {/* 헤더 */}
-                  <div className="bg-gray-100 px-4 py-2 border-b">
-                    <div className="flex items-center">
-                      <div className="w-[44px] flex-shrink-0"></div> {/* 체크박스 정확한 공간 */}
-                      <div className="flex-1 grid gap-3 text-xs font-medium text-gray-600 uppercase tracking-wide pl-0" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
-                        <div className="text-left pl-0">ID</div>
-                        <div className="text-left pl-0">지역</div>
-                        <div className="text-left pl-0">챕터</div>
-                        <div className="text-left pl-0">멤버명</div>
-                        <div className="text-left pl-0">산업군</div>
-                        <div className="text-left pl-0">회사</div>
-                        <div className="text-left pl-0">전문분야</div>
-                        <div className="text-left pl-0">상태/파트너수</div>
+                  <div className="bg-gray-100 py-2 border-b">
+                    <div className="flex items-center pl-4">
+                      <div className="w-[40px] flex-shrink-0"></div> {/* 체크박스 공간 */}
+                      <div className="flex-1 grid gap-3 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
+                        <div className="text-left">ID</div>
+                        <div className="text-left">지역</div>
+                        <div className="text-left">챕터</div>
+                        <div className="text-left">멤버명</div>
+                        <div className="text-left">산업군</div>
+                        <div className="text-left">회사</div>
+                        <div className="text-left">전문분야</div>
+                        <div className="text-left">상태/파트너수</div>
                       </div>
+                      <div className="w-4"></div> {/* 오른쪽 여백 */}
                     </div>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
