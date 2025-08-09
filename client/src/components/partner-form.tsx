@@ -476,25 +476,22 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             </div>
             
             {/* 수동 저장 버튼 */}
-            <div className="flex justify-center pt-4 border-t">
+            <div className="flex justify-end pt-4 border-t">
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}
-                className="w-full max-w-xs px-8 py-3 text-white font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105"
-                style={{ 
-                  backgroundColor: '#d12031',
-                  boxShadow: '0 4px 14px 0 rgba(209, 32, 49, 0.39)'
-                }}
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
               >
                 {saveMutation.isPending ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
                     구글 시트 동기화 중...
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 w-4 h-4" />
-                    제출하기 (구글 시트 연동)
+                    제출하기
                   </>
                 )}
               </Button>
