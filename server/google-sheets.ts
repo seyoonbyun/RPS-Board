@@ -822,19 +822,18 @@ class GoogleSheetsService {
       console.log('Google Sheets update result:', updateResult);
       console.log(`✅ Successfully synced data to Google Sheets for ${data.userEmail}`);
     } catch (error: any) {
-      console.error('Google Sheets sync error:', error);
+      console.error('❌ Google Sheets sync error for', data.userEmail, ':', error);
       
-      // If we get an SSL/crypto error, log the data for manual entry
-      if (error?.message?.includes('DECODER routines') || 
-          error?.code === 'ERR_OSSL_UNSUPPORTED' ||
-          error?.message?.includes('crypto')) {
-        console.error('Crypto/SSL compatibility issue detected. Using fallback logging.');
-        this.logSyncData(data);
-        console.log('✅ Data saved locally. Manual Google Sheets entry may be required.');
-        return;
-      }
+      // 구체적인 에러 정보 로그
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        status: error?.status,
+        stack: error?.stack?.split('\n').slice(0, 3)
+      });
       
-      throw new Error(`Google Sheets 동기화 실패: ${error?.message || 'Unknown error'}`);
+      // 실제 Google Sheets API 에러인 경우 재시도 로직 없이 에러 던지기
+      throw new Error(`Google Sheets 동기화 실패 - ${data.userEmail}: ${error?.message || 'Unknown error'}`);
     }
   }
 

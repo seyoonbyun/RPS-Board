@@ -160,11 +160,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         updatedAt: data.updatedAt
       });
       
-      // 저장 완료 팝업 표시
+      // 저장 완료 팝업 표시 - 구글 시트 동기화 확인 메시지 추가
       toast({
-        title: "저장 완료",
-        description: "RPS 보드에 성공적으로 기록되었습니다.",
-        duration: 3000,
+        title: "저장 완료 ✅",
+        description: "파워팀 RPS 데이터가 구글 시트에 성공적으로 동기화되었습니다.",
+        duration: 4000,
       });
       
       // 백그라운드에서 데이터 새로고침 (팝업 표시에 영향주지 않음)
@@ -489,12 +489,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 {saveMutation.isPending ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    RPS 보드에 기록 중...
+                    구글 시트 동기화 중...
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 w-4 h-4" />
-                    제출하기
+                    제출하기 (구글 시트 연동)
                   </>
                 )}
               </Button>
