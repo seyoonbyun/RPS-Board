@@ -464,9 +464,9 @@ export default function AdminPage() {
     if (!allUsers) return;
 
     const csvContent = [
-      '이메일,지역,챕터,멤버명,전문분야,상태,총파트너수,달성률',
+      '이메일,지역,챕터,멤버명,산업군,회사,전문분야,상태,총파트너수,달성률',
       ...allUsers.map(user => 
-        `"${user.email}","${user.region || ''}","${user.chapter || ''}","${user.memberName || ''}","${user.specialty || ''}","${user.status}","${user.totalPartners}","${user.achievement}"`
+        `"${user.email}","${user.region || ''}","${user.chapter || ''}","${user.memberName || ''}","${user.industry || ''}","${user.company || ''}","${user.specialty || ''}","${user.status}","${user.totalPartners}","${user.achievement}"`
       )
     ].join('\n');
 
