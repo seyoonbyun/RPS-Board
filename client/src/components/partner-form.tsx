@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
@@ -55,6 +56,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [stageDropdowns, setStageDropdowns] = useState<{[key: string]: boolean}>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const dropdownRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
 
   // 드롭다운 바깥 영역 클릭 감지
@@ -609,8 +611,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                       </Button>
                       
                       {/* 탈퇴 버튼 */}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                        <DialogTrigger asChild>
                           <Button
                             type="button"
                             variant="outline"
@@ -619,16 +621,16 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             <Trash2 className="mr-2 w-4 h-4" />
                             나의 RPS 계정 삭제하기
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="alert-dialog-content max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="alert-dialog-title">
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md border border-gray-300" style={{borderWidth: '1px'}}>
+                          <DialogHeader>
+                            <DialogTitle>
                               파워팀 계정 삭제
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="alert-dialog-description">
+                            </DialogTitle>
+                            <DialogDescription>
                               정말로 계정을 삭제하시겠습니까?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
+                            </DialogDescription>
+                          </DialogHeader>
                           <div className="py-4">
                             <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
                               <h4 className="font-semibold text-gray-800 mb-2">
@@ -642,18 +644,23 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               </div>
                             </div>
                           </div>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => withdrawalMutation.mutate()}
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                              취소
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                withdrawalMutation.mutate();
+                                setDeleteDialogOpen(false);
+                              }}
                               disabled={withdrawalMutation.isPending}
-                              className="alert-dialog-action-destructive"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               {withdrawalMutation.isPending ? "처리 중..." : "계정 삭제 계속하기"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </div>
