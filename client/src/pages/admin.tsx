@@ -835,7 +835,7 @@ export default function AdminPage() {
                       <SelectValue placeholder="전체" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="__all__">전체</SelectItem>
+                      <SelectItem value="__all__">선택</SelectItem>
                       {uniqueRegions.map(region => (
                         <SelectItem key={region} value={region}>{region}</SelectItem>
                       ))}
@@ -859,7 +859,7 @@ export default function AdminPage() {
                       <SelectValue placeholder="전체" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="__all__">전체</SelectItem>
+                      <SelectItem value="__all__">선택</SelectItem>
                       {uniqueChapters.map(chapter => (
                         <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
                       ))}
@@ -1000,7 +1000,7 @@ export default function AdminPage() {
                     <SelectValue placeholder="전체" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectItem value="__all__">전체</SelectItem>
+                    <SelectItem value="__all__">선택</SelectItem>
                     {withdrawnUniqueRegions.map((region) => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
                     ))}
@@ -1024,7 +1024,7 @@ export default function AdminPage() {
                     <SelectValue placeholder="전체" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectItem value="__all__">전체</SelectItem>
+                    <SelectItem value="__all__">선택</SelectItem>
                     {withdrawnUniqueChapters.map((chapter) => (
                       <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
                     ))}
