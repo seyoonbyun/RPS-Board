@@ -195,6 +195,26 @@ const setupPrintHandlers = () => {
       characterData: true
     });
   }
+  
+  // 강제 제목 변경을 위한 지속적인 체크
+  setInterval(() => {
+    if (document.title !== targetTitle) {
+      document.title = targetTitle;
+      const titleElement = document.querySelector('title');
+      if (titleElement) {
+        titleElement.textContent = targetTitle;
+      }
+    }
+  }, 100);
+  
+  // Replit 환경 대응: window.parent가 있는 경우 상위 프레임 제목도 변경 시도
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.document.title = targetTitle;
+    }
+  } catch (e) {
+    // 보안상 접근 불가능할 수 있음
+  }
 };
 
 // 여러 시점에서 실행
