@@ -537,14 +537,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log(`✅ New user added successfully: ${email}`);
-      res.json({ message: "사용자가 성공적으로 추가되었습니다", email });
+      res.json({ message: "멤버가 성공적으로 추가되었습니다", email });
       
     } catch (error: any) {
       console.error(`❌ Error adding user:`, error);
       if (error.message.includes('already exists')) {
-        res.status(409).json({ message: "이미 존재하는 사용자입니다" });
+        res.status(409).json({ message: "이미 존재하는 멤버입니다" });
       } else {
-        res.status(500).json({ message: "사용자 추가 중 오류가 발생했습니다" });
+        res.status(500).json({ message: "멤버 추가 중 오류가 발생했습니다" });
       }
     }
   });
@@ -555,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { users } = req.body;
       
       if (!users || !Array.isArray(users) || users.length === 0) {
-        return res.status(400).json({ message: "유효한 사용자 목록을 제공해주세요" });
+        return res.status(400).json({ message: "유효한 멤버 목록을 제공해주세요" });
       }
 
       console.log(`🔄 Starting bulk user addition for ${users.length} users`);
@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error: any) {
           console.error(`❌ Bulk addition error for ${user.email}:`, error);
           if (error.message.includes('already exists')) {
-            errors.push(`${user.email}: 이미 존재하는 사용자입니다`);
+            errors.push(`${user.email}: 이미 존재하는 멤버입니다`);
           } else {
             errors.push(`${user.email}: ${error.message}`);
           }
@@ -622,7 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(response);
     } catch (error: any) {
       console.error("❌ Error in bulk user addition:", error);
-      res.status(500).json({ message: "일괄 사용자 추가 중 오류가 발생했습니다" });
+      res.status(500).json({ message: "일괄 멤버 추가 중 오류가 발생했습니다" });
     }
   });
 
@@ -801,7 +801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error: any) {
           console.error(`❌ CSV bulk addition error for ${user.email}:`, error);
           if (error.message.includes('already exists')) {
-            errors.push(`${user.email}: 이미 존재하는 사용자입니다`);
+            errors.push(`${user.email}: 이미 존재하는 멤버입니다`);
           } else {
             errors.push(`${user.email}: ${error.message}`);
           }

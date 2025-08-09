@@ -240,7 +240,7 @@ export default function AdminPage() {
         auth: 'Member'
       });
       toast({
-        title: "사용자 추가 완료",
+        title: "멤버 추가 완료",
         description: data.message,
         className: "bg-white text-gray-900",
         duration: 3000
@@ -248,8 +248,8 @@ export default function AdminPage() {
     },
     onError: (error: any) => {
       toast({
-        title: "사용자 추가 오류",
-        description: error.message || "사용자 추가 중 오류가 발생했습니다",
+        title: "멤버 추가 오류",
+        description: error.message || "멤버 추가 중 오류가 발생했습니다",
         variant: "destructive",
         className: "bg-white text-gray-900"
       });
@@ -265,15 +265,15 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       setShowAddUserDialog(false);
       toast({
-        title: "일괄 사용자 추가 완료",
+        title: "일괄 멤버 추가 완료",
         description: data.message,
         className: "bg-white text-gray-900"
       });
     },
     onError: (error: any) => {
       toast({
-        title: "일괄 사용자 추가 오류",
-        description: error.message || "일괄 사용자 추가 중 오류가 발생했습니다",
+        title: "일괄 멤버 추가 오류",
+        description: error.message || "일괄 멤버 추가 중 오류가 발생했습니다",
         variant: "destructive",
         className: "bg-white text-gray-900"
       });
@@ -430,7 +430,7 @@ export default function AdminPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'CSV_템플릿_사용자추가.csv');
+    link.setAttribute('download', 'CSV_템플릿_멤버추가.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
