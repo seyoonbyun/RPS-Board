@@ -110,6 +110,20 @@ export default function AdminPage() {
     staleTime: 60000, // 1분간 캐시
   });
 
+  // 챕터 목록 가져오기
+  const { data: chapters = [], isLoading: isChaptersLoading } = useQuery({
+    queryKey: ["/api/admin/chapters"],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/chapters');
+      if (!response.ok) {
+        throw new Error('챕터 목록을 가져올 수 없습니다');
+      }
+      return response.json();
+    },
+    enabled: !!adminPermission?.isAdmin,
+    staleTime: 300000, // 5분간 캐시
+  });
+
   // 드롭다운 바깥 영역 클릭 감지
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1166,12 +1180,31 @@ export default function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">챕터 *</label>
-                    <Input
-                      placeholder="하이"
+                    <Select
                       value={newUser.chapter}
-                      onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
-                    />
+                      onValueChange={(value) => setNewUser({...newUser, chapter: value})}
+                    >
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                        <SelectValue placeholder="챕터를 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
+                        {isChaptersLoading ? (
+                          <SelectItem value="" disabled>
+                            챕터 목록을 불러오는 중...
+                          </SelectItem>
+                        ) : chapters.length > 0 ? (
+                          chapters.map((chapter: string) => (
+                            <SelectItem key={chapter} value={chapter} className="text-gray-900 hover:bg-gray-100">
+                              {chapter}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            챕터 목록이 없습니다
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">산업군 *</label>

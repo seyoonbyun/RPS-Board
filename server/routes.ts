@@ -442,6 +442,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Get unique chapters for dropdown
+  app.get("/api/admin/chapters", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const allUsersData = await storage.getAllUsersFromGoogleSheets();
+      const uniqueChapters = Array.from(new Set(allUsersData
+        .map(user => user.chapter)
+        .filter(chapter => chapter && chapter.trim())
+      )).sort(); // 오름차순 정렬
+
+      res.json(uniqueChapters);
+    } catch (error: any) {
+      console.error("❌ Error fetching chapters:", error);
+      res.status(500).json({ message: "챕터 목록 조회 실패" });
+    }
+  });
+
   // Admin API: Bulk withdrawal
   app.post("/api/admin/bulk-withdrawal", async (req, res) => {
     try {
