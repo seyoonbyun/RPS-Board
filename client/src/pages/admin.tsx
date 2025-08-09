@@ -305,9 +305,16 @@ export default function AdminPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      
+      const hasErrors = data.errors && data.errors.length > 0;
+      const title = data.message; // 서버에서 온 메시지 그대로 사용
+      const description = hasErrors
+        ? "이미 존재하는 멤버이거나 잘못된 양식의 파일입니다."
+        : "새로운 멤버의 시트 생성이 완료되었습니다 !";
+      
       toast({
-        title: "CSV 파일 처리 완료",
-        description: data.message,
+        title,
+        description,
         className: "bg-white text-gray-900"
       });
     },
