@@ -218,9 +218,11 @@ export default function AdminPage() {
       }
       setSelectedUsers([]);
       setBulkEmails('');
-      // 탈퇴 처리 완료 후 모든 필터 초기화
+      // 탈퇴 처리 완료 후 모든 필터 초기화 (활성 멤버와 탈퇴된 멤버 모두)
       setRegionFilter('__all__');
       setChapterFilter('__all__');
+      setWithdrawnRegionFilter('__all__');
+      setWithdrawnChapterFilter('__all__');
       // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
