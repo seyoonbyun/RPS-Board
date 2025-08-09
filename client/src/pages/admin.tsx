@@ -264,9 +264,19 @@ export default function AdminPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       setShowAddUserDialog(false);
+      
+      const hasErrors = data.errors && data.errors.length > 0;
+      const title = hasErrors 
+        ? `멤버 일괄 추가 성공 : ${data.processedCount}명 추가 (${data.errors.length}명 오류)`
+        : `멤버 일괄 추가 성공 : ${data.processedCount}명 추가`;
+      
+      const description = hasErrors
+        ? "이미 존재하는 멤버이거나 잘못된 양식의 파일입니다."
+        : "새로운 멤버의 시트 생성이 완료되었습니다 !";
+      
       toast({
-        title: "일괄 멤버 추가 완료",
-        description: data.message,
+        title,
+        description,
         className: "bg-white text-gray-900"
       });
     },
