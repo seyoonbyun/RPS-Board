@@ -901,9 +901,9 @@ class GoogleSheetsService {
       withdrawalValues[17] = ''; // R파트너 4 단계
       withdrawalValues[18] = '0'; // 총 R파트너 수
       withdrawalValues[19] = '0%'; // 달성률
-      withdrawalValues[22] = '탈퇴'; // STATUS를 "탈퇴"로 변경
+      withdrawalValues[24] = '탈퇴'; // STATUS를 "탈퇴"로 변경 (25번째 컬럼, index 24)
       
-      const range = `RPS!A${userRowIndex + 1}:W${userRowIndex + 1}`;
+      const range = `RPS!A${userRowIndex + 1}:Z${userRowIndex + 1}`;
       console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
       
       const updateResponse = await fetch(

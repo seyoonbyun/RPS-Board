@@ -194,8 +194,8 @@ export default function AdminPage() {
       } else {
         // Case 1: 탈퇴 처리가 진행된 경우
         toast({
-          title: '일괄 탈퇴 처리 완료',
-          description: `${data.processedCount}명의 사용자가 탈퇴 처리되었습니다.`,
+          title: '탈퇴 처리 완료',
+          description: `선택한 멤버 탈퇴가 정상적으로 완료되었습니다. (${data.processedCount}명)`,
           duration: 3000
         });
       }
