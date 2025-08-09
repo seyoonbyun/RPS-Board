@@ -495,7 +495,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             </div>
             
             {/* 수동 저장 버튼 */}
-            <div className="flex justify-end pt-4 border-t">
+            <div className="flex justify-end pt-4 border-t submit-button-section">
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}

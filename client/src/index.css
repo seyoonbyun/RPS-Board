@@ -100,8 +100,15 @@
   .fixed,
   .absolute,
   .tabs-list,
-  .footer-buttons {
+  .footer-buttons,
+  .submit-button-section {
     display: none !important;
+  }
+  
+  /* 제출하기 버튼 섹션 숨김으로 인한 여백 조정 */
+  .form-content-wrapper {
+    margin-bottom: 0 !important;
+    padding-bottom: 20px !important;
   }
   
   body {
