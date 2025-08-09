@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API: Add single user
   app.post("/api/admin/add-user", async (req, res) => {
     try {
-      const { email, region, chapter, memberName, specialty, targetCustomer, password, auth } = req.body;
+      const { email, region, chapter, memberName, industry, company, specialty, targetCustomer, password, auth } = req.body;
       
       if (!email || !memberName) {
         return res.status(400).json({ message: "이메일과 멤버명은 필수 항목입니다" });
@@ -528,6 +528,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         region: region || '',
         chapter: chapter || '',
         memberName,
+        industry: industry || '',
+        company: company || '',
         specialty: specialty || '',
         targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정 (사용자가 직접 입력)
         password: password || '1234', // 기본 비밀번호
@@ -584,6 +586,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             region: user.region || '',
             chapter: user.chapter || '',
             memberName: user.memberName,
+            industry: user.industry || '',
+            company: user.company || '',
             specialty: user.specialty || '',
             targetCustomer: user.targetCustomer || '',
             password: user.password || '1234',
@@ -750,7 +754,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           region: parts[1] || '',
           chapter: parts[2] || '',
           memberName: parts[3],
-          specialty: parts[4] || '',
+          industry: parts[4] || '',
+          company: parts[5] || '',
+          specialty: parts[6] || '',
           targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정
           password: password,
           auth: auth
@@ -793,6 +799,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             region: user.region || '',
             chapter: user.chapter || '',
             memberName: user.memberName,
+            industry: user.industry || '',
+            company: user.company || '',
             specialty: user.specialty || '',
             targetCustomer: user.targetCustomer || '',
             password: user.password || '1234',

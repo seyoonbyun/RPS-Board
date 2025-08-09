@@ -30,6 +30,8 @@ interface UserData {
   region: string;
   chapter: string;
   memberName: string;
+  industry: string;
+  company: string;
   specialty: string;
   status: string;
   totalPartners: string;
@@ -81,6 +83,8 @@ export default function AdminPage() {
     region: '',
     chapter: '',
     memberName: '',
+    industry: '',
+    company: '',
     specialty: '',
     password: '',
     auth: ''
@@ -229,6 +233,8 @@ export default function AdminPage() {
         region: '',
         chapter: '',
         memberName: '',
+        industry: '',
+        company: '',
         specialty: '',
         password: '1234',
         auth: 'Member'
@@ -1126,6 +1132,24 @@ export default function AdminPage() {
                       placeholder="하이"
                       value={newUser.chapter}
                       onChange={(e) => setNewUser({...newUser, chapter: e.target.value})}
+                      className="bg-white border-gray-300 placeholder-gray-light"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">산업군 *</label>
+                    <Input
+                      placeholder="IT"
+                      value={newUser.industry}
+                      onChange={(e) => setNewUser({...newUser, industry: e.target.value})}
+                      className="bg-white border-gray-300 placeholder-gray-light"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">회사 *</label>
+                    <Input
+                      placeholder="회사명"
+                      value={newUser.company}
+                      onChange={(e) => setNewUser({...newUser, company: e.target.value})}
                       className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>

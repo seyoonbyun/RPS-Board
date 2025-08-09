@@ -495,6 +495,8 @@ class GoogleSheetsService {
     region: string;
     chapter: string;
     memberName: string;
+    industry: string;
+    company: string;
     specialty: string;
     targetCustomer: string;
     password?: string;
@@ -511,7 +513,7 @@ class GoogleSheetsService {
       
       // Check if user already exists
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -551,35 +553,37 @@ class GoogleSheetsService {
         userData.region,          // B: 지역  
         userData.chapter,         // C: 챕터
         userData.memberName,      // D: 멤버명
-        userData.specialty,       // E: 전문분야
-        userData.targetCustomer,  // F: 나의 핵심 고객층
-        '',                       // G: R파트너 1
-        '',                       // H: R파트너 1 전문분야
-        '',                       // I: R파트너 1 V-C-P
-        '',                       // J: R파트너 2
-        '',                       // K: R파트너 2 전문분야
-        '',                       // L: R파트너 2 V-C-P
-        '',                       // M: R파트너 3
-        '',                       // N: R파트너 3 전문분야
-        '',                       // O: R파트너 3 V-C-P
-        '',                       // P: R파트너 4
-        '',                       // Q: R파트너 4 전문분야
-        '',                       // R: R파트너 4 V-C-P
-        '0',                      // S: 총 R파트너 수
-        '0%',                     // T: 달성
-        userData.email,           // U: ID
-        userData.password || '1234', // V: PW
-        '활동중',                 // W: STATUS
-        userData.auth || 'Member' // X: AUTH
+        userData.industry,        // E: 산업군
+        userData.company,         // F: 회사
+        userData.specialty,       // G: 전문분야
+        userData.targetCustomer,  // H: 나의 핵심 고객층
+        '',                       // I: R파트너 1
+        '',                       // J: R파트너 1 전문분야
+        '',                       // K: R파트너 1 V-C-P
+        '',                       // L: R파트너 2
+        '',                       // M: R파트너 2 전문분야
+        '',                       // N: R파트너 2 V-C-P
+        '',                       // O: R파트너 3
+        '',                       // P: R파트너 3 전문분야
+        '',                       // Q: R파트너 3 V-C-P
+        '',                       // R: R파트너 4
+        '',                       // S: R파트너 4 전문분야
+        '',                       // T: R파트너 4 V-C-P
+        '0',                      // U: 총 R파트너 수
+        '0%',                     // V: 달성
+        userData.email,           // W: ID (index 22)
+        userData.password || '1234', // X: PW (index 23)
+        '활동중',                 // Y: STATUS (index 24)
+        userData.auth || 'Member' // Z: AUTH (index 25)
       ];
 
       console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
         email: newUserData[0],
-        password: newUserData[21], // V: PW
-        auth: newUserData[23]      // X: AUTH
+        password: newUserData[23], // X: PW
+        auth: newUserData[25]      // Z: AUTH
       });
 
-      const range = `RPS!A${targetRowIndex + 1}:X${targetRowIndex + 1}`;
+      const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
       
       const updateResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
