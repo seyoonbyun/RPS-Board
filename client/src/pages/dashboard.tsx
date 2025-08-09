@@ -81,29 +81,34 @@ export default function Dashboard() {
   };
 
   const handlePrint = () => {
-    // 인쇄 전에 제목을 강제로 변경
-    const originalTitle = document.title;
-    document.title = "My RPS Board Report - BNI KOREA";
-    
-    // title 태그도 직접 변경
-    const titleElement = document.querySelector('title');
-    const originalTitleText = titleElement?.textContent;
-    if (titleElement) {
-      titleElement.textContent = "My RPS Board Report - BNI KOREA";
+    // 새 창을 열어서 올바른 제목으로 인쇄
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      // 팝업이 차단된 경우 기존 방식으로 대체
+      document.title = "My RPS Board Report - BNI KOREA";
+      const titleElement = document.querySelector('title');
+      if (titleElement) {
+        titleElement.textContent = "My RPS Board Report - BNI KOREA";
+      }
+      setTimeout(() => window.print(), 50);
+      return;
     }
-    
-    // 짧은 지연 후 인쇄
+
+    // 현재 페이지의 HTML을 복사하되 제목을 변경
+    const currentHTML = document.documentElement.outerHTML;
+    const modifiedHTML = currentHTML
+      .replace(/<title>.*?<\/title>/i, '<title>My RPS Board Report - BNI KOREA</title>')
+      .replace(/RPS Board - Replit/g, 'My RPS Board Report - BNI KOREA');
+
+    printWindow.document.write(modifiedHTML);
+    printWindow.document.close();
+
+    // 새 창에서 스타일과 스크립트가 로드될 때까지 대기 후 인쇄
     setTimeout(() => {
-      window.print();
-      
-      // 인쇄 후 원래 제목으로 복원 (선택사항)
-      setTimeout(() => {
-        document.title = "My RPS Board Report - BNI KOREA"; // 원하는 제목 유지
-        if (titleElement) {
-          titleElement.textContent = "My RPS Board Report - BNI KOREA";
-        }
-      }, 100);
-    }, 50);
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, 1000);
   };
 
   if (!user) {
