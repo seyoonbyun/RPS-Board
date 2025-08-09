@@ -933,15 +933,15 @@ export default function AdminPage() {
                   <div className="bg-gray-100 py-2 border-b">
                     <div className="flex items-center">
                       <div className="w-[60px] flex-shrink-0"></div> {/* 체크박스 공간 */}
-                      <div className="flex-1 grid gap-2 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
-                        <div className="text-left">ID</div>
-                        <div className="text-left">지역</div>
-                        <div className="text-left">챕터</div>
-                        <div className="text-left">멤버명</div>
-                        <div className="text-left">산업군</div>
-                        <div className="text-left">회사</div>
-                        <div className="text-left">전문분야</div>
-                        <div className="text-left">상태/파트너수</div>
+                      <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        <div className="w-[200px] text-left px-2">ID</div>
+                        <div className="w-[120px] text-left px-2">지역</div>
+                        <div className="w-[100px] text-left px-2">챕터</div>
+                        <div className="w-[100px] text-left px-2">멤버명</div>
+                        <div className="w-[100px] text-left px-2">산업군</div>
+                        <div className="w-[100px] text-left px-2">회사</div>
+                        <div className="w-[120px] text-left px-2">전문분야</div>
+                        <div className="flex-1 text-left px-2">상태/파트너수</div>
                       </div>
                     </div>
                   </div>
@@ -954,15 +954,15 @@ export default function AdminPage() {
                             onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
                           />
                         </div>
-                        <div className="flex-1 grid gap-2 text-sm" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
-                          <div className="font-medium truncate text-left text-ellipsis overflow-hidden" title={user.email}>{user.email}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.region}>{user.region}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.chapter}>{user.chapter}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.memberName}>{user.memberName}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.industry}>{user.industry}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.company}>{user.company}</div>
-                          <div className="truncate text-left text-ellipsis overflow-hidden" title={user.specialty}>{user.specialty}</div>
-                          <div className="flex items-center text-left space-x-1">
+                        <div className="flex text-sm">
+                          <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
+                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
+                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
+                          <div className="flex-1 flex items-center text-left space-x-1 px-2">
                             <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs flex-shrink-0">
                               {user.status}
                             </Badge>
@@ -1127,15 +1127,15 @@ export default function AdminPage() {
                 <div className="bg-gray-100 py-2 border-b">
                   <div className="flex items-center">
                     <div className="w-[60px] flex-shrink-0"></div> {/* 체크박스 공간 */}
-                    <div className="flex-1 grid gap-2 text-xs font-medium text-gray-600 uppercase tracking-wide" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
-                      <div className="text-left">ID</div>
-                      <div className="text-left">지역</div>
-                      <div className="text-left">챕터</div>
-                      <div className="text-left">멤버명</div>
-                      <div className="text-left">산업군</div>
-                      <div className="text-left">회사</div>
-                      <div className="text-left">전문분야</div>
-                      <div className="text-left">상태/파트너수</div>
+                    <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
+                      <div className="w-[200px] text-left px-2">ID</div>
+                      <div className="w-[120px] text-left px-2">지역</div>
+                      <div className="w-[100px] text-left px-2">챕터</div>
+                      <div className="w-[100px] text-left px-2">멤버명</div>
+                      <div className="w-[100px] text-left px-2">산업군</div>
+                      <div className="w-[100px] text-left px-2">회사</div>
+                      <div className="w-[120px] text-left px-2">전문분야</div>
+                      <div className="flex-1 text-left px-2">상태/파트너수</div>
                     </div>
                   </div>
                 </div>
@@ -1148,15 +1148,15 @@ export default function AdminPage() {
                           onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
                         />
                       </div>
-                      <div className="flex-1 grid gap-2 text-sm" style={{gridTemplateColumns: '1.8fr 1fr 1fr 1fr 1fr 1fr 1.2fr 1.3fr'}}>
-                        <div className="font-medium truncate text-left text-ellipsis overflow-hidden" title={user.email}>{user.email}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.region}>{user.region}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.chapter}>{user.chapter}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.memberName}>{user.memberName}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.industry}>{user.industry}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.company}>{user.company}</div>
-                        <div className="truncate text-left text-ellipsis overflow-hidden" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex items-center text-left space-x-2">
+                      <div className="flex text-sm">
+                        <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
+                        <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
+                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
+                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
+                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
+                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
+                        <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
+                        <div className="flex-1 flex items-center text-left space-x-2 px-2">
                           <Badge variant="destructive" className="flex-shrink-0">탈퇴</Badge>
                           <span className="text-gray-500 flex-shrink-0">{user.totalPartners}명</span>
                         </div>
