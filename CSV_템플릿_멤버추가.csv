@@ -1,2 +1,4 @@
 ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,전문분야,권한,PW_H.P. 뒷 4자리
-example@test.com,서울,테스트챕터,홍길동,IT,테스트회사,개발자,Member,1234
+example1@test.com,서울,테스트챕터,홍길동,IT,테스트회사,개발자,Admin,1234
+example2@test.com,부산,샘플챕터,김영희,금융,은행회사,금융컨설팅,Growth,5678
+example3@test.com,대구,예시챕터,이철수,제조,제조회사,제품기획,Member,9012

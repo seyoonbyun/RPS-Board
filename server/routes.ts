@@ -686,17 +686,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // 권한 키워드 매핑 함수
       const normalizeAuthKeyword = (keyword: string): string | null => {
-        const lower = keyword.toLowerCase();
+        if (!keyword) return null;
+        const lower = keyword.toLowerCase().trim();
+        
+        // Admin 매핑: ADMIN, admin, 어드민
         if (lower === 'admin' || lower === 'ADMIN'.toLowerCase() || lower === '어드민') {
           return 'Admin';
         }
-        if (lower === 'growth' || lower === 'GROWTH'.toLowerCase() || lower === '성장') {
+        
+        // Growth 매핑: GROWTH, growth, 그로스, 그로쓰, 성장팀, 성장, 성장 코디네이터, 성장코디네이터, 성장코디
+        const growthKeywords = [
+          'growth', 'GROWTH'.toLowerCase(),
+          '그로스', '그로쓰', '성장팀', '성장',
+          '성장 코디네이터', '성장코디네이터', '성장코디'
+        ];
+        if (growthKeywords.includes(lower)) {
           return 'Growth';
         }
+        
+        // Member 매핑: MEMBER, member, 멤버
         if (lower === 'member' || lower === 'MEMBER'.toLowerCase() || lower === '멤버') {
           return 'Member';
         }
-        return null;
+        
+        // 인식되지 않은 키워드는 기본값 Member로 설정하고 로그 남김
+        console.log(`⚠️ Unknown auth keyword: "${keyword}", defaulting to Member`);
+        return 'Member';
       };
 
       const users = dataLines.filter(line => {
