@@ -111,6 +111,40 @@
     padding-bottom: 20px !important;
   }
   
+  /* 페이지 나누기 방지 - 제목과 입력 필드를 함께 유지 */
+  .form-field,
+  .form-group,
+  .space-y-2,
+  .space-y-4 > div {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* 라벨과 입력 필드 그룹 */
+  label + .relative,
+  label + input,
+  label + select,
+  label + textarea {
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+  
+  /* 폼 섹션별 간격 조정 */
+  .space-y-4 {
+    margin-bottom: 15px !important;
+  }
+  
+  .space-y-2 {
+    margin-bottom: 10px !important;
+  }
+  
+  /* R파트너 섹션 간격 최적화 */
+  .partner-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 12px !important;
+  }
+  
   body {
     background: white !important;
     color: black !important;

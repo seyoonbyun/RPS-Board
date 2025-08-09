@@ -249,7 +249,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (
-    <div className="bg-red-50 p-4 rounded-lg border mb-4" style={{ borderColor: '#f5c2c7' }}>
+    <div className="bg-red-50 p-4 rounded-lg border mb-4 partner-section" style={{ borderColor: '#f5c2c7' }}>
       <div className="flex items-center mb-3">
         <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: '#d12031' }}>
           {partnerNumber}
@@ -262,7 +262,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           control={form.control}
           name={`rpartner${partnerNumber}` as keyof ScoreboardForm}
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="form-field">
               <FormLabel className="text-xs text-gray-600">파트너명</FormLabel>
               <FormControl>
                 <Input 
@@ -281,7 +281,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           control={form.control}
           name={`rpartner${partnerNumber}Specialty` as keyof ScoreboardForm}
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="form-field">
               <FormLabel className="text-xs text-gray-600">전문분야</FormLabel>
               <FormControl>
                 <Input 
@@ -300,7 +300,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           control={form.control}
           name={`rpartner${partnerNumber}Stage` as keyof ScoreboardForm}
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="form-field">
               <FormLabel className="text-xs text-gray-600">관계 단계</FormLabel>
               <FormControl>
                 <div className="relative" ref={(el) => dropdownRefs.current[`stage${partnerNumber}`] = el}>
@@ -450,7 +450,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   control={form.control}
                   name="specialty"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="form-field">
                       <FormLabel>전문분야</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="챕터 경청표_나의 전문분야" />
@@ -464,7 +464,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   control={form.control}
                   name="targetCustomer"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="form-field">
                       <FormLabel>나의 핵심 고객층</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="나의 핵심 고객 전문분야" />
