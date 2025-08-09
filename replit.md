@@ -71,6 +71,12 @@ Preferred communication style: Simple, everyday language.
   - Fixed member withdrawal processing by expanding Google Sheets search range from 100 to 5000 rows
   - Updated withdrawal popup message format: "선택한 멤버 탈퇴 처리" with proper terminology consistency
   - Custom dropdown solution resolves AlertDialog compatibility issues with Radix UI Select components
+- **Data Preservation During Withdrawal (Aug 9, 2025)**: ✅ RESOLVED
+  - Modified markUserAsWithdrawn to only change STATUS field to "탈퇴" without deleting user data
+  - Preserved all R파트너 information, personal details, and achievement data during withdrawal
+  - Enhanced real-time synchronization with 3-second auto-refresh and cache prevention headers
+  - Added manual "데이터 새로고침" button for immediate Google Sheets data updates
+  - Fixed STATUS column mapping to Y column (index 24) for accurate withdrawal processing
 - **Member Table Enhancement & Status Sync Fix (Aug 9, 2025)**: ✅ RESOLVED
   - Fixed STATUS column index error (22→24) - withdrawal status now correctly updates in Google Sheets
   - Added missing 산업군(industry) and 회사(company) columns to member table display

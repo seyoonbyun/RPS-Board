@@ -880,28 +880,14 @@ class GoogleSheetsService {
       
       const existingRow = rows[userRowIndex];
       
-      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지는 기존 값 유지
+      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지 정보는 모두 유지
       const withdrawalValues = [...existingRow];
       while (withdrawalValues.length < 26) {
         withdrawalValues.push(''); // 26개 컬럼까지 빈 열 채우기 (A-Z)
       }
       
-      // 데이터 삭제 (R파트너 정보 클리어)
-      withdrawalValues[8] = '';   // R파트너 1 (index 8)
-      withdrawalValues[9] = '';   // R파트너 1 전문분야 (index 9)
-      withdrawalValues[10] = '';  // R파트너 1 단계 (index 10)
-      withdrawalValues[11] = '';  // R파트너 2 (index 11)
-      withdrawalValues[12] = '';  // R파트너 2 전문분야 (index 12)
-      withdrawalValues[13] = '';  // R파트너 2 단계 (index 13)
-      withdrawalValues[14] = '';  // R파트너 3 (index 14)
-      withdrawalValues[15] = '';  // R파트너 3 전문분야 (index 15)
-      withdrawalValues[16] = '';  // R파트너 3 단계 (index 16)
-      withdrawalValues[17] = '';  // R파트너 4 (index 17)
-      withdrawalValues[18] = '';  // R파트너 4 전문분야 (index 18)
-      withdrawalValues[19] = '';  // R파트너 4 단계 (index 19)
-      withdrawalValues[20] = '0'; // 총 R파트너 수 (index 20)
-      withdrawalValues[21] = '0%'; // 달성률 (index 21)
-      withdrawalValues[24] = '탈퇴'; // STATUS를 "탈퇴"로 변경 (Y열, index 24)
+      // STATUS만 "탈퇴"로 변경 (Y열, index 24) - 다른 정보는 삭제하지 않음
+      withdrawalValues[24] = '탈퇴';
       
       const range = `RPS!A${userRowIndex + 1}:Z${userRowIndex + 1}`;
       console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
