@@ -1,195 +1,90 @@
 # BNI Korea Power Team Referral Partner Scoreboard
 
 ## Overview
-
-This is a full-stack web application designed for BNI Korea's Power Team referral partner management system. The application allows members to track and manage their referral partners through different stages (V, C, P) with progress tracking and achievement visualization. Built as a modern web application with a React frontend and Express backend, it features user authentication, data persistence, and real-time progress monitoring.
+This is a full-stack web application for BNI Korea's Power Team referral partner management. It enables members to track and manage referral partners through V, C, and P stages, visualize progress, and monitor achievements. The system features user authentication, data persistence, and real-time monitoring, aiming to streamline referral partner management for BNI Korea.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
 ### Frontend Architecture
-- **Framework**: React with TypeScript using Vite as the build tool
-- **UI Components**: Shadcn/ui component library built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom CSS variables for theming
-- **State Management**: TanStack Query (React Query) for server state management
-- **Form Handling**: React Hook Form with Zod schema validation
-- **Routing**: Wouter for lightweight client-side routing
-- **Component Structure**: Modular component architecture with separate UI components, pages, and business logic hooks
+- **Framework**: React with TypeScript, using Vite.
+- **UI Components**: Shadcn/ui (built on Radix UI) and Tailwind CSS for styling. Custom CSS variables for theming.
+- **State Management**: TanStack Query for server state.
+- **Form Handling**: React Hook Form with Zod validation.
+- **Routing**: Wouter for client-side routing.
+- **Component Structure**: Modular design with separate UI components, pages, and business logic hooks.
+- **Key Features**:
+    - Visual achievement ring for 4-partner goal progress.
+    - Single vertical form for managing up to 4 referral partners.
+    - V (Visitor), C (Contact), P (Partner) stage progression.
+    - Achievement Rate Layout: Circular progress chart, partner statistics, and total partner count.
+    - BNI Korea brand color (#d12031) applied system-wide.
+    - Consistent form styling with unified placeholder and input text colors.
+    - Enhanced login page with updated footer, consistent toast notifications, and brand-color styling.
+    - Print Layout: Clean A4 print layout, Korean language attribute, and custom footer.
+    - Data Integrity Control: Google Sheets-sourced fields are read-only to prevent corruption.
+    - Auto-Save: Form changes auto-save to Google Sheets 2 seconds after modification for bidirectional fields.
+    - Responsive design for mobile compatibility.
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **Language**: TypeScript with ES modules
-- **API Design**: RESTful API endpoints for authentication and data management
-- **Data Validation**: Zod schemas shared between frontend and backend
-- **Error Handling**: Centralized error handling middleware
-- **Development**: Hot reload with tsx and Vite integration
+- **Runtime**: Node.js with Express.js.
+- **Language**: TypeScript with ES modules.
+- **API Design**: RESTful API for authentication and data management.
+- **Data Validation**: Zod schemas, shared with the frontend.
+- **Error Handling**: Centralized middleware.
 
 ### Data Storage Solutions
-- **Database**: PostgreSQL configured via Drizzle ORM
-- **Schema Management**: Drizzle Kit for migrations and schema management
-- **Storage Interface**: Abstract storage interface with in-memory implementation for development
-- **Connection**: Neon Database serverless PostgreSQL connection
-- **Data Models**: Users, scoreboard data, and change history tracking
+- **Database**: PostgreSQL via Drizzle ORM.
+- **Schema Management**: Drizzle Kit for migrations.
+- **Storage Interface**: Abstract storage interface with in-memory development implementation.
+- **Connection**: Neon Database serverless PostgreSQL.
+- **Data Models**: Users, scoreboard data, and change history.
 
 ### Authentication and Authorization
-- **Authentication Method**: Email and 4-digit password system
-- **Auto-registration**: New users are automatically registered on first login
-- **Session Management**: Client-side user data persistence in localStorage
-- **Security**: Simple password-based authentication suitable for internal team use
-- **Google Sheets Authentication**: Service account-based OAuth2 authentication with googleapis library
-  - Service Account: mypowerteam@qualified-glow-467905-k0.iam.gserviceaccount.com
-  - Scopes: https://www.googleapis.com/auth/spreadsheets
-  - Status: ✅ Active and functioning
-- **Authorization System**: ✅ IMPLEMENTED (Aug 6, 2025)
-  - Google Sheets AUTH column (24th column) integration for role-based access control
-  - Admin roles: "Admin" and "Growth" 
-  - Dynamic permission checking API: `/api/admin/check-permission`
-  - Frontend UI conditionally displays admin features based on user permissions
-  - Secure admin panel access with automatic redirect for unauthorized users
-- **User Management System**: ✅ UPDATED (Aug 7, 2025)
-  - Single user addition with profile data (email, region, chapter, member name, specialty, password)
-  - CSV file upload for bulk user addition with comprehensive error handling and encoding support
-  - UTF-8/EUC-KR/CP949 encoding detection with iconv-lite library for proper Korean text handling
-  - Header row detection and automatic skipping for CSV files
-  - Real-time Google Sheets integration for immediate data persistence
-  - Automatic validation for required fields (email, member name)
-  - Smart row allocation system that reuses empty rows from deleted users
-  - **UI Streamlined (Aug 7, 2025)**: Single unified dialog with both options - removed separate "일괄 추가" button
-  - Two-panel interface: left panel for single user form, right panel for CSV upload
-  - Full integration with existing withdrawal and permission systems
-  - **Target Customer Policy**: Target customer (나의 핵심 고객층) excluded from admin addition - users manage this field directly
-- **Toast Notification Z-Index Fix (Aug 8, 2025)**: ✅ RESOLVED
-  - Fixed toast notifications appearing behind AlertDialog components
-  - Updated ToastViewport z-index to maximum value (2147483647)
-  - Enhanced CSS specificity for Radix UI toast components
-  - Toast error messages now properly display above admin member addition forms
-- **Chapter Dropdown & Member Withdrawal Fix (Aug 9, 2025)**: ✅ RESOLVED
-  - Implemented custom chapter dropdown for individual member addition with Google Sheets integration
-  - Fixed member withdrawal processing by expanding Google Sheets search range from 100 to 5000 rows
-  - Updated withdrawal popup message format: "선택한 멤버 탈퇴 처리" with proper terminology consistency
-  - Custom dropdown solution resolves AlertDialog compatibility issues with Radix UI Select components
-- **Data Preservation During Withdrawal (Aug 9, 2025)**: ✅ RESOLVED
-  - Modified markUserAsWithdrawn to only change STATUS field to "탈퇴" without deleting user data
-  - Preserved all R파트너 information, personal details, and achievement data during withdrawal
-  - Enhanced real-time synchronization with 3-second auto-refresh and cache prevention headers
-  - Added manual "데이터 새로고침" button for immediate Google Sheets data updates
-  - Fixed STATUS column mapping to Y column (index 24) for accurate withdrawal processing
-- **Member Table Enhancement & Status Sync Fix (Aug 9, 2025)**: ✅ RESOLVED
-  - Fixed STATUS column index error (22→24) - withdrawal status now correctly updates in Google Sheets
-  - Added missing 산업군(industry) and 회사(company) columns to member table display
-  - Improved table layout consistency with proper grid alignment and responsive design
-  - Enhanced React Query cache invalidation with forced refetch for real-time status updates
-  - Toast message updated to user-friendly format: "탈퇴 처리 완료 - 선택한 멤버 탈퇴가 정상적으로 완료되었습니다"
-- **Real-time Data Sync & Withdrawal Filtering (Aug 9, 2025)**: ✅ RESOLVED
-  - Added cache prevention headers and timestamps to prevent Google Sheets data caching
-  - Implemented automatic filtering of withdrawn users (STATUS='탈퇴') from member list display
-  - Enhanced getAllUsers method with proper column mapping for industry and company fields
-  - Real-time synchronization ensures immediate reflection of Google Sheets changes in web interface
-  - Withdrawn members now disappear from admin panel immediately after status change in Google Sheets
-- **Bidirectional Sync Data Deletion Fix (Aug 8, 2025)**: ✅ RESOLVED
-  - Fixed critical issue where deleted data in bidirectional fields wasn't being saved to Google Sheets
-  - Modified syncScoreboardData function to properly handle local data deletions
-  - Distinguished between undefined (no change) and empty string (intentional deletion) for bidirectional fields
-  - Users can now freely edit and delete data in "전문분야" and "나의 핵심 고객층" fields with proper Google Sheets sync
-  - Maintained data integrity with proper field priority: Google Sheets for read-only, user input for bidirectional
-- **Auto-Save Functionality Restoration (Aug 8, 2025)**: ✅ IMPLEMENTED
-  - Restored original auto-save behavior where form changes are immediately synced to Google Sheets
-  - Removed manual save button requirement - changes auto-saved 2 seconds after modification
-  - Intelligent change detection for bidirectional fields only (specialty, targetCustomer, R파트너 information)
-  - Real-time status indicator shows "자동 저장 중..." during save operations
-  - Maintains seamless user experience with no manual intervention required
+- **Authentication Method**: Email and 4-digit password system.
+- **Auto-registration**: New users registered on first login.
+- **Session Management**: Client-side data persistence in localStorage.
+- **Google Sheets Authentication**: Service account-based OAuth2 with `googleapis` library.
+- **Authorization System**: Google Sheets AUTH column (24th column) for role-based access. Admin roles: "Admin" and "Growth". Dynamic permission checking via `/api/admin/check-permission`.
+- **User Management**: Single user addition and CSV upload for bulk user addition with error handling and encoding support (UTF-8/EUC-KR/CP4949). Real-time Google Sheets integration for data persistence. Smart row allocation reuses empty rows. Single unified dialog for user addition.
+- **Withdrawal Process**: Users marked as "탈퇴" (withdrawn) in the STATUS field, preserving all other data.
+- **Data Preservation**: Existing PW/STATUS values are preserved, missing fields get safe defaults.
+- **Real-time Data Sync**: Cache prevention headers and timestamps for Google Sheets. Withdrawn users are automatically filtered from the member list. Bidirectional sync for certain fields (e.g., "전문분야," "나의 핵심 고객층").
 
 ### Key Features
-- **Progress Tracking**: Visual achievement ring showing completion percentage toward 4-partner goal
-- **Partner Management**: Single vertical form interface for managing up to 4 referral partners (reverted from tab layout)
-- **Stage Tracking**: V (Visitor), C (Contact), P (Partner) stage progression
-- **Achievement Rate Layout**: ✅ UPDATED (Aug 3, 2025)
-  - Left side: Circular progress chart with percentage and ratio display
-  - Right side: Partner statistics breakdown (P/C/V counts)
-  - Bottom: "나의 총 리퍼럴 파트너 수" showing total partner count
-- **Brand Color Update**: ✅ UPDATED (Aug 3, 2025)
-  - Official BNI Korea brand color #d12031 (red) applied system-wide
-  - Updated CSS variables for primary colors, buttons, progress indicators
-  - Consistent color scheme across login, dashboard, and form components
-- **Form Styling Consistency**: ✅ RESOLVED (Aug 3, 2025)
-  - Unified placeholder text colors across all form fields using rgb(156 163 175)
-  - User input text colors consistently dark using rgb(17 24 39)
-  - Radix UI Select component styling issues completely resolved with nuclear CSS overrides
-  - Browser autofill and focus blue color issues completely resolved with webkit overrides
-  - "선택 안함" option added to relationship stage dropdown for clearing values
-  - Applied to all existing users (biesy0011@naver.com, syoon850@gmail.com, info@bnikorea.com) and future users
-- **Login Page Enhancement**: ✅ UPDATED (Aug 3, 2025)
-  - Footer message updated from generic signup text to BNI Connect email clarification
-  - Toast notification styling enhanced with proper white background and 3-second duration
-  - All popup notifications (login, logout, save) use consistent styling and timing
-  - Login card styling enhanced with brand color border (1px #d12031) and 3D shadow effects
-  - Login failure message customized to "잠깐 !" with friendly guidance text
-- **Print Layout Enhancement**: ✅ UPDATED (Aug 4, 2025)
-  - Page title changed from "RPS Board - Replit" to "BNI Korea 파워팀 R파트너 스코어보드"
-  - HTML language attribute updated to Korean (lang="ko")
-  - Print CSS added to remove browser headers/footers during printing
-  - Clean A4 print layout with proper margins and white background
-  - Replit development banners hidden during print operations
-  - Toast notifications and popup dialogs hidden during print to prevent inclusion in printed documents
-  - Custom footer URL "https://www.powerteam-bnikorea.com" added for print layout
-  - Enhanced @page CSS rules to override browser default headers and footers
-  - Print header added with "BNI Korea My Powerteam RPS Report" title and current timestamp (yyyy-mm-dd, hh:mm:ss format)
-- **Data Integrity Control**: ✅ IMPLEMENTED (Aug 3, 2025)
-  - Google Sheets sourced fields (지역, 챕터, 멤버, 업태명, 타겟고객) converted to read-only
-  - Visual indicators added: gray background, disabled cursor, "(구분 시트 연동)" labels
-  - User can only modify R파트너 information while viewing authentic Google Sheets data
-  - Prevents data corruption between local changes and Google Sheets synchronization
-- **Google Sheets Integration**: ✅ FULLY OPERATIONAL - Automatic sync to Google Sheets RPS tab (A1:U1 format)
-  - Headers: 지역, 이메일, 챕터, 멤버, 업태명, 타겟고객, 나의 리펀 서비스, R파트너 1-4 with 전문분야 and V-C-P stages, 총 R파트너 수, 달성
-  - ✅ UPDATED (Aug 3, 2025): "총 R파트너 수" now records only P-stage partners (not total partners)
-  - Automatic calculation of P-stage partners and achievement percentage  
-  - User-specific row updates with email-based identification
-  - ✅ RESOLVED: Node.js v20/OpenSSL 3.x compatibility issues bypassed using googleapis library
-  - ✅ SUCCESS: Real-time data synchronization working with service account authentication
-  - Active spreadsheet: https://docs.google.com/spreadsheets/d/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/edit
-  - ✅ RESOLVED: Login page display issue caused by keyboard full-width character mode (전각문자)
-  - ✅ ENHANCED: Seamless bidirectional auto-sync with Google Sheets every 5 seconds (no manual buttons needed)
-  - ✅ DYNAMIC USER MANAGEMENT (Aug 4, 2025): Robust handling of user additions/deletions
-    - Automatic detection of new users in Google Sheets (up to 5000 rows)
-    - Smart row reallocation: Empty rows from deleted users are recycled for new users
-    - Enhanced error handling for sheet limit exceeded scenarios
-    - Improved authentication with dynamic ID/PW column detection
-    - Safe bidirectional sync with no data loss during user changes
-    - Real-time achievement rate updates for all user modifications
-- **Change History**: Audit trail of data modifications
-- **Print Support**: Print-friendly layout for physical scoreboard display
-- **Responsive Design**: Mobile-friendly interface with adaptive layouts
+- **Progress Tracking**: Visual achievement ring, V/C/P stage progression.
+- **Partner Management**: Single vertical form.
+- **Google Sheets Integration**: Automatic sync to Google Sheets RPS tab. Calculates P-stage partners and achievement percentage. User-specific row updates with email-based identification. Real-time data synchronization with service account authentication. Dynamic user management for additions/deletions, with smart row reallocation.
+- **Change History**: Audit trail of data modifications.
+- **Print Support**: Print-friendly layout.
+- **Responsive Design**: Mobile-friendly interface.
 
 ## External Dependencies
 
 ### UI and Styling
-- Radix UI primitives for accessible component foundations
-- Tailwind CSS for utility-first styling
-- Lucide React for consistent iconography
-- Class Variance Authority for component variant management
+- Radix UI primitives
+- Tailwind CSS
+- Lucide React (iconography)
+- Class Variance Authority
 
 ### Data and Forms
-- TanStack Query for server state management and caching
-- React Hook Form for form state management
-- Zod for runtime type validation and schema definition
-- Date-fns for date manipulation utilities
+- TanStack Query
+- React Hook Form
+- Zod
+- Date-fns
 
 ### Database and Backend
-- Drizzle ORM for type-safe database operations
-- Neon Database for serverless PostgreSQL hosting
-- Express.js for HTTP server and API routing
-- Connect-pg-simple for PostgreSQL session storage
+- Drizzle ORM
+- Neon Database
+- Express.js
+- Connect-pg-simple
 
 ### Development Tools
-- Vite for fast development and building
-- TypeScript for type safety
-- ESBuild for production bundling
-- Replit-specific plugins for development environment integration
+- Vite
+- TypeScript
+- ESBuild
 
-### Potential Integrations
-- Google Sheets API integration prepared for data synchronization
-- Print functionality for physical scoreboard generation
-- Real-time change notifications system architecture
+### Integrations
+- Google Sheets API
