@@ -267,7 +267,7 @@ export default function AdminPage() {
       
       const hasErrors = data.errors && data.errors.length > 0;
       const title = hasErrors 
-        ? `멤버 일괄 추가 성공 : ${data.processedCount}명 추가 (${data.errors.length}명 오류)`
+        ? `멤버 일괄 추가 오류 : ${data.processedCount}명 추가 (${data.errors.length}명 오류)`
         : `멤버 일괄 추가 성공 : ${data.processedCount}명 추가`;
       
       const description = hasErrors
