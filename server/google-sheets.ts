@@ -880,18 +880,8 @@ class GoogleSheetsService {
       
       const existingRow = rows[userRowIndex];
       
-      // 탈퇴 처리: STATUS만 "탈퇴"로 변경하고 나머지 정보는 절대 변경하지 않음
-      const withdrawalValues = [...existingRow];
-      
-      // 배열 길이를 26으로 맞추되, 기존 값들은 절대 변경하지 않음
-      while (withdrawalValues.length < 26) {
-        withdrawalValues.push('');
-      }
-      
-      // STATUS만 "탈퇴"로 변경 (Y열, index 24) - 다른 어떤 필드도 수정하지 않음
-      withdrawalValues[24] = '탈퇴';
-      
-      const range = `RPS!A${userRowIndex + 1}:Z${userRowIndex + 1}`;
+      // STATUS 컬럼만 업데이트 (Y열, 인덱스 24) - 다른 어떤 필드도 건드리지 않음
+      const range = `RPS!Y${userRowIndex + 1}`;
       console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1} (STATUS: 탈퇴)`);
       
       const updateResponse = await fetch(
@@ -903,7 +893,7 @@ class GoogleSheetsService {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            values: [withdrawalValues]
+            values: [['탈퇴']]
           })
         }
       );
