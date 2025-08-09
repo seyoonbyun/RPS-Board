@@ -123,22 +123,100 @@ const setPageTitle = () => {
   document.title = "My RPS Board Report - BNI KOREA";
 };
 
+// 인쇄 이벤트 감지하여 제목 변경
+const setupPrintHandlers = () => {
+  const targetTitle = "My RPS Board Report - BNI KOREA";
+  
+  // 인쇄 전 이벤트
+  window.addEventListener('beforeprint', () => {
+    document.title = targetTitle;
+    // head의 title 태그 직접 수정
+    const titleElement = document.querySelector('title');
+    if (titleElement) {
+      titleElement.textContent = targetTitle;
+    }
+  });
+  
+  // 인쇄 후 이벤트
+  window.addEventListener('afterprint', () => {
+    document.title = targetTitle;
+    const titleElement = document.querySelector('title');
+    if (titleElement) {
+      titleElement.textContent = targetTitle;
+    }
+  });
+  
+  // Ctrl+P 키 감지
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      document.title = targetTitle;
+      const titleElement = document.querySelector('title');
+      if (titleElement) {
+        titleElement.textContent = targetTitle;
+      }
+      // 약간의 지연 후 다시 설정
+      setTimeout(() => {
+        document.title = targetTitle;
+        const titleEl = document.querySelector('title');
+        if (titleEl) titleEl.textContent = targetTitle;
+      }, 10);
+    }
+  });
+  
+  // 미디어 쿼리 변경 감지 (인쇄 모드 전환)
+  const printMediaQuery = window.matchMedia('print');
+  printMediaQuery.addEventListener('change', (e) => {
+    if (e.matches) {
+      document.title = targetTitle;
+      const titleElement = document.querySelector('title');
+      if (titleElement) {
+        titleElement.textContent = targetTitle;
+      }
+    }
+  });
+  
+  // 지속적으로 제목 감시 및 강제 변경
+  const titleObserver = new MutationObserver(() => {
+    if (document.title !== targetTitle) {
+      document.title = targetTitle;
+      const titleElement = document.querySelector('title');
+      if (titleElement && titleElement.textContent !== targetTitle) {
+        titleElement.textContent = targetTitle;
+      }
+    }
+  });
+  
+  // head 요소의 변경 감시
+  const headElement = document.querySelector('head');
+  if (headElement) {
+    titleObserver.observe(headElement, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+};
+
 // 여러 시점에서 실행
 forcePlaceholderColors();
 setPageTitle();
+setupPrintHandlers();
 document.addEventListener('DOMContentLoaded', () => {
   forcePlaceholderColors();
   setPageTitle();
+  setupPrintHandlers();
 });
 window.addEventListener('load', () => {
   forcePlaceholderColors();
   setPageTitle();
+  setupPrintHandlers();
 });
 
 // React 앱 렌더링 후에도 실행
 setTimeout(() => {
   forcePlaceholderColors();
   setPageTitle();
+  setupPrintHandlers();
 }, 100);
 setTimeout(() => {
   forcePlaceholderColors();
