@@ -275,29 +275,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 </CardContent>
               </Card>
 
-              {/* 시너지 분야 */}
-              {aiAnalysis.synergyFields?.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-green-600" />
-                      추천 시너지 분야
-                    </CardTitle>
-                    <CardDescription>
-                      현재 전문분야와 협력 가능한 비즈니스 영역들입니다
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {aiAnalysis.synergyFields.map((field: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-center p-2">
-                          {field}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+
 
               {/* 우선순위별 전략 */}
               {aiAnalysis.priorities && (
@@ -358,47 +336,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 </div>
               )}
 
-              {/* 매칭된 멤버들 */}
-              {aiAnalysis.matchingMembers?.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      시너지 매칭 멤버
-                    </CardTitle>
-                    <CardDescription>
-                      총 {aiAnalysis.totalMatches}명 중 상위 {aiAnalysis.matchingMembers.length}명
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {aiAnalysis.matchingMembers.map((member: any, index: number) => (
-                        <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold">{member.name}</h4>
-                              <p className="text-sm text-blue-600">{member.specialty}</p>
-                            </div>
-                            <Badge 
-                              variant={member.matchType === 'direct' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {member.matchType === 'direct' ? '직접매칭' : 
-                               member.matchType === 'related' ? '관련분야' : '잠재적'}
-                            </Badge>
-                          </div>
-                          <div className="text-xs text-gray-600 mb-2">
-                            {member.region} · {member.chapter}
-                          </div>
-                          <div className="text-sm text-green-700 font-medium">
-                            매칭분야: {member.matchedSynergyField}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+
             </div>
           ) : (
             <Card>
@@ -418,6 +356,30 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         </TabsContent>
 
         <TabsContent value="recommendations" className="space-y-4">
+          {/* AI 추천 시너지 분야 */}
+          {aiAnalysis?.synergyFields?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-green-600" />
+                  AI 추천 시너지 분야
+                </CardTitle>
+                <CardDescription>
+                  Gemini AI가 분석한 현재 전문분야와 협력 가능한 비즈니스 영역들입니다
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {aiAnalysis.synergyFields.map((field: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="text-center p-2">
+                      {field}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* 필터 패널 */}
           {showFilters && (
             <Card>
@@ -669,6 +631,48 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
+          {/* AI 시너지 매칭 멤버 */}
+          {aiAnalysis?.matchingMembers?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  AI 시너지 매칭 멤버
+                </CardTitle>
+                <CardDescription>
+                  Gemini AI가 분석한 총 {aiAnalysis.totalMatches}명 중 상위 {aiAnalysis.matchingMembers.length}명
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {aiAnalysis.matchingMembers.map((member: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-semibold">{member.name}</h4>
+                          <p className="text-sm text-blue-600">{member.specialty}</p>
+                        </div>
+                        <Badge 
+                          variant={member.matchType === 'direct' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {member.matchType === 'direct' ? '직접매칭' : 
+                           member.matchType === 'related' ? '관련분야' : '잠재적'}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-gray-600 mb-2">
+                        {member.region} · {member.chapter}
+                      </div>
+                      <div className="text-sm text-green-700 font-medium">
+                        매칭분야: {member.matchedSynergyField}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {isLoadingAnalytics ? (
             <Card className="animate-pulse">
               <CardHeader>
