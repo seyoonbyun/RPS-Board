@@ -200,7 +200,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           </TabsTrigger>
           <TabsTrigger value="recommendations" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            추천 파트너
+            AI 추천 시너지 분야
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -362,11 +362,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-green-600" />
-                  AI 추천 시너지 분야
-                </CardTitle>
-                <CardDescription>
                   Gemini AI가 분석한 현재 전문분야와 협력 가능한 비즈니스 영역들입니다
-                </CardDescription>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
