@@ -240,10 +240,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="w-5 h-5 text-purple-600" />
-                    Gemini AI 상세 분석
+                    BNI AI 상세분석
                   </CardTitle>
                   <CardDescription>
-                    비즈니스 시너지와 확장 가능성에 대한 AI 분석입니다
+                    대표님의 비즈니스 시너지와 확장 가능성에 대한 BNI AI의 분석입니다
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
