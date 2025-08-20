@@ -142,7 +142,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-yellow-500" />
-                    현재 전문분야 분석
+                    현재 나의 전문분야
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
