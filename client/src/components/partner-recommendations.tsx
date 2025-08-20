@@ -616,15 +616,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 ))}
               </div>
             </div>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">조건에 맞는 추천 파트너가 없습니다</p>
-                <p className="text-sm text-gray-500 mt-2">필터 조건을 조정해보세요</p>
-              </CardContent>
-            </Card>
-          )}
+          ) : null}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
