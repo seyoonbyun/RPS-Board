@@ -347,8 +347,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 gap-4">
-                  {aiAnalysis.matchingMembers.map((member: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+                  {/* 중복 제거를 위해 이메일 기준으로 unique한 멤버만 표시 */}
+                  {Array.from(new Map(aiAnalysis.matchingMembers.map((member: any) => [member.email, member])).values())
+                    .map((member: any, index: number) => (
+                    <div key={member.email} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
