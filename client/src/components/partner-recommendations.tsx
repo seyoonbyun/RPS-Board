@@ -342,7 +342,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-green-600" />
-                  AI가 분석한 현재 전문분야와 협력 가능한 비즈니스 영역들입니다
+                  BNI AI가 분석한 현재 전문분야와 협력 가능한 비즈니스 영역들입니다
                 </CardTitle>
               </CardHeader>
               <CardContent>
