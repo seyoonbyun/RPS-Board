@@ -172,15 +172,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         <h2 className="text-2xl font-bold">비즈니스 시너지 파트너 추천</h2>
       </div>
 
-      <Tabs defaultValue="recommendations" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="ai-analysis" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="ai-analysis" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
             나의 전문분야 분석
-          </TabsTrigger>
-          <TabsTrigger value="recommendations" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            AI 추천 시너지 분야
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -335,26 +331,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           )}
         </TabsContent>
 
-        <TabsContent value="recommendations" className="space-y-4">
-          {/* AI 추천 시너지 분야 */}
-          {aiAnalysis?.synergyDetails && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-green-600" />
-                  BNI AI가 분석한 현재 전문분야와 협력 가능한 비즈니스 영역들입니다
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                    {aiAnalysis.synergyDetails}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
+        {/* AI 시너지 매칭 멤버 탭 */}
+        <TabsContent value="analytics" className="space-y-4">
           {/* 필터 패널 */}
           {showFilters && (
             <Card>
