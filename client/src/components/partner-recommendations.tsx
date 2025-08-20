@@ -333,6 +333,81 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
         {/* AI 시너지 매칭 멤버 탭 */}
         <TabsContent value="analytics" className="space-y-4">
+          {/* AI 매칭 결과 표시 */}
+          {aiAnalysis?.matchingMembers && aiAnalysis.matchingMembers.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  BNI AI가 분석한 총 {aiAnalysis.totalMatches || aiAnalysis.matchingMembers.length}명 중 상위 20명 추천
+                </CardTitle>
+                <CardDescription>
+                  "구체적인 시너지 분야 리스트"를 기반으로 매칭된 멤버들입니다
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4">
+                  {aiAnalysis.matchingMembers.map((member: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-gray-700">지역:</span>
+                            <span>{member.region}</span>
+                            <span className="text-gray-400">|</span>
+                            <span className="font-semibold text-gray-700">챕터:</span>
+                            <span>{member.chapter}</span>
+                            <span className="text-gray-400">|</span>
+                            <span className="font-semibold text-gray-700">멤버명:</span>
+                            <span className="text-blue-600 font-medium">{member.memberName}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-gray-700">회사명:</span>
+                            <span>{member.company || '정보 없음'}</span>
+                            <span className="text-gray-400">|</span>
+                            <span className="font-semibold text-gray-700">전문분야:</span>
+                            <span>{member.specialty || '정보 없음'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-700">이메일:</span>
+                            <span className="text-gray-600">{member.email}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-sm text-green-700 font-medium mb-1">
+                              매칭분야: {member.matchedSynergyField}
+                            </div>
+                            {member.matchedFields && member.matchedFields.length > 0 && (
+                              <div className="text-xs text-gray-500">
+                                매칭 키워드: {member.matchedFields.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                          <Badge 
+                            variant={member.matchType === 'direct' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {member.matchType === 'direct' ? '직접매칭' : 
+                             member.matchType === 'related' ? '관련분야' : '잠재적'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-2">매칭된 멤버가 없습니다</p>
+                <p className="text-sm text-gray-500">먼저 "나의 전문분야 분석" 탭에서 AI 분석을 실행해주세요</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* 필터 패널 */}
           {showFilters && (
             <Card>
