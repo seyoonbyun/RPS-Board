@@ -337,7 +337,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
         <TabsContent value="recommendations" className="space-y-4">
           {/* AI 추천 시너지 분야 */}
-          {aiAnalysis?.synergyFields?.length > 0 && (
+          {aiAnalysis?.synergyDetails && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -346,12 +346,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {aiAnalysis.synergyFields.map((field: string, index: number) => (
-                    <Badge key={index} variant="secondary" className="text-center p-2">
-                      {field}
-                    </Badge>
-                  ))}
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                    {aiAnalysis.synergyDetails}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -611,7 +609,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {aiAnalysis.matchingMembers.map((member: any, index: number) => (
+                  {aiAnalysis?.matchingMembers?.map((member: any, index: number) => (
                     <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-2">
                         <div>

@@ -14,6 +14,7 @@ export class GeminiService {
   async analyzeSpecialtyAndRecommendSynergies(specialty: string): Promise<{
     analysis: string;
     synergyFields: string[];
+    synergyDetails: string;
     priorities: {
       shortTerm: string[];
       mediumTerm: string[];
@@ -48,11 +49,13 @@ export class GeminiService {
       
       // 시너지 분야 추출을 위한 간단한 파싱
       const synergyFields = this.extractSynergyFields(analysisText);
+      const synergyDetails = this.extractSynergyDetails(analysisText);
       const priorities = this.extractPriorities(analysisText);
 
       return {
         analysis: analysisText,
         synergyFields,
+        synergyDetails,
         priorities
       };
     } catch (error) {
@@ -78,6 +81,35 @@ export class GeminiService {
     }
     
     return Array.from(new Set(fields)).slice(0, 15); // 중복 제거 및 최대 15개
+  }
+
+  private extractSynergyDetails(text: string): string {
+    // "구체적인 시너지 분야 리스트" 섹션을 추출
+    const lines = text.split('\n');
+    let isInSynergySection = false;
+    let synergyDetails = '';
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      // 시너지 분야 리스트 섹션 시작 감지
+      if (trimmed.includes('구체적인 시너지 분야') || trimmed.includes('2.')) {
+        isInSynergySection = true;
+        continue;
+      }
+      
+      // 다음 섹션 시작 시 종료 (우선순위별 분류)
+      if (isInSynergySection && (trimmed.includes('우선순위') || trimmed.includes('3.'))) {
+        break;
+      }
+      
+      // 시너지 섹션 내의 내용 수집
+      if (isInSynergySection && trimmed.length > 0) {
+        synergyDetails += line + '\n';
+      }
+    }
+    
+    return synergyDetails.trim();
   }
 
   private extractPriorities(text: string): {
