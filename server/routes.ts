@@ -1194,6 +1194,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 챕터 내 시너지 멤버 검색 API
+  app.get("/api/chapter-synergy-members/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      // 사용자 정보 조회
+      const userRow = await googleSheetsService.findUserByEmail(userId);
+      if (!userRow) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      const userChapter = userRow[2]; // 챕터 정보
+      const userSpecialty = userRow[6]; // 전문분야 정보
+
+      // 동일 챕터의 모든 멤버 조회
+      const allUsers = await googleSheetsService.getAllUsers();
+      const chapterMembers = allUsers.filter(user => 
+        user[2] === userChapter && // 같은 챕터
+        user[0] !== userId && // 본인 제외
+        user[24] === '활동중' // 활동중인 멤버만
+      );
+
+      // 시너지 분석 (간단한 키워드 매칭)
+      const synergyMembers = chapterMembers.filter(member => {
+        const memberSpecialty = member[6] || '';
+        const memberIndustry = member[4] || '';
+        
+        // 시너지 가능성 체크 (간단한 로직)
+        const hasSpecialtySynergy = 
+          memberSpecialty.includes('컨설팅') && userSpecialty.includes('건축') ||
+          memberSpecialty.includes('마케팅') && userSpecialty.includes('건축') ||
+          memberSpecialty.includes('인테리어') && userSpecialty.includes('건축') ||
+          memberSpecialty.includes('부동산') && userSpecialty.includes('건축');
+        
+        return hasSpecialtySynergy;
+      }).map(member => ({
+        email: member[0],
+        memberName: member[3],
+        company: member[5],
+        specialty: member[6],
+        chapter: member[2],
+        synergyReason: '건축 분야와의 협업 가능성'
+      }));
+
+      res.json({ members: synergyMembers });
+    } catch (error) {
+      console.error("챕터 내 시너지 멤버 검색 오류:", error);
+      res.status(500).json({ message: "챕터 내 시너지 멤버 검색 중 오류가 발생했습니다" });
+    }
+  });
+
+  // 지역 내 업체 검색 API (Gemini API 사용)
+  app.post("/api/regional-businesses/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const { aiAnalysis, synergyFields } = req.body;
+      
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      // 사용자 정보 조회
+      const userRow = await googleSheetsService.findUserByEmail(userId);
+      if (!userRow) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      const userRegion = userRow[1]; // 지역 정보
+      const userSpecialty = userRow[6]; // 전문분야 정보
+
+      const { GeminiService } = await import('./gemini-service.js');
+      const geminiService = new GeminiService();
+
+      // Gemini API를 통한 지역 업체 검색
+      const searchQuery = `${userRegion} 지역에서 ${userSpecialty}와 시너지를 일으킬 수 있는 업체들을 찾아주세요. 
+      
+      AI 분석 결과: ${aiAnalysis}
+      
+      다음 분야들과 협업 가능한 업체들을 우선적으로 찾아주세요:
+      - 단기: ${synergyFields?.shortTerm?.join(', ') || ''}
+      - 중기: ${synergyFields?.mediumTerm?.join(', ') || ''}
+      - 장기: ${synergyFields?.longTerm?.join(', ') || ''}
+      
+      결과는 다음 JSON 형식으로 제공해주세요:
+      {
+        "businesses": [
+          {
+            "name": "업체명",
+            "category": "업종",
+            "address": "주소",
+            "phone": "연락처",
+            "synergyPotential": "시너지 가능성",
+            "description": "상세 설명"
+          }
+        ]
+      }`;
+
+      const result = await geminiService.searchRegionalBusinesses(searchQuery);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("지역 업체 검색 오류:", error);
+      res.status(500).json({ 
+        message: "지역 업체 검색 중 오류가 발생했습니다",
+        businesses: []
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

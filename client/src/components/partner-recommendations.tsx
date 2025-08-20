@@ -4,118 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Lightbulb, Users, BarChart3, Filter, TrendingUp, MapPin, Building2, ChevronDown, Brain, Sparkles, Target, Clock } from 'lucide-react';
-
-interface BusinessSynergyRecommendation {
-  memberName: string;
-  email: string;
-  industry: string;
-  company: string;
-  specialty: string;
-  targetCustomer: string;
-  region: string;
-  chapter: string;
-  synergyScore: number;
-  synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market';
-  businessValue: string;
-  collaborationOpportunities: string[];
-  targetMarketAlignment: number;
-  currentStage?: 'V' | 'C' | 'P' | 'none';
-}
-
-interface RecommendationFilters {
-  region?: string;
-  chapter?: string;
-  minCompatibilityScore: number;
-  excludeCurrentPartners: boolean;
-  maxResults: number;
-}
-
-interface PartnerRecommendation {
-  memberName: string;
-  specialty: string;
-  region: string;
-  chapter: string;
-  compatibilityScore: number;
-  synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market';
-  reasons: string[];
-}
+import { Lightbulb, Users, BarChart3, MapPin, Brain, Sparkles, Target, Clock, Search } from 'lucide-react';
 
 interface PartnerRecommendationsProps {
   userId: string;
 }
 
 export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) {
-  const [filters, setFilters] = useState<RecommendationFilters>({
-    minCompatibilityScore: 60,
-    excludeCurrentPartners: true,
-    maxResults: 8
-  });
-
-  const [showFilters, setShowFilters] = useState(false);
-  const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
-  const regionDropdownRef = useRef<HTMLDivElement>(null);
-
-  // 드롭다운 바깥 영역 클릭 감지
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
-        setRegionDropdownOpen(false);
-      }
-    };
-
-    if (regionDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [regionDropdownOpen]);
-
-  // 파트너 추천 데이터 조회
-  const { 
-    data: recommendations, 
-    isLoading: isLoadingRecommendations, 
-    error: recommendationError,
-    refetch: refetchRecommendations 
-  } = useQuery({
-    queryKey: ['/api/partner-recommendations', userId, filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.region) params.append('region', filters.region);
-      if (filters.chapter) params.append('chapter', filters.chapter);
-      params.append('minScore', filters.minCompatibilityScore.toString());
-      params.append('excludeCurrent', filters.excludeCurrentPartners.toString());
-      params.append('maxResults', filters.maxResults.toString());
-
-      const response = await fetch(`/api/partner-recommendations/${userId}?${params}`);
-      if (!response.ok) {
-        throw new Error('파트너 추천을 불러오는데 실패했습니다');
-      }
-      return response.json();
-    },
-    enabled: !!userId
-  });
-
-  // 업종 분석 데이터 조회
-  const { 
-    data: industryAnalytics, 
-    isLoading: isLoadingAnalytics 
-  } = useQuery({
-    queryKey: ['/api/industry-analytics'],
-    queryFn: async () => {
-      const response = await fetch('/api/industry-analytics');
-      if (!response.ok) {
-        throw new Error('업종 분석을 불러오는데 실패했습니다');
-      }
-      return response.json();
-    }
-  });
+  // 새로운 state 추가
+  const [chapterSynergyMembers, setChapterSynergyMembers] = useState<any[]>([]);
+  const [regionalBusinesses, setRegionalBusinesses] = useState<any[]>([]);
+  const [isLoadingRegionalBusinesses, setIsLoadingRegionalBusinesses] = useState(false);
 
   // AI 전문분야 분석 조회
   const { 
@@ -137,32 +36,53 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     staleTime: 5 * 60 * 1000, // 5분간 캐시
   });
 
-  const getSynergyColor = (synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market') => {
-    switch (synergyType) {
-      case 'perfect-match': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high-potential': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'growth-opportunity': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'new-market': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  // 챕터 내 시너지 멤버 검색 함수
+  const searchChapterSynergyMembers = async () => {
+    if (!aiAnalysis || !userId) return;
+    
+    try {
+      const response = await fetch(`/api/chapter-synergy-members/${userId}`);
+      if (!response.ok) throw new Error('챕터 내 시너지 멤버 검색 실패');
+      
+      const data = await response.json();
+      setChapterSynergyMembers(data.members || []);
+    } catch (error) {
+      console.error('챕터 내 시너지 멤버 검색 오류:', error);
     }
   };
 
-  const getSynergyText = (synergyType: 'perfect-match' | 'high-potential' | 'growth-opportunity' | 'new-market') => {
-    switch (synergyType) {
-      case 'perfect-match': return '완벽 매치';
-      case 'high-potential': return '높은 잠재력';
-      case 'growth-opportunity': return '성장 기회';
-      case 'new-market': return '신규 시장';
-      default: return '기본';
+  // 지역 내 업체 검색 함수
+  const searchRegionalBusinesses = async () => {
+    if (!aiAnalysis || !userId) return;
+    
+    setIsLoadingRegionalBusinesses(true);
+    try {
+      const response = await fetch(`/api/regional-businesses/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          aiAnalysis: aiAnalysis.analysis,
+          synergyFields: aiAnalysis.priorities
+        })
+      });
+      
+      if (!response.ok) throw new Error('지역 업체 검색 실패');
+      
+      const data = await response.json();
+      setRegionalBusinesses(data.businesses || []);
+    } catch (error) {
+      console.error('지역 업체 검색 오류:', error);
+    } finally {
+      setIsLoadingRegionalBusinesses(false);
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-red-600 font-bold';
-    if (score >= 60) return 'text-orange-600 font-semibold';
-    if (score >= 40) return 'text-blue-600 font-medium';
-    return 'text-green-600';
-  };
+  // AI 분석이 완료되면 자동으로 챕터 내 시너지 멤버 검색
+  useEffect(() => {
+    if (aiAnalysis && userId) {
+      searchChapterSynergyMembers();
+    }
+  }, [aiAnalysis, userId]);
 
   return (
     <div className="space-y-6">
@@ -251,8 +171,6 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 </CardContent>
               </Card>
 
-
-
               {/* 우선순위별 전략 */}
               {aiAnalysis.priorities && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -311,8 +229,6 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                   </Card>
                 </div>
               )}
-
-
             </div>
           ) : (
             <Card>
@@ -331,31 +247,27 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           )}
         </TabsContent>
 
+        {/* AI 시너지 매칭 멤버 탭 */}
         <TabsContent value="analytics" className="space-y-4">
-          {/* AI 매칭 결과 표시 */}
-          {aiAnalysis?.matchingMembers && aiAnalysis.matchingMembers.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  BNI AI가 분석한 총 {aiAnalysis.totalMatches || aiAnalysis.matchingMembers.length}명 중 상위 20명 추천
-                </CardTitle>
-                <CardDescription>
-                  "구체적인 시너지 분야 리스트"를 기반으로 매칭된 멤버들입니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          {/* 1차: 동일 챕터 내 추천 멤버 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                나의 챕터 내 시너지 멤버 추천
+              </CardTitle>
+              <CardDescription>
+                동일 챕터에서 나의 전문분야와 시너지를 일으킬 수 있는 멤버들입니다
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {chapterSynergyMembers && chapterSynergyMembers.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
-                  {/* 중복 제거를 위해 이메일 기준으로 unique한 멤버만 표시 */}
-                  {Array.from(new Map(aiAnalysis.matchingMembers.map((member: any) => [member.email, member])).values())
-                    .map((member: any, index: number) => (
-                    <div key={member.email} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+                  {chapterSynergyMembers.map((member: any, index: number) => (
+                    <div key={member.email} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-blue-50">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">지역:</span>
-                            <span>{member.region}</span>
-                            <span className="text-gray-400">|</span>
                             <span className="font-semibold text-gray-700">챕터:</span>
                             <span>{member.chapter}</span>
                             <span className="text-gray-400">|</span>
@@ -377,357 +289,107 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="text-sm text-green-700 font-medium mb-1">
-                              매칭분야: {member.matchedSynergyField}
+                              시너지 분야: {member.synergyReason}
                             </div>
-                            {member.matchedFields && member.matchedFields.length > 0 && (
-                              <div className="text-xs text-gray-500">
-                                매칭 키워드: {member.matchedFields.join(', ')}
-                              </div>
-                            )}
                           </div>
-                          <Badge 
-                            variant={member.matchType === 'direct' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {member.matchType === 'direct' ? '직접매칭' : 
-                             member.matchType === 'related' ? '관련분야' : '잠재적'}
+                          <Badge variant="default" className="text-xs">
+                            챕터 내 추천
                           </Badge>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">매칭된 멤버가 없습니다</p>
-                <p className="text-sm text-gray-500">먼저 "나의 전문분야 분석" 탭에서 AI 분석을 실행해주세요</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 필터 패널 */}
-          {showFilters && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Filter className="w-5 h-5" />
-                  추천 필터
-                </CardTitle>
-                <CardDescription>
-                  원하는 조건에 맞는 파트너를 찾아보세요
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>지역 필터</Label>
-                  <div className="relative" ref={regionDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setRegionDropdownOpen(!regionDropdownOpen)}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                    >
-                      <span className={filters.region ? 'text-gray-900' : 'text-gray-400'}>
-                        {filters.region || '모든 지역'}
-                      </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
-                    </button>
-                    {regionDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: undefined }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          모든 지역
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '서울' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          서울
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '경기' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          경기
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '인천' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          인천
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '부산' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          부산
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '대구' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          대구
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '광주' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          광주
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors text-gray-900"
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, region: '대전' }));
-                            setRegionDropdownOpen(false);
-                          }}
-                        >
-                          대전
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-2">아직까지 추천할 멤버가 없습니다.</p>
+                  <p className="text-sm text-gray-500">나의 전문분야 분석을 통해 제안드린 분야의 멤버를 영입해보세요!</p>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label>최소 호환성 점수</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={filters.minCompatibilityScore}
-                    onChange={(e) => setFilters(prev => ({ 
-                      ...prev, 
-                      minCompatibilityScore: parseInt(e.target.value) || 60 
-                    }))}
-                  />
-                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="space-y-2">
-                  <Label>최대 결과 수</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={filters.maxResults}
-                    onChange={(e) => setFilters(prev => ({ 
-                      ...prev, 
-                      maxResults: parseInt(e.target.value) || 8 
-                    }))}
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={filters.excludeCurrentPartners}
-                    onCheckedChange={(checked) => setFilters(prev => ({ 
-                      ...prev, 
-                      excludeCurrentPartners: checked 
-                    }))}
-                    className="data-[state=checked]:bg-gray-200 data-[state=unchecked]:bg-gray-200 [&>span]:data-[state=checked]:bg-red-600 [&>span]:data-[state=unchecked]:bg-white [&>span]:data-[state=checked]:translate-x-5 [&>span]:transition-all [&>span]:duration-200"
-                  />
-                  <Label>현재 파트너 제외</Label>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* 추천 결과 */}
-          {isLoadingRecommendations ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+          {/* 2차: 지역 기반 업체 검색 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-green-600" />
+                지역 내 시너지 업체 검색
+              </CardTitle>
+              <CardDescription>
+                나의 지역에서 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingRegionalBusinesses ? (
+                <div className="animate-pulse space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="border rounded-lg p-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : recommendationError ? (
-            <Card className="border-red-200">
-              <CardContent className="text-center py-8">
-                <p className="text-red-600">파트너 추천을 불러오는데 실패했습니다</p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => refetchRecommendations()}
-                  className="mt-4"
-                >
-                  다시 시도
-                </Button>
-              </CardContent>
-            </Card>
-          ) : recommendations?.recommendations?.length > 0 ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  총 {recommendations.totalRecommendations}개의 추천 파트너
-                </p>
-                <Badge variant="outline" className="text-red-600 border-red-200">
-                  {recommendations.userEmail}
-                </Badge>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recommendations.recommendations.map((rec: PartnerRecommendation, index: number) => (
-                  <Card key={index} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{rec.memberName}</CardTitle>
-                          <CardDescription className="font-medium text-blue-600">
-                            {rec.specialty}
-                          </CardDescription>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-lg font-bold ${getScoreColor(rec.compatibilityScore)}`}>
-                            {rec.compatibilityScore}점
-                          </div>
-                          <Badge className={getSynergyColor(rec.synergyType)}>
-                            {getSynergyText(rec.synergyType)}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {rec.region}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Building2 className="w-4 h-4" />
-                          {rec.chapter}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">추천 이유</Label>
-                        <div className="space-y-1">
-                          {rec.reasons.map((reason: string, reasonIndex: number) => (
-                            <div key={reasonIndex} className="text-sm text-gray-700 flex items-start gap-2">
-                              <TrendingUp className="w-3 h-3 mt-0.5 text-red-600 flex-shrink-0" />
-                              {reason}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          {/* AI 매칭 결과 표시 */}
-          {aiAnalysis?.matchingMembers && aiAnalysis.matchingMembers.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  BNI AI가 분석한 총 {aiAnalysis.totalMatches || aiAnalysis.matchingMembers.length}명 중 상위 20명 추천
-                </CardTitle>
-                <CardDescription>
-                  "구체적인 시너지 분야 리스트"를 기반으로 매칭된 멤버들입니다
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+                  ))}
+                </div>
+              ) : regionalBusinesses && regionalBusinesses.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
-                  {/* 중복 제거를 위해 이메일 기준으로 unique한 멤버만 표시 */}
-                  {Array.from(new Map(aiAnalysis.matchingMembers.map((member: any) => [member.email, member])).values())
-                    .map((member: any, index: number) => (
-                    <div key={member.email} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+                  {regionalBusinesses.map((business: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-green-50">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">지역:</span>
-                            <span>{member.region}</span>
-                            <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">챕터:</span>
-                            <span>{member.chapter}</span>
-                            <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">멤버명:</span>
-                            <span className="text-blue-600 font-medium">{member.memberName}</span>
+                            <span className="font-semibold text-gray-700">업체명:</span>
+                            <span className="text-green-600 font-medium">{business.name}</span>
                           </div>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">회사명:</span>
-                            <span>{member.company || '정보 없음'}</span>
+                            <span className="font-semibold text-gray-700">업종:</span>
+                            <span>{business.category}</span>
                             <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">전문분야:</span>
-                            <span>{member.specialty || '정보 없음'}</span>
+                            <span className="font-semibold text-gray-700">주소:</span>
+                            <span>{business.address}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-700">이메일:</span>
-                            <span className="text-gray-600">{member.email}</span>
-                          </div>
+                          {business.phone && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">연락처:</span>
+                              <span className="text-gray-600">{business.phone}</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="text-sm text-green-700 font-medium mb-1">
-                              매칭분야: {member.matchedSynergyField}
+                              시너지 가능성: {business.synergyPotential}
                             </div>
-                            {member.matchedFields && member.matchedFields.length > 0 && (
-                              <div className="text-xs text-gray-500">
-                                매칭 키워드: {member.matchedFields.join(', ')}
-                              </div>
-                            )}
+                            <div className="text-xs text-gray-500">
+                              {business.description}
+                            </div>
                           </div>
-                          <Badge 
-                            variant={member.matchType === 'direct' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {member.matchType === 'direct' ? '직접매칭' : 
-                             member.matchType === 'related' ? '관련분야' : '잠재적'}
+                          <Badge variant="secondary" className="text-xs">
+                            지역 업체
                           </Badge>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">매칭된 멤버가 없습니다</p>
-                <p className="text-sm text-gray-500">먼저 "나의 전문분야 분석" 탭에서 AI 분석을 실행해주세요</p>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="text-center py-8">
+                  <Button 
+                    onClick={searchRegionalBusinesses}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    disabled={!aiAnalysis}
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    지역 내 시너지 업체 검색
+                  </Button>
+                  {!aiAnalysis && (
+                    <p className="text-sm text-gray-500 mt-2">먼저 "나의 전문분야 분석"을 실행해주세요</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

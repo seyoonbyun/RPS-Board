@@ -229,6 +229,50 @@ export class GeminiService {
     
     return 'potential';
   }
+
+  async searchRegionalBusinesses(searchQuery: string): Promise<{ businesses: any[] }> {
+    try {
+      const response = await this.ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: {
+              businesses: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    category: { type: "string" },
+                    address: { type: "string" },
+                    phone: { type: "string" },
+                    synergyPotential: { type: "string" },
+                    description: { type: "string" }
+                  },
+                  required: ["name", "category", "address", "synergyPotential"]
+                }
+              }
+            },
+            required: ["businesses"]
+          }
+        },
+        contents: searchQuery
+      });
+
+      const rawJson = response.text;
+      if (rawJson) {
+        const data = JSON.parse(rawJson);
+        return data;
+      } else {
+        throw new Error("Empty response from Gemini API");
+      }
+    } catch (error) {
+      console.error('Gemini 지역 업체 검색 오류:', error);
+      return { businesses: [] };
+    }
+  }
 }
 
 // 싱글톤 인스턴스

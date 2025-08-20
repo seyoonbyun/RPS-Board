@@ -7,6 +7,14 @@ This is a full-stack web application for BNI Korea's Power Team referral partner
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes and Fixes
+- **2025-08-20**: Enhanced AI 시너지 매칭 멤버 system with two-tier matching approach
+  - Added new API endpoints: `/api/chapter-synergy-members` and `/api/regional-businesses`
+  - Implemented chapter-based member recommendations using keyword matching
+  - Integrated Gemini API for regional business search functionality
+  - Enhanced UI with two separate cards: "나의 챕터 내 시너지 멤버 추천" and "지역 내 시너지 업체 검색"
+  - Automatic chapter member search when AI analysis completes
+  - Manual regional business search with loading states and error handling
+  
 - **2025-08-10**: Fixed critical withdrawal processing bug where columns were being mapped incorrectly
   - Issue: STATUS column was correctly identified at index 24 (Y column), but email was duplicated at both index 0 (A column) and index 22 (W column)
   - Solution: Updated `markUserAsWithdrawn` function to read full range (A1:Z5000) and correctly target only STATUS column
