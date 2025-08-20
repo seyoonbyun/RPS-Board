@@ -689,60 +689,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 </div>
               </CardContent>
             </Card>
-          ) : industryAnalytics ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    업종별 분포
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Object.entries(industryAnalytics.industryDistribution)
-                      .sort(([,a], [,b]) => (b as number) - (a as number))
-                      .slice(0, 8)
-                      .map(([industry, count]) => (
-                      <div key={industry} className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{industry}</span>
-                        <Badge variant="outline">{count as number}명</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    호환성 기회
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {industryAnalytics.compatibilityOpportunities
-                      .slice(0, 8)
-                      .map((opportunity: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{opportunity.industry}</span>
-                        <Badge className="bg-red-100 text-red-800">
-                          {opportunity.potentialPartners}개 기회
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           ) : (
-            <Card>
-              <CardContent className="text-center py-8">
-                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">업종 분석 데이터를 불러올 수 없습니다</p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600">추가 분석 데이터가 표시됩니다</p>
+            </div>
           )}
         </TabsContent>
       </Tabs>
