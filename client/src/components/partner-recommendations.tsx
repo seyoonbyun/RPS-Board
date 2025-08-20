@@ -331,7 +331,6 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           )}
         </TabsContent>
 
-        {/* AI 시너지 매칭 멤버 탭 */}
         <TabsContent value="analytics" className="space-y-4">
           {/* AI 매칭 결과 표시 */}
           {aiAnalysis?.matchingMembers && aiAnalysis.matchingMembers.length > 0 ? (
