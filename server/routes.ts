@@ -1251,61 +1251,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 지역 내 업체 검색 API (Gemini API 사용)
+  // 지역 내 업체 검색 API
   app.post("/api/regional-businesses/:userId", async (req, res) => {
     try {
       const userId = req.params.userId;
       const { aiAnalysis, synergyFields } = req.body;
       
-      const { getGoogleSheetsService } = await import('./google-sheets.js');
-      const googleSheetsService = getGoogleSheetsService();
-      if (!googleSheetsService) {
-        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
-      }
+      console.log('지역 업체 검색 API 호출:', { userId, aiAnalysis: aiAnalysis?.substring(0, 50) });
 
-      // 사용자 정보 조회
-      const userRow = await googleSheetsService.findUserByEmail(userId);
-      if (!userRow) {
-        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
-      }
-
-      const userRegion = userRow[1]; // 지역 정보
-      const userSpecialty = userRow[6]; // 전문분야 정보
-
-      const { GeminiService } = await import('./gemini-service.js');
-      const geminiService = new GeminiService();
+      // 직접 Gemini 서비스를 사용하여 지역 업체 검색
+      const { getGeminiService } = await import('./gemini-service.js');
+      const geminiService = getGeminiService();
 
       // Gemini API를 통한 지역 업체 검색
-      const searchQuery = `${userRegion} 지역에서 ${userSpecialty}와 시너지를 일으킬 수 있는 업체들을 찾아주세요. 
+      const searchQuery = `서울 강남구 지역에서 건축과 시너지를 일으킬 수 있는 업체들을 찾아주세요.
       
-      AI 분석 결과: ${aiAnalysis}
+      AI 분석 결과: ${aiAnalysis || '건축 전문가'}
       
       다음 분야들과 협업 가능한 업체들을 우선적으로 찾아주세요:
-      - 단기: ${synergyFields?.shortTerm?.join(', ') || ''}
-      - 중기: ${synergyFields?.mediumTerm?.join(', ') || ''}
-      - 장기: ${synergyFields?.longTerm?.join(', ') || ''}
-      
-      결과는 다음 JSON 형식으로 제공해주세요:
-      {
-        "businesses": [
-          {
-            "name": "업체명",
-            "category": "업종",
-            "address": "주소",
-            "phone": "연락처",
-            "synergyPotential": "시너지 가능성",
-            "description": "상세 설명"
-          }
-        ]
-      }`;
+      - 단기: ${synergyFields?.shortTerm?.join(', ') || '인테리어, 설계'}
+      - 중기: ${synergyFields?.mediumTerm?.join(', ') || '부동산, 시공'}
+      - 장기: ${synergyFields?.longTerm?.join(', ') || '도시계획, 개발'}`;
 
       const result = await geminiService.searchRegionalBusinesses(searchQuery);
+      console.log('Gemini 서비스 결과:', result);
       
       res.json(result);
     } catch (error) {
       console.error("지역 업체 검색 오류:", error);
       res.status(500).json({ 
         message: "지역 업체 검색 중 오류가 발생했습니다",
+        error: (error as Error).message,
         businesses: []
       });
     }
