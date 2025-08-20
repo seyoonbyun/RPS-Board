@@ -302,10 +302,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">아직까지 추천할 멤버가 없습니다.</p>
-                  <p className="text-sm text-gray-500">나의 전문분야 분석을 통해 제안드린 분야의 멤버를 영입해보세요!</p>
+                <div className="text-center py-4">
+                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 text-sm mb-1">아직까지 추천할 멤버가 없습니다.</p>
+                  <p className="text-xs text-gray-500">나의 전문분야 분석을 통해 제안드린 분야의 멤버를 영입해보세요!</p>
                 </div>
               )}
             </CardContent>
@@ -375,17 +375,12 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Button 
-                    onClick={searchRegionalBusinesses}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    disabled={!aiAnalysis}
-                  >
-                    <Search className="w-4 h-4 mr-2" />
-                    지역 내 시너지 업체 검색
-                  </Button>
+                <div className="text-center py-4">
+                  <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 text-sm mb-2">지역 업체 정보가 검색되지 않았습니다.</p>
+                  <p className="text-xs text-gray-500 mb-3">나의 전문분야 분석이 완료되면 자동으로 검색됩니다.</p>
                   {!aiAnalysis && (
-                    <p className="text-sm text-gray-500 mt-2">먼저 "나의 전문분야 분석"을 실행해주세요</p>
+                    <p className="text-xs text-yellow-600">먼저 "나의 전문분야 분석"을 실행해주세요</p>
                   )}
                 </div>
               )}

@@ -22,27 +22,15 @@ export class GeminiService {
     };
   }> {
     try {
-      const prompt = `
-당신은 비즈니스 전문가입니다. 아래 전문분야를 분석하여 시너지를 낼 수 있는 분야들을 추천해주세요.
-
-전문분야: ${specialty}
-
-다음 형식으로 답변해주세요:
-
-1. 전문분야 분석 및 시너지 분야 추천 (상세한 설명)
-2. 구체적인 시너지 분야 리스트 (10-15개)
-3. 우선순위별 분류:
-   - 단기적 확장 (즉시 가능한 분야)
-   - 중기적 성장 (1-2년 준비 필요)
-   - 장기적 투자 (3-5년 계획)
-
-답변은 한국어로 작성하고, BNI 비즈니스 네트워킹 관점에서 실질적이고 구체적인 조언을 제공해주세요.
-각 시너지 분야는 해당 전문분야와 어떤 협력이 가능한지 명확히 설명해주세요.
-`;
+      const prompt = `${specialty} 전문분야와 시너지 효과를 낼 수 있는 비즈니스 분야들을 10개 추천하고, 단기/중기/장기로 분류해주세요. 각 분야별 협업 방안을 간단히 설명해주세요.`;
 
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
+        config: {
+          maxOutputTokens: 1000, // 출력 토큰 제한으로 응답 속도 향상
+          temperature: 0.7 // 일관성 있는 빠른 응답
+        }
       });
 
       const analysisText = response.text || "";

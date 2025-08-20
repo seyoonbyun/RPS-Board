@@ -1148,8 +1148,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getGeminiService } = await import('./gemini-service.js');
       const geminiService = getGeminiService();
 
-      // AI 분석 실행
+      // AI 분석 실행 (성능 측정)
+      const startTime = Date.now();
+      console.log(`🚀 AI 분석 시작: ${userProfile.specialty}`);
+      
       const analysis = await geminiService.analyzeSpecialtyAndRecommendSynergies(userProfile.specialty);
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      console.log(`✅ AI 분석 완료: ${duration}ms (${(duration/1000).toFixed(2)}초)`);
 
       // 구글 시트에서 모든 활성 멤버 가져오기
       const allUsers = await googleSheetsService.getAllUsers();
@@ -1211,27 +1218,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
 
-      // Google Sheets에서 사용자 정보 조회
-      const userRow = await googleSheetsService.findUserByEmail(user.email);
+      // Google Sheets에서 사용자 정보 조회  
+      const allUsers = await googleSheetsService.getAllUsers();
+      const userRow = allUsers.find(u => u.email === user.email);
       if (!userRow) {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
 
-      const userChapter = userRow[2]; // 챕터 정보
-      const userSpecialty = userRow[6]; // 전문분야 정보
+      const userChapter = userRow.chapter; // 챕터 정보
+      const userSpecialty = userRow.specialty; // 전문분야 정보
 
       // 동일 챕터의 모든 멤버 조회
-      const allUsers = await googleSheetsService.getAllUsers();
-      const chapterMembers = allUsers.filter(user => 
-        user[2] === userChapter && // 같은 챕터
-        user[0] !== userId && // 본인 제외
-        user[24] === '활동중' // 활동중인 멤버만
+      const chapterMembers = allUsers.filter(member => 
+        member.chapter === userChapter && // 같은 챕터
+        member.email !== user.email && // 본인 제외
+        member.status === '활동중' // 활동중인 멤버만
       );
 
       // 시너지 분석 (간단한 키워드 매칭)
       const synergyMembers = chapterMembers.filter(member => {
-        const memberSpecialty = member[6] || '';
-        const memberIndustry = member[4] || '';
+        const memberSpecialty = member.specialty || '';
+        const memberIndustry = member.industry || '';
         
         // 시너지 가능성 체크 (간단한 로직)
         const hasSpecialtySynergy = 
@@ -1242,11 +1249,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return hasSpecialtySynergy;
       }).map(member => ({
-        email: member[0],
-        memberName: member[3],
-        company: member[5],
-        specialty: member[6],
-        chapter: member[2],
+        email: member.email,
+        memberName: member.memberName,
+        company: member.company,
+        specialty: member.specialty,
+        chapter: member.chapter,
         synergyReason: '건축 분야와의 협업 가능성'
       }));
 

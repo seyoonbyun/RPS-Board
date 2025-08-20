@@ -998,6 +998,41 @@ class GoogleSheetsService {
   }
 
   // 관리자용: 모든 사용자 데이터 가져오기
+  async findUserByEmail(email: string): Promise<any[] | null> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to read Google Sheets for user search');
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row && row[0] && row[0].toString().trim().toLowerCase() === email.toLowerCase()) {
+          return row;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding user by email:', error);
+      return null;
+    }
+  }
+
   async getAllUsers(): Promise<any[]> {
     try {
       const accessToken = await this.getAccessToken();
