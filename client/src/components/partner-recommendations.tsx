@@ -606,7 +606,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  AI가 분석한 총 102명 중 상위 20명 추천
+                  BNI AI가 분석한 총 102명 중 상위 20명 추천
                 </CardTitle>
               </CardHeader>
               <CardContent>
