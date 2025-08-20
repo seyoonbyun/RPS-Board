@@ -196,7 +196,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="ai-analysis" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            AI 분석
+            나의 전문분야 분석
           </TabsTrigger>
           <TabsTrigger value="recommendations" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
