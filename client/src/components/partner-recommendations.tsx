@@ -167,29 +167,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="w-6 h-6 text-red-600" />
-          <h2 className="text-2xl font-bold">비즈니스 시너지 파트너 추천</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            필터 {showFilters ? '숨기기' : '보기'}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => refetchRecommendations()}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            새로고침
-          </Button>
-        </div>
+      <div className="flex items-center gap-2">
+        <Lightbulb className="w-6 h-6 text-red-600" />
+        <h2 className="text-2xl font-bold">비즈니스 시너지 파트너 추천</h2>
       </div>
 
       <Tabs defaultValue="recommendations" className="w-full">
