@@ -1123,6 +1123,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI 전문분야 분석 및 시너지 추천
+  app.get("/api/ai-specialty-analysis/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      // 사용자 프로필에서 전문분야 가져오기
+      const userProfile = await googleSheetsService.getUserProfile(user.email);
+      if (!userProfile || !userProfile.specialty) {
+        return res.status(400).json({ message: "전문분야 정보가 없습니다. 프로필을 먼저 설정해주세요." });
+      }
+
+      const { getGeminiService } = await import('./gemini-service.js');
+      const geminiService = getGeminiService();
+
+      // AI 분석 실행
+      const analysis = await geminiService.analyzeSpecialtyAndRecommendSynergies(userProfile.specialty);
+
+      // 구글 시트에서 모든 활성 멤버 가져오기
+      const allUsers = await googleSheetsService.getAllUsers();
+      const activeMembers = allUsers.filter(user => user.status === '활동중');
+
+      // 시너지 분야와 매칭되는 멤버 찾기
+      const matchingMembers = await geminiService.findMatchingMembers(analysis.synergyFields, activeMembers);
+
+      res.json({
+        userSpecialty: userProfile.specialty,
+        analysis: analysis.analysis,
+        synergyFields: analysis.synergyFields,
+        priorities: analysis.priorities,
+        matchingMembers: matchingMembers.slice(0, 20), // 최대 20명
+        totalMatches: matchingMembers.length
+      });
+
+    } catch (error) {
+      console.error("AI specialty analysis error:", error);
+      res.status(500).json({ message: "AI 전문분야 분석 중 오류가 발생했습니다" });
+    }
+  });
+
   // Industry analytics endpoint
   app.get("/api/industry-analytics", async (req, res) => {
     try {
