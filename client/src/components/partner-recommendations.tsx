@@ -204,7 +204,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            업종 분석
+            AI 시너지 매칭 멤버
           </TabsTrigger>
         </TabsList>
 
@@ -634,11 +634,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  AI 시너지 매칭 멤버
+                  AI가 분석한 총 102명 중 상위 20명 추천
                 </CardTitle>
-                <CardDescription>
-                  Gemini AI가 분석한 총 {aiAnalysis.totalMatches}명 중 상위 {aiAnalysis.matchingMembers.length}명
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
