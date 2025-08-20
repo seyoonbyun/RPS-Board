@@ -1205,8 +1205,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
       }
 
-      // 사용자 정보 조회
-      const userRow = await googleSheetsService.findUserByEmail(userId);
+      // Storage에서 사용자 정보 조회
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+
+      // Google Sheets에서 사용자 정보 조회
+      const userRow = await googleSheetsService.findUserByEmail(user.email);
       if (!userRow) {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
@@ -1263,15 +1269,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getGeminiService } = await import('./gemini-service.js');
       const geminiService = getGeminiService();
 
-      // Gemini API를 통한 지역 업체 검색
-      const searchQuery = `서울 강남구 지역에서 건축과 시너지를 일으킬 수 있는 업체들을 찾아주세요.
-      
-      AI 분석 결과: ${aiAnalysis || '건축 전문가'}
-      
-      다음 분야들과 협업 가능한 업체들을 우선적으로 찾아주세요:
-      - 단기: ${synergyFields?.shortTerm?.join(', ') || '인테리어, 설계'}
-      - 중기: ${synergyFields?.mediumTerm?.join(', ') || '부동산, 시공'}
-      - 장기: ${synergyFields?.longTerm?.join(', ') || '도시계획, 개발'}`;
+      // AI 분석에서 추출된 모든 시너지 분야들을 수집
+      const allSynergyFields = [
+        ...(synergyFields?.shortTerm || []),
+        ...(synergyFields?.mediumTerm || []),
+        ...(synergyFields?.longTerm || [])
+      ];
+
+      // Gemini API를 통한 종합적인 지역 업체 검색
+      const searchQuery = `서울 강남구 지역에서 건축사와 시너지를 일으킬 수 있는 업체들을 상세히 찾아주세요.
+
+AI 분석 결과: ${aiAnalysis || '건축사 전문분야 분석'}
+
+다음 모든 분야와 관련된 업체들을 찾아서 각 분야별로 최소 2-3개씩 제공해주세요:
+${allSynergyFields.length > 0 ? allSynergyFields.map(field => `- ${field}`).join('\n') : 
+`- 인테리어 디자인
+- 건축 설계
+- 부동산 개발
+- 시공업체
+- 도시계획
+- 조경설계
+- 건축자재
+- 건설장비
+- 건축컨설팅
+- 부동산투자
+- 프로젝트관리
+- 건축법무
+- 환경설계
+- 스마트빌딩
+- 건축마케팅`}
+
+각 업체는 실제 존재하는 회사명과 정확한 연락처, 주소를 포함해서 제공해주세요. 
+결과는 최소 15-20개 업체를 포함하여 다양한 분야를 커버하도록 해주세요.`;
 
       const result = await geminiService.searchRegionalBusinesses(searchQuery);
       console.log('Gemini 서비스 결과:', result);

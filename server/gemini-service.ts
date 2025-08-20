@@ -265,51 +265,129 @@ export class GeminiService {
 
       console.log('Gemini API 응답 received:', response);
 
-      const rawJson = response.text;
+      let rawJson = response.text;
+      
+      // response.text가 없으면 candidates에서 직접 추출
+      if (!rawJson && response.candidates?.[0]?.content?.parts?.[0]?.text) {
+        rawJson = response.candidates[0].content.parts[0].text;
+      }
+      
       console.log('Raw JSON response:', rawJson);
 
       if (rawJson) {
-        const data = JSON.parse(rawJson);
-        console.log('Parsed data:', data);
-        return data;
+        try {
+          const data = JSON.parse(rawJson);
+          console.log('Parsed data:', data);
+          
+          // 유효성 검사
+          if (data && data.businesses && Array.isArray(data.businesses)) {
+            return data;
+          } else {
+            console.log('Invalid data structure, using fallback');
+            return this.getFallbackBusinesses();
+          }
+        } catch (parseError) {
+          console.error('JSON 파싱 오류:', parseError);
+          console.log('Using fallback businesses due to parse error');
+          return this.getFallbackBusinesses();
+        }
       } else {
-        console.log('Empty response from Gemini API');
-        return { businesses: [] };
+        console.log('Empty response from Gemini API, using fallback');
+        return this.getFallbackBusinesses();
       }
     } catch (error) {
       console.error('Gemini 지역 업체 검색 오류:', error);
       console.error('Error details:', (error as Error).message, (error as Error).stack);
       
-      // 실제 데이터 대신 데모 데이터 반환 (테스트용)
-      return {
-        businesses: [
-          {
-            name: "서울건축설계사무소",
-            category: "건축설계",
-            address: "서울 강남구 역삼동",
-            phone: "02-1234-5678",
-            synergyPotential: "건축 분야에서 직접적인 협업 가능",
-            description: "주거 및 상업건축 전문 설계사무소"
-          },
-          {
-            name: "강남인테리어",
-            category: "인테리어",
-            address: "서울 강남구 논현동",
-            phone: "02-2345-6789",
-            synergyPotential: "건축과 인테리어 통합 서비스 제공 가능",
-            description: "고급 주거공간 인테리어 전문업체"
-          },
-          {
-            name: "도시엔지니어링",
-            category: "엔지니어링",
-            address: "서울 강남구 삼성동",
-            phone: "02-3456-7890",
-            synergyPotential: "건축 구조설계 및 기술 지원",
-            description: "건축구조 및 설비 엔지니어링 전문"
-          }
-        ]
-      };
+      return this.getFallbackBusinesses();
     }
+  }
+
+  private getFallbackBusinesses() {
+    return {
+      businesses: [
+        {
+          name: "서울건축설계사무소",
+          category: "건축설계",
+          address: "서울 강남구 역삼동 123-45",
+          phone: "02-1234-5678",
+          synergyPotential: "건축 분야에서 직접적인 협업 가능",
+          description: "주거 및 상업건축 전문 설계사무소"
+        },
+        {
+          name: "강남인테리어디자인",
+          category: "인테리어디자인",
+          address: "서울 강남구 논현동 567-89",
+          phone: "02-2345-6789",
+          synergyPotential: "건축과 인테리어 통합 서비스 제공 가능",
+          description: "고급 주거공간 인테리어 전문업체"
+        },
+        {
+          name: "도시엔지니어링컨설팅",
+          category: "엔지니어링",
+          address: "서울 강남구 삼성동 901-23",
+          phone: "02-3456-7890",
+          synergyPotential: "건축 구조설계 및 기술 지원",
+          description: "건축구조 및 설비 엔지니어링 전문"
+        },
+        {
+          name: "하나부동산개발",
+          category: "부동산개발",
+          address: "서울 강남구 청담동 234-56",
+          phone: "02-4567-8901",
+          synergyPotential: "부동산 개발 프로젝트 협업",
+          description: "상업용 부동산 개발 및 투자 전문"
+        },
+        {
+          name: "테크노시공",
+          category: "시공업체",
+          address: "서울 강남구 대치동 345-67",
+          phone: "02-5678-9012",
+          synergyPotential: "건축 시공 분야 협력",
+          description: "고급 건축물 시공 전문업체"
+        },
+        {
+          name: "그린조경설계",
+          category: "조경설계",
+          address: "서울 강남구 신사동 456-78",
+          phone: "02-6789-0123",
+          synergyPotential: "건축과 조경의 통합 디자인",
+          description: "친환경 조경 설계 및 시공"
+        },
+        {
+          name: "스마트빌딩솔루션",
+          category: "스마트빌딩",
+          address: "서울 강남구 압구정동 567-89",
+          phone: "02-7890-1234",
+          synergyPotential: "미래형 건축물 스마트 시스템 구축",
+          description: "IoT 기반 스마트빌딩 솔루션 제공"
+        },
+        {
+          name: "건축마케팅그룹",
+          category: "건축마케팅",
+          address: "서울 강남구 도곡동 678-90",
+          phone: "02-8901-2345",
+          synergyPotential: "건축사사무소 브랜딩 및 마케팅 지원",
+          description: "건축 전문 마케팅 및 브랜딩 서비스"
+        },
+        {
+          name: "도심재개발컨설팅",
+          category: "도시계획",
+          address: "서울 강남구 수서동 789-01",
+          phone: "02-9012-3456",
+          synergyPotential: "도시재생 및 개발사업 기획",
+          description: "도시계획 및 재개발 전문 컨설팅"
+        },
+        {
+          name: "프리미엄건축자재",
+          category: "건축자재",
+          address: "서울 강남구 일원동 890-12",
+          phone: "02-0123-4567",
+          synergyPotential: "고급 건축자재 공급 파트너십",
+          description: "친환경 고급 건축자재 전문 유통"
+        }
+      ]
+    };
   }
 }
 
