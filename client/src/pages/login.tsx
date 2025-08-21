@@ -89,14 +89,14 @@ export default function LoginPage() {
       <Card className="w-full max-w-md mx-4 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105" style={{ border: '1px solid #d12031' }}>
         <CardContent className="pt-6">
           <div className="text-center mb-8">
-            <div className="mb-2">
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <img 
                 src={rpsLogoPath} 
                 alt="BNI RPS 로고" 
-                className="mx-auto h-16 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
             </div>
-            <div className="w-16 h-1 mx-auto rounded mt-6" style={{ backgroundColor: '#d12031' }}></div>
+            <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
           </div>
 
           <Form {...form}>
