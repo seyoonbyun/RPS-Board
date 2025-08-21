@@ -52,8 +52,14 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       
       const data = await response.json();
       console.log(`📊 AI 분석 응답 받음 - userId: ${userId}, specialty: ${data.userSpecialty}, analysis length: ${data.analysis?.length}자`);
+      console.log(`🔍 새로운 분석 내용 미리보기: ${data.analysis?.substring(0, 200)}...`);
       
-      setAiAnalysis(data);
+      // 완전히 새로운 객체로 설정하여 React 리렌더링 강제
+      setAiAnalysis({
+        ...data,
+        timestamp: Date.now(),
+        forceUpdate: Math.random()
+      });
     } catch (error) {
       console.error('AI 분석 오류:', error);
       setAiError(error as Error);
@@ -65,7 +71,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   // 컴포넌트 마운트 시 AI 분석 실행
   useEffect(() => {
     if (userId) {
-      fetchAIAnalysis();
+      // 컴포넌트 마운트 시 1초 후 실행하여 완전한 초기화 보장
+      setTimeout(() => {
+        fetchAIAnalysis();
+      }, 100);
     }
   }, [userId]);
 
