@@ -169,8 +169,14 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
   const saveMutation = useMutation({
     mutationFn: async (data: ScoreboardForm) => {
-      console.log('🔄 Saving form data:', data);
+      console.log('🔄 MUTATION DEBUG - Saving form data:', {
+        specialty: data.specialty,
+        targetCustomer: data.targetCustomer,
+        userId: userId,
+        requestBody: JSON.stringify(data, null, 2)
+      });
       const response = await apiRequest("POST", `/api/scoreboard/${userId}`, data);
+      console.log('🔄 MUTATION DEBUG - Server response status:', response.status);
       return response.json();
     },
     onSuccess: (data) => {
@@ -235,11 +241,12 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   // 수동 저장 방식으로 변경
 
   const onSubmit = (data: ScoreboardForm) => {
-    console.log('🔄 Form onSubmit triggered with data:', {
+    console.log('🔄 FORM SUBMIT DEBUG - Form onSubmit triggered with data:', {
       specialty: data.specialty,
       targetCustomer: data.targetCustomer,
-      formData: data
+      fullFormData: JSON.stringify(data, null, 2)
     });
+    console.log('🔄 FORM SUBMIT DEBUG - About to call saveMutation.mutate with:', data);
     saveMutation.mutate(data);
   };
 
