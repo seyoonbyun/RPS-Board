@@ -89,9 +89,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md mx-4 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105" style={{ border: '1px solid #d12031' }}>
         <CardContent className="pt-6">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#d12031' }}>
-              <Handshake className="text-white text-2xl w-8 h-8" />
-            </div>
             <div className="mb-4">
               <img 
                 src={rpsLogoPath} 
