@@ -234,11 +234,18 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {aiAnalysis.priorities.mediumTerm?.map((item: string, index: number) => (
-                          <div key={index} className="text-sm p-2 bg-orange-50 rounded border-l-2 border-orange-500">
-                            {item}
+                        {aiAnalysis.priorities.mediumTerm && aiAnalysis.priorities.mediumTerm.length > 0 ? (
+                          aiAnalysis.priorities.mediumTerm.map((item: string, index: number) => (
+                            <div key={index} className="text-sm p-2 bg-orange-50 rounded border-l-2 border-orange-500">
+                              {item}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded border">
+                            ⏳ 중기 성장 전략 분석 중...<br/>
+                            <span className="text-xs">AI가 귀하의 전문분야에 맞는 중기 협업 파트너를 분석하고 있습니다.</span>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </CardContent>
                   </Card>
