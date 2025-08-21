@@ -1365,19 +1365,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(defaultSynergyFields[userSpecialty] || defaultSynergyFields['건축사'])
       ];
 
+      // 사용자 지역 정보 추출 (사용자 프로필의 챕터 정보 활용)
+      const chapterInfo = userRow?.chapter || '강남';
+      const userRegion = chapterInfo.includes('강남') ? '강남구' : 
+                        chapterInfo.includes('서초') ? '서초구' :
+                        chapterInfo.includes('송파') ? '송파구' :
+                        chapterInfo.includes('종로') ? '종로구' :
+                        chapterInfo.includes('중구') ? '중구' :
+                        chapterInfo.includes('영등포') ? '영등포구' :
+                        chapterInfo.includes('마포') ? '마포구' :
+                        chapterInfo === '강남' ? '강남구' : '강남구'; // 기본값
+
+      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${userRegion}, 시너지 분야: ${combinedFields.length}개`);
+
       // Gemini API를 통한 종합적인 지역 업체 검색
-      const searchQuery = `서울 강남구 지역에서 ${userSpecialty}와 시너지를 일으킬 수 있는 업체들을 상세히 찾아주세요.
+      const searchQuery = `서울 ${userRegion} 지역에서 "${userSpecialty}"와 시너지를 일으킬 수 있는 실제 존재하는 업체들을 찾아주세요.
 
-AI 분석 결과: ${aiAnalysis || `${userSpecialty} 전문분야 분석`}
+전문분야 분석: ${aiAnalysis || `${userSpecialty} 전문분야 네트워킹 분석`}
 
-다음 모든 분야와 관련된 업체들을 찾아서 각 분야별로 최소 2-3개씩 제공해주세요:
+다음 분야와 관련된 실제 업체들을 각 분야별로 2-3개씩 제공해주세요:
 ${combinedFields.map(field => `- ${field}`).join('\n')}
 
-각 업체는 실제 존재하는 회사명과 정확한 연락처, 주소를 포함해서 제공해주세요. 
-결과는 최소 15-20개 업체를 포함하여 다양한 분야를 커버하도록 해주세요.`;
+요구사항:
+1. 서울 ${userRegion} 지역에 실제 위치한 업체만 포함
+2. 각 업체의 정확한 회사명, 주소, 연락처 정보 제공
+3. ${userSpecialty}와의 구체적인 시너지 가능성 설명
+4. 최소 12-15개 업체를 다양한 분야에서 선별
+5. 각 업체에 대한 간략한 사업 설명 포함
 
-      const result = await geminiService.searchRegionalBusinesses(searchQuery);
-      console.log('Gemini 서비스 결과:', result);
+결과를 JSON 형태로 정리해서 제공해주세요.`;
+
+      const result = await geminiService.searchRegionalBusinesses(searchQuery, userSpecialty, userRegion);
+      console.log(`🎯 지역 업체 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
       
       res.json(result);
     } catch (error) {
