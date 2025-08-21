@@ -769,6 +769,17 @@ class GoogleSheetsService {
         console.log(`Updating existing user ${data.userEmail} in row ${userRowIndex + 1} with range ${range}`);
         console.log(`Values to update:`, values);
         
+        // 🔥 CRITICAL DEBUG: 구글 시트 API 호출 전 상세 로그
+        const requestBody = JSON.stringify({ values: [values] });
+        console.log(`🔥 CRITICAL: About to update Google Sheets with:`, {
+          url: `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+          range: range,
+          method: 'PUT',
+          specialtyValue: values[6], // G열 specialty
+          bodyLength: requestBody.length,
+          accessTokenStart: accessToken.substring(0, 20) + '...'
+        });
+
         updateResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
           {
@@ -777,11 +788,19 @@ class GoogleSheetsService {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              values: [values]
-            })
+            body: requestBody
           }
         );
+
+        // 🔥 CRITICAL DEBUG: 응답 상세 분석
+        const responseClone = updateResponse.clone();
+        const responseText = await responseClone.text();
+        console.log(`🔥 CRITICAL: Google Sheets API Response:`, {
+          status: updateResponse.status,
+          ok: updateResponse.ok,
+          headers: Object.fromEntries(updateResponse.headers.entries()),
+          responseBody: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : '')
+        });
       } else {
         // 새 사용자 추가: 빈 행 우선 사용, 없으면 마지막 행 다음에 추가
         let targetRow = -1;
