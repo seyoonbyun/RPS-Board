@@ -98,8 +98,8 @@ export default function LoginPage() {
               />
             </div>
             <div className="mb-4">
-              <p className="text-lg text-gray-600 italic font-bold" style={{ fontFamily: 'cursive' }}>
-                Referral Partner Score Board
+              <p className="text-lg text-gray-600 font-bold" style={{ fontFamily: 'Arial, sans-serif' }}>
+                <span style={{ color: '#d12031' }}>R</span>eferral <span style={{ color: '#d12031' }}>P</span>artner <span style={{ color: '#d12031' }}>S</span>core Board
               </p>
             </div>
             <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
