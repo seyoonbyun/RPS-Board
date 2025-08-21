@@ -98,7 +98,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="mb-4">
-              <p className="text-lg text-gray-600 font-bold" style={{ fontFamily: 'Arial, sans-serif' }}>
+              <p className="text-lg font-bold" style={{ fontFamily: 'Arial, sans-serif', color: '#000000' }}>
                 <span style={{ color: '#d12031' }}>R</span>eferral <span style={{ color: '#d12031' }}>P</span>artner <span style={{ color: '#d12031' }}>S</span>core Board
               </p>
             </div>
