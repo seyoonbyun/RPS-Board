@@ -1137,7 +1137,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai-specialty-analysis/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      console.log(`🔍 AI 분석 요청 - userId: ${userId}`);
+      const forceRefresh = req.query.t; // 타임스탬프로 강제 새로고침 감지
+      console.log(`🔍 AI 분석 요청 - userId: ${userId}, forceRefresh: ${!!forceRefresh}`);
+      
+      // 캐시 무효화 헤더 설정
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       
       const user = await storage.getUserById(userId);
       if (!user) {
@@ -1164,16 +1172,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getGeminiService } = await import('./gemini-service.js');
       const geminiService = getGeminiService();
 
-      // AI 분석 실행 (성능 측정)
+      // AI 분석 실행 (성능 측정) - 매번 새로운 분석 강제 실행
       const startTime = Date.now();
-      console.log(`🚀 AI 분석 시작 - user: ${user.email}, specialty: ${userProfile.specialty}`);
+      const timestamp = Date.now();
+      console.log(`🚀 AI 분석 새로 시작 - user: ${user.email}, specialty: ${userProfile.specialty}, timestamp: ${timestamp}`);
       
       const analysis = await geminiService.analyzeSpecialtyAndRecommendSynergies(userProfile.specialty);
       
       const endTime = Date.now();
       const duration = endTime - startTime;
       console.log(`✅ AI 분석 완료 - user: ${user.email}, duration: ${duration}ms (${(duration/1000).toFixed(2)}초)`);
-      console.log(`📊 AI 분석 결과 preview - specialty: ${userProfile.specialty}, analysis preview: ${analysis.analysis?.substring(0, 100)}...`);
+      console.log(`📊 새로운 AI 분석 결과 생성 - specialty: ${userProfile.specialty}, analysis length: ${analysis.analysis?.length}자`);
 
       // 구글 시트에서 모든 활성 멤버 가져오기
       const allUsers = await googleSheetsService.getAllUsers();
