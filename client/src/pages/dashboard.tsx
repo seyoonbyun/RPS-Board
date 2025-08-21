@@ -250,37 +250,30 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Guide Section */}
         <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg" style={{ borderLeftColor: '#d12031' }}>
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Compass style={{ color: '#d12031' }} className="w-5 h-5" />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
-              <div className="text-sm text-gray-700 space-y-2">
-                <p>나의 파워팀_리퍼럴 파트너 스코어보드(RPS)는 BNI코리아 대표님들의 비즈니스 확장 경험을 측정하고 기록하는 데 도움을 주는 기록 툴로, 성취 경험을 향상시킴은 물론, 비즈니스 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
-                
-                <div className="bg-white p-4 rounded-lg mt-4">
-                  <p className="font-semibold text-gray-800 mb-2">🔁 관계 단계:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="w-6 h-6 bg-yellow-100 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">V</span>
-                      <span className="text-sm"><strong>Visibility</strong>: 아는 단계</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="w-6 h-6 bg-orange-100 text-orange-800 rounded-full flex items-center justify-center text-xs font-bold">C</span>
-                      <span className="text-sm"><strong>Credibility</strong>: 신뢰 단계</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center text-xs font-bold">P</span>
-                      <span className="text-sm"><strong>Profit</strong>: 수익 단계</span>
-                    </div>
-                  </div>
+          <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
+          <div className="text-sm text-gray-700 space-y-2">
+            <p>나의 파워팀_리퍼럴 파트너 스코어보드(RPS)는 BNI코리아 대표님들의 비즈니스 확장 경험을 측정하고 기록하는 데 도움을 주는 기록 툴로, 성취 경험을 향상시킴은 물론, 비즈니스 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
+            
+            <div className="bg-white p-4 rounded-lg mt-4">
+              <p className="font-semibold text-gray-800 mb-2">🔁 관계 단계:</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex items-center space-x-2">
+                  <span className="w-6 h-6 bg-yellow-100 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">V</span>
+                  <span className="text-sm"><strong>Visibility</strong>: 아는 단계</span>
                 </div>
-                
-                <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg mt-4">
-                  <p className="text-sm"><strong>⚠️ 참고:</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않습니다. 2년간 총 4명의 파트너를 영입하시면 100% 달성하게 됩니다.</p>
+                <div className="flex items-center space-x-2">
+                  <span className="w-6 h-6 bg-orange-100 text-orange-800 rounded-full flex items-center justify-center text-xs font-bold">C</span>
+                  <span className="text-sm"><strong>Credibility</strong>: 신뢰 단계</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center text-xs font-bold">P</span>
+                  <span className="text-sm"><strong>Profit</strong>: 수익 단계</span>
                 </div>
               </div>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg mt-4">
+              <p className="text-sm"><strong>⚠️ 참고:</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않습니다. 2년간 총 4명의 파트너를 영입하시면 100% 달성하게 됩니다.</p>
             </div>
           </div>
         </div>
