@@ -801,6 +801,41 @@ class GoogleSheetsService {
           headers: Object.fromEntries(updateResponse.headers.entries()),
           responseBody: responseText.substring(0, 500) + (responseText.length > 500 ? '...' : '')
         });
+
+        // 🔥 IMMEDIATE VERIFICATION: 업데이트 직후 즉시 구글 시트에서 값 재확인
+        console.log(`🔥 IMMEDIATE VERIFICATION: Checking if update actually persisted in Google Sheets...`);
+        try {
+          const verifyResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}?access_token=${accessToken}&_verify=${Date.now()}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
+              }
+            }
+          );
+          
+          if (verifyResponse.ok) {
+            const verifyData = await verifyResponse.json();
+            const actualValue = verifyData.values?.[0]?.[0] || 'EMPTY';
+            console.log(`🔥 IMMEDIATE VERIFICATION RESULT:`, {
+              expectedValue: values[6], // specialty field
+              actualValueInSheets: actualValue,
+              matches: values[6] === actualValue,
+              rawVerifyData: verifyData
+            });
+            
+            if (values[6] !== actualValue) {
+              console.error(`🚨 CRITICAL FAILURE: Google Sheets update DID NOT PERSIST!`);
+              console.error(`🚨 Expected: "${values[6]}", but found: "${actualValue}"`);
+            } else {
+              console.log(`✅ VERIFICATION SUCCESS: Google Sheets update successfully persisted!`);
+            }
+          }
+        } catch (verifyError) {
+          console.error(`🔥 VERIFICATION ERROR:`, verifyError);
+        }
       } else {
         // 새 사용자 추가: 빈 행 우선 사용, 없으면 마지막 행 다음에 추가
         let targetRow = -1;
