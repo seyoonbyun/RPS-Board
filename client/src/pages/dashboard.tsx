@@ -123,7 +123,8 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          {/* 데스크톱 레이아웃 */}
+          <div className="hidden md:flex justify-between items-center py-4">
             <div className="flex items-center">
               <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#d12031' }}>
                 <BarChart3 className="text-white w-5 h-5" />
@@ -177,6 +178,70 @@ export default function Dashboard() {
                 <LogOut className="mr-1 w-4 h-4" />
                 로그아웃
               </Button>
+            </div>
+          </div>
+
+          {/* 모바일 레이아웃 */}
+          <div className="md:hidden py-4">
+            {/* 타이틀과 사용자 정보 - 맨 위 */}
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#d12031' }}>
+                <BarChart3 className="text-white w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold" style={{ color: '#d12031' }}>파워팀 스코어보드</h1>
+                <span className="text-sm text-gray-500 truncate max-w-xs" title={user.email}>ID : {user.email}</span>
+                {userProfile && (
+                  <div className="text-sm text-gray-700 mt-1">
+                    {userProfile.partner} {userProfile.memberName} 대표님, 환영합니다 ! :)
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 버튼들 - 아래에 배치 */}
+            <div className="space-y-2">
+              {/* 관리자 패널 버튼 - 있으면 첫 번째 줄에 전체 너비 */}
+              {adminPermission?.isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/admin')}
+                  style={{ 
+                    color: '#d12031', 
+                    borderColor: '#f5c2c7', 
+                  }}
+                  className="hover:bg-red-50 w-full"
+                >
+                  <Users className="mr-2 w-4 h-4" />
+                  관리자 패널
+                </Button>
+              )}
+              {/* 인쇄와 로그아웃 버튼 - 두 번째 줄에 나란히 */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  style={{ 
+                    color: '#d12031', 
+                    borderColor: '#f5c2c7', 
+                  }}
+                  className="hover:bg-red-50 flex-1"
+                >
+                  <Printer className="mr-1 w-4 h-4" />
+                  인쇄
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-red-800 border-red-200 hover:bg-red-50 flex-1"
+                >
+                  <LogOut className="mr-1 w-4 h-4" />
+                  로그아웃
+                </Button>
+              </div>
             </div>
           </div>
         </div>
