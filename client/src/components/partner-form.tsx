@@ -432,8 +432,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                                 value={field.value || ""} 
                                 placeholder="BNI Connect 산업 대분류" 
                                 readOnly 
-                                className="bg-gray-50 cursor-not-allowed truncate" 
-                                title={field.value || ""}
+                                className="bg-gray-50 cursor-not-allowed truncate"
                               />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-xs">
