@@ -8,10 +8,11 @@ Preferred communication style: Simple, everyday language.
 Form consistency preference: All form fields must require submit button activation for saving - no auto-save functionality to avoid user confusion.
 
 ## Recent Changes and Fixes
-- **2025-08-21**: FORM CONSISTENCY IMPROVEMENT: 모든 필드 수정이 제출 버튼을 통해서만 저장되도록 사용자 안내 추가
+- **2025-08-21**: FORM CONSISTENCY & TOAST IMPROVEMENT: 폼 일관성 및 알림 팝업 최적화
   - ✅ CLARITY ENHANCEMENT: 전문분야/핵심 고객층 필드 상단에 저장 방법 안내 메시지 추가
   - ✅ SUBMIT GUIDANCE: 제출 버튼 상단에 중요 알림 메시지로 일관된 저장 방식 강조
   - ✅ USER EXPERIENCE: 자동 저장과 수동 저장이 혼재하여 발생하는 사용자 혼동 방지
+  - ✅ TOAST OPTIMIZATION: 모든 저장 완료/실패 팝업이 2.5초 후 자동 사라지도록 duration 통일 설정
   
 - **2025-08-21**: CONFIRMED WORKING: AI 파트너 추천 시스템 완전 정상화
   - ✅ CRITICAL BUG RESOLVED: 하드코딩된 건축설계사 분석 내용을 실제 Gemini API 호출로 대체
