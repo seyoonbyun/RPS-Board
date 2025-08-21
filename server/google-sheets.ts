@@ -806,10 +806,11 @@ class GoogleSheetsService {
         console.log(`🔥 IMMEDIATE VERIFICATION: Checking if update actually persisted in Google Sheets...`);
         try {
           const verifyResponse = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}?access_token=${accessToken}&_verify=${Date.now()}`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}`,
             {
               method: 'GET',
               headers: {
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache, no-store, must-revalidate'
               }
@@ -833,7 +834,8 @@ class GoogleSheetsService {
               console.log(`✅ VERIFICATION SUCCESS: Google Sheets update successfully persisted!`);
             }
           } else {
-            console.error(`🔥 VERIFICATION API ERROR: Status ${verifyResponse.status}`);
+            const errorText = await verifyResponse.text();
+            console.error(`🔥 VERIFICATION API ERROR: Status ${verifyResponse.status}, Error: ${errorText}`);
           }
         } catch (verifyError) {
           console.error(`🔥 VERIFICATION ERROR:`, verifyError);
