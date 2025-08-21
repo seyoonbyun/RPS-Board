@@ -28,10 +28,12 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     
     setIsLoadingAI(true);
     setAiError(null);
+    setAiAnalysis(null); // 이전 분석 결과 완전 초기화
     
     try {
-      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}, timestamp: ${Date.now()}`);
-      const response = await fetch(`/api/ai-specialty-analysis/${userId}?t=${Date.now()}`, {
+      const timestamp = Date.now();
+      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}, timestamp: ${timestamp}`);
+      const response = await fetch(`/api/ai-specialty-analysis/${userId}?force=true&t=${timestamp}`, {
         method: 'GET',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
