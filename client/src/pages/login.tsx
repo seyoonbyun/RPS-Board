@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
 import { Handshake, LogIn } from "lucide-react";
-import rpsLogoPath from "@assets/RPS logo 3_1755761103783.png";
+import rpsLogoPath from "@assets/RPS logo 4_1755761676803.png";
 
 
 export default function LoginPage() {
@@ -89,7 +89,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md mx-4 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105" style={{ border: '1px solid #d12031' }}>
         <CardContent className="pt-6">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4"></div>
+            <div className="w-16 h-8 mx-auto mb-4"></div>
             <div className="mb-2">
               <img 
                 src={rpsLogoPath} 
