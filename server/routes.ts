@@ -185,6 +185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/scoreboard/:userId", async (req, res) => {
     try {
+      console.log('🔥 SERVER DEBUG - POST /api/scoreboard/:userId called');
+      console.log('🔥 SERVER DEBUG - Request params:', req.params);
+      console.log('🔥 SERVER DEBUG - Request body:', JSON.stringify(req.body, null, 2));
+      
       const { userId } = req.params;
       const formData = scoreboardPartialUpdateSchema.parse(req.body);
       
