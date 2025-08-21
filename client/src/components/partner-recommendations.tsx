@@ -91,11 +91,12 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     }
   };
 
-  // AI 분석이 완료되면 자동으로 챕터 내 시너지 멤버 검색 및 지역 업체 검색
+  // AI 분석이 완료되면 자동으로 챕터 내 시너지 멤버 검색
   useEffect(() => {
     if (aiAnalysis && userId) {
+      console.log(`🔄 AI 분석 완료됨, 추가 검색 시작 - specialty: ${aiAnalysis.userSpecialty}`);
       searchChapterSynergyMembers();
-      searchRegionalBusinesses(); // 자동으로 지역 업체도 검색
+      // 지역 업체 검색은 수동으로만 실행 (자동 실행 제거)
     }
   }, [aiAnalysis, userId]);
 
