@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
 import { Handshake, LogIn } from "lucide-react";
+import rpsLogoPath from "@assets/RPS logo 2_1755760698280.png";
 
 
 export default function LoginPage() {
@@ -91,8 +92,13 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#d12031' }}>
               <Handshake className="text-white text-2xl w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">BNI 코리아</h1>
-            <h2 className="text-lg mb-4" style={{ color: '#d12031' }}>파워팀 리퍼럴 파트너 스코어보드</h2>
+            <div className="mb-4">
+              <img 
+                src={rpsLogoPath} 
+                alt="BNI RPS 로고" 
+                className="mx-auto h-16 w-auto object-contain"
+              />
+            </div>
             <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
           </div>
 
