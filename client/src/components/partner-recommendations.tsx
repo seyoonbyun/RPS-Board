@@ -157,10 +157,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="w-5 h-5 text-purple-600" />
-                    BNI AI 상세분석
+                    K-BNI AI 상세분석
                   </CardTitle>
                   <CardDescription>
-                    대표님의 비즈니스 시너지와 확장 가능성에 대한 BNI AI의 분석입니다
+                    대표님의 비즈니스 시너지와 확장 가능성에 대한 K-BNI AI의 분석입니다
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
