@@ -832,6 +832,8 @@ class GoogleSheetsService {
             } else {
               console.log(`✅ VERIFICATION SUCCESS: Google Sheets update successfully persisted!`);
             }
+          } else {
+            console.error(`🔥 VERIFICATION API ERROR: Status ${verifyResponse.status}`);
           }
         } catch (verifyError) {
           console.error(`🔥 VERIFICATION ERROR:`, verifyError);
