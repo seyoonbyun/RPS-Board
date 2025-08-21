@@ -90,12 +90,17 @@ export default function LoginPage() {
         <CardContent className="pt-6">
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4"></div>
-            <div className="mb-4">
+            <div className="mb-2">
               <img 
                 src={rpsLogoPath} 
                 alt="BNI RPS 로고" 
                 className="mx-auto h-16 w-auto object-contain"
               />
+            </div>
+            <div className="mb-4">
+              <p className="text-lg text-gray-600 italic font-light" style={{ fontFamily: 'cursive' }}>
+                Referral Partner Score Board
+              </p>
             </div>
             <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
           </div>
