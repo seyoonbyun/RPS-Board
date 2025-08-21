@@ -597,7 +597,8 @@ export default function AdminPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          {/* 데스크톱 레이아웃 */}
+          <div className="hidden md:flex justify-between items-center py-4">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center mr-3">
                 <Users className="text-white w-5 h-5" />
@@ -632,6 +633,52 @@ export default function AdminPage() {
                 size="sm"
                 onClick={() => setLocation('/dashboard')}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
+              >
+                <ArrowLeft className="mr-1 w-4 h-4" />
+                대시보드로 돌아가기
+              </Button>
+            </div>
+          </div>
+
+          {/* 모바일 레이아웃 */}
+          <div className="md:hidden py-4">
+            {/* 타이틀과 서브텍스트 - 맨 위 */}
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center mr-3">
+                <Users className="text-white w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-red-600">BNI Korea 관리자 패널</h1>
+                <span className="text-sm text-gray-500">파워팀 멤버 관리 (입회/탈퇴)</span>
+              </div>
+            </div>
+
+            {/* 버튼들 - 아래에 수평 배치 */}
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={() => setShowAddUserDialog(true)}
+                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600 flex-1 min-w-0"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                멤버 추가하기
+              </Button>
+              {adminPermission?.auth === 'National' && (
+                <Button 
+                  onClick={exportUserList} 
+                  variant="outline" 
+                  size="sm"
+                  className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1 min-w-0"
+                >
+                  <Download className="mr-1 w-4 h-4" />
+                  RPS 목록 내보내기
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLocation('/dashboard')}
+                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1 min-w-0"
               >
                 <ArrowLeft className="mr-1 w-4 h-4" />
                 대시보드로 돌아가기
