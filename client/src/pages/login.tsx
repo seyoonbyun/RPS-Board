@@ -98,7 +98,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="mb-4">
-              <p className="text-lg text-gray-600 italic font-light" style={{ fontFamily: 'cursive' }}>
+              <p className="text-lg text-gray-600 italic font-bold" style={{ fontFamily: 'cursive' }}>
                 Referral Partner Score Board
               </p>
             </div>
