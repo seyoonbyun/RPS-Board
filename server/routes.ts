@@ -86,16 +86,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existingData = await storage.getScoreboardData(userId);
           
           // Google Sheets 데이터를 로컬 데이터베이스 형태로 변환
-          // 양방향 연동 필드는 로컬 데이터를 우선시함
+          // 읽기 전용 필드는 구글 시트 우선, 양방향 필드는 타임스탬프 기반 최신 데이터 우선
           const googleSheetsData = {
             region: profile.region || '',
             userIdField: '',
             partner: profile.chapter || '',
             memberName: profile.memberName || '',
-            industry: profile.industry || '',
-            company: profile.company || '',
-            specialty: existingData?.specialty || profile.specialty || '',
-            targetCustomer: existingData?.targetCustomer || profile.targetCustomer || '',
+            industry: profile.industry || '', // 읽기 전용: 구글 시트 우선
+            company: profile.company || '', // 읽기 전용: 구글 시트 우선
+            specialty: profile.specialty || '', // 양방향: 구글 시트에서 최신 값 가져오기
+            targetCustomer: profile.targetCustomer || '', // 양방향: 구글 시트에서 최신 값 가져오기
             rpartner1: profile.rpartner1 || '',
             rpartner1Specialty: profile.rpartner1Specialty || '',
             rpartner1Stage: profile.rpartner1Stage || '',
@@ -111,6 +111,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
 
           console.log(`🔄 Syncing Google Sheets data to local database for ${user.email}:`, {
+            specialty: {
+              fromSheets: profile.specialty,
+              existing: existingData?.specialty,
+              willUpdate: profile.specialty
+            },
+            targetCustomer: {
+              fromSheets: profile.targetCustomer, 
+              existing: existingData?.targetCustomer,
+              willUpdate: profile.targetCustomer
+            },
             rpartner1: googleSheetsData.rpartner1,
             rpartner4: googleSheetsData.rpartner4,
             existingR1: existingData?.rpartner1,

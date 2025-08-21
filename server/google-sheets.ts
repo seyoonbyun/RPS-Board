@@ -737,9 +737,13 @@ class GoogleSheetsService {
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명 (구글 시트 우선)
           values[4] = existingRow[4] || data.industry || ''; // 산업군 - 구글 시트 우선 (read-only)
           values[5] = existingRow[5] || data.company || ''; // 회사 - 구글 시트 우선 (read-only)
-          // 양방향 연동 필드는 이미 초기 설정에서 올바르게 처리됨 - 여기서 덮어쓰지 않음
-          
-          // 양방향 연동 필드 처리 완료
+          // 양방향 연동 필드 (specialty, targetCustomer)는 앱에서 전달된 최신 데이터 사용
+          // values[6] = specialty (G열) - 앱에서 업데이트된 값 사용
+          // values[7] = targetCustomer (H열) - 앱에서 업데이트된 값 사용
+          console.log(`🔄 Bidirectional field update for ${data.userEmail}:`, {
+            specialty: { current: existingRow[6], updating: values[6] },
+            targetCustomer: { current: existingRow[7], updating: values[7] }
+          });
           
           // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
           // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
