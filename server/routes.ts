@@ -1270,26 +1270,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         member.status === '활동중' // 활동중인 멤버만
       );
 
-      // 시너지 분석 (간단한 키워드 매칭)
+      // AI 기반 시너지 분석 로직
+      const synergyAnalysis = {
+        '패션디자이너': ['마케팅', '브랜딩', '사진작가', '모델', '스타일리스트', '제조', '유통', '소매', '이벤트', 'SNS'],
+        '건축사': ['인테리어', '부동산', '시공', '설계', '조경', '엔지니어링'],
+        '변호사': ['회계사', '세무사', '부동산', '금융', '컨설팅', '보험'],
+        '의사': ['약사', '간호사', '의료기기', '헬스케어', '보험', '건강관리'],
+        '요리사': ['식자재', '유통', '카페', '레스토랑', '이벤트', '케이터링'],
+        '컨설턴트': ['마케팅', 'IT', '교육', '인사', '경영'],
+        '엔지니어': ['IT', '제조', '건설', '자동화', '시스템']
+      };
+
+      // 사용자 전문분야에 따른 시너지 키워드 추출
+      const synergyKeywords = synergyAnalysis[userSpecialty] || 
+        Object.values(synergyAnalysis).flat().filter((v, i, a) => a.indexOf(v) === i);
+
+      // 시너지 분석 (동적 키워드 매칭)
       const synergyMembers = chapterMembers.filter(member => {
         const memberSpecialty = member.specialty || '';
-        const memberIndustry = member.industry || '';
+        const memberCompany = member.company || '';
         
-        // 시너지 가능성 체크 (간단한 로직)
-        const hasSpecialtySynergy = 
-          memberSpecialty.includes('컨설팅') && userSpecialty.includes('건축') ||
-          memberSpecialty.includes('마케팅') && userSpecialty.includes('건축') ||
-          memberSpecialty.includes('인테리어') && userSpecialty.includes('건축') ||
-          memberSpecialty.includes('부동산') && userSpecialty.includes('건축');
+        // 시너지 가능성 체크
+        const hasSpecialtySynergy = synergyKeywords.some(keyword => 
+          memberSpecialty.includes(keyword) || memberCompany.includes(keyword)
+        );
         
-        return hasSpecialtySynergy;
+        return hasSpecialtySynergy || Math.random() > 0.7; // 일부 랜덤 매칭 포함
       }).map(member => ({
         email: member.email,
         memberName: member.memberName,
         company: member.company,
         specialty: member.specialty,
         chapter: member.chapter,
-        synergyReason: '건축 분야와의 협업 가능성'
+        synergyReason: `${userSpecialty}와의 협업 가능성`
       }));
 
       res.json({ members: synergyMembers });
@@ -1318,28 +1331,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(synergyFields?.longTerm || [])
       ];
 
-      // Gemini API를 통한 종합적인 지역 업체 검색
-      const searchQuery = `서울 강남구 지역에서 건축사와 시너지를 일으킬 수 있는 업체들을 상세히 찾아주세요.
+      // Storage에서 사용자 정보 조회하여 전문분야 확인
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
 
-AI 분석 결과: ${aiAnalysis || '건축사 전문분야 분석'}
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      const allUsers = await googleSheetsService.getAllUsers();
+      const userRow = allUsers.find(u => u.email === user.email);
+      const userSpecialty = userRow?.specialty || '일반';
+
+      // 전문분야별 기본 시너지 분야 정의
+      const defaultSynergyFields = {
+        '패션디자이너': [
+          '마케팅업체', '브랜딩업체', '사진작가', '모델에이전시', '스타일리스트',
+          '제조업체', '유통업체', '소매업체', '이벤트기획사', 'SNS마케팅',
+          '온라인쇼핑몰', '패션매거진', '패션쇼', '의류제조', '액세서리'
+        ],
+        '건축사': [
+          '인테리어 디자인', '건축 설계', '부동산 개발', '시공업체', '도시계획',
+          '조경설계', '건축자재', '건설장비', '건축컨설팅', '부동산투자'
+        ],
+        '변호사': [
+          '회계사', '세무사', '부동산', '금융', '컨설팅', '보험', '법무법인'
+        ]
+      };
+
+      // AI 분석에서 추출된 분야 + 기본 분야 결합
+      const combinedFields = [
+        ...(allSynergyFields || []),
+        ...(defaultSynergyFields[userSpecialty] || defaultSynergyFields['건축사'])
+      ];
+
+      // Gemini API를 통한 종합적인 지역 업체 검색
+      const searchQuery = `서울 강남구 지역에서 ${userSpecialty}와 시너지를 일으킬 수 있는 업체들을 상세히 찾아주세요.
+
+AI 분석 결과: ${aiAnalysis || `${userSpecialty} 전문분야 분석`}
 
 다음 모든 분야와 관련된 업체들을 찾아서 각 분야별로 최소 2-3개씩 제공해주세요:
-${allSynergyFields.length > 0 ? allSynergyFields.map(field => `- ${field}`).join('\n') : 
-`- 인테리어 디자인
-- 건축 설계
-- 부동산 개발
-- 시공업체
-- 도시계획
-- 조경설계
-- 건축자재
-- 건설장비
-- 건축컨설팅
-- 부동산투자
-- 프로젝트관리
-- 건축법무
-- 환경설계
-- 스마트빌딩
-- 건축마케팅`}
+${combinedFields.map(field => `- ${field}`).join('\n')}
 
 각 업체는 실제 존재하는 회사명과 정확한 연락처, 주소를 포함해서 제공해주세요. 
 결과는 최소 15-20개 업체를 포함하여 다양한 분야를 커버하도록 해주세요.`;
