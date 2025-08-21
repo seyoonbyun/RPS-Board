@@ -5,8 +5,14 @@ This is a full-stack web application for BNI Korea's Power Team referral partner
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Form consistency preference: All form fields must require submit button activation for saving - no auto-save functionality to avoid user confusion.
 
 ## Recent Changes and Fixes
+- **2025-08-21**: FORM CONSISTENCY IMPROVEMENT: 모든 필드 수정이 제출 버튼을 통해서만 저장되도록 사용자 안내 추가
+  - ✅ CLARITY ENHANCEMENT: 전문분야/핵심 고객층 필드 상단에 저장 방법 안내 메시지 추가
+  - ✅ SUBMIT GUIDANCE: 제출 버튼 상단에 중요 알림 메시지로 일관된 저장 방식 강조
+  - ✅ USER EXPERIENCE: 자동 저장과 수동 저장이 혼재하여 발생하는 사용자 혼동 방지
+  
 - **2025-08-21**: CONFIRMED WORKING: AI 파트너 추천 시스템 완전 정상화
   - ✅ CRITICAL BUG RESOLVED: 하드코딩된 건축설계사 분석 내용을 실제 Gemini API 호출로 대체
   - ✅ DYNAMIC AI ANALYSIS: 각 전문분야별 맞춤형 AI 분석 제공 (패션디자이너 5323자 분석 확인)

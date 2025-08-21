@@ -490,6 +490,13 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 />
               </div>
               
+              {/* 저장 안내 메시지 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>저장 방법:</strong> 모든 정보 수정 후 아래 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
+                </p>
+              </div>
+              
 
             </div>
 
@@ -509,8 +516,13 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               </div>
             </div>
             
-            {/* 수동 저장 버튼 */}
-            <div className="flex justify-end pt-4 border-t submit-button-section">
+            {/* 저장 버튼 */}
+            <div className="pt-4 border-t submit-button-section">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-amber-800">
+                  ⚠️ <strong>중요:</strong> 위의 모든 정보를 수정한 후 반드시 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
+                </p>
+              </div>
               <Button
                 type="submit"
                 disabled={saveMutation.isPending}
