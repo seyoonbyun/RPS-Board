@@ -25,15 +25,25 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   } = useQuery({
     queryKey: ['/api/ai-specialty-analysis', userId],
     queryFn: async () => {
-      const response = await fetch(`/api/ai-specialty-analysis/${userId}`);
+      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}`);
+      const response = await fetch(`/api/ai-specialty-analysis/${userId}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'AI 분석을 불러오는데 실패했습니다');
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`📊 AI 분석 응답 받음 - userId: ${userId}, specialty: ${data.userSpecialty}, debugInfo:`, data.debugInfo);
+      return data;
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5분간 캐시
+    staleTime: 0, // 캐시 비활성화로 항상 새로운 요청
+    cacheTime: 0, // 메모리 캐시도 비활성화
   });
 
   // 챕터 내 시너지 멤버 검색 함수

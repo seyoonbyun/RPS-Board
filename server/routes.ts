@@ -1137,11 +1137,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai-specialty-analysis/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
+      console.log(`🔍 AI 분석 요청 - userId: ${userId}`);
       
       const user = await storage.getUserById(userId);
       if (!user) {
+        console.log(`❌ 사용자를 찾을 수 없음 - userId: ${userId}`);
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
+      console.log(`✅ 사용자 발견 - email: ${user.email}, id: ${user.id}`);
 
       const { getGoogleSheetsService } = await import('./google-sheets.js');
       const googleSheetsService = getGoogleSheetsService();
@@ -1151,7 +1154,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 사용자 프로필에서 전문분야 가져오기
       const userProfile = await googleSheetsService.getUserProfile(user.email);
+      console.log(`🔍 사용자 프로필 조회 - email: ${user.email}, specialty: ${userProfile?.specialty}`);
+      
       if (!userProfile || !userProfile.specialty) {
+        console.log(`❌ 전문분야 정보 없음 - email: ${user.email}, profile:`, userProfile);
         return res.status(400).json({ message: "전문분야 정보가 없습니다. 프로필을 먼저 설정해주세요." });
       }
 
@@ -1160,13 +1166,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // AI 분석 실행 (성능 측정)
       const startTime = Date.now();
-      console.log(`🚀 AI 분석 시작: ${userProfile.specialty}`);
+      console.log(`🚀 AI 분석 시작 - user: ${user.email}, specialty: ${userProfile.specialty}`);
       
       const analysis = await geminiService.analyzeSpecialtyAndRecommendSynergies(userProfile.specialty);
       
       const endTime = Date.now();
       const duration = endTime - startTime;
-      console.log(`✅ AI 분석 완료: ${duration}ms (${(duration/1000).toFixed(2)}초)`);
+      console.log(`✅ AI 분석 완료 - user: ${user.email}, duration: ${duration}ms (${(duration/1000).toFixed(2)}초)`);
+      console.log(`📊 AI 분석 결과 preview - specialty: ${userProfile.specialty}, analysis preview: ${analysis.analysis?.substring(0, 100)}...`);
 
       // 구글 시트에서 모든 활성 멤버 가져오기
       const allUsers = await googleSheetsService.getAllUsers();
@@ -1175,17 +1182,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 시너지 분야와 매칭되는 멤버 찾기
       const matchingMembers = await geminiService.findMatchingMembers(analysis.synergyFields, activeMembers);
 
-      res.json({
+      const responseData = {
         userSpecialty: userProfile.specialty,
         analysis: analysis.analysis,
         synergyFields: analysis.synergyFields,
         priorities: analysis.priorities,
         matchingMembers: matchingMembers.slice(0, 20), // 최대 20명
-        totalMatches: matchingMembers.length
-      });
+        totalMatches: matchingMembers.length,
+        debugInfo: {
+          requestedUserId: userId,
+          requestedUserEmail: user.email,
+          actualSpecialty: userProfile.specialty,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      console.log(`🎯 AI 분석 응답 전송 - user: ${user.email}, specialty: ${userProfile.specialty}`);
+      res.json(responseData);
 
     } catch (error) {
-      console.error("AI specialty analysis error:", error);
+      console.error(`❌ AI specialty analysis error for userId ${req.params.userId}:`, error);
       res.status(500).json({ message: "AI 전문분야 분석 중 오류가 발생했습니다" });
     }
   });
