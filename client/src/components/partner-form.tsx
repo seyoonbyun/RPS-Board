@@ -624,7 +624,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                       >
                         <ExternalLink className="mr-2 w-4 h-4" />
-                        나의 챕터 RPI (Referral Partner Index) 확인하기
+                        나의 챕터 RPI 확인하기
                       </Button>
                       
                       {/* 탈퇴 버튼 */}
