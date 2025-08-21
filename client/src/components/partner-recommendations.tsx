@@ -23,27 +23,31 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     error: aiError,
     refetch: refetchAI
   } = useQuery({
-    queryKey: ['/api/ai-specialty-analysis', userId],
+    queryKey: ['/api/ai-specialty-analysis', userId, Date.now()], // 타임스탬프로 강제 캐시 무효화
     queryFn: async () => {
-      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}`);
-      const response = await fetch(`/api/ai-specialty-analysis/${userId}`, {
+      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}, timestamp: ${Date.now()}`);
+      const response = await fetch(`/api/ai-specialty-analysis/${userId}?t=${Date.now()}`, {
+        method: 'GET',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
         }
       });
+      console.log(`📡 AI 분석 요청 전송됨 - status: ${response.status}`);
       if (!response.ok) {
         const errorData = await response.json();
+        console.error(`❌ AI 분석 요청 실패 - status: ${response.status}, error:`, errorData);
         throw new Error(errorData.message || 'AI 분석을 불러오는데 실패했습니다');
       }
       const data = await response.json();
-      console.log(`📊 AI 분석 응답 받음 - userId: ${userId}, specialty: ${data.userSpecialty}, debugInfo:`, data.debugInfo);
+      console.log(`📊 AI 분석 응답 받음 - userId: ${userId}, specialty: ${data.userSpecialty}, analysis:`, data.analysis?.substring(0, 200));
       return data;
     },
     enabled: !!userId,
     staleTime: 0, // 캐시 비활성화로 항상 새로운 요청
-    cacheTime: 0, // 메모리 캐시도 비활성화
+    gcTime: 0, // React Query v5: cacheTime → gcTime으로 변경
+    retry: false, // 재시도 비활성화
   });
 
   // 챕터 내 시너지 멤버 검색 함수
