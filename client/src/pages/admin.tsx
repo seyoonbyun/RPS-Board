@@ -653,36 +653,38 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 버튼들 - 아래에 수평 배치 */}
-            <div className="flex flex-wrap gap-2">
+            {/* 버튼들 - 아래에 수직 배치 */}
+            <div className="space-y-2">
               <Button 
                 onClick={() => setShowAddUserDialog(true)}
-                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600 flex-1 min-w-0"
+                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600 w-full"
                 size="sm"
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
               </Button>
-              {adminPermission?.auth === 'National' && (
-                <Button 
-                  onClick={exportUserList} 
-                  variant="outline" 
+              <div className="flex gap-2">
+                {adminPermission?.auth === 'National' && (
+                  <Button 
+                    onClick={exportUserList} 
+                    variant="outline" 
+                    size="sm"
+                    className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1"
+                  >
+                    <Download className="mr-1 w-4 h-4" />
+                    RPS 목록 내보내기
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
                   size="sm"
-                  className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1 min-w-0"
+                  onClick={() => setLocation('/dashboard')}
+                  className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1"
                 >
-                  <Download className="mr-1 w-4 h-4" />
-                  RPS 목록 내보내기
+                  <ArrowLeft className="mr-1 w-4 h-4" />
+                  대시보드로 돌아가기
                 </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLocation('/dashboard')}
-                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1 min-w-0"
-              >
-                <ArrowLeft className="mr-1 w-4 h-4" />
-                대시보드로 돌아가기
-              </Button>
+              </div>
             </div>
           </div>
         </div>
