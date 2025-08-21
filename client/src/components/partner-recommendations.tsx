@@ -90,7 +90,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       {/* 헤더 */}
       <div className="flex items-center gap-2">
         <Lightbulb className="w-6 h-6 text-red-600" />
-        <h2 className="text-2xl font-bold">비즈니스 시너지 파트너 추천</h2>
+        <h2 className="text-2xl font-bold">파워팀 파트너 추천</h2>
       </div>
 
       <Tabs defaultValue="ai-analysis" className="w-full">
@@ -101,7 +101,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            AI 시너지 매칭 멤버
+            파워팀 파트너 추천
           </TabsTrigger>
         </TabsList>
 
@@ -255,7 +255,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600" />
-                나의 챕터 내 시너지 멤버 추천
+                나의 챕터 내 파워팀 멤버 추천
               </CardTitle>
               <CardDescription>
                 동일 챕터에서 나의 전문분야와 시너지를 일으킬 수 있는 멤버들입니다
@@ -316,10 +316,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-green-600" />
-                지역 내 시너지 업체 검색
+                지역 내 파워팀 업체 검색
               </CardTitle>
               <CardDescription>
-                나의 지역에서 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
+                지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
               </CardDescription>
             </CardHeader>
             <CardContent>
