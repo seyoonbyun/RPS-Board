@@ -32,13 +32,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     
     try {
       const timestamp = Date.now();
-      console.log(`🔄 AI 분석 요청 시작 - userId: ${userId}, timestamp: ${timestamp}`);
-      const response = await fetch(`/api/ai-specialty-analysis/${userId}?force=true&t=${timestamp}`, {
+      const response = await fetch(`/api/ai-specialty-analysis/${userId}`, {
         method: 'GET',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
       });
       
