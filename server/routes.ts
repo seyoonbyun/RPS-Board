@@ -1291,22 +1291,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ 1-2단계 검증 완료 - 3단계 네이버 API 검색 시작');
 
-      // 직접 Gemini 서비스를 사용하여 지역 업체 검색
-      const { getGeminiService } = await import('./gemini-service.js');
-      const geminiService = getGeminiService();
+      // PureDynamicSearch를 사용하여 지역 업체 검색
+      const { PureDynamicSearch } = await import('./pure-dynamic-search.js');
+      const pureDynamicSearch = new PureDynamicSearch();
 
       const userSpecialty = userRow.specialty;
       const userRegion = userRow.region;
 
-      console.log(`🎯 순수 동적 검색 시작 - AI 분석 직접 전달`);
+      console.log(`🎯 순수 동적 검색 시작 - PureDynamicSearch 사용`);
       
-      // AI 분석 텍스트를 직접 새로운 순수 동적 검색 시스템에 전달
-      const result = await geminiService.searchRegionalBusinesses(aiAnalysis, userSpecialty, userRegion);
-      console.log(`🎯 순수 동적 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
+      // AI 분석 텍스트를 새로운 순수 동적 검색 시스템에 전달
+      const businesses = await pureDynamicSearch.searchPureDynamic(userSpecialty, userRegion, aiAnalysis);
+      console.log(`🎯 순수 동적 검색 완료 - ${businesses?.length || 0}개 업체 발견`);
       
       res.json({
-        message: "순수 동적 AI 검색 완료 - 하드코딩 제거됨",
-        businesses: result.businesses || [],
+        message: "순수 동적 AI 검색 완료 - 시너지 섹션에서 키워드 직접 추출",
+        businesses: businesses || [],
         userSpecialty,
         userRegion
       });
