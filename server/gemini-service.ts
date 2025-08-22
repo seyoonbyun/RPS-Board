@@ -463,7 +463,7 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
   }
 
   /**
-   * AI 분석에서 협업 분야 구조화 추출 (범용 동적 시스템)
+   * AI 분석에서 협업 분야 구조화 추출 (범용 동적 시스템) - 강화된 파싱
    */
   private parseSynergyCollaborationFields(analysisText: string): Array<{
     index: number;
@@ -472,7 +472,8 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
     collaborationMethod: string;
     keywords: string[];
   }> {
-    console.log('🔍 AI 분석에서 협업 분야 구조화 추출 시작');
+    console.log('🔍 AI 분석에서 협업 분야 구조화 추출 시작 (강화된 파싱)');
+    console.log(`📄 분석 텍스트 길이: ${analysisText.length}자`);
     
     const collaborationFields: Array<{
       index: number;
@@ -482,73 +483,145 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       keywords: string[];
     }> = [];
 
-    // "🤝 시너지 창출 가능 비즈니스 분야" 섹션 찾기
-    const synergySection = analysisText.match(/🤝\s*시너지.*?분야.*?\n([\s\S]*?)(?=\n\n|\n#|$)/i);
-    
-    if (!synergySection) {
-      console.log('⚠️ 협업 분야 섹션을 찾을 수 없음 - 기본값 반환');
-      return [];
-    }
-
-    const content = synergySection[1];
-    
-    // 각 협업 분야를 순서대로 파싱 (번호나 불릿 포인트 기준)
-    const fieldPatterns = [
-      /(\d+\.?\s*\*{0,3}\s*)(.*?):\s*(.*?)(?=\n\s*\d+\.|\n\s*\*|$)/g,
-      /(\*\s*\*{0,2}\s*)(.*?):\s*(.*?)(?=\n\s*\*|$)/g,
-      /(\-\s*)(.*?):\s*(.*?)(?=\n\s*\-|$)/g
+    // "🤝 시너지 창출 가능 비즈니스 분야" 섹션 찾기 (더 유연한 매칭)
+    const sectionPatterns = [
+      /🤝\s*시너지.*?분야[\s\S]*?\n([\s\S]*?)(?=\n\n|$)/i,
+      /시너지.*?창출.*?분야[\s\S]*?\n([\s\S]*?)(?=\n\n|$)/i,
+      /협업.*?분야[\s\S]*?\n([\s\S]*?)(?=\n\n|$)/i
     ];
 
-    let index = 1;
+    let content = '';
+    for (const pattern of sectionPatterns) {
+      const match = analysisText.match(pattern);
+      if (match && match[1]) {
+        content = match[1];
+        console.log(`✅ 협업 분야 섹션 발견 (길이: ${content.length}자)`);
+        break;
+      }
+    }
+    
+    if (!content) {
+      console.log('⚠️ 협업 분야 섹션을 찾을 수 없음 - 전체 텍스트에서 협업 분야 추출 시도');
+      content = analysisText;
+    }
+
+    // 강화된 파싱: 다양한 패턴으로 협업 분야 추출
+    const fieldPatterns = [
+      // 1. "숫자. **제목:**" 패턴
+      /(\d+)\.?\s*\*{2,3}\s*([^*:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*{2,3}|$)/g,
+      // 2. "숫자. **제목 (설명):**" 패턴
+      /(\d+)\.?\s*\*{2,3}\s*([^:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*{2,3}|$)/g,
+      // 3. "- **제목:**" 패턴
+      /\-\s*\*{2,3}\s*([^*:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\-|\n\s*\*{2,3}|$)/g
+    ];
+
+    let totalMatches = 0;
     for (const pattern of fieldPatterns) {
       let match: RegExpExecArray | null;
+      pattern.lastIndex = 0; // 정규식 초기화
       
       while ((match = pattern.exec(content)) !== null) {
-        const title = match[2].trim().replace(/\*{1,3}/g, '').trim();
-        const description = match[3].trim();
+        totalMatches++;
+        let title = '';
+        let description = '';
         
-        if (title && description && title.length > 3) {
+        if (match.length >= 4) {
+          // 숫자가 있는 패턴 (match[1]은 숫자, match[2]는 제목, match[3]은 설명)
+          title = match[2].trim().replace(/\*{1,3}/g, '').trim();
+          description = match[3].trim();
+        } else if (match.length >= 3) {
+          // 숫자가 없는 패턴 (match[1]은 제목, match[2]는 설명)
+          title = match[1].trim().replace(/\*{1,3}/g, '').trim();
+          description = match[2].trim();
+        }
+        
+        // 제목에서 괄호 내용 분리
+        const titleWithoutParens = title.replace(/\s*\([^)]+\)/g, '').trim();
+        
+        if (titleWithoutParens && description && titleWithoutParens.length > 2) {
+          console.log(`🎯 협업 분야 발견: "${titleWithoutParens}" (설명 길이: ${description.length}자)`);
+          
           // 키워드 추출 (업종명들)
-          const keywords = this.extractKeywordsFromDescription(title, description);
+          const keywords = this.extractKeywordsFromDescription(titleWithoutParens, description);
           
           // 협업 방안 추출
           const collaborationMethod = this.extractCollaborationMethod(description);
           
           collaborationFields.push({
-            index,
-            title,
-            description: description.split('(')[0].trim(), // 괄호 앞까지만
+            index: collaborationFields.length + 1,
+            title: titleWithoutParens,
+            description: description.split('\n')[0].trim(), // 첫 번째 줄만
             collaborationMethod,
             keywords
           });
           
-          index++;
+          console.log(`  📋 키워드: [${keywords.join(', ')}]`);
+          console.log(`  🤝 협업방안: ${collaborationMethod}`);
         }
       }
       
-      if (collaborationFields.length > 0) break; // 첫 번째 패턴에서 매칭되면 중단
+      if (collaborationFields.length > 0) {
+        console.log(`✅ 패턴 ${fieldPatterns.indexOf(pattern) + 1}에서 ${collaborationFields.length}개 분야 추출 성공`);
+        break; // 첫 번째 성공한 패턴에서 중단
+      }
     }
 
-    console.log(`✅ ${collaborationFields.length}개 협업 분야 추출 완료`);
+    console.log(`🔍 총 매칭 시도: ${totalMatches}회, 최종 추출: ${collaborationFields.length}개 협업 분야`);
     return collaborationFields.slice(0, 10); // 최대 10개
   }
 
   /**
-   * 설명에서 키워드 추출
+   * 설명에서 키워드 추출 (강화된 키워드 매칭)
    */
   private extractKeywordsFromDescription(title: string, description: string): string[] {
     const keywords: string[] = [];
     
-    // 제목에서 키워드 추출
-    keywords.push(...title.split(/[\/,&\s]+/).map(k => k.trim()).filter(k => k.length > 1));
+    // 제목에서 핵심 키워드 추출
+    const titleKeywords = title.split(/[\/,&\s\(\)]+/).map(k => k.trim()).filter(k => k.length > 1);
+    keywords.push(...titleKeywords);
     
-    // 설명에서 업종 키워드 추출
-    const industryKeywords = description.match(/[가-힣a-zA-Z]+업체|[가-힣a-zA-Z]+사|[가-힣a-zA-Z]+점|[가-힣a-zA-Z]+관|[가-힣a-zA-Z]+원/g) || [];
-    keywords.push(...industryKeywords.map(k => k.replace(/업체|사|점|관|원$/g, '')));
+    // 업종별 전문 키워드 매칭
+    const industryMappings = {
+      '사진작가': ['사진', '포토', '스튜디오', '촬영'],
+      '영상': ['영상', '비디오', '촬영', '편집'],
+      '헤어': ['미용실', '헤어', '미용'],
+      '메이크업': ['메이크업', '화장', '뷰티'],
+      '스타일리스트': ['스타일링', '코디'],
+      '원단': ['원단', '섬유', '텍스타일', '직물'],
+      '부자재': ['부자재', '자재', '원료'],
+      '봉제': ['봉제', '의류제조', '재봉'],
+      '패턴': ['패턴', '의류설계'],
+      '마케팅': ['마케팅', '광고', '홍보'],
+      '인플루언서': ['인플루언서', 'SNS', '소셜미디어'],
+      '쥬얼리': ['주얼리', '보석', '귀금속'],
+      '가방': ['가방', '핸드백', '백'],
+      '슈즈': ['신발', '구두', '슈즈'],
+      '변호사': ['변호사', '법무', '법률']
+    };
+
+    // 제목과 설명에서 업종 매칭
+    const fullText = `${title} ${description}`.toLowerCase();
+    for (const [industry, relatedKeywords] of Object.entries(industryMappings)) {
+      if (fullText.includes(industry.toLowerCase())) {
+        keywords.push(industry);
+        keywords.push(...relatedKeywords);
+      }
+      
+      for (const keyword of relatedKeywords) {
+        if (fullText.includes(keyword.toLowerCase())) {
+          keywords.push(keyword);
+          keywords.push(industry);
+        }
+      }
+    }
     
-    // 일반적인 업종 키워드
-    const commonKeywords = description.match(/사진|영상|스튜디오|원단|부자재|패턴|봉제|주얼리|액세서리|법무|변호사|회계|세무|인테리어|디자인|마케팅|광고|브랜딩/g) || [];
-    keywords.push(...commonKeywords);
+    // 설명에서 업체 유형 키워드 추출
+    const businessTypes = description.match(/[가-힣a-zA-Z]+업체|[가-힣a-zA-Z]+사|[가-힣a-zA-Z]+점|[가-힣a-zA-Z]+관|[가-힣a-zA-Z]+원/g) || [];
+    keywords.push(...businessTypes.map(k => k.replace(/업체|사|점|관|원$/g, '')));
+    
+    // 일반적인 비즈니스 키워드
+    const businessKeywords = description.match(/사진|영상|스튜디오|원단|부자재|패턴|봉제|주얼리|액세서리|법무|변호사|회계|세무|인테리어|디자인|마케팅|광고|브랜딩|미용실|화장|뷰티|스타일링/g) || [];
+    keywords.push(...businessKeywords);
     
     // 중복 제거 및 필터링
     const uniqueKeywords: string[] = [];
@@ -557,6 +630,8 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
         uniqueKeywords.push(keyword);
       }
     }
+    
+    console.log(`    🔑 "${title}"에서 추출된 키워드: [${uniqueKeywords.slice(0, 8).join(', ')}]`);
     return uniqueKeywords;
   }
 

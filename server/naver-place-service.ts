@@ -26,29 +26,37 @@ export class NaverPlaceService {
   }
 
   /**
-   * AI 분석으로부터 협업 분야를 추출하고 네이버 플레이스에서 실제 업체를 검색
+   * AI 분석으로부터 협업 분야를 추출하고 네이버 플레이스에서 실제 업체를 검색 (강화된 검색)
    */
   async searchSynergyBusinesses(
     userSpecialty: string,
     userRegion: string,
     synergyFields: string[]
   ): Promise<NaverPlaceBusiness[]> {
-    console.log(`🔍 네이버 플레이스 업체 검색 시작 - 지역: ${userRegion}, 전문분야: ${userSpecialty}, 협업분야: ${synergyFields.length}개`);
+    console.log(`🔍 네이버 플레이스 업체 검색 시작 (강화된 검색) - 지역: ${userRegion}, 전문분야: ${userSpecialty}, 협업분야: ${synergyFields.length}개`);
 
     const businesses: NaverPlaceBusiness[] = [];
 
-    // 동적 검색어 생성
-    const detailedSearchTerms = this.generateDynamicSearchTerms(userSpecialty, userRegion, synergyFields);
+    // 동적 검색어 생성 (개선된 로직)
+    const detailedSearchTerms = this.generateEnhancedSearchTerms(userSpecialty, userRegion, synergyFields);
     
     console.log(`🎯 검색할 동적 업체 유형: ${detailedSearchTerms.length}개`);
+    detailedSearchTerms.forEach((term, index) => {
+      console.log(`  ${index + 1}. [${term.category}] "${term.keyword}" - 우선순위: ${term.priority}`);
+    });
 
-    // 4개 협업 분야별로 균형있게 검색 (분야당 2-3개씩 총 10개)
+    // 우선순위별로 정렬하여 검색
+    const sortedTerms = detailedSearchTerms.sort((a, b) => b.priority - a.priority);
     const categorizedResults: { [key: string]: NaverPlaceBusiness[] } = {};
     
-    for (const searchTerm of detailedSearchTerms) {
+    for (const searchTerm of sortedTerms) {
       try {
+        console.log(`🔍 "${searchTerm.keyword}" 검색 중... (카테고리: ${searchTerm.category})`);
         const searchResults = await this.searchBusinessByCategory(searchTerm.keyword, userRegion);
+        
         if (searchResults.length > 0) {
+          console.log(`✅ "${searchTerm.keyword}"에서 ${searchResults.length}개 업체 발견`);
+          
           // 카테고리별로 결과 그룹핑
           if (!categorizedResults[searchTerm.category]) {
             categorizedResults[searchTerm.category] = [];
@@ -88,30 +96,190 @@ export class NaverPlaceService {
   }
 
   /**
-   * 동적 검색 키워드 생성 - 협업 분야를 기반으로 검색어 생성
+   * 전문분야와 협업 분야를 기반으로 동적 검색어 생성 (강화된 알고리즘)
    */
-  private generateDynamicSearchTerms(userSpecialty: string, userRegion: string, synergyFields: string[]): Array<{keyword: string, category: string}> {
-    console.log(`🔄 동적 검색어 생성 - 전문분야: "${userSpecialty}", 협업분야: [${synergyFields.join(', ')}]`);
+  private generateEnhancedSearchTerms(
+    userSpecialty: string, 
+    userRegion: string, 
+    synergyFields: string[]
+  ): Array<{ keyword: string; category: string; priority: number }> {
+    console.log(`🎯 검색어 생성 시작 - 전문분야: "${userSpecialty}", 협업분야: [${synergyFields.join(', ')}]`);
     
-    const searchTerms: Array<{keyword: string, category: string}> = [];
+    const searchTerms: Array<{ keyword: string; category: string; priority: number }> = [];
+
+    // 전문분야별 맞춤 검색 키워드 매핑 (확장된 데이터베이스)
+    const specialtyMappings: { [key: string]: { [key: string]: Array<{ keyword: string; priority: number }> } } = {
+      '패션디자이너': {
+        '사진작가': [
+          { keyword: '사진작가', priority: 10 },
+          { keyword: '포토스튜디오', priority: 9 },
+          { keyword: '패션사진', priority: 8 },
+          { keyword: '상업사진', priority: 7 }
+        ],
+        '영상제작': [
+          { keyword: '영상제작', priority: 10 },
+          { keyword: '영상편집', priority: 8 },
+          { keyword: '비디오그래퍼', priority: 7 }
+        ],
+        '헤어메이크업': [
+          { keyword: '미용실', priority: 10 },
+          { keyword: '메이크업', priority: 9 },
+          { keyword: '뷰티샵', priority: 8 },
+          { keyword: '헤어샵', priority: 8 }
+        ],
+        '원단부자재': [
+          { keyword: '원단', priority: 10 },
+          { keyword: '섬유', priority: 8 },
+          { keyword: '부자재', priority: 7 },
+          { keyword: '의류자재', priority: 6 }
+        ],
+        '봉제패턴': [
+          { keyword: '봉제공장', priority: 10 },
+          { keyword: '의류제조', priority: 9 },
+          { keyword: '패턴', priority: 7 }
+        ],
+        '마케팅': [
+          { keyword: '마케팅', priority: 10 },
+          { keyword: '광고대행사', priority: 8 },
+          { keyword: '브랜딩', priority: 7 }
+        ],
+        '액세서리': [
+          { keyword: '주얼리', priority: 10 },
+          { keyword: '가방', priority: 9 },
+          { keyword: '신발', priority: 8 },
+          { keyword: '액세서리', priority: 7 }
+        ],
+        '법무': [
+          { keyword: '변호사', priority: 10 },
+          { keyword: '법무', priority: 8 },
+          { keyword: '특허', priority: 6 }
+        ]
+      },
+      '딸기농장운영': {
+        '유통판매': [
+          { keyword: '카페', priority: 10 },
+          { keyword: '레스토랑', priority: 9 },
+          { keyword: '베이커리', priority: 8 },
+          { keyword: '디저트카페', priority: 7 }
+        ],
+        '농업기술': [
+          { keyword: '농업기술', priority: 10 },
+          { keyword: '스마트팜', priority: 9 },
+          { keyword: '농자재', priority: 8 }
+        ],
+        '관광체험': [
+          { keyword: '여행사', priority: 10 },
+          { keyword: '관광농원', priority: 9 },
+          { keyword: '체험농장', priority: 8 }
+        ],
+        '가공식품': [
+          { keyword: '식품제조', priority: 10 },
+          { keyword: '가공업체', priority: 8 },
+          { keyword: '제과점', priority: 7 }
+        ]
+      }
+    };
+
+    // 현재 전문분야에 맞는 매핑 찾기
+    const currentMapping = specialtyMappings[userSpecialty] || {};
     
-    // 협업 분야를 기반으로 검색어 생성
+    // 협업 분야별로 검색어 생성
     for (const field of synergyFields) {
-      const cleanField = field.replace('업체', '').replace('회사', '').trim();
-      searchTerms.push({
-        keyword: `${userRegion} ${cleanField}`,
-        category: field
-      });
+      console.log(`  🔍 협업분야 "${field}" 분석 중...`);
+      
+      let bestCategory = '';
+      let bestKeywords: Array<{ keyword: string; priority: number }> = [];
+      let maxScore = 0;
+
+      // 각 카테고리와 매칭 점수 계산
+      for (const [category, keywords] of Object.entries(currentMapping)) {
+        let score = 0;
+        
+        // 카테고리명과 협업 분야의 유사도 계산
+        if (field.toLowerCase().includes(category.toLowerCase())) {
+          score += 10;
+        }
+        
+        // 키워드별 매칭 점수
+        for (const keywordObj of keywords) {
+          if (field.toLowerCase().includes(keywordObj.keyword.toLowerCase())) {
+            score += keywordObj.priority;
+          }
+        }
+        
+        if (score > maxScore) {
+          maxScore = score;
+          bestCategory = category;
+          bestKeywords = keywords;
+        }
+      }
+
+      // 매칭된 키워드가 있으면 추가
+      if (bestKeywords.length > 0) {
+        console.log(`    ✅ "${field}" → 카테고리: "${bestCategory}" (점수: ${maxScore})`);
+        
+        for (const keywordObj of bestKeywords.slice(0, 3)) {
+          searchTerms.push({
+            keyword: keywordObj.keyword,
+            category: bestCategory,
+            priority: keywordObj.priority + (maxScore > 10 ? 5 : 0) // 높은 매칭 점수 보너스
+          });
+        }
+      } else {
+        // 기본 키워드 생성
+        console.log(`    ⚠️ "${field}" → 기본 키워드 생성`);
+        const basicKeywords = this.generateBasicKeywords(field);
+        for (const keyword of basicKeywords) {
+          searchTerms.push({
+            keyword,
+            category: '기본',
+            priority: 5
+          });
+        }
+      }
+    }
+
+    // 중복 제거 및 우선순위 정렬
+    const uniqueTerms = this.removeDuplicateTerms(searchTerms);
+    console.log(`🎯 최종 생성된 검색어: ${uniqueTerms.length}개`);
+    
+    return uniqueTerms.slice(0, 15); // 최대 15개 검색어
+  }
+
+  /**
+   * 기본 키워드 생성
+   */
+  private generateBasicKeywords(field: string): string[] {
+    const keywords = [field];
+    
+    // 일반적인 업체 접미사 추가
+    const suffixes = ['업체', '전문', '서비스', '대행사'];
+    for (const suffix of suffixes) {
+      if (!field.includes(suffix)) {
+        keywords.push(`${field}${suffix}`);
+      }
     }
     
-    // 전문분야와 직접 관련된 검색어도 추가
-    searchTerms.push({
-      keyword: `${userRegion} ${userSpecialty}`,
-      category: `${userSpecialty} 관련`
-    });
+    return keywords.slice(0, 3);
+  }
+
+  /**
+   * 중복 검색어 제거
+   */
+  private removeDuplicateTerms(
+    terms: Array<{ keyword: string; category: string; priority: number }>
+  ): Array<{ keyword: string; category: string; priority: number }> {
+    const seen = new Set<string>();
+    const uniqueTerms: Array<{ keyword: string; category: string; priority: number }> = [];
     
-    console.log(`✅ ${searchTerms.length}개 동적 검색어 생성 완료`);
-    return searchTerms;
+    for (const term of terms) {
+      if (!seen.has(term.keyword)) {
+        seen.add(term.keyword);
+        uniqueTerms.push(term);
+      }
+    }
+    
+    return uniqueTerms.sort((a, b) => b.priority - a.priority);
   }
 
 
