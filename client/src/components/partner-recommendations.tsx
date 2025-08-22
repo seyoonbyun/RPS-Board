@@ -184,8 +184,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           </DialogHeader>
           <div className="text-center py-8 px-4">
             <div className="space-y-4">
-              <div className="text-lg font-semibold text-gray-900 whitespace-nowrap">
-                K-BNI.AI가 전문분야를 분석하고 있습니다.
+              <div className="text-base font-semibold text-gray-900 whitespace-nowrap">
+                K-BNI.AI가 대표님의 전문분야를 분석하고 있습니다.
               </div>
               <div className="text-base font-medium text-gray-700">
                 잠시만 기다려 주세요...!
