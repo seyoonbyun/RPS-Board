@@ -99,10 +99,44 @@
   [role="dialog"],
   .fixed,
   .absolute,
-  .tabs-list,
   .footer-buttons,
   .submit-button-section {
     display: none !important;
+  }
+  
+  /* 탭 리스트는 숨기지만 탭 내용은 모두 표시 */
+  .tabs-list {
+    display: none !important;
+  }
+  
+  /* 모든 탭 내용을 인쇄 시 표시 */
+  [data-state="inactive"] {
+    display: block !important;
+  }
+  
+  /* 탭 내용 간 구분을 위한 페이지 브레이크 */
+  [role="tabpanel"]:not(:first-child) {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  /* AI 파트너 추천 탭 내용도 인쇄에 포함 */
+  [role="tabpanel"][data-state="inactive"] {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* 인쇄 시 각 탭 내용 앞에 제목 추가 */
+  [role="tabpanel"]:not(:first-child):before {
+    content: "K-BNI.AI 파워팀 파트너 추천";
+    display: block !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #d12031 !important;
+    margin-bottom: 20px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 2px solid #d12031 !important;
+    text-align: center !important;
   }
   
   /* 제출하기 버튼 섹션 숨김으로 인한 여백 조정 */
