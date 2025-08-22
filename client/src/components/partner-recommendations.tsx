@@ -335,13 +335,12 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                             <span className="text-green-600 font-medium text-sm break-words">{business.name}</span>
                           </div>
                           
-                          {/* 모바일에서 업종과 주소를 분리 */}
-                          <div className="md:flex md:items-center md:gap-2 space-y-1 md:space-y-0">
+                          {/* 업종과 주소를 세로 배치 */}
+                          <div className="space-y-1">
                             <div className="flex items-start gap-2">
                               <span className="font-semibold text-gray-700 text-sm min-w-fit">업종:</span>
                               <span className="text-sm break-words">{business.category}</span>
                             </div>
-                            <span className="text-gray-400 hidden md:inline">|</span>
                             <div className="flex items-start gap-2">
                               <span className="font-semibold text-gray-700 text-sm min-w-fit">주소:</span>
                               <span className="text-sm break-words">{business.address}</span>
