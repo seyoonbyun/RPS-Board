@@ -87,17 +87,22 @@ export class PureDynamicSearch {
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
       
-      const extractionPrompt = `다음은 "${analysisText.match(/전문분야[:\s]*([^\n.]*)/)?.[1] || '전문가'}" 전문분야에 대한 AI 분석입니다.
+      // 전문분야 파악
+      const specialty = analysisText.match(/전문분야[:\s]*([^\n.]*)/)?.[1] || analysisText.match(/(?:^|\n)# ([^\n]*) 전문분야/)?.[1] || '전문가';
+      
+      const extractionPrompt = `"${specialty}" 전문분야 비즈니스 파트너 찾기
 
-${analysisText.substring(0, 2000)}
+다음 중에서 ${specialty}와 실제 협업이 가능한 업체 유형을 정확히 5개만 선택하고, 각각을 한 단어로 답해주세요:
 
-이 전문분야와 실제로 비즈니스 협업이 가능한 구체적인 업체 유형 5개만 나열해주세요.
-업체명이 아닌 업체 "유형"을 말해주세요.
+패션/의류 관련: 봉제공장, 원단업체, 액세서리업체, 패션사진스튜디오, 모델에이전시, 의류매장, 부티크
+음식/외식 관련: 제과점, 카페, 레스토랑, 급식업체, 식품유통업체, 농산물가공업체, 식자재업체
+건축/인테리어: 시공업체, 자재업체, 가구업체, 조경업체, 설계사무소, 부동산업체
+기술/제조: 제조업체, 기술업체, 소프트웨어업체, 장비업체, 연구소
+서비스: 마케팅업체, 광고대행사, 물류업체, 컨설팅업체, 교육업체, 출판업체
+의료/건강: 병원, 약국, 의료기기업체, 건강식품업체, 피트니스센터
+예술/문화: 갤러리, 공연장, 문화센터, 미디어업체, 방송업체
 
-좋은 예시: 의류제조업체, 원단업체, 액세서리업체, 패션사진업체, 모델에이전시
-나쁜 예시: 패션디자이너, 전문분야, 네트워킹, 분석, 시너지
-
-협업 가능한 업체 유형 5개:`;
+${specialty}에 맞는 5개 업체 유형 (예: 제과점, 카페, 식품유통업체, 마케팅업체, 농산물가공업체):`;
       
       const response = await ai.models.generateContent({
         model: "gemini-1.5-flash",
@@ -111,12 +116,28 @@ ${analysisText.substring(0, 2000)}
       const responseText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
       console.log(`🔍 Gemini 추출 결과: "${responseText}"`);
       
-      // 응답에서 한글 2-10글자 단어들 추출
-      const fields = responseText.match(/[가-힣]{2,10}/g) || [];
-      const uniqueSet = new Set(fields);
-      const uniqueFields = Array.from(uniqueSet)
-        .filter(field => !this.isCommonWord(field))
-        .slice(0, 5);
+      // 응답에서 업체 유형 추출 (더 정확한 매칭)
+      const businessTypes = [
+        '제과점', '카페', '레스토랑', '급식업체', '식품유통업체', '농산물가공업체', '식자재업체',
+        '봉제공장', '원단업체', '액세서리업체', '패션사진스튜디오', '모델에이전시', '의류매장', '부티크',
+        '시공업체', '자재업체', '가구업체', '조경업체', '설계사무소', '부동산업체',
+        '제조업체', '기술업체', '소프트웨어업체', '장비업체', '연구소',
+        '마케팅업체', '광고대행사', '물류업체', '컨설팅업체', '교육업체', '출판업체',
+        '병원', '약국', '의료기기업체', '건강식품업체', '피트니스센터',
+        '갤러리', '공연장', '문화센터', '미디어업체', '방송업체'
+      ];
+      
+      const foundTypes = businessTypes.filter(type => 
+        responseText.includes(type) || responseText.includes(type.replace('업체', ''))
+      );
+      
+      const uniqueFields = foundTypes.slice(0, 5);
+      
+      // 적절한 업체 유형이 없으면 기본값 사용
+      if (uniqueFields.length === 0) {
+        console.log('⚠️ 적절한 업체 유형을 찾지 못함 - 기본값 사용');
+        return ['제과점', '카페', '마케팅업체', '유통업체', '컨설팅업체'];
+      }
       
       console.log(`✅ 최종 협업 분야: [${uniqueFields.join(', ')}]`);
       return uniqueFields;
