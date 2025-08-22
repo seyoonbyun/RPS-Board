@@ -1,9 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { NaverPlaceService, NaverPlaceBusiness } from './naver-place-service';
+import { PureDynamicSearch } from './pure-dynamic-search';
 
 export class GeminiService {
   private ai: GoogleGenAI;
   private naverPlaceService: NaverPlaceService;
+  private pureDynamicSearch: PureDynamicSearch;
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -12,6 +14,7 @@ export class GeminiService {
     }
     this.ai = new GoogleGenAI({ apiKey });
     this.naverPlaceService = new NaverPlaceService();
+    this.pureDynamicSearch = new PureDynamicSearch();
   }
 
   async analyzeSpecialtyAndRecommendSynergies(specialty: string): Promise<{
@@ -722,103 +725,33 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
   }
 
   async searchRegionalBusinesses(searchQuery: string, userSpecialty: string = '일반', userRegion: string = '강남구'): Promise<{ businesses: NaverPlaceBusiness[] }> {
-    console.log('🔍 3단계 지역 업체 검색 시작:', { userSpecialty, userRegion });
+    console.log('🎯 순수 동적 검색 시작 - 하드코딩 완전 제거');
+    console.log(`  전문분야: "${userSpecialty}", 지역: "${userRegion}", AI 분석 길이: ${searchQuery.length}자`);
       
     try {
-      // 1단계: 구글 Gemini API로 전문분야 분석 완료 (이미 완료됨)
-      console.log('✅ 1단계 완료: 구글 Gemini API 전문분야 분석');
-      
-      // 2단계: 분석 결과에서 시너지 분야 추출
-      const synergyFields = await this.extractSynergyFieldsFromAnalysis(searchQuery, userSpecialty);
-      console.log(`✅ 2단계 완료: 시너지 분야 추출 - ${synergyFields.join(', ')}`);
-      
-      // 3단계: 네이버 플레이스 API로 실제 업체 10개 검색
-      console.log('🔄 3단계 시작: 네이버 플레이스 API 실제 업체 검색');
-      const naverBusinesses = await this.naverPlaceService.searchSynergyBusinesses(
-        userSpecialty, 
-        userRegion, 
-        synergyFields
+      // 새로운 순수 동적 검색 시스템 사용 - AI 분석만을 사용한 완전 동적 검색
+      const businesses = await this.pureDynamicSearch.searchCollaborationBusinesses(
+        searchQuery,
+        userSpecialty,
+        userRegion
       );
       
-      if (naverBusinesses.length > 0) {
-        // AI 분석에서 협업 분야 추출
-        const collaborationFields = this.parseSynergyCollaborationFields(searchQuery);
-        
-        // 협업 분야 매칭 정보 추가
-        const enhancedBusinesses = naverBusinesses.map(business => {
-          const collaborationInfo = this.matchBusinessToCollaborationField(
-            business.name, 
-            business.category, 
-            collaborationFields
-          );
-          
-          return {
-            ...business,
-            collaborationCategory: collaborationInfo ? {
-              name: collaborationInfo.categoryName,
-              index: collaborationInfo.categoryIndex,
-              description: collaborationInfo.description,
-              method: collaborationInfo.collaborationMethod
-            } : null
-          };
+      console.log(`🎯 순수 동적 검색 완료 - ${businesses.length}개 업체 발견`);
+      
+      if (businesses.length > 0) {
+        console.log(`📊 검색된 업체 목록:`);
+        businesses.forEach((business, index) => {
+          console.log(`  ${index + 1}. ${business.name} (${business.category}) - ${business.address}`);
         });
-        
-        console.log(`✅ 3단계 완료: 네이버 플레이스에서 ${enhancedBusinesses.length}개 실제 업체 발견 (동적 협업 분야 매칭 완료)`);
-        return { businesses: enhancedBusinesses };
+        return { businesses };
+      } else {
+        console.log(`⚠️ "${userSpecialty}" 전문분야의 "${userRegion}" 지역에서 AI 분석 기반 협업 가능한 업체를 찾을 수 없습니다.`);
       }
       
-      // 네이버 API 실패 시 솔직한 안내 (가짜 데이터 제공 금지)
-      console.log('❌ 3단계 실패: 네이버 플레이스 API 검색 결과 없음');
-      throw new Error(`현재 네이버 플레이스 API에서 "${userSpecialty}" 분야의 "${userRegion}" 지역 업체 정보를 찾을 수 없습니다. 실제 존재하는 업체만 제공하는 정책에 따라 검색 결과가 없습니다. 다른 지역이나 관련 전문분야로 다시 검색해보세요.`);
+      return { businesses: [] };
     } catch (error) {
-      console.error('Gemini 지역 업체 검색 오류:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error name:', (error as any)?.name);
-      console.error('Error message:', (error as Error)?.message);
-      
-      // Gemini API 500 오류인 경우 특별 처리
-      if ((error as any)?.status === 500 || (error as Error)?.message?.includes('INTERNAL')) {
-        console.log('🔄 Gemini API 500 오류 감지 - 간단한 재시도 실행');
-        try {
-          // 더 간단한 프롬프트로 재시도
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 대기
-          
-          const simpleResponse = await this.ai.models.generateContent({
-            model: "gemini-1.5-flash",
-            config: {
-              maxOutputTokens: 600,
-              temperature: 0.5,
-            },
-            contents: [
-              `서울 ${userRegion}에서 "${userSpecialty}" 사업자가 협업할 수 있는 업체 5개만 간단히 추천해주세요.
-              
-업체명:
-분류:  
-주소:
-협업방안:
----
-
-실제 존재하는 업체만 추천하세요.`
-            ]
-          });
-          
-          let simpleText = simpleResponse.text || simpleResponse.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (simpleText && simpleText.length > 50) {
-            const businesses = this.parseTextResponseToBusinesses(simpleText, userRegion);
-            if (businesses.length > 0) {
-              console.log('✅ 간단한 재시도 성공');
-              return { businesses };
-            }
-          }
-        } catch (retryError) {
-          console.error('간단한 재시도도 실패:', retryError);
-        }
-        
-        console.log('🔄 간단한 재시도 실패 - 동적 검색으로 전환');
-        return await this.generateDynamicBusinessResponse(userSpecialty, userRegion);
-      }
-      
-      return await this.generateDynamicBusinessResponse(userSpecialty, userRegion);
+      console.error(`❌ 순수 동적 검색 실패:`, error);
+      return { businesses: [] };
     }
   }
 
