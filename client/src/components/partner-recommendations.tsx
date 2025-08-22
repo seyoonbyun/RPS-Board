@@ -346,6 +346,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-green-600" />
                 지역 내 파워팀 업체 검색
+                {regionalBusinesses && regionalBusinesses.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {regionalBusinesses.length} 업체 추천
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>
                 지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
