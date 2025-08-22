@@ -79,11 +79,11 @@ ${specialty}와 협업할 수 있는 **구체적인 업체 유형들**을 제시
 ## ${analysisTemplate.sections[2].icon} ${analysisTemplate.sections[2].title}
 다음과 같이 시간대별로 구분하여 협업 전략을 제시해주세요:
 
-**단기 전략 (즉시~6개월):** 즉각적인 성과를 기대할 수 있는 **구체적인 업체 유형들** (예: 법무법인, 회계법인, 특허법인 등)
+**단기 전략 (즉시~6개월):** 즉각적인 성과를 기대할 수 있는 **검색 가능한 구체적인 업체명/업종명**을 반드시 포함하여 작성
 
-**중기 전략 (6개월~2년):** 지속적인 관계 구축과 상호 성장을 위한 **구체적인 업체 유형들** (예: 부동산중개업, 금융기관, 보험회사 등)
+**중기 전략 (6개월~2년):** 지속적인 관계 구축과 상호 성장을 위한 **검색 가능한 구체적인 업체명/업종명**을 반드시 포함하여 작성
 
-**장기 전략 (2년 이상):** 혁신과 사업 확장을 위한 **구체적인 업체 유형들** (예: IT업체, 컨설팅업체, 교육기관 등)
+**장기 전략 (2년 이상):** 혁신과 사업 확장을 위한 **검색 가능한 구체적인 업체명/업종명**을 반드시 포함하여 작성
 
 ## ${analysisTemplate.sections[3].icon} ${analysisTemplate.sections[3].title}
 위에서 제시한 협업 전략을 실제로 실행하기 위한 구체적인 실행 방법들을 제시해주세요. 네트워킹 방법, 관계 구축 전략, 상호 이익 창출 모델을 포함하여 실무진이 바로 적용할 수 있는 방안을 작성해주세요.
@@ -378,16 +378,8 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       }
     }
 
-    // ✅ 전문분야별 적응형 기본값 설정 (추출된 항목이 없을 경우)
-    if (priorities.shortTerm.length === 0) {
-      priorities.shortTerm = this.getDefaultBusinessTypes('short');
-    }
-    if (priorities.mediumTerm.length === 0) {
-      priorities.mediumTerm = this.getDefaultBusinessTypes('medium');
-    }
-    if (priorities.longTerm.length === 0) {
-      priorities.longTerm = this.getDefaultBusinessTypes('long');
-    }
+    // 🚫 하드코딩 완전 제거: AI가 생성하지 못하면 빈 배열로 유지
+    // 기본값 설정 없음 - 100% AI 동적 생성만 사용
 
     // 각 배열을 최대 3개로 제한하고 의미 있는 내용만 유지
     priorities.shortTerm = priorities.shortTerm.slice(0, 3).filter(item => item.length > 1 && !item.match(/^\d+$/));
@@ -397,17 +389,6 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
     return priorities;
   }
 
-  // 🎯 전문분야별 적응형 기본 업체 유형 반환
-  private getDefaultBusinessTypes(term: 'short' | 'medium' | 'long'): string[] {
-    // 모든 전문분야에 범용적으로 적용 가능한 업체 유형들
-    const universalBusinessTypes = {
-      short: ['법무법인', '회계법인', '세무법인'],
-      medium: ['부동산중개업', '금융기관', '보험회사'],
-      long: ['IT업체', '컨설팅업체', '교육기관']
-    };
-    
-    return universalBusinessTypes[term];
-  }
 
   async findMatchingMembers(
     synergyFields: string[],
