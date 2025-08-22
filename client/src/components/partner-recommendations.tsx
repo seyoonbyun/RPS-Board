@@ -299,13 +299,13 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                   </Button>
                 )}
               </CardTitle>
-              <div className="flex flex-col md:flex-row md:items-center gap-2">
+              <div className="flex flex-row items-center justify-between md:flex-row md:items-center gap-2">
                 <CardDescription className="text-sm md:text-base">
                   지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
                 </CardDescription>
                 {/* 모바일에서만 버튼 표시 */}
                 {regionalBusinesses && regionalBusinesses.length > 0 && (
-                  <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white md:hidden w-fit">
+                  <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white md:hidden w-fit shrink-0">
                     {regionalBusinesses.length} 업체 추천
                   </Button>
                 )}
