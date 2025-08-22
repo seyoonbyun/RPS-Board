@@ -316,52 +316,64 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               ) : regionalBusinesses && regionalBusinesses.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
                   {regionalBusinesses.map((business: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-green-50">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">업체명:</span>
-                            <span className="text-green-600 font-medium">{business.name}</span>
+                    <div key={index} className="border rounded-lg p-3 md:p-4 hover:shadow-md transition-shadow bg-green-50">
+                      {/* 모바일: 세로 배치, PC: 가로 배치 */}
+                      <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+                        {/* 왼쪽: 기본 정보 */}
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <span className="font-semibold text-gray-700 text-sm min-w-fit">업체명:</span>
+                            <span className="text-green-600 font-medium text-sm break-words">{business.name}</span>
                           </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">업종:</span>
-                            <span>{business.category}</span>
-                            <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">주소:</span>
-                            <span>{business.address}</span>
+                          
+                          {/* 모바일에서 업종과 주소를 분리 */}
+                          <div className="md:flex md:items-center md:gap-2 space-y-1 md:space-y-0">
+                            <div className="flex items-start gap-2">
+                              <span className="font-semibold text-gray-700 text-sm min-w-fit">업종:</span>
+                              <span className="text-sm break-words">{business.category}</span>
+                            </div>
+                            <span className="text-gray-400 hidden md:inline">|</span>
+                            <div className="flex items-start gap-2">
+                              <span className="font-semibold text-gray-700 text-sm min-w-fit">주소:</span>
+                              <span className="text-sm break-words">{business.address}</span>
+                            </div>
                           </div>
+                          
                           {business.phone && (
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold text-gray-700">연락처:</span>
-                              <span className="text-gray-600">{business.phone}</span>
+                            <div className="flex items-start gap-2">
+                              <span className="font-semibold text-gray-700 text-sm min-w-fit">연락처:</span>
+                              <span className="text-gray-600 text-sm break-all">{business.phone}</span>
                             </div>
                           )}
+                          
                           {business.website && (
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-700">웹사이트:</span>
+                            <div className="flex items-start gap-2">
+                              <span className="font-semibold text-gray-700 text-sm min-w-fit">웹사이트:</span>
                               <a 
                                 href={business.website} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                className="text-blue-600 hover:text-blue-800 underline text-sm break-all"
                               >
                                 {business.website}
                               </a>
                             </div>
                           )}
                         </div>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-sm text-green-700 font-medium mb-1">
+                        
+                        {/* 오른쪽: 시너지 정보 */}
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="text-sm text-green-700 font-medium">
                               시너지 가능성: {business.synergyPotential}
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {business.description}
-                            </div>
+                            <Badge variant="secondary" className="text-xs ml-2 shrink-0">
+                              지역 업체
+                            </Badge>
                           </div>
-                          <Badge variant="secondary" className="text-xs">
-                            지역 업체
-                          </Badge>
+                          <div className="text-xs text-gray-500 leading-relaxed">
+                            {business.description}
+                          </div>
                         </div>
                       </div>
                     </div>
