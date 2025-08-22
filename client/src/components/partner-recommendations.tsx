@@ -185,11 +185,15 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       </div>
 
       <Tabs defaultValue="ai-analysis" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="ai-analysis" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            <span className="hidden md:block">AI의 Biz파트너 추천</span>
-            <span className="block md:hidden">AI의 파트너 추천</span>
+            나의 전문분야 분석
+          </TabsTrigger>
+          <TabsTrigger value="ai-recommendations" className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            <span className="hidden md:block">AI 파트너 추천</span>
+            <span className="block md:hidden">AI의 Biz파트너 추천</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -285,7 +289,18 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           )}
         </TabsContent>
 
-        {/* AI 시너지 매칭 멤버 탭 */}
+        {/* AI 파트너 추천 탭 */}
+        <TabsContent value="ai-recommendations" className="space-y-4">
+          <Card>
+            <CardContent className="text-center py-8">
+              <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">AI 파트너 추천 기능이 준비 중입니다</p>
+              <p className="text-sm text-gray-500 mt-2">곧 업데이트될 예정입니다</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* K-BNI.AI 파워팀 파트너 추천 탭 */}
         <TabsContent value="analytics" className="space-y-4">
           {/* 지역 기반 업체 검색 */}
           <Card>
