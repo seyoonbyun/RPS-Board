@@ -300,7 +300,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 )}
               </CardTitle>
               <div className="flex flex-col md:flex-row md:items-center gap-2">
-                <CardDescription className="text-sm md:text-sm">
+                <CardDescription className="text-xs md:text-sm">
                   지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
                 </CardDescription>
                 {/* 모바일에서만 버튼 표시 */}
