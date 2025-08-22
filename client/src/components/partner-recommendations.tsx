@@ -472,14 +472,20 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                         <p className="text-amber-800 font-medium mb-2">실제 데이터만 제공 정책</p>
                         <p className="text-amber-700 text-sm leading-relaxed mb-3">
                           현재 시스템은 **실제로 존재하는 업체만**을 검색하여 제공합니다. 
-                          이전에 표시되었던 업체들은 가상의 예시 데이터였으며, 실제 존재하지 않는 업체들이었습니다.
+                          다양한 검색 방법을 통해 실제 협업 가능한 업체를 찾고 있습니다.
                         </p>
                         <div className="p-3 bg-amber-100 rounded border border-amber-300">
-                          <p className="text-amber-800 text-xs font-medium mb-1">🔍 현재 상태</p>
-                          <p className="text-amber-700 text-xs">
-                            실제 업체 검색 시스템이 일시적으로 불안정하여 검증된 데이터를 제공할 수 없는 상황입니다. 
-                            가짜 데이터 대신 검증된 실제 업체 정보만을 제공하기 위해 잠시 서비스를 중단했습니다.
+                          <p className="text-amber-800 text-xs font-medium mb-1">⚠️ 무료 API 제한</p>
+                          <p className="text-amber-700 text-xs mb-2">
+                            현재 무료 API 키로 인해 분당 2회 요청 제한이 적용되고 있습니다.
                           </p>
+                          <div className="text-amber-600 text-xs">
+                            <p className="font-medium mb-1">유료 전환 방법:</p>
+                            <p>1. Google Cloud Console → 결제 설정</p>
+                            <p>2. 신용카드 등록 및 결제 계정 활성화</p>
+                            <p>3. 유료 플랜으로 전환 후 더 많은 요청 가능</p>
+                            <p>4. 실제 업체 검색 시스템 정상 작동</p>
+                          </div>
                         </div>
                       </div>
                     </div>
