@@ -88,8 +88,8 @@ export class PureDynamicSearch {
     
     for (const line of lines) {
       const trimmed = line.trim();
-      // "1. 제과점:" 또는 "- 카페:" 형태 찾기
-      const match = trimmed.match(/^(?:\d+\.|\-|\*)\s*([^:]+):/);
+      // "1. **회계사/세무사:**" 또는 "- 카페:" 형태 찾기 (볼드 마크다운 포함)
+      const match = trimmed.match(/^(?:\d+\.|\-|\*)\s*(?:\*\*)?([^:*]+?)(?:\*\*)?:/);
       if (match && match[1]) {
         const keyword = match[1].trim();
         // 기본 필터링: 너무 일반적이지 않은 키워드만
