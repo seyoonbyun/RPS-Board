@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Lightbulb, Users, BarChart3, MapPin, Brain, Sparkles, Target, Clock, Search } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Lightbulb, Users, BarChart3, MapPin, Brain, Sparkles, Target, Clock, Search, Loader2 } from 'lucide-react';
 
 interface PartnerRecommendationsProps {
   userId: string;
@@ -172,6 +173,28 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
   return (
     <div className="space-y-6">
+      {/* AI 분석 중 로딩 팝업 */}
+      <Dialog open={isLoadingAI} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+              K-BNI.AI 분석 중
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-6">
+            <div className="space-y-3">
+              <div className="text-lg font-medium text-gray-800">
+                K-BNI.AI가 대표님의 전문분야를 분석하고 있습니다.
+              </div>
+              <div className="text-base text-gray-600">
+                잠시만 기다려 주세요...!
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* 헤더 */}
       <div className="flex items-center gap-2">
         <Lightbulb className="w-6 h-6 text-red-600" />
