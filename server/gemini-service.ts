@@ -799,16 +799,26 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
       '딸기농장운영': ['카페', '베이커리', '레스토랑', '유통업체', '마케팅업체', '관광업체', '교육기관', '물류업체'],
       '건축설계': ['인테리어업체', '시공업체', '자재업체', '부동산업체', '엔지니어링업체'],
       '마케팅': ['광고대행사', 'IT업체', '인쇄업체', '이벤트업체', '컨설팅업체'],
-      '의료': ['의료기기업체', '제약업체', '의료정보업체', '보험업체', '헬스케어업체']
+      '의료': ['의료기기업체', '제약업체', '의료정보업체', '보험업체', '헬스케어업체'],
+      '패션디자이너': ['의류업체', '액세서리업체', '뷰티업체', '브랜딩업체', '사진스튜디오', '모델에이전시', '원단업체', '이벤트업체'],
+      '패션디자인': ['의류업체', '액세서리업체', '뷰티업체', '브랜딩업체', '사진스튜디오', '모델에이전시', '원단업체', '이벤트업체']
     };
 
-    // 매칭되는 전문분야가 있으면 해당 협업 분야 반환
+    // 매칭되는 전문분야가 있으면 해당 협업 분야 반환 (정확한 매칭)
+    console.log(`🔍 전문분야 매칭 시도 - 사용자: "${userSpecialty}"`);
     for (const [specialty, fields] of Object.entries(specialtyMapping)) {
-      if (userSpecialty.includes(specialty) || specialty.includes(userSpecialty)) {
-        console.log(`✅ ${specialty} 전문분야 매칭 - 맞춤 협업 분야 사용`);
+      // 더 엄격한 매칭: 전문분야가 정확히 포함되어야 함
+      const isExactMatch = userSpecialty === specialty || 
+                          userSpecialty.includes(specialty) || 
+                          specialty.includes(userSpecialty);
+      
+      if (isExactMatch) {
+        console.log(`✅ ${specialty} 전문분야 정확 매칭 - "${userSpecialty}" → 맞춤 협업 분야 사용: [${fields.join(', ')}]`);
         return fields.slice(0, 10); // 최대 10개
       }
     }
+    
+    console.log(`❌ 전문분야 매칭 실패 - "${userSpecialty}"는 등록된 특화 분야에 없음`);  
 
     // 텍스트에서 키워드 추출 시도
     const extractedFields: string[] = [];

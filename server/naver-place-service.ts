@@ -120,9 +120,11 @@ export class NaverPlaceService {
    */
   private getSpecialtySpecificKeywords(userSpecialty: string, userRegion: string): Array<{keyword: string, category: string}> {
     const specialty = userSpecialty.toLowerCase();
+    console.log(`🔍 네이버 플레이스 전문분야 매칭 시도 - 원본: "${userSpecialty}", 소문자: "${specialty}"`);
 
     // 농업 관련 (딸기농장운영, 농업, 농장 등)
     if (specialty.includes('딸기') || specialty.includes('농장') || specialty.includes('농업')) {
+      console.log(`✅ 농업 전문분야 매칭 - ${userSpecialty}: 딸기농장 특화 검색 키워드 사용`);  
       return [
         { keyword: `${userRegion} 딸기케이크`, category: '식품 및 외식업계' },
         { keyword: `${userRegion} 카페 베이커리`, category: '식품 및 외식업계' },
@@ -226,7 +228,25 @@ export class NaverPlaceService {
       ];
     }
 
+    // 패션/디자인 관련
+    if (specialty.includes('패션') || specialty.includes('디자이너') || specialty.includes('의류') || specialty.includes('패션디자인')) {
+      console.log(`✅ 패션/디자인 전문분야 매칭 - ${userSpecialty}: 패션 특화 검색 키워드 사용`);
+      return [
+        { keyword: `${userRegion} 의류`, category: '패션 및 의류' },
+        { keyword: `${userRegion} 액세서리`, category: '패션 액세서리' },
+        { keyword: `${userRegion} 뷰티`, category: '뷰티 및 화장품' },
+        { keyword: `${userRegion} 브랜딩`, category: '브랜딩 및 마케팅' },
+        { keyword: `${userRegion} 사진스튜디오`, category: '포토그래피' },
+        { keyword: `${userRegion} 모델 에이전시`, category: '모델링' },
+        { keyword: `${userRegion} 원단`, category: '원단 및 소재' },
+        { keyword: `${userRegion} 패션쇼`, category: '이벤트 기획' },
+        { keyword: `${userRegion} 디자인`, category: '디자인 서비스' },
+        { keyword: `${userRegion} 봉제`, category: '제조 및 생산' }
+      ];
+    }
+
     // 매치되지 않는 경우 빈 배열 반환
+    console.log(`⚠️ 전문분야 매칭 실패 - ${userSpecialty}: 기본 검색어 사용`);
     return [];
   }
 
