@@ -779,7 +779,7 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
       }
     }
     
-    return businesses.slice(0, 5);
+    return businesses.slice(0, 10);
   }
 
   /**
@@ -806,7 +806,7 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
     for (const [specialty, fields] of Object.entries(specialtyMapping)) {
       if (userSpecialty.includes(specialty) || specialty.includes(userSpecialty)) {
         console.log(`✅ ${specialty} 전문분야 매칭 - 맞춤 협업 분야 사용`);
-        return fields.slice(0, 5); // 최대 5개
+        return fields.slice(0, 10); // 최대 10개
       }
     }
 
@@ -817,7 +817,7 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
     for (const keyword of keywords) {
       if (analysisText.includes(keyword)) {
         extractedFields.push(keyword + '업체');
-        if (extractedFields.length >= 5) break;
+        if (extractedFields.length >= 10) break;
       }
     }
 
@@ -883,13 +883,18 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
           temperature: 0.1,
         },
         contents: [
-          `${userSpecialty}와 협업할 수 있는 업종을 5개만 추천해주세요.
+          `${userSpecialty}와 협업할 수 있는 업종을 10개 추천해주세요.
 
 - 카페/레스토랑
 - 물류업체
 - 마케팅업체
 - 유통업체
 - 관광업체
+- 제조업체
+- 서비스업체
+- 교육업체
+- IT업체
+- 컨설팅업체
 
 위 형태로 간단히 답변하세요.`
         ]
@@ -905,23 +910,23 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
           .filter(line => line.trim().startsWith('-'))
           .map(line => line.replace(/^-\s*/, '').trim())
           .filter(field => field.length > 0 && field.length < 20)
-          .slice(0, 8); // 최대 8개로 제한
+          .slice(0, 10); // 최대 10개로 제한
 
         console.log(`✅ ${userSpecialty} 시너지 분야 생성 완료: [${fields.join(', ')}]`);
         
         if (fields.length === 0) {
           console.log('⚠️ 시너지 분야 파싱 실패 - 기본값 사용');
-          return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체'];
+          return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체', '제조업체', '교육업체', 'IT업체', '컨설팅업체', '관광업체'];
         }
         
         return fields;
       }
       
       console.log('⚠️ 빈 응답 - 기본 시너지 분야 사용');
-      return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체'];
+      return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체', '제조업체', '교육업체', 'IT업체', '컨설팅업체', '관광업체'];
     } catch (error) {
       console.error(`시너지 분야 생성 오류 (${userSpecialty}):`, error);
-      return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체'];
+      return ['카페업체', '마케팅업체', '유통업체', '물류업체', '서비스업체', '제조업체', '교육업체', 'IT업체', '컨설팅업체', '관광업체'];
     }
   }
 

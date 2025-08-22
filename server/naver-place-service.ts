@@ -126,9 +126,14 @@ export class NaverPlaceService {
       return [
         { keyword: `${userRegion} 딸기케이크`, category: '식품 및 외식업계' },
         { keyword: `${userRegion} 카페 베이커리`, category: '식품 및 외식업계' },
+        { keyword: `${userRegion} 레스토랑`, category: '식품 및 외식업계' },
         { keyword: `${userRegion} 농산물 마케팅`, category: '유통 및 마케팅' },
         { keyword: `${userRegion} 농장체험`, category: '관광 및 체험' },
-        { keyword: `${userRegion} 과일가공`, category: '가공 및 제조업' }
+        { keyword: `${userRegion} 과일가공`, category: '가공 및 제조업' },
+        { keyword: `${userRegion} 디저트카페`, category: '식품 및 외식업계' },
+        { keyword: `${userRegion} 물류운송`, category: '물류 및 운송' },
+        { keyword: `${userRegion} 유기농`, category: '친환경 및 건강' },
+        { keyword: `${userRegion} 관광농원`, category: '관광 및 체험' }
       ];
     }
 
