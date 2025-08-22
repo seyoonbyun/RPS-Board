@@ -89,46 +89,134 @@ export class NaverPlaceService {
    * 전문분야별 상세 검색 키워드 생성
    */
   private getDetailedSearchTerms(userSpecialty: string, userRegion: string): Array<{keyword: string, category: string}> {
-    if (userSpecialty.includes('딸기농장운영')) {
+    // 전문분야별 맞춤 검색 키워드 매핑
+    const specialtyKeywords = this.getSpecialtySpecificKeywords(userSpecialty, userRegion);
+    
+    if (specialtyKeywords.length > 0) {
+      return specialtyKeywords;
+    }
+
+    // 기본 비즈니스 협업 분야 검색어
+    return [
+      { keyword: `${userRegion} 마케팅`, category: '마케팅 및 홍보' },
+      { keyword: `${userRegion} 디자인`, category: '디자인 및 크리에이티브' },
+      { keyword: `${userRegion} 컨설팅`, category: '전문 컨설팅' },
+      { keyword: `${userRegion} IT`, category: 'IT 및 기술' },
+      { keyword: `${userRegion} 제조업`, category: '제조 및 생산' },
+      { keyword: `${userRegion} 금융`, category: '금융 및 보험' },
+      { keyword: `${userRegion} 교육`, category: '교육 및 연수' },
+      { keyword: `${userRegion} 유통`, category: '유통 및 판매' }
+    ];
+  }
+
+  /**
+   * 전문분야별 특화된 검색 키워드 생성
+   */
+  private getSpecialtySpecificKeywords(userSpecialty: string, userRegion: string): Array<{keyword: string, category: string}> {
+    const specialty = userSpecialty.toLowerCase();
+
+    // 농업 관련 (딸기농장운영, 농업, 농장 등)
+    if (specialty.includes('딸기') || specialty.includes('농장') || specialty.includes('농업')) {
       return [
-        // 1. 식품 및 외식업계 협업 - 실제 딸기 활용 업체들
         { keyword: `${userRegion} 딸기케이크`, category: '식품 및 외식업계' },
-        { keyword: `${userRegion} 딸기디저트`, category: '식품 및 외식업계' },
         { keyword: `${userRegion} 카페 베이커리`, category: '식품 및 외식업계' },
-        { keyword: `${userRegion} 브런치카페`, category: '식품 및 외식업계' },
-        { keyword: `${userRegion} 파티시에`, category: '식품 및 외식업계' },
-        
-        // 2. 유통 및 마케팅 분야 - 농산물 마케팅 전문업체
-        { keyword: `${userRegion} 농산물 마케팅`, category: '유통 및 마케팅 분야' },
-        { keyword: `${userRegion} 농산물 브랜딩`, category: '유통 및 마케팅 분야' },
-        { keyword: `${userRegion} 온라인마케팅`, category: '유통 및 마케팅 분야' },
-        { keyword: `${userRegion} SNS마케팅`, category: '유통 및 마케팅 분야' },
-        
-        // 3. 관광 및 체험 산업 - 실제 체험/축제 관련 업체
-        { keyword: `${userRegion} 딸기축제`, category: '관광 및 체험 산업' },
-        { keyword: `${userRegion} 농장체험`, category: '관광 및 체험 산업' },
-        { keyword: `${userRegion} 기업워크숍`, category: '관광 및 체험 산업' },
-        { keyword: `${userRegion} 농촌관광`, category: '관광 및 체험 산업' },
-        { keyword: `${userRegion} 체험학습`, category: '관광 및 체험 산업' },
-        { keyword: `${userRegion} 이벤트기획`, category: '관광 및 체험 산업' },
-        
-        // 4. 가공 및 제조업 - 딸기 관련 가공업체
-        { keyword: `${userRegion} 딸기잼`, category: '가공 및 제조업' },
-        { keyword: `${userRegion} 과일가공`, category: '가공 및 제조업' },
-        { keyword: `${userRegion} 농산물포장`, category: '가공 및 제조업' },
-        { keyword: `${userRegion} 냉장물류`, category: '가공 및 제조업' },
-        { keyword: `${userRegion} 식품포장`, category: '가공 및 제조업' }
+        { keyword: `${userRegion} 농산물 마케팅`, category: '유통 및 마케팅' },
+        { keyword: `${userRegion} 농장체험`, category: '관광 및 체험' },
+        { keyword: `${userRegion} 과일가공`, category: '가공 및 제조업' }
       ];
     }
 
-    // 기타 전문분야 기본 검색어
-    return [
-      { keyword: `${userRegion} 마케팅`, category: '마케팅 분야' },
-      { keyword: `${userRegion} 디자인`, category: '디자인 분야' },
-      { keyword: `${userRegion} 컨설팅`, category: '컨설팅 분야' },
-      { keyword: `${userRegion} IT`, category: 'IT 분야' },
-      { keyword: `${userRegion} 제조업`, category: '제조업 분야' }
-    ];
+    // 세무/회계 관련
+    if (specialty.includes('세무') || specialty.includes('회계') || specialty.includes('tax')) {
+      return [
+        { keyword: `${userRegion} 법무법인`, category: '법무 및 컨설팅' },
+        { keyword: `${userRegion} 회계법인`, category: '회계 및 세무' },
+        { keyword: `${userRegion} 스타트업`, category: '창업 및 벤처' },
+        { keyword: `${userRegion} 중소기업`, category: '기업 서비스' },
+        { keyword: `${userRegion} 부동산`, category: '부동산 및 투자' },
+        { keyword: `${userRegion} 금융`, category: '금융 및 보험' }
+      ];
+    }
+
+    // 법무 관련
+    if (specialty.includes('법무') || specialty.includes('변호사') || specialty.includes('법률')) {
+      return [
+        { keyword: `${userRegion} 세무사`, category: '세무 및 회계' },
+        { keyword: `${userRegion} 부동산`, category: '부동산 및 투자' },
+        { keyword: `${userRegion} 기업`, category: '기업 서비스' },
+        { keyword: `${userRegion} 특허`, category: '지적재산권' },
+        { keyword: `${userRegion} 보험`, category: '금융 및 보험' }
+      ];
+    }
+
+    // 의료 관련
+    if (specialty.includes('의료') || specialty.includes('병원') || specialty.includes('의사') || specialty.includes('간호')) {
+      return [
+        { keyword: `${userRegion} 의료기기`, category: '의료기기 및 장비' },
+        { keyword: `${userRegion} 제약`, category: '제약 및 바이오' },
+        { keyword: `${userRegion} 건강관리`, category: '헬스케어' },
+        { keyword: `${userRegion} 의료정보`, category: 'IT 및 정보시스템' },
+        { keyword: `${userRegion} 보험`, category: '금융 및 보험' }
+      ];
+    }
+
+    // 건축/설계 관련
+    if (specialty.includes('건축') || specialty.includes('설계') || specialty.includes('인테리어')) {
+      return [
+        { keyword: `${userRegion} 시공`, category: '건설 및 시공' },
+        { keyword: `${userRegion} 인테리어`, category: '인테리어 및 디자인' },
+        { keyword: `${userRegion} 자재`, category: '건축자재' },
+        { keyword: `${userRegion} 부동산`, category: '부동산 개발' },
+        { keyword: `${userRegion} 엔지니어링`, category: '엔지니어링' }
+      ];
+    }
+
+    // IT/소프트웨어 관련
+    if (specialty.includes('it') || specialty.includes('소프트웨어') || specialty.includes('개발') || specialty.includes('프로그래밍')) {
+      return [
+        { keyword: `${userRegion} 마케팅`, category: '디지털 마케팅' },
+        { keyword: `${userRegion} 디자인`, category: 'UI/UX 디자인' },
+        { keyword: `${userRegion} 스타트업`, category: '스타트업' },
+        { keyword: `${userRegion} 교육`, category: 'IT 교육' },
+        { keyword: `${userRegion} 컨설팅`, category: 'IT 컨설팅' }
+      ];
+    }
+
+    // 마케팅/광고 관련
+    if (specialty.includes('마케팅') || specialty.includes('광고') || specialty.includes('홍보')) {
+      return [
+        { keyword: `${userRegion} 디자인`, category: '디자인 및 크리에이티브' },
+        { keyword: `${userRegion} 인쇄`, category: '인쇄 및 출판' },
+        { keyword: `${userRegion} 이벤트`, category: '이벤트 기획' },
+        { keyword: `${userRegion} 방송`, category: '방송 및 미디어' },
+        { keyword: `${userRegion} 컨텐츠`, category: '컨텐츠 제작' }
+      ];
+    }
+
+    // 교육 관련
+    if (specialty.includes('교육') || specialty.includes('학원') || specialty.includes('강사')) {
+      return [
+        { keyword: `${userRegion} 출판`, category: '교육 출판' },
+        { keyword: `${userRegion} IT교육`, category: 'IT 교육' },
+        { keyword: `${userRegion} 어학`, category: '어학 교육' },
+        { keyword: `${userRegion} 체험학습`, category: '체험 교육' },
+        { keyword: `${userRegion} 컨설팅`, category: '교육 컨설팅' }
+      ];
+    }
+
+    // 제조업 관련
+    if (specialty.includes('제조') || specialty.includes('생산') || specialty.includes('공장')) {
+      return [
+        { keyword: `${userRegion} 자동화`, category: '자동화 및 로봇' },
+        { keyword: `${userRegion} 물류`, category: '물류 및 운송' },
+        { keyword: `${userRegion} 품질관리`, category: '품질 관리' },
+        { keyword: `${userRegion} 포장`, category: '포장 및 패키징' },
+        { keyword: `${userRegion} 마케팅`, category: '제품 마케팅' }
+      ];
+    }
+
+    // 매치되지 않는 경우 빈 배열 반환
+    return [];
   }
 
   /**
