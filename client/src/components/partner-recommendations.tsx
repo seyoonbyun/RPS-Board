@@ -12,8 +12,7 @@ interface PartnerRecommendationsProps {
 }
 
 export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) {
-  // 새로운 state 추가
-  const [chapterSynergyMembers, setChapterSynergyMembers] = useState<any[]>([]);
+  // 지역 업체 검색 state
   const [regionalBusinesses, setRegionalBusinesses] = useState<any[]>([]);
   const [isLoadingRegionalBusinesses, setIsLoadingRegionalBusinesses] = useState(false);
 
@@ -76,21 +75,6 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       }, 100);
     }
   }, [userId]);
-
-  // 챕터 내 시너지 멤버 검색 함수
-  const searchChapterSynergyMembers = async () => {
-    if (!aiAnalysis || !userId) return;
-    
-    try {
-      const response = await fetch(`/api/chapter-synergy-members/${userId}`);
-      if (!response.ok) throw new Error('챕터 내 시너지 멤버 검색 실패');
-      
-      const data = await response.json();
-      setChapterSynergyMembers(data.members || []);
-    } catch (error) {
-      console.error('챕터 내 시너지 멤버 검색 오류:', error);
-    }
-  };
 
   // 지역 내 업체 검색 함수
   const searchRegionalBusinesses = async () => {
@@ -161,12 +145,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     }
   };
 
-  // AI 분석이 완료되면 자동으로 챕터 내 시너지 멤버 검색 및 지역 업체 검색
+  // AI 분석이 완료되면 자동으로 지역 업체 검색 실행
   useEffect(() => {
     if (aiAnalysis && userId) {
       console.log(`🔄 AI 분석 완료됨, 추가 검색 시작 - specialty: ${aiAnalysis.userSpecialty}`);
-      searchChapterSynergyMembers();
-      // 자동으로 지역 업체 검색도 실행
+      // 자동으로 지역 업체 검색 실행
       searchRegionalBusinesses();
     }
   }, [aiAnalysis, userId]);
@@ -302,73 +285,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
         {/* AI 시너지 매칭 멤버 탭 */}
         <TabsContent value="analytics" className="space-y-4">
-          {/* 1차: 동일 챕터 내 추천 멤버 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                나의 챕터 내 파워팀 멤버 추천
-                {chapterSynergyMembers && chapterSynergyMembers.length > 0 && (
-                  <Button size="sm" className="ml-2 h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white">
-                    {chapterSynergyMembers.length} 멤버 추천
-                  </Button>
-                )}
-              </CardTitle>
-              <CardDescription>
-                동일 챕터에서 나의 전문분야와 시너지를 일으킬 수 있는 멤버들입니다
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chapterSynergyMembers && chapterSynergyMembers.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {chapterSynergyMembers.map((member: any, index: number) => (
-                    <div key={member.email} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-blue-50">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">챕터:</span>
-                            <span>{member.chapter}</span>
-                            <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">멤버명:</span>
-                            <span className="text-blue-600 font-medium">{member.memberName}</span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-gray-700">회사명:</span>
-                            <span>{member.company || '정보 없음'}</span>
-                            <span className="text-gray-400">|</span>
-                            <span className="font-semibold text-gray-700">전문분야:</span>
-                            <span>{member.specialty || '정보 없음'}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-700">이메일:</span>
-                            <span className="text-gray-600">{member.email}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-sm text-green-700 font-medium mb-1">
-                              시너지 분야: {member.synergyReason}
-                            </div>
-                          </div>
-                          <Badge variant="default" className="text-xs">
-                            챕터 내 추천
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600 text-sm mb-1">아직까지 추천할 멤버가 없습니다.</p>
-                  <p className="text-xs text-gray-500">나의 전문분야 분석을 통해 제안드린 분야의 멤버를 영입해보세요!</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 2차: 지역 기반 업체 검색 */}
+          {/* 지역 기반 업체 검색 */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
