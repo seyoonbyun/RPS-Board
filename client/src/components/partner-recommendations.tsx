@@ -287,7 +287,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <p className="text-gray-600">AI 분석 데이터가 없습니다</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => refetchAI()}
+                  onClick={() => refetch()}
                   className="mt-4 bg-red-600 hover:bg-red-700 text-white"
                 >
                   분석 시작
@@ -400,9 +400,22 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                             <span>{business.address}</span>
                           </div>
                           {business.phone && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mb-2">
                               <span className="font-semibold text-gray-700">연락처:</span>
                               <span className="text-gray-600">{business.phone}</span>
+                            </div>
+                          )}
+                          {business.website && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">웹사이트:</span>
+                              <a 
+                                href={business.website} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline text-sm"
+                              >
+                                {business.website}
+                              </a>
                             </div>
                           )}
                         </div>

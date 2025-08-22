@@ -8,6 +8,12 @@ Preferred communication style: Simple, everyday language.
 Form consistency preference: All form fields must require submit button activation for saving - no auto-save functionality to avoid user confusion.
 
 ## Recent Changes and Fixes
+- **2025-08-22**: WEBSITE LINKS ENHANCEMENT: 지역 업체 검색 결과에 웹사이트 링크 추가
+  - ✅ CLICKABLE LINKS: 지역 내 파워팀 업체 검색 결과에 클릭 가능한 웹사이트 링크 추가
+  - ✅ EXTERNAL LINKS: 새 탭에서 열리는 안전한 외부 링크 구현 (target="_blank", rel="noopener noreferrer")
+  - ✅ FALLBACK DATA: 기본 fallback 업체 데이터에 웹사이트 정보 추가
+  - ✅ USER EXPERIENCE: 업체 정보 확인을 위한 직접 웹사이트 접근 기능 제공
+
 - **2025-08-22**: PRINT LAYOUT ENHANCEMENT: 인쇄 시 모든 탭 내용 표시 기능 추가
   - ✅ TAB CONTENT PRINTING: 스코어보드와 AI 파트너 추천 탭 모두 인쇄 시 표시되도록 CSS 수정
   - ✅ PAGE BREAK OPTIMIZATION: 탭 간 자동 페이지 브레이크로 깔끔한 인쇄 레이아웃 구현
