@@ -289,18 +289,27 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           {/* 지역 기반 업체 검색 */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <MapPin className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                 지역 내 파워팀 업체 검색
+                {/* PC에서만 버튼 표시 */}
                 {regionalBusinesses && regionalBusinesses.length > 0 && (
-                  <Button size="sm" className="ml-2 h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white">
+                  <Button size="sm" className="ml-2 h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white hidden md:inline-flex">
                     {regionalBusinesses.length} 업체 추천
                   </Button>
                 )}
               </CardTitle>
-              <CardDescription>
-                지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
-              </CardDescription>
+              <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <CardDescription className="text-sm md:text-base">
+                  지역에서 나의 전문분야와 시너지를 일으킬 수 있는 업체 정보입니다
+                </CardDescription>
+                {/* 모바일에서만 버튼 표시 */}
+                {regionalBusinesses && regionalBusinesses.length > 0 && (
+                  <Button size="sm" className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white md:hidden w-fit">
+                    {regionalBusinesses.length} 업체 추천
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingRegionalBusinesses ? (
