@@ -79,11 +79,11 @@ ${specialty}와 협업할 수 있는 **구체적인 업체 유형들**을 제시
 ## ${analysisTemplate.sections[2].icon} ${analysisTemplate.sections[2].title}
 다음과 같이 시간대별로 구분하여 협업 전략을 제시해주세요:
 
-**단기 전략 (즉시~6개월):** 즉각적인 성과를 기대할 수 있는 협업 분야들
+**단기 전략 (즉시~6개월):** 즉각적인 성과를 기대할 수 있는 **구체적인 업체 유형들** (예: 법무법인, 회계법인, 특허법인 등)
 
-**중기 전략 (6개월~2년):** 지속적인 관계 구축과 상호 성장을 위한 전략적 협업 분야들
+**중기 전략 (6개월~2년):** 지속적인 관계 구축과 상호 성장을 위한 **구체적인 업체 유형들** (예: 부동산중개업, 금융기관, 보험회사 등)
 
-**장기 전략 (2년 이상):** 혁신과 사업 확장을 위한 장기적 파트너십 구축 분야들
+**장기 전략 (2년 이상):** 혁신과 사업 확장을 위한 **구체적인 업체 유형들** (예: IT업체, 컨설팅업체, 교육기관 등)
 
 ## ${analysisTemplate.sections[3].icon} ${analysisTemplate.sections[3].title}
 위에서 제시한 협업 전략을 실제로 실행하기 위한 구체적인 실행 방법들을 제시해주세요. 네트워킹 방법, 관계 구축 전략, 상호 이익 창출 모델을 포함하여 실무진이 바로 적용할 수 있는 방안을 작성해주세요.
@@ -366,24 +366,27 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
         
         if (match && match[1]) {
           const item = match[1].trim();
-          if (item.length > 2 && item.length < 20 && 
-              !item.includes('전략') && !item.includes('협업') && 
-              !item.includes('추천') && !item.includes('우선순위')) {
+          // 🚨 추상적/검색 불가능한 키워드 강력 필터링
+          const invalidKeywords = ['실행 로드맵', '위클리 프리젠테이션', '피처드 프리젠테이션', '방문객 초대', '전략', '협업', '추천', '우선순위', '방안', '로드맵', '프리젠테이션'];
+          const isValid = item.length > 2 && item.length < 20 && 
+                         !invalidKeywords.some(invalid => item.includes(invalid)) &&
+                         (item.includes('업체') || item.includes('업') || item.includes('법인') || item.includes('회사') || item.includes('기관') || item.includes('센터'));
+          if (isValid) {
             priorities[currentSection as keyof typeof priorities].push(item);
           }
         }
       }
     }
 
-    // 기본값 설정 (추출된 항목이 없을 경우)
+    // ✅ 전문분야별 적응형 기본값 설정 (추출된 항목이 없을 경우)
     if (priorities.shortTerm.length === 0) {
-      priorities.shortTerm = ['마케팅업체', '브랜딩업체', '제조업체'];
+      priorities.shortTerm = this.getDefaultBusinessTypes('short');
     }
     if (priorities.mediumTerm.length === 0) {
-      priorities.mediumTerm = ['소매업체', '유통업체', '이벤트기획사'];
+      priorities.mediumTerm = this.getDefaultBusinessTypes('medium');
     }
     if (priorities.longTerm.length === 0) {
-      priorities.longTerm = ['IT솔루션', '글로벌파트너', '투자업체'];
+      priorities.longTerm = this.getDefaultBusinessTypes('long');
     }
 
     // 각 배열을 최대 3개로 제한하고 의미 있는 내용만 유지
@@ -392,6 +395,18 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
     priorities.longTerm = priorities.longTerm.slice(0, 3).filter(item => item.length > 1 && !item.match(/^\d+$/));
 
     return priorities;
+  }
+
+  // 🎯 전문분야별 적응형 기본 업체 유형 반환
+  private getDefaultBusinessTypes(term: 'short' | 'medium' | 'long'): string[] {
+    // 모든 전문분야에 범용적으로 적용 가능한 업체 유형들
+    const universalBusinessTypes = {
+      short: ['법무법인', '회계법인', '세무법인'],
+      medium: ['부동산중개업', '금융기관', '보험회사'],
+      long: ['IT업체', '컨설팅업체', '교육기관']
+    };
+    
+    return universalBusinessTypes[term];
   }
 
   async findMatchingMembers(
