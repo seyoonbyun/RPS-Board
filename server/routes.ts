@@ -1343,22 +1343,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRow = allUsers.find(u => u.email === user.email);
       const userSpecialty = userRow?.specialty || '일반';
 
-      // AI 분석에서 추출된 시너지 분야를 우선 사용, 없으면 동적으로 생성
-      let combinedFields = allSynergyFields || [];
+      // AI 분석 결과에서 협업 분야 직접 추출
+      let collaborationFields: string[] = [];
+      const aiAnalysisText = aiAnalysis || '';
       
-      // AI 분석 데이터가 없거나 시너지 분야가 부족한 경우 Gemini로 동적 생성
-      if (combinedFields.length < 3) {
-        console.log(`📝 ${userSpecialty} 전문분야의 시너지 분야 동적 생성 중...`);
-        try {
-          const geminiFieldsResponse = await geminiService.generateSynergyFields(userSpecialty);
-          combinedFields = [...combinedFields, ...geminiFieldsResponse];
-          console.log(`✅ 동적 시너지 분야 생성 완료: ${combinedFields.length}개`);
-        } catch (fieldError) {
-          console.error('시너지 분야 동적 생성 실패:', fieldError);
-          // 최소한의 일반적 분야 제공
-          combinedFields = ['협업업체', '유통업체', '마케팅업체', '서비스업체', '제조업체'];
+      if (aiAnalysisText) {
+        console.log(`📊 AI 분석 결과에서 협업 분야 추출 중... (분석 길이: ${aiAnalysisText.length}자)`);
+        
+        // "협업 분야:" 패턴 찾기
+        const collaborationMatches = aiAnalysisText.match(/협업 분야[:\s]*([^.\n]+)/g);
+        
+        if (collaborationMatches) {
+          collaborationFields = collaborationMatches
+            .map(match => match.replace(/협업 분야[:\s]*/, '').trim())
+            .join(', ')
+            .split(/[,，、]/)
+            .map(field => field.trim().replace(/[()（）]/g, ''))
+            .filter(field => field.length > 1 && field.length < 15)
+            .slice(0, 8);
+          
+          console.log(`✅ AI 분석에서 협업 분야 추출 완료: [${collaborationFields.join(', ')}]`);
         }
       }
+      
+      // AI 분석에서 추출된 분야가 없으면 기본값 사용
+      if (collaborationFields.length === 0) {
+        console.log(`⚠️ AI 분석에서 협업 분야 추출 실패 - ${userSpecialty} 기본값 사용`);
+        collaborationFields = ['카페', '레스토랑', '마케팅업체', '유통업체', '관광업체'];
+      }
+      
+      const combinedFields = collaborationFields;
 
       // 사용자 지역 정보 추출 (사용자 프로필의 챕터 정보 활용)
       const chapterInfo = userRow?.chapter || '강남';
@@ -1371,29 +1385,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         chapterInfo.includes('마포') ? '마포구' :
                         chapterInfo === '강남' ? '강남구' : '강남구'; // 기본값
 
-      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${userRegion}, 시너지 분야: ${combinedFields.length}개`);
+      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${userRegion}, 협업 분야: [${combinedFields.join(', ')}]`);
 
-      // Gemini API를 통한 종합적인 지역 업체 검색
-      const searchQuery = `서울 ${userRegion} 지역에서 "${userSpecialty}"와 시너지를 일으킬 수 있는 실제 존재하는 업체들을 찾아주세요.
+      // 협업 분야 정보를 포함한 검색 쿼리 생성
+      const collaborationText = combinedFields.length > 0 
+        ? `주요 협업 분야: ${combinedFields.join(', ')}`
+        : `${userSpecialty}와 협업 가능한 업종`;
+      
+      const searchQuery = `서울 ${userRegion} 지역에서 "${userSpecialty}" 전문분야와 협업 가능한 실제 업체들을 찾아주세요.
 
-전문분야 분석: ${aiAnalysis || `${userSpecialty} 전문분야 네트워킹 분석`}
+${collaborationText}
 
-다음 분야와 관련된 실제 업체들을 각 분야별로 2-3개씩 제공해주세요:
-${combinedFields.map(field => `- ${field}`).join('\n')}
+실제로 존재하는 업체만 추천하고, 각 업체의 정확한 정보와 ${userSpecialty}와의 구체적인 협업 방안을 제시해주세요.`;
 
-요구사항:
-1. 서울 ${userRegion} 지역에 실제 위치한 업체만 포함
-2. 각 업체의 정확한 회사명, 주소, 연락처 정보 제공
-3. ${userSpecialty}와의 구체적인 시너지 가능성 설명
-4. 최소 12-15개 업체를 다양한 분야에서 선별
-5. 각 업체에 대한 간략한 사업 설명 포함
-
-결과를 JSON 형태로 정리해서 제공해주세요.`;
-
+      // Gemini API로 협업 분야 기반 실제 업체 검색
       const result = await geminiService.searchRegionalBusinesses(searchQuery, userSpecialty, userRegion);
       console.log(`🎯 지역 업체 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
       
-      res.json(result);
+      res.json({
+        message: "AI 분석 기반 협업 업체 검색 완료",
+        businesses: result.businesses || [],
+        userSpecialty,
+        userRegion,
+        collaborationFields: combinedFields
+      });
     } catch (error) {
       console.error("지역 업체 검색 오류:", error);
       console.error("Error type:", typeof error);
