@@ -193,7 +193,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           <TabsTrigger value="analytics" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
             <BarChart3 className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
             <span className="hidden md:block">K-BNI.AI의 파워팀 파트너 추천</span>
-            <span className="block md:hidden truncate">K-AI의 파트너 추천</span>
+            <span className="block md:hidden truncate">AI의 파워팀 추천</span>
           </TabsTrigger>
         </TabsList>
 
