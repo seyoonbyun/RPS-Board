@@ -189,7 +189,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           <TabsTrigger value="ai-analysis" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
             <span className="block sm:hidden">AI의 파트너 추천</span>
-            <span className="hidden sm:block">나의 전문분야 분석</span>
+            <span className="hidden sm:block">AI의 파워팀 파트너 추천</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
