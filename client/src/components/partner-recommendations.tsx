@@ -188,11 +188,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="ai-analysis" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            나의 전문분야 분석
+            AI의 파트너 추천
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            K-BNI.AI의 파워팀 파트너 추천
+            K-AI의 파워팀 파트너 추천
           </TabsTrigger>
         </TabsList>
 
