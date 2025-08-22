@@ -285,6 +285,11 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600" />
                 나의 챕터 내 파워팀 멤버 추천
+                {chapterSynergyMembers && chapterSynergyMembers.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {chapterSynergyMembers.length} 멤버 추천
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>
                 동일 챕터에서 나의 전문분야와 시너지를 일으킬 수 있는 멤버들입니다
