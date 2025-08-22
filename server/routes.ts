@@ -1298,71 +1298,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userSpecialty = userRow.specialty;
       const userRegion = userRow.region;
 
-      // AI 분석 결과에서 협업 분야 직접 추출
-      let collaborationFields: string[] = [];
-      const aiAnalysisText = aiAnalysis || '';
+      console.log(`🎯 순수 동적 검색 시작 - AI 분석 직접 전달`);
       
-      if (aiAnalysisText) {
-        console.log(`📊 AI 분석 결과에서 협업 분야 추출 중... (분석 길이: ${aiAnalysisText.length}자)`);
-        
-        // "협업 분야:" 패턴 찾기
-        const collaborationMatches = aiAnalysisText.match(/협업 분야[:\s]*([^.\n]+)/g);
-        
-        if (collaborationMatches) {
-          collaborationFields = collaborationMatches
-            .map(match => match.replace(/협업 분야[:\s]*/, '').trim())
-            .join(', ')
-            .split(/[,，、]/)
-            .map(field => field.trim().replace(/[()（）]/g, ''))
-            .filter(field => field.length > 1 && field.length < 15)
-            .slice(0, 8);
-          
-          console.log(`✅ AI 분석에서 협업 분야 추출 완료: [${collaborationFields.join(', ')}]`);
-        }
-      }
-      
-      // AI 분석에서 추출된 분야가 없으면 기본값 사용
-      if (collaborationFields.length === 0) {
-        console.log(`⚠️ AI 분석에서 협업 분야 추출 실패 - ${userSpecialty} 기본값 사용`);
-        collaborationFields = ['카페', '레스토랑', '마케팅업체', '유통업체', '관광업체'];
-      }
-      
-      const combinedFields = collaborationFields;
-
-      // 사용자 지역 정보 추출 (사용자 프로필의 챕터 정보 활용)
-      const chapterInfo = userRow?.chapter || '강남';
-      const finalUserRegion = chapterInfo.includes('강남') ? '강남구' : 
-                        chapterInfo.includes('서초') ? '서초구' :
-                        chapterInfo.includes('송파') ? '송파구' :
-                        chapterInfo.includes('종로') ? '종로구' :
-                        chapterInfo.includes('중구') ? '중구' :
-                        chapterInfo.includes('영등포') ? '영등포구' :
-                        chapterInfo.includes('마포') ? '마포구' :
-                        chapterInfo === '강남' ? '강남구' : '강남구'; // 기본값
-
-      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${finalUserRegion}, 협업 분야: [${combinedFields.join(', ')}]`);
-
-      // 협업 분야 정보를 포함한 검색 쿼리 생성
-      const collaborationText = combinedFields.length > 0 
-        ? `주요 협업 분야: ${combinedFields.join(', ')}`
-        : `${userSpecialty}와 협업 가능한 업종`;
-      
-      const searchQuery = `서울 ${finalUserRegion} 지역에서 "${userSpecialty}" 전문분야와 협업 가능한 실제 업체들을 찾아주세요.
-
-${collaborationText}
-
-실제로 존재하는 업체만 추천하고, 각 업체의 정확한 정보와 ${userSpecialty}와의 구체적인 협업 방안을 제시해주세요.`;
-
-      // Gemini API로 협업 분야 기반 실제 업체 검색
-      const result = await geminiService.searchRegionalBusinesses(searchQuery, userSpecialty, finalUserRegion);
-      console.log(`🎯 지역 업체 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
+      // AI 분석 텍스트를 직접 새로운 순수 동적 검색 시스템에 전달
+      const result = await geminiService.searchRegionalBusinesses(aiAnalysis, userSpecialty, userRegion);
+      console.log(`🎯 순수 동적 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
       
       res.json({
-        message: "AI 분석 기반 협업 업체 검색 완료",
+        message: "순수 동적 AI 검색 완료 - 하드코딩 제거됨",
         businesses: result.businesses || [],
         userSpecialty,
-        userRegion: finalUserRegion,
-        collaborationFields: combinedFields
+        userRegion
       });
     } catch (error) {
       console.error("지역 업체 검색 오류:", error);
