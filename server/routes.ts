@@ -1343,27 +1343,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRow = allUsers.find(u => u.email === user.email);
       const userSpecialty = userRow?.specialty || '일반';
 
-      // 전문분야별 기본 시너지 분야 정의
-      const defaultSynergyFields = {
-        '패션디자이너': [
-          '마케팅업체', '브랜딩업체', '사진작가', '모델에이전시', '스타일리스트',
-          '제조업체', '유통업체', '소매업체', '이벤트기획사', 'SNS마케팅',
-          '온라인쇼핑몰', '패션매거진', '패션쇼', '의류제조', '액세서리'
-        ],
-        '건축사': [
-          '인테리어 디자인', '건축 설계', '부동산 개발', '시공업체', '도시계획',
-          '조경설계', '건축자재', '건설장비', '건축컨설팅', '부동산투자'
-        ],
-        '변호사': [
-          '회계사', '세무사', '부동산', '금융', '컨설팅', '보험', '법무법인'
-        ]
-      };
-
-      // AI 분석에서 추출된 분야 + 기본 분야 결합
-      const combinedFields = [
-        ...(allSynergyFields || []),
-        ...(defaultSynergyFields[userSpecialty] || defaultSynergyFields['건축사'])
-      ];
+      // AI 분석에서 추출된 시너지 분야를 우선 사용, 없으면 동적으로 생성
+      let combinedFields = allSynergyFields || [];
+      
+      // AI 분석 데이터가 없거나 시너지 분야가 부족한 경우 Gemini로 동적 생성
+      if (combinedFields.length < 3) {
+        console.log(`📝 ${userSpecialty} 전문분야의 시너지 분야 동적 생성 중...`);
+        try {
+          const geminiFieldsResponse = await geminiService.generateSynergyFields(userSpecialty);
+          combinedFields = [...combinedFields, ...geminiFieldsResponse];
+          console.log(`✅ 동적 시너지 분야 생성 완료: ${combinedFields.length}개`);
+        } catch (fieldError) {
+          console.error('시너지 분야 동적 생성 실패:', fieldError);
+          // 최소한의 일반적 분야 제공
+          combinedFields = ['협업업체', '유통업체', '마케팅업체', '서비스업체', '제조업체'];
+        }
+      }
 
       // 사용자 지역 정보 추출 (사용자 프로필의 챕터 정보 활용)
       const chapterInfo = userRow?.chapter || '강남';
@@ -1401,18 +1396,30 @@ ${combinedFields.map(field => `- ${field}`).join('\n')}
       res.json(result);
     } catch (error) {
       console.error("지역 업체 검색 오류:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error name:", (error as any)?.name);
+      console.error("Error message:", (error as Error)?.message);
+      console.error("Error stack:", (error as Error)?.stack);
+      console.error("Full error details:", JSON.stringify(error, null, 2));
       
       // 사용자 데이터 유효성 오류인 경우
-      if ((error as Error).message.includes('전문분야') || (error as Error).message.includes('지역 정보')) {
+      if ((error as Error).message && ((error as Error).message.includes('전문분야') || (error as Error).message.includes('지역 정보'))) {
         res.status(400).json({ 
           message: (error as Error).message,
           businesses: [],
           requiresUserInput: true
         });
+      // Gemini API 서비스 오류인 경우  
+      } else if ((error as Error).message && (error as Error).message.includes('Gemini API 서비스')) {
+        res.status(503).json({ 
+          message: (error as Error).message,
+          businesses: [],
+          serviceError: true
+        });
       } else {
         res.status(500).json({ 
           message: "지역 업체 검색 중 오류가 발생했습니다",
-          error: (error as Error).message,
+          error: (error as Error)?.message || '알 수 없는 오류',
           businesses: []
         });
       }

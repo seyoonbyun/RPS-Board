@@ -314,7 +314,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <p className="text-gray-600">AI 분석 데이터가 없습니다</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => refetch()}
+                  onClick={() => fetchRegionalBusinesses()}
                   className="mt-4 bg-red-600 hover:bg-red-700 text-white"
                 >
                   분석 시작
