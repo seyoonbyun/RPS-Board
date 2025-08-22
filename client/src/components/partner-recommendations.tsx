@@ -371,6 +371,26 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                         
                         {/* 오른쪽: 시너지 정보 */}
                         <div className="space-y-2">
+                          {/* 협업 분야 정보 */}
+                          {(business as any).collaborationCategory && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs bg-blue-100 text-blue-800 border-blue-300"
+                                >
+                                  {(business as any).collaborationCategory.index}. {(business as any).collaborationCategory.name}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-blue-700 leading-relaxed mb-2">
+                                <strong>협업 대상:</strong> {(business as any).collaborationCategory.description}
+                              </div>
+                              <div className="text-xs text-blue-600 leading-relaxed">
+                                <strong>협업 방안:</strong> {(business as any).collaborationCategory.method}
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex items-start justify-between">
                             <div className="text-sm text-green-700 font-medium">
                               시너지 가능성: {business.synergyPotential}

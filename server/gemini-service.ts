@@ -462,6 +462,79 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
     return 'potential';
   }
 
+  /**
+   * 딸기농장운영 협업 분야 매칭
+   */
+  private matchCollaborationCategory(businessName: string, category: string): { 
+    categoryName: string; 
+    categoryIndex: number; 
+    description: string;
+    collaborationMethod: string;
+  } | null {
+    const name = businessName.toLowerCase();
+    const cat = category.toLowerCase();
+    
+    // 1. 유통 및 판매 채널
+    if (name.includes('카페') || name.includes('레스토랑') || name.includes('베이커리') || 
+        name.includes('호텔') || name.includes('백화점') || cat.includes('음식') || 
+        cat.includes('카페') || cat.includes('레스토랑') || cat.includes('디저트')) {
+      return {
+        categoryName: '유통 및 판매 채널',
+        categoryIndex: 1,
+        description: '고급 레스토랑/카페, 베이커리, 호텔, 온라인 쇼핑몰, 백화점 식품관',
+        collaborationMethod: '정기 납품 계약, 공동 메뉴 개발(딸기 케이크, 칵테일), 시즌 프로모션'
+      };
+    }
+    
+    // 2. 농업 기술 및 스마트팜 솔루션
+    if (name.includes('농업') || name.includes('기술') || name.includes('스마트') || 
+        name.includes('iot') || name.includes('솔루션') || cat.includes('기술') || 
+        cat.includes('컨설팅') || cat.includes('시스템')) {
+      return {
+        categoryName: '농업 기술 및 스마트팜 솔루션',
+        categoryIndex: 2,
+        description: '스마트팜 설비/컨설팅 업체, IoT 센서 개발사, 친환경 비료/농약 공급사',
+        collaborationMethod: '기술 도입, 맞춤형 솔루션 개발, 공동 R&D, 친환경 재배 전환 컨설팅'
+      };
+    }
+    
+    // 3. 관광 및 체험 서비스
+    if (name.includes('여행') || name.includes('관광') || name.includes('체험') || 
+        name.includes('축제') || name.includes('교육') || name.includes('사진') || 
+        cat.includes('여행') || cat.includes('관광') || cat.includes('교육')) {
+      return {
+        categoryName: '관광 및 체험 서비스',
+        categoryIndex: 3,
+        description: '여행사, 숙박업소, 지역 축제 기획사, 교육 기관, 사진/영상 작가',
+        collaborationMethod: '체험 프로그램 공동 기획(딸기 따기, 딸기 가공), 패키지 상품 개발, 홍보 콘텐츠 제작'
+      };
+    }
+    
+    // 4. 가공식품 및 식음료 산업
+    if (name.includes('식품') || name.includes('제조') || name.includes('가공') || 
+        name.includes('음료') || name.includes('잼') || cat.includes('식품') || 
+        cat.includes('제조') || cat.includes('음료')) {
+      return {
+        categoryName: '가공식품 및 식음료 산업',
+        categoryIndex: 4,
+        description: '식품 제조 업체(잼, 청), 디저트 카페, 건강 음료 회사',
+        collaborationMethod: '원물 공급, 공동 브랜드 제품 개발(딸기잼, 건딸기), OEM/ODM'
+      };
+    }
+    
+    // 기본 매칭 (마케팅 관련은 유통으로 분류)
+    if (name.includes('마케팅') || name.includes('광고') || name.includes('브랜딩')) {
+      return {
+        categoryName: '유통 및 판매 채널',
+        categoryIndex: 1,
+        description: '마케팅 및 브랜딩 지원을 통한 판매 채널 확대',
+        collaborationMethod: '브랜드 마케팅 협력, 판매 채널 확장, 고객 접점 늘리기'
+      };
+    }
+    
+    return null;
+  }
+
   async searchRegionalBusinesses(searchQuery: string, userSpecialty: string = '일반', userRegion: string = '강남구'): Promise<{ businesses: NaverPlaceBusiness[] }> {
     console.log('🔍 3단계 지역 업체 검색 시작:', { userSpecialty, userRegion });
       
@@ -482,8 +555,23 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       );
       
       if (naverBusinesses.length > 0) {
-        console.log(`✅ 3단계 완료: 네이버 플레이스에서 ${naverBusinesses.length}개 실제 업체 발견`);
-        return { businesses: naverBusinesses };
+        // 협업 분야 매칭 정보 추가
+        const enhancedBusinesses = naverBusinesses.map(business => {
+          const collaborationInfo = this.matchCollaborationCategory(business.name, business.category);
+          
+          return {
+            ...business,
+            collaborationCategory: collaborationInfo ? {
+              name: collaborationInfo.categoryName,
+              index: collaborationInfo.categoryIndex,
+              description: collaborationInfo.description,
+              method: collaborationInfo.collaborationMethod
+            } : null
+          };
+        });
+        
+        console.log(`✅ 3단계 완료: 네이버 플레이스에서 ${enhancedBusinesses.length}개 실제 업체 발견 (협업 분야 매칭 완료)`);
+        return { businesses: enhancedBusinesses };
       }
       
       // 네이버 API 실패 시 솔직한 안내 (가짜 데이터 제공 금지)
