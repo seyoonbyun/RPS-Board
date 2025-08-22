@@ -114,10 +114,31 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       if (!response.ok) throw new Error('지역 업체 검색 실패');
       
       const data = await response.json();
+      
+      // 사용자 입력이 필요한 경우 토스트 메시지 표시
+      if (data.requiresUserInput) {
+        const { toast } = await import('@/hooks/use-toast');
+        toast({
+          title: "입력 정보 확인 필요",
+          description: data.message,
+          variant: "destructive",
+          duration: 4000,
+        });
+        setRegionalBusinesses([]);
+        return;
+      }
+      
       console.log('🎯 지역 업체 검색 응답 받음:', data.businesses?.length || 0, '개 업체');
       setRegionalBusinesses(data.businesses || []);
     } catch (error) {
       console.error('지역 업체 검색 오류:', error);
+      const { toast } = await import('@/hooks/use-toast');
+      toast({
+        title: "검색 오류",
+        description: error instanceof Error ? error.message : '지역 업체 검색 중 오류가 발생했습니다',
+        variant: "destructive",
+        duration: 3000,
+      });
     } finally {
       setIsLoadingRegionalBusinesses(false);
     }

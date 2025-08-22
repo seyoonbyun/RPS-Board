@@ -1401,11 +1401,21 @@ ${combinedFields.map(field => `- ${field}`).join('\n')}
       res.json(result);
     } catch (error) {
       console.error("지역 업체 검색 오류:", error);
-      res.status(500).json({ 
-        message: "지역 업체 검색 중 오류가 발생했습니다",
-        error: (error as Error).message,
-        businesses: []
-      });
+      
+      // 사용자 데이터 유효성 오류인 경우
+      if ((error as Error).message.includes('전문분야') || (error as Error).message.includes('지역 정보')) {
+        res.status(400).json({ 
+          message: (error as Error).message,
+          businesses: [],
+          requiresUserInput: true
+        });
+      } else {
+        res.status(500).json({ 
+          message: "지역 업체 검색 중 오류가 발생했습니다",
+          error: (error as Error).message,
+          businesses: []
+        });
+      }
     }
   });
 

@@ -8,6 +8,12 @@ Preferred communication style: Simple, everyday language.
 Form consistency preference: All form fields must require submit button activation for saving - no auto-save functionality to avoid user confusion.
 
 ## Recent Changes and Fixes
+- **2025-08-22**: DATA INTEGRITY ENHANCEMENT: 사용자 데이터 검증 및 오류 처리 개선
+  - ✅ USER DATA VALIDATION: 전문분야/지역 정보 부재 시 명확한 오류 메시지 제공
+  - ✅ ERROR HANDLING: 잘못된 fallback 데이터 제공 방지, 토스트 알림으로 사용자 안내
+  - ✅ AUTHENTIC DATA ONLY: 사용자 정보 확인 불가 시 임의 데이터 대신 입력 요청
+  - ✅ SPECIALTY MATCHING: 헤어디자이너 전용 업체 데이터 추가 및 동적 매칭 개선
+
 - **2025-08-22**: WEBSITE LINKS ENHANCEMENT: 지역 업체 검색 결과에 웹사이트 링크 추가
   - ✅ CLICKABLE LINKS: 지역 내 파워팀 업체 검색 결과에 클릭 가능한 웹사이트 링크 추가
   - ✅ EXTERNAL LINKS: 새 탭에서 열리는 안전한 외부 링크 구현 (target="_blank", rel="noopener noreferrer")
