@@ -1,9 +1,5 @@
 import { NaverPlaceBusiness } from './naver-place-service';
 
-/**
- * 완전히 하드코딩 없는 순수 동적 검색 시스템
- * AI 분석 결과만을 사용하여 협업 업체를 검색
- */
 export class PureDynamicSearch {
   private clientId: string;
   private clientSecret: string;
@@ -11,28 +7,23 @@ export class PureDynamicSearch {
   constructor() {
     this.clientId = process.env.NAVER_CLIENT_ID || '';
     this.clientSecret = process.env.NAVER_CLIENT_SECRET || '';
-    
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error('Naver API credentials are required');
-    }
   }
 
   /**
-   * AI 분석에서 추출된 협업 분야를 직접 사용하여 업체 검색
-   * 하드코딩된 매핑 없이 완전 동적 검색
+   * 순수 동적 검색: AI 분석 결과의 시너지 섹션에서 키워드를 직접 추출하여 검색
    */
-  async searchCollaborationBusinesses(
-    aiAnalysisText: string,
+  async searchPureDynamic(
     userSpecialty: string,
-    userRegion: string
+    userRegion: string,
+    aiAnalysisText: string
   ): Promise<(NaverPlaceBusiness & { synergyInfo?: { collaborationField: string; synergyDescription: string } })[]> {
-    console.log(`🎯 순수 동적 검색 시작:`);
+    console.log('🎯 순수 동적 검색 시작:');
     console.log(`  전문분야: "${userSpecialty}"`);
     console.log(`  지역: "${userRegion}"`);
     console.log(`  AI 분석 텍스트 길이: ${aiAnalysisText.length}자`);
 
-    // 1. Gemini API로 협업 분야 명확하게 추출
-    const collaborationFields = await this.extractCollaborationFieldsDirectly(aiAnalysisText);
+    // 1. AI 분석의 시너지 섹션에서 협업 분야 직접 추출
+    const collaborationFields = this.extractFromSynergySection(aiAnalysisText);
     console.log(`📋 추출된 협업 분야: [${collaborationFields.join(', ')}]`);
 
     if (collaborationFields.length === 0) {
@@ -40,18 +31,15 @@ export class PureDynamicSearch {
       return [];
     }
 
-    const allBusinesses: NaverPlaceBusiness[] = [];
-    const maxPerField = Math.ceil(10 / collaborationFields.length);
+    const allBusinesses = [];
+    const maxPerField = 2;
 
     // 2. 각 협업 분야를 검색어로 직접 사용
     for (const field of collaborationFields) {
       console.log(`🔍 "${field}" 검색 중...`);
       
       try {
-        const searchKeyword = this.prepareSearchKeyword(field);
-        console.log(`  검색어: "${searchKeyword}"`);
-        
-        const businesses = await this.searchNaver(searchKeyword, userRegion);
+        const businesses = await this.searchNaver(field, userRegion);
         console.log(`  결과: ${businesses.length}개`);
         
         // 각 업체에 시너지 정보 추가
@@ -78,130 +66,41 @@ export class PureDynamicSearch {
   }
 
   /**
-   * AI 분석 텍스트에서 Gemini API를 사용하여 협업 분야를 명확하게 추출
+   * AI 분석에서 시너지 섹션의 키워드를 간단하게 추출
    */
-  private async extractCollaborationFieldsDirectly(analysisText: string): Promise<string[]> {
-    console.log('🤖 Gemini API로 협업 분야 추출 시작');
+  private extractFromSynergySection(analysisText: string): string[] {
+    console.log('🔍 시너지 섹션에서 협업 분야 추출 시작');
     
-    try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-      
-      // 전문분야 파악
-      const specialty = analysisText.match(/전문분야[:\s]*([^\n.]*)/)?.[1] || analysisText.match(/(?:^|\n)# ([^\n]*) 전문분야/)?.[1] || '전문가';
-      
-      const extractionPrompt = `"${specialty}" 전문분야 비즈니스 파트너 찾기
-
-다음 중에서 ${specialty}와 실제 협업이 가능한 업체 유형을 정확히 5개만 선택하고, 각각을 한 단어로 답해주세요:
-
-패션/의류 관련: 봉제공장, 원단업체, 액세서리업체, 패션사진스튜디오, 모델에이전시, 의류매장, 부티크
-음식/외식 관련: 제과점, 카페, 레스토랑, 급식업체, 식품유통업체, 농산물가공업체, 식자재업체
-건축/인테리어: 시공업체, 자재업체, 가구업체, 조경업체, 설계사무소, 부동산업체
-기술/제조: 제조업체, 기술업체, 소프트웨어업체, 장비업체, 연구소
-서비스: 마케팅업체, 광고대행사, 물류업체, 컨설팅업체, 교육업체, 출판업체
-의료/건강: 병원, 약국, 의료기기업체, 건강식품업체, 피트니스센터
-예술/문화: 갤러리, 공연장, 문화센터, 미디어업체, 방송업체
-
-${specialty}에 맞는 5개 업체 유형 (예: 제과점, 카페, 식품유통업체, 마케팅업체, 농산물가공업체):`;
-      
-      const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        config: {
-          maxOutputTokens: 200,
-          temperature: 0.3,
-        },
-        contents: [extractionPrompt]
-      });
-      
-      const responseText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      console.log(`🔍 Gemini 추출 결과: "${responseText}"`);
-      
-      // 응답에서 업체 유형 추출 (더 정확한 매칭)
-      const businessTypes = [
-        '제과점', '카페', '레스토랑', '급식업체', '식품유통업체', '농산물가공업체', '식자재업체',
-        '봉제공장', '원단업체', '액세서리업체', '패션사진스튜디오', '모델에이전시', '의류매장', '부티크',
-        '시공업체', '자재업체', '가구업체', '조경업체', '설계사무소', '부동산업체',
-        '제조업체', '기술업체', '소프트웨어업체', '장비업체', '연구소',
-        '마케팅업체', '광고대행사', '물류업체', '컨설팅업체', '교육업체', '출판업체',
-        '병원', '약국', '의료기기업체', '건강식품업체', '피트니스센터',
-        '갤러리', '공연장', '문화센터', '미디어업체', '방송업체'
-      ];
-      
-      const foundTypes = businessTypes.filter(type => 
-        responseText.includes(type) || responseText.includes(type.replace('업체', ''))
-      );
-      
-      const uniqueFields = foundTypes.slice(0, 5);
-      
-      // 적절한 업체 유형이 없으면 기본값 사용
-      if (uniqueFields.length === 0) {
-        console.log('⚠️ 적절한 업체 유형을 찾지 못함 - 기본값 사용');
-        return ['제과점', '카페', '마케팅업체', '유통업체', '컨설팅업체'];
-      }
-      
-      console.log(`✅ 최종 협업 분야: [${uniqueFields.join(', ')}]`);
-      return uniqueFields;
-      
-    } catch (error) {
-      console.error('❌ Gemini API 협업 분야 추출 실패:', error);
-      // 폴백: 기본적인 협업 분야 반환
-      return ['카페', '레스토랑', '마케팅업체', '유통업체', '제조업체'];
+    // "## 🤝 시너지 창출 가능 비즈니스 분야 및 협업 전략" 섹션 찾기
+    const synergyMatch = analysisText.match(/## 🤝 시너지 창출 가능 비즈니스 분야.*?([\s\S]*?)(?=##|$)/);
+    
+    if (!synergyMatch || !synergyMatch[1]) {
+      console.log('⚠️ 시너지 섹션을 찾을 수 없음');
+      return [];
     }
-  }
-
-  /**
-   * 협업 관련 라인인지 판단
-   */
-  private isCollaborationLine(line: string): boolean {
-    const collaborationKeywords = [
-      '협업', '시너지', '파트너', '연계', '제휴',
-      '함께', '공동', '매칭', '네트워킹', '상호',
-      '분야', '업체', '전문', '서비스'
-    ];
     
-    return collaborationKeywords.some(keyword => line.includes(keyword));
-  }
-
-  /**
-   * 라인에서 구체적인 분야/업체명 추출
-   */
-  private extractFieldsFromLine(line: string): string[] {
-    const fields: string[] = [];
+    const synergySection = synergyMatch[1].trim();
+    console.log(`📋 시너지 섹션 발견 (길이: ${synergySection.length}자)`);
     
-    // 한글로 된 2-6글자 단어들을 추출 (업체명이나 분야명일 가능성이 높음)
-    const koreanWords = line.match(/[가-힣]{2,6}/g) || [];
+    // 간단한 방식: 숫자나 대시로 시작하는 라인에서 콜론 앞의 텍스트 추출
+    const keywords = [];
+    const lines = synergySection.split('\n');
     
-    for (const word of koreanWords) {
-      // 일반적인 접속사나 부사는 제외
-      if (!this.isCommonWord(word)) {
-        fields.push(word);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // "1. 제과점:" 또는 "- 카페:" 형태 찾기
+      const match = trimmed.match(/^(?:\d+\.|\-|\*)\s*([^:]+):/);
+      if (match && match[1]) {
+        const keyword = match[1].trim();
+        // 기본 필터링: 너무 일반적이지 않은 키워드만
+        if (keyword.length >= 2 && keyword !== '협업' && keyword !== '시너지') {
+          keywords.push(keyword);
+        }
       }
     }
     
-    return fields;
-  }
-
-  /**
-   * 일반적인 단어인지 확인 (업체명/분야명이 아닐 가능성이 높은 단어들)
-   */
-  private isCommonWord(word: string): boolean {
-    const commonWords = [
-      '그리고', '하지만', '또한', '따라서', '그러나', '그래서',
-      '이러한', '그러한', '다양한', '여러', '많은', '적은',
-      '높은', '낮은', '좋은', '나쁜', '새로운', '기존',
-      '경우', '때문', '위해', '통해', '대한', '관한',
-      '필요', '중요', '가능', '어려운', '쉬운'
-    ];
-    
-    return commonWords.includes(word);
-  }
-
-  /**
-   * 검색어 정제 (네이버 검색에 적합하게)
-   */
-  private prepareSearchKeyword(field: string): string {
-    // 특수문자 제거 및 공백 정리
-    return field.replace(/[^\w\s가-힣]/g, ' ').trim();
+    console.log(`✅ 추출된 협업 분야: [${keywords.join(', ')}]`);
+    return keywords.slice(0, 5); // 최대 5개
   }
 
   /**
