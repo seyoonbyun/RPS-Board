@@ -474,17 +474,17 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                           현재 시스템은 **실제로 존재하는 업체만**을 검색하여 제공합니다. 
                           다양한 검색 방법을 통해 실제 협업 가능한 업체를 찾고 있습니다.
                         </p>
-                        <div className="p-3 bg-amber-100 rounded border border-amber-300">
-                          <p className="text-amber-800 text-xs font-medium mb-1">⚠️ 무료 API 제한</p>
-                          <p className="text-amber-700 text-xs mb-2">
-                            현재 무료 API 키로 인해 분당 2회 요청 제한이 적용되고 있습니다.
+                        <div className="p-3 bg-green-100 rounded border border-green-300">
+                          <p className="text-green-800 text-xs font-medium mb-1">✅ 실제 업체 검색 시스템 정상 작동</p>
+                          <p className="text-green-700 text-xs mb-2">
+                            유료 계정 전환으로 실제 업체 검색이 성공적으로 작동하고 있습니다.
                           </p>
-                          <div className="text-amber-600 text-xs">
-                            <p className="font-medium mb-1">유료 전환 방법:</p>
-                            <p>1. Google Cloud Console → 결제 설정</p>
-                            <p>2. 신용카드 등록 및 결제 계정 활성화</p>
-                            <p>3. 유료 플랜으로 전환 후 더 많은 요청 가능</p>
-                            <p>4. 실제 업체 검색 시스템 정상 작동</p>
+                          <div className="text-green-600 text-xs">
+                            <p className="font-medium mb-1">현재 상태:</p>
+                            <p>✓ 실제 업체 검색 성공</p>
+                            <p>✓ 지역별 맞춤 추천 가능</p>
+                            <p>✓ 협업 가능 업체만 선별</p>
+                            <p>✓ 안정적인 서비스 제공</p>
                           </div>
                         </div>
                       </div>
