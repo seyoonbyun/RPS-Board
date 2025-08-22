@@ -15,16 +15,24 @@ export class PureDynamicSearch {
   async searchPureDynamic(
     userSpecialty: string,
     userRegion: string,
-    aiAnalysisText: string
+    aiAnalysisText: string,
+    priorityKeywords?: string[]
   ): Promise<(NaverPlaceBusiness & { synergyInfo?: { collaborationField: string; synergyDescription: string } })[]> {
     console.log('🎯 순수 동적 검색 시작:');
     console.log(`  전문분야: "${userSpecialty}"`);
     console.log(`  지역: "${userRegion}"`);
     console.log(`  AI 분석 텍스트 길이: ${aiAnalysisText.length}자`);
 
-    // 1. AI 분석의 시너지 섹션에서 협업 분야 직접 추출
-    const collaborationFields = this.extractFromSynergySection(aiAnalysisText);
-    console.log(`📋 추출된 협업 분야: [${collaborationFields.join(', ')}]`);
+    // 1. 우선순위 키워드가 있으면 그것을 우선 사용, 없으면 AI 분석에서 추출
+    let collaborationFields = [];
+    
+    if (priorityKeywords && priorityKeywords.length > 0) {
+      collaborationFields = priorityKeywords;
+      console.log(`📋 우선순위에서 가져온 협업 분야: [${collaborationFields.join(', ')}]`);
+    } else {
+      collaborationFields = this.extractFromSynergySection(aiAnalysisText);
+      console.log(`📋 AI 분석에서 추출된 협업 분야: [${collaborationFields.join(', ')}]`);
+    }
 
     if (collaborationFields.length === 0) {
       console.log('❌ 협업 분야를 찾을 수 없습니다.');

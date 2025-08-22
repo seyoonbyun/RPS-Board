@@ -1300,8 +1300,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🎯 순수 동적 검색 시작 - PureDynamicSearch 사용`);
       
-      // AI 분석 텍스트를 새로운 순수 동적 검색 시스템에 전달
-      const businesses = await pureDynamicSearch.searchPureDynamic(userSpecialty, userRegion, aiAnalysis);
+      // 시너지 필드에서 검색 키워드 추출 (우선순위 기반)
+      let searchKeywords = [];
+      
+      if (synergyFields && typeof synergyFields === 'object') {
+        // 우선순위 객체에서 키워드 추출
+        const allPriorities = [
+          ...(synergyFields.shortTerm || []),
+          ...(synergyFields.mediumTerm || []),
+          ...(synergyFields.longTerm || [])
+        ];
+        searchKeywords = allPriorities.slice(0, 5); // 최대 5개
+        console.log(`📋 우선순위에서 추출한 키워드: [${searchKeywords.join(', ')}]`);
+      }
+      
+      // AI 분석 텍스트를 키워드와 함께 전달
+      const businesses = await pureDynamicSearch.searchPureDynamic(userSpecialty, userRegion, aiAnalysis, searchKeywords);
       console.log(`🎯 순수 동적 검색 완료 - ${businesses?.length || 0}개 업체 발견`);
       
       res.json({
