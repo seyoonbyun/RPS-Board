@@ -82,19 +82,32 @@ export class PureDynamicSearch {
     const synergySection = synergyMatch[1].trim();
     console.log(`📋 시너지 섹션 발견 (길이: ${synergySection.length}자)`);
     
-    // 간단한 방식: 숫자나 대시로 시작하는 라인에서 콜론 앞의 텍스트 추출
+    // 간단한 방식: 숫자나 대시로 시작하는 라인에서 키워드 추출
     const keywords = [];
     const lines = synergySection.split('\n');
     
     for (const line of lines) {
       const trimmed = line.trim();
-      // "1. **회계사/세무사:**" 또는 "- 카페:" 형태 찾기 (볼드 마크다운 포함)
-      const match = trimmed.match(/^(?:\d+\.|\-|\*)\s*(?:\*\*)?([^:*]+?)(?:\*\*)?:/);
+      
+      // 패턴 1: "1. **회계사/세무사:**" 형태 (단순한 키워드)
+      let match = trimmed.match(/^(?:\d+\.|\-|\*)\s*(?:\*\*)?([^:*(]+?)(?:\*\*)?:/);
       if (match && match[1]) {
         const keyword = match[1].trim();
-        // 기본 필터링: 너무 일반적이지 않은 키워드만
-        if (keyword.length >= 2 && keyword !== '협업' && keyword !== '시너지') {
+        if (keyword.length >= 2 && keyword !== '협업' && keyword !== '시너지' && !keyword.includes('분야')) {
           keywords.push(keyword);
+        }
+      }
+      
+      // 패턴 2: "1. **제조 및 생산 분야 (봉제공장, 원단/부자재 업체):**" 형태 (괄호 안 키워드들)
+      const parenthesesMatch = trimmed.match(/\(([^)]+)\):/);
+      if (parenthesesMatch && parenthesesMatch[1]) {
+        const parenthesesContent = parenthesesMatch[1];
+        // 쉼표로 분리하여 개별 업체명 추출
+        const businessTypes = parenthesesContent.split(',').map(item => item.trim());
+        for (const type of businessTypes) {
+          if (type.length >= 2 && type !== '협업' && type !== '시너지') {
+            keywords.push(type);
+          }
         }
       }
     }
