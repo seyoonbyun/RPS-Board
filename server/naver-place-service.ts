@@ -107,136 +107,25 @@ export class NaverPlaceService {
     
     const searchTerms: Array<{ keyword: string; category: string; priority: number }> = [];
 
-    // 전문분야별 맞춤 검색 키워드 매핑 (확장된 데이터베이스)
-    const specialtyMappings: { [key: string]: { [key: string]: Array<{ keyword: string; priority: number }> } } = {
-      '패션디자이너': {
-        '사진작가': [
-          { keyword: '사진작가', priority: 10 },
-          { keyword: '포토스튜디오', priority: 9 },
-          { keyword: '패션사진', priority: 8 },
-          { keyword: '상업사진', priority: 7 }
-        ],
-        '영상제작': [
-          { keyword: '영상제작', priority: 10 },
-          { keyword: '영상편집', priority: 8 },
-          { keyword: '비디오그래퍼', priority: 7 }
-        ],
-        '헤어메이크업': [
-          { keyword: '미용실', priority: 10 },
-          { keyword: '메이크업', priority: 9 },
-          { keyword: '뷰티샵', priority: 8 },
-          { keyword: '헤어샵', priority: 8 }
-        ],
-        '원단부자재': [
-          { keyword: '원단', priority: 10 },
-          { keyword: '섬유', priority: 8 },
-          { keyword: '부자재', priority: 7 },
-          { keyword: '의류자재', priority: 6 }
-        ],
-        '봉제패턴': [
-          { keyword: '봉제공장', priority: 10 },
-          { keyword: '의류제조', priority: 9 },
-          { keyword: '패턴', priority: 7 }
-        ],
-        '마케팅': [
-          { keyword: '마케팅', priority: 10 },
-          { keyword: '광고대행사', priority: 8 },
-          { keyword: '브랜딩', priority: 7 }
-        ],
-        '액세서리': [
-          { keyword: '주얼리', priority: 10 },
-          { keyword: '가방', priority: 9 },
-          { keyword: '신발', priority: 8 },
-          { keyword: '액세서리', priority: 7 }
-        ],
-        '법무': [
-          { keyword: '변호사', priority: 10 },
-          { keyword: '법무', priority: 8 },
-          { keyword: '특허', priority: 6 }
-        ]
-      },
-      '딸기농장운영': {
-        '유통판매': [
-          { keyword: '카페', priority: 10 },
-          { keyword: '레스토랑', priority: 9 },
-          { keyword: '베이커리', priority: 8 },
-          { keyword: '디저트카페', priority: 7 }
-        ],
-        '농업기술': [
-          { keyword: '농업기술', priority: 10 },
-          { keyword: '스마트팜', priority: 9 },
-          { keyword: '농자재', priority: 8 }
-        ],
-        '관광체험': [
-          { keyword: '여행사', priority: 10 },
-          { keyword: '관광농원', priority: 9 },
-          { keyword: '체험농장', priority: 8 }
-        ],
-        '가공식품': [
-          { keyword: '식품제조', priority: 10 },
-          { keyword: '가공업체', priority: 8 },
-          { keyword: '제과점', priority: 7 }
-        ]
-      }
-    };
-
-    // 현재 전문분야에 맞는 매핑 찾기
-    const currentMapping = specialtyMappings[userSpecialty] || {};
-    
-    // 협업 분야별로 검색어 생성
+    // 동적 검색어 생성: AI 분석에서 추출된 협업 분야를 직접 활용
     for (const field of synergyFields) {
-      console.log(`  🔍 협업분야 "${field}" 분석 중...`);
+      console.log(`  🔍 협업분야 "${field}" 동적 키워드 생성 중...`);
       
-      let bestCategory = '';
-      let bestKeywords: Array<{ keyword: string; priority: number }> = [];
-      let maxScore = 0;
-
-      // 각 카테고리와 매칭 점수 계산
-      for (const [category, keywords] of Object.entries(currentMapping)) {
-        let score = 0;
+      // 협업 분야 텍스트에서 핵심 키워드 추출
+      const coreKeywords = this.extractDynamicKeywords(field, userSpecialty);
+      
+      // 각 키워드를 검색어로 추가
+      coreKeywords.forEach((keyword, index) => {
+        const priority = Math.max(10 - index, 5); // 첫 번째 키워드가 가장 높은 우선순위
         
-        // 카테고리명과 협업 분야의 유사도 계산
-        if (field.toLowerCase().includes(category.toLowerCase())) {
-          score += 10;
-        }
-        
-        // 키워드별 매칭 점수
-        for (const keywordObj of keywords) {
-          if (field.toLowerCase().includes(keywordObj.keyword.toLowerCase())) {
-            score += keywordObj.priority;
-          }
-        }
-        
-        if (score > maxScore) {
-          maxScore = score;
-          bestCategory = category;
-          bestKeywords = keywords;
-        }
-      }
-
-      // 매칭된 키워드가 있으면 추가
-      if (bestKeywords.length > 0) {
-        console.log(`    ✅ "${field}" → 카테고리: "${bestCategory}" (점수: ${maxScore})`);
-        
-        for (const keywordObj of bestKeywords.slice(0, 3)) {
-          searchTerms.push({
-            keyword: keywordObj.keyword,
-            category: bestCategory,
-            priority: keywordObj.priority + (maxScore > 10 ? 5 : 0) // 높은 매칭 점수 보너스
-          });
-        }
-      } else {
-        // 기본 키워드 생성
-        console.log(`    ⚠️ "${field}" → 기본 키워드 생성`);
-        const basicKeywords = this.generateBasicKeywords(field);
-        for (const keyword of basicKeywords) {
-          searchTerms.push({
-            keyword,
-            category: '기본',
-            priority: 5
-          });
-        }
-      }
+        searchTerms.push({
+          keyword,
+          category: field, // 협업 분야 자체를 카테고리로 사용
+          priority
+        });
+      });
+      
+      console.log(`    ✅ "${field}" → 키워드: [${coreKeywords.join(', ')}]`);
     }
 
     // 중복 제거 및 우선순위 정렬
@@ -247,20 +136,49 @@ export class NaverPlaceService {
   }
 
   /**
-   * 기본 키워드 생성
+   * 협업 분야에서 완전 동적으로 검색 키워드 추출 (하드코딩 없음)
    */
-  private generateBasicKeywords(field: string): string[] {
-    const keywords = [field];
+  private extractDynamicKeywords(field: string, userSpecialty: string): string[] {
+    const keywords: string[] = [];
     
-    // 일반적인 업체 접미사 추가
-    const suffixes = ['업체', '전문', '서비스', '대행사'];
-    for (const suffix of suffixes) {
-      if (!field.includes(suffix)) {
-        keywords.push(`${field}${suffix}`);
+    // 1. 협업 분야 텍스트 자체를 최우선 키워드로 사용
+    const cleanField = field.replace(/업체$|회사$|전문$|서비스$|대행사$/, '').trim();
+    if (cleanField) {
+      keywords.push(cleanField);
+    }
+    
+    // 2. 텍스트에서 한글/영문 키워드 추출 (2글자 이상)
+    const extractedWords = field.match(/[가-힣a-zA-Z]{2,}/g) || [];
+    keywords.push(...extractedWords);
+    
+    // 3. 공백이나 특수문자로 분리된 단어들 추출
+    const wordSeparators = field.split(/[\s,&\(\)\/\-]+/);
+    for (const word of wordSeparators) {
+      const cleanWord = word.replace(/[^가-힣a-zA-Z]/g, '').trim();
+      if (cleanWord.length >= 2) {
+        keywords.push(cleanWord);
       }
     }
     
-    return keywords.slice(0, 3);
+    // 4. 일반적인 업체 접미사 변형 (동적 생성)
+    const coreWord = cleanField.replace(/[^가-힣a-zA-Z]/g, '');
+    if (coreWord.length > 1) {
+      const suffixes = ['업체', '전문', '서비스'];
+      for (const suffix of suffixes) {
+        if (!coreWord.includes(suffix)) {
+          keywords.push(`${coreWord}${suffix}`);
+        }
+      }
+    }
+    
+    // 중복 제거 및 정리 (원본 텍스트 우선)
+    const uniqueSet = new Set([field, ...keywords]);
+    const uniqueKeywords = Array.from(uniqueSet)
+      .filter(k => k && k.length > 1)
+      .slice(0, 5); // 최대 5개
+    
+    console.log(`    🔑 "${field}" 동적 키워드 생성: [${uniqueKeywords.join(', ')}]`);
+    return uniqueKeywords;
   }
 
   /**
