@@ -175,7 +175,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     <div className="space-y-6">
       {/* AI 분석 중 로딩 팝업 */}
       <Dialog open={isLoadingAI} onOpenChange={() => {}}>
-        <DialogContent className="w-[85vw] max-w-sm sm:max-w-md mx-4 bg-white border-2 border-gray-200 shadow-2xl rounded-[7px]">
+        <DialogContent className="w-[85vw] max-w-sm sm:max-w-md bg-white border-2 border-gray-200 shadow-2xl rounded-[7px] mx-auto">
           <DialogHeader className="pb-1 sm:pb-2">
             <DialogTitle className="flex items-center gap-2 sm:gap-3 text-center justify-center text-lg sm:text-xl font-bold text-gray-900">
               <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin text-blue-600" />
