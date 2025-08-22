@@ -95,11 +95,16 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
   const searchRegionalBusinesses = async () => {
     if (!aiAnalysis || !userId) return;
     
+    console.log('🔄 지역 업체 검색 요청 시작 - userId:', userId, 'specialty:', aiAnalysis.userSpecialty);
     setIsLoadingRegionalBusinesses(true);
     try {
-      const response = await fetch(`/api/regional-businesses/${userId}`, {
+      const response = await fetch(`/api/regional-businesses/${userId}?t=${Date.now()}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
         body: JSON.stringify({
           aiAnalysis: aiAnalysis.analysis,
           synergyFields: aiAnalysis.priorities
@@ -109,6 +114,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       if (!response.ok) throw new Error('지역 업체 검색 실패');
       
       const data = await response.json();
+      console.log('🎯 지역 업체 검색 응답 받음:', data.businesses?.length || 0, '개 업체');
       setRegionalBusinesses(data.businesses || []);
     } catch (error) {
       console.error('지역 업체 검색 오류:', error);
