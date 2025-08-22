@@ -175,19 +175,19 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     <div className="space-y-6">
       {/* AI 분석 중 로딩 팝업 */}
       <Dialog open={isLoadingAI} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <DialogContent className="sm:max-w-md bg-white border-2 border-gray-200 shadow-2xl">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="flex items-center gap-3 text-center justify-center text-xl font-bold text-gray-900">
+              <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
               K-BNI.AI 분석 중
             </DialogTitle>
           </DialogHeader>
-          <div className="text-center py-6">
-            <div className="space-y-3">
-              <div className="text-lg font-medium text-gray-800">
+          <div className="text-center py-8 px-4">
+            <div className="space-y-4">
+              <div className="text-lg font-semibold text-gray-900">
                 K-BNI.AI가 대표님의 전문분야를 분석하고 있습니다.
               </div>
-              <div className="text-base text-gray-600">
+              <div className="text-base font-medium text-gray-700">
                 잠시만 기다려 주세요...!
               </div>
             </div>
