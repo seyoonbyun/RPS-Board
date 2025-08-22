@@ -96,6 +96,12 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         })
       });
       
+      // 🔍 디버깅: 실제 전송 데이터 확인
+      console.log(`🔍 전송 데이터 디버깅:`);
+      console.log(`  - aiAnalysis.analysis 길이: ${aiAnalysis.analysis?.length || 0}자`);
+      console.log(`  - aiAnalysis.analysis 미리보기: "${aiAnalysis.analysis?.substring(0, 100)}..."`);
+      console.log(`  - aiAnalysis.priorities:`, aiAnalysis.priorities);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: '지역 업체 검색 실패' }));
         
