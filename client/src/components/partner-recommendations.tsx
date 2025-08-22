@@ -376,7 +376,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                             <div className="text-sm text-green-700 font-medium">
                               시너지 가능성: {business.synergyPotential}
                             </div>
-                            <Badge variant="secondary" className="text-xs ml-2 shrink-0">
+                            <Badge variant="secondary" className="text-xs ml-2 shrink-0 hidden md:inline-flex">
                               지역 업체
                             </Badge>
                           </div>
