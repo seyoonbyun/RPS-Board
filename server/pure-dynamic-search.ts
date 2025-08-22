@@ -25,14 +25,14 @@ export class PureDynamicSearch {
     aiAnalysisText: string,
     userSpecialty: string,
     userRegion: string
-  ): Promise<NaverPlaceBusiness[]> {
+  ): Promise<(NaverPlaceBusiness & { synergyInfo?: { collaborationField: string; synergyDescription: string } })[]> {
     console.log(`🎯 순수 동적 검색 시작:`);
     console.log(`  전문분야: "${userSpecialty}"`);
     console.log(`  지역: "${userRegion}"`);
     console.log(`  AI 분석 텍스트 길이: ${aiAnalysisText.length}자`);
 
-    // 1. AI 분석에서 협업 분야 직접 추출
-    const collaborationFields = this.extractCollaborationFieldsDirectly(aiAnalysisText);
+    // 1. Gemini API로 협업 분야 명확하게 추출
+    const collaborationFields = await this.extractCollaborationFieldsDirectly(aiAnalysisText);
     console.log(`📋 추출된 협업 분야: [${collaborationFields.join(', ')}]`);
 
     if (collaborationFields.length === 0) {
@@ -54,7 +54,16 @@ export class PureDynamicSearch {
         const businesses = await this.searchNaver(searchKeyword, userRegion);
         console.log(`  결과: ${businesses.length}개`);
         
-        allBusinesses.push(...businesses.slice(0, maxPerField));
+        // 각 업체에 시너지 정보 추가
+        const businessesWithSynergy = businesses.slice(0, maxPerField).map(business => ({
+          ...business,
+          synergyInfo: {
+            collaborationField: field,
+            synergyDescription: `${userSpecialty}와 ${field} 분야의 전문적 협업을 통한 시너지 창출 기대`
+          }
+        }));
+        
+        allBusinesses.push(...businessesWithSynergy);
         
         // API 호출 간격
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -69,33 +78,54 @@ export class PureDynamicSearch {
   }
 
   /**
-   * AI 분석 텍스트에서 협업 분야를 직접 추출
-   * 하드코딩된 패턴 없이 텍스트 분석만으로 추출
+   * AI 분석 텍스트에서 Gemini API를 사용하여 협업 분야를 명확하게 추출
    */
-  private extractCollaborationFieldsDirectly(analysisText: string): string[] {
-    const fields: string[] = [];
+  private async extractCollaborationFieldsDirectly(analysisText: string): Promise<string[]> {
+    console.log('🤖 Gemini API로 협업 분야 추출 시작');
     
-    // 협업과 관련된 키워드가 포함된 문장들을 찾아서 분석
-    const lines = analysisText.split('\n');
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
       
-      // 협업, 시너지, 파트너 등의 키워드가 포함된 라인에서 업체/분야명 추출
-      if (this.isCollaborationLine(trimmedLine)) {
-        const extractedFields = this.extractFieldsFromLine(trimmedLine);
-        fields.push(...extractedFields);
-      }
+      const extractionPrompt = `다음은 "${analysisText.match(/전문분야[:\s]*([^\n.]*)/)?.[1] || '전문가'}" 전문분야에 대한 AI 분석입니다.
+
+${analysisText.substring(0, 2000)}
+
+이 전문분야와 실제로 비즈니스 협업이 가능한 구체적인 업체 유형 5개만 나열해주세요.
+업체명이 아닌 업체 "유형"을 말해주세요.
+
+좋은 예시: 의류제조업체, 원단업체, 액세서리업체, 패션사진업체, 모델에이전시
+나쁜 예시: 패션디자이너, 전문분야, 네트워킹, 분석, 시너지
+
+협업 가능한 업체 유형 5개:`;
+      
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        config: {
+          maxOutputTokens: 200,
+          temperature: 0.3,
+        },
+        contents: [extractionPrompt]
+      });
+      
+      const responseText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      console.log(`🔍 Gemini 추출 결과: "${responseText}"`);
+      
+      // 응답에서 한글 2-10글자 단어들 추출
+      const fields = responseText.match(/[가-힣]{2,10}/g) || [];
+      const uniqueSet = new Set(fields);
+      const uniqueFields = Array.from(uniqueSet)
+        .filter(field => !this.isCommonWord(field))
+        .slice(0, 5);
+      
+      console.log(`✅ 최종 협업 분야: [${uniqueFields.join(', ')}]`);
+      return uniqueFields;
+      
+    } catch (error) {
+      console.error('❌ Gemini API 협업 분야 추출 실패:', error);
+      // 폴백: 기본적인 협업 분야 반환
+      return ['카페', '레스토랑', '마케팅업체', '유통업체', '제조업체'];
     }
-    
-    // 중복 제거 및 정리
-    const uniqueSet = new Set(fields);
-    const uniqueFields = Array.from(uniqueSet)
-      .filter(field => field.length > 1)
-      .slice(0, 5); // 최대 5개 분야
-    
-    console.log(`🔍 AI 텍스트에서 추출한 협업 분야: [${uniqueFields.join(', ')}]`);
-    return uniqueFields;
   }
 
   /**

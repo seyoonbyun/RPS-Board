@@ -371,7 +371,24 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                         
                         {/* 오른쪽: 시너지 정보 */}
                         <div className="space-y-2">
-                          {/* 협업 분야 정보 */}
+                          {/* 새로운 시너지 정보 표시 */}
+                          {(business as any).synergyInfo && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs bg-blue-100 text-blue-800 border-blue-300"
+                                >
+                                  🤝 {(business as any).synergyInfo.collaborationField}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-blue-700 leading-relaxed">
+                                <strong>시너지 분야:</strong> {(business as any).synergyInfo.synergyDescription}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* 기존 협업 분야 정보 (후방 호환성) */}
                           {(business as any).collaborationCategory && (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
                               <div className="flex items-center gap-2 mb-2">
@@ -393,14 +410,14 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                           
                           <div className="flex items-start justify-between">
                             <div className="text-sm text-green-700 font-medium">
-                              시너지 가능성: {business.synergyPotential}
+                              {business.synergyPotential ? `시너지 가능성: ${business.synergyPotential}` : '✨ 전문분야별 맞춤 협업'}
                             </div>
                             <Badge variant="secondary" className="text-xs ml-2 shrink-0 hidden md:inline-flex">
                               지역 업체
                             </Badge>
                           </div>
                           <div className="text-xs text-gray-500 leading-relaxed">
-                            {business.description}
+                            {business.description || '동적 AI 분석을 통한 맞춤형 협업 파트너'}
                           </div>
                         </div>
                       </div>
