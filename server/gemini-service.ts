@@ -505,13 +505,15 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       content = analysisText;
     }
 
-    // 강화된 파싱: 다양한 패턴으로 협업 분야 추출
+    // 강화된 파싱: 패션디자이너 텍스트 구조에 최적화된 패턴들
     const fieldPatterns = [
-      // 1. "숫자. **제목:**" 패턴
+      // 1. "숫자. **제목 (괄호 설명):**" 패턴 - 패션디자이너 전용
+      /(\d+)\.?\s*\*{2,3}\s*([^*:]+?)\s*\(([^)]+?)\)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*{1,3}|$)/g,
+      // 2. "숫자. **제목:**" 패턴
       /(\d+)\.?\s*\*{2,3}\s*([^*:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*{2,3}|$)/g,
-      // 2. "숫자. **제목 (설명):**" 패턴
-      /(\d+)\.?\s*\*{2,3}\s*([^:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*{2,3}|$)/g,
-      // 3. "- **제목:**" 패턴
+      // 3. 일반 "숫자. 제목:" 패턴 (별표 없음)
+      /(\d+)\.?\s*([^:\n]+?):\s*([\s\S]*?)(?=\n\s*\d+\.|\n\s*\*|$)/g,
+      // 4. "- **제목:**" 패턴
       /\-\s*\*{2,3}\s*([^*:]+?)\s*\*{2,3}\s*:\s*([\s\S]*?)(?=\n\s*\-|\n\s*\*{2,3}|$)/g
     ];
 
@@ -525,8 +527,18 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
         let title = '';
         let description = '';
         
-        if (match.length >= 4) {
-          // 숫자가 있는 패턴 (match[1]은 숫자, match[2]는 제목, match[3]은 설명)
+        if (match.length >= 5) {
+          // 괄호 포함 패턴 (match[1]은 숫자, match[2]는 제목, match[3]은 괄호내용, match[4]는 설명)
+          title = match[2].trim().replace(/\*{1,3}/g, '').trim();
+          const parenthesis = match[3] ? match[3].trim() : '';
+          description = match[4].trim();
+          
+          // 괄호 내용을 제목에 포함
+          if (parenthesis && !title.includes(parenthesis)) {
+            title = `${title} ${parenthesis}`.trim();
+          }
+        } else if (match.length >= 4) {
+          // 숫자가 있는 일반 패턴 (match[1]은 숫자, match[2]는 제목, match[3]은 설명)
           title = match[2].trim().replace(/\*{1,3}/g, '').trim();
           description = match[3].trim();
         } else if (match.length >= 3) {
@@ -535,8 +547,8 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
           description = match[2].trim();
         }
         
-        // 제목에서 괄호 내용 분리
-        const titleWithoutParens = title.replace(/\s*\([^)]+\)/g, '').trim();
+        // 제목 정리 (불필요한 괄호 내용은 제거하되 핵심은 유지)
+        const titleWithoutParens = title.replace(/\s*\([^)]*그래퍼[^)]*\)/g, '').trim();
         
         if (titleWithoutParens && description && titleWithoutParens.length > 2) {
           console.log(`🎯 협업 분야 발견: "${titleWithoutParens}" (설명 길이: ${description.length}자)`);
