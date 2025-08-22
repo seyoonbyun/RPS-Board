@@ -286,7 +286,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <Users className="w-5 h-5 text-blue-600" />
                 나의 챕터 내 파워팀 멤버 추천
                 {chapterSynergyMembers && chapterSynergyMembers.length > 0 && (
-                  <Button variant="outline" size="sm" className="ml-2 h-6 px-2 text-xs">
+                  <Button size="sm" className="ml-2 h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700 text-white">
                     {chapterSynergyMembers.length} 멤버 추천
                   </Button>
                 )}
@@ -352,7 +352,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <MapPin className="w-5 h-5 text-green-600" />
                 지역 내 파워팀 업체 검색
                 {regionalBusinesses && regionalBusinesses.length > 0 && (
-                  <Button variant="outline" size="sm" className="ml-2 h-6 px-2 text-xs">
+                  <Button size="sm" className="ml-2 h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white">
                     {regionalBusinesses.length} 업체 추천
                   </Button>
                 )}
