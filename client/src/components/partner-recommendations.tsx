@@ -111,22 +111,38 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         })
       });
       
-      if (!response.ok) throw new Error('지역 업체 검색 실패');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: '지역 업체 검색 실패' }));
+        
+        // 단계별 검증 실패 구분
+        if (errorData.step === 1) {
+          // 1단계: 기본 정보 없음
+          const { toast } = await import('@/hooks/use-toast');
+          toast({
+            title: "❗ 프로필 정보 필요",
+            description: errorData.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setRegionalBusinesses([]);
+          return;
+        } else if (errorData.step === 2) {
+          // 2단계: AI 분석 먼저 필요
+          const { toast } = await import('@/hooks/use-toast');
+          toast({
+            title: "🧠 AI 분석 먼저 진행",
+            description: errorData.message,
+            variant: "destructive", 
+            duration: 6000,
+          });
+          setRegionalBusinesses([]);
+          return;
+        }
+        
+        throw new Error(errorData.message || '지역 업체 검색 실패');
+      }
       
       const data = await response.json();
-      
-      // 사용자 입력이 필요한 경우 토스트 메시지 표시
-      if (data.requiresUserInput) {
-        const { toast } = await import('@/hooks/use-toast');
-        toast({
-          title: "입력 정보 확인 필요",
-          description: data.message,
-          variant: "destructive",
-          duration: 4000,
-        });
-        setRegionalBusinesses([]);
-        return;
-      }
       
       console.log('🎯 지역 업체 검색 응답 받음:', data.businesses?.length || 0, '개 업체');
       setRegionalBusinesses(data.businesses || []);

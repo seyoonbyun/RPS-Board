@@ -82,6 +82,12 @@ export class NaverPlaceService {
     }
 
     console.log(`✅ 네이버 플레이스 검색 완료: ${businesses.length}개 업체 발견`);
+    
+    // 실시간 API 검색 결과가 없는 경우 빈 배열 반환 (가짜 데이터 제공 금지)
+    if (businesses.length === 0) {
+      console.log(`⚠️ ${userSpecialty} 분야의 ${userRegion} 지역 검색 결과 없음 - 실제 API 검색만 수행`);
+    }
+    
     return businesses;
   }
 

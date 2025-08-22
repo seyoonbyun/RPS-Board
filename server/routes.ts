@@ -1164,9 +1164,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userProfile = await googleSheetsService.getUserProfile(user.email);
       console.log(`🔍 사용자 프로필 조회 - email: ${user.email}, specialty: ${userProfile?.specialty}`);
       
-      if (!userProfile || !userProfile.specialty) {
-        console.log(`❌ 전문분야 정보 없음 - email: ${user.email}, profile:`, userProfile);
-        return res.status(400).json({ message: "전문분야 정보가 없습니다. 프로필을 먼저 설정해주세요." });
+      // 1단계 검증: 지역과 전문분야 정보 확인
+      if (!userProfile || !userProfile.specialty || !userProfile.region) {
+        console.log(`❌ 필수 정보 없음 - email: ${user.email}, specialty: ${userProfile?.specialty}, region: ${userProfile?.region}`);
+        const missingFields = [];
+        if (!userProfile?.specialty) missingFields.push('전문분야');
+        if (!userProfile?.region) missingFields.push('지역');
+        
+        return res.status(400).json({ 
+          message: `AI 분석을 위해 ${missingFields.join('과 ')} 정보가 필요합니다. 프로필에서 ${missingFields.join('과 ')} 정보를 먼저 입력해주세요.`,
+          missingFields
+        });
       }
 
       const { getGeminiService } = await import('./gemini-service.js');
@@ -1318,20 +1326,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.params.userId;
       const { aiAnalysis, synergyFields } = req.body;
       
-      console.log('지역 업체 검색 API 호출:', { userId, aiAnalysis: aiAnalysis?.substring(0, 50) });
+      console.log('🔍 지역 업체 검색 API 호출:', { userId, hasAnalysis: !!aiAnalysis });
 
-      // 직접 Gemini 서비스를 사용하여 지역 업체 검색
-      const { getGeminiService } = await import('./gemini-service.js');
-      const geminiService = getGeminiService();
-
-      // AI 분석에서 추출된 모든 시너지 분야들을 수집
-      const allSynergyFields = [
-        ...(synergyFields?.shortTerm || []),
-        ...(synergyFields?.mediumTerm || []),
-        ...(synergyFields?.longTerm || [])
-      ];
-
-      // Storage에서 사용자 정보 조회하여 전문분야 확인
+      // 1단계 검증: 사용자 정보 확인
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
@@ -1341,7 +1338,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleSheetsService = getGoogleSheetsService();
       const allUsers = await googleSheetsService.getAllUsers();
       const userRow = allUsers.find(u => u.email === user.email);
-      const userSpecialty = userRow?.specialty || '일반';
+      
+      // 1단계 검증: 지역과 전문분야 정보 확인
+      if (!userRow?.specialty || !userRow?.region) {
+        console.log(`❌ 필수 정보 없음 - email: ${user.email}, specialty: ${userRow?.specialty}, region: ${userRow?.region}`);
+        const missingFields = [];
+        if (!userRow?.specialty) missingFields.push('전문분야');
+        if (!userRow?.region) missingFields.push('지역');
+        
+        return res.status(400).json({ 
+          message: `지역 업체 검색을 위해 ${missingFields.join('과 ')} 정보가 필요합니다. 프로필에서 ${missingFields.join('과 ')} 정보를 먼저 입력해주세요.`,
+          missingFields,
+          step: 1
+        });
+      }
+
+      // 2단계 검증: AI 분석 완료 여부 확인
+      if (!aiAnalysis || aiAnalysis.length < 100) {
+        console.log(`❌ AI 분석 미완료 - email: ${user.email}, analysisLength: ${aiAnalysis?.length || 0}`);
+        return res.status(400).json({ 
+          message: "지역 업체 검색을 위해서는 나의 전문분야 AI 분석을 먼저 진행해주세요. 'AI 파트너 추천' 탭에서 '나의 전문분야 분석하기' 버튼을 클릭하세요.",
+          step: 2,
+          requiresAnalysis: true
+        });
+      }
+
+      console.log('✅ 1-2단계 검증 완료 - 3단계 네이버 API 검색 시작');
+
+      // 직접 Gemini 서비스를 사용하여 지역 업체 검색
+      const { getGeminiService } = await import('./gemini-service.js');
+      const geminiService = getGeminiService();
+
+      const userSpecialty = userRow.specialty;
+      const userRegion = userRow.region;
 
       // AI 분석 결과에서 협업 분야 직접 추출
       let collaborationFields: string[] = [];
@@ -1376,7 +1405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 사용자 지역 정보 추출 (사용자 프로필의 챕터 정보 활용)
       const chapterInfo = userRow?.chapter || '강남';
-      const userRegion = chapterInfo.includes('강남') ? '강남구' : 
+      const finalUserRegion = chapterInfo.includes('강남') ? '강남구' : 
                         chapterInfo.includes('서초') ? '서초구' :
                         chapterInfo.includes('송파') ? '송파구' :
                         chapterInfo.includes('종로') ? '종로구' :
@@ -1385,28 +1414,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         chapterInfo.includes('마포') ? '마포구' :
                         chapterInfo === '강남' ? '강남구' : '강남구'; // 기본값
 
-      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${userRegion}, 협업 분야: [${combinedFields.join(', ')}]`);
+      console.log(`🌍 지역 업체 검색 - 사용자: ${userSpecialty}, 지역: ${finalUserRegion}, 협업 분야: [${combinedFields.join(', ')}]`);
 
       // 협업 분야 정보를 포함한 검색 쿼리 생성
       const collaborationText = combinedFields.length > 0 
         ? `주요 협업 분야: ${combinedFields.join(', ')}`
         : `${userSpecialty}와 협업 가능한 업종`;
       
-      const searchQuery = `서울 ${userRegion} 지역에서 "${userSpecialty}" 전문분야와 협업 가능한 실제 업체들을 찾아주세요.
+      const searchQuery = `서울 ${finalUserRegion} 지역에서 "${userSpecialty}" 전문분야와 협업 가능한 실제 업체들을 찾아주세요.
 
 ${collaborationText}
 
 실제로 존재하는 업체만 추천하고, 각 업체의 정확한 정보와 ${userSpecialty}와의 구체적인 협업 방안을 제시해주세요.`;
 
       // Gemini API로 협업 분야 기반 실제 업체 검색
-      const result = await geminiService.searchRegionalBusinesses(searchQuery, userSpecialty, userRegion);
+      const result = await geminiService.searchRegionalBusinesses(searchQuery, userSpecialty, finalUserRegion);
       console.log(`🎯 지역 업체 검색 완료 - ${result.businesses?.length || 0}개 업체 발견`);
       
       res.json({
         message: "AI 분석 기반 협업 업체 검색 완료",
         businesses: result.businesses || [],
         userSpecialty,
-        userRegion,
+        userRegion: finalUserRegion,
         collaborationFields: combinedFields
       });
     } catch (error) {

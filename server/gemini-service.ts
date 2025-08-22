@@ -104,15 +104,8 @@ ${specialty}와 협업할 수 있는 다양한 비즈니스 분야들을 제시�
     } catch (error) {
       console.error(`❌ Gemini API 오류 (${specialty}):`, error);
       
-      // 폴백: 상세한 기본 분석 제공 (이전 형식 유지)
-      const fallbackAnalysis = this.generateDetailedFallbackAnalysis(specialty);
-
-      return {
-        analysis: fallbackAnalysis,
-        synergyFields: this.getDefaultSynergyFields(specialty),
-        synergyDetails: this.getDefaultSynergyDetails(specialty),
-        priorities: this.getDefaultPriorities(specialty)
-      };
+      // 실시간 API만 사용 - 실패시 오류 메시지 반환
+      throw new Error(`AI 분석 서비스가 일시적으로 이용 불가능합니다. 잠시 후 다시 시도해주세요. (Gemini API 오류: ${error})`);
     }
   }
 
@@ -558,14 +551,18 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
   }
 
   async searchRegionalBusinesses(searchQuery: string, userSpecialty: string = '일반', userRegion: string = '강남구'): Promise<{ businesses: NaverPlaceBusiness[] }> {
+    console.log('🔍 3단계 지역 업체 검색 시작:', { userSpecialty, userRegion });
+      
     try {
-      console.log('🔍 네이버 플레이스 연동 지역 업체 검색 시작:', { userSpecialty, userRegion });
+      // 1단계: 구글 Gemini API로 전문분야 분석 완료 (이미 완료됨)
+      console.log('✅ 1단계 완료: 구글 Gemini API 전문분야 분석');
       
-      // 1단계: AI 분석에서 협업 분야 추출
+      // 2단계: 분석 결과에서 시너지 분야 추출
       const synergyFields = this.extractSynergyFields(searchQuery, userSpecialty);
-      console.log(`📊 추출된 협업 분야: ${synergyFields.join(', ')}`);
+      console.log(`✅ 2단계 완료: 시너지 분야 추출 - ${synergyFields.join(', ')}`);
       
-      // 2단계: 네이버 플레이스에서 실제 업체 검색
+      // 3단계: 네이버 플레이스 API로 실제 업체 10개 검색
+      console.log('🔄 3단계 시작: 네이버 플레이스 API 실제 업체 검색');
       const naverBusinesses = await this.naverPlaceService.searchSynergyBusinesses(
         userSpecialty, 
         userRegion, 
@@ -573,48 +570,13 @@ ${specialty} 분야는 다양한 업종과의 협업을 통해 상호 발전할 
       );
       
       if (naverBusinesses.length > 0) {
-        console.log(`✅ 네이버 플레이스에서 ${naverBusinesses.length}개 실제 업체 발견`);
+        console.log(`✅ 3단계 완료: 네이버 플레이스에서 ${naverBusinesses.length}개 실제 업체 발견`);
         return { businesses: naverBusinesses };
       }
       
-      // 3단계: 네이버 API 실패 시 Gemini로 보완 검색
-      console.log('⚠️ 네이버 플레이스 검색 실패, Gemini API로 보완 검색 시도');
-      
-      if (!process.env.GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
-      }
-      
-      const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        config: {
-          maxOutputTokens: 1200,
-          temperature: 0.1,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              businesses: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    category: { type: "string" },
-                    address: { type: "string" },
-                    phone: { type: "string" },
-                    website: { type: "string" },
-                    synergyPotential: { type: "string" },
-                    description: { type: "string" }
-                  },
-                  required: ["name", "category", "address", "synergyPotential"]
-                }
-              }
-            },
-            required: ["businesses"]
-          }
-        },
-        contents: [searchQuery]
-      });
+      // 네이버 API 실패 시 솔직한 안내 (가짜 데이터 제공 금지)
+      console.log('❌ 3단계 실패: 네이버 플레이스 API 검색 결과 없음');
+      throw new Error(`현재 네이버 플레이스 API에서 "${userSpecialty}" 분야의 "${userRegion}" 지역 업체 정보를 찾을 수 없습니다. 실제 존재하는 업체만 제공하는 정책에 따라 검색 결과가 없습니다. 다른 지역이나 관련 전문분야로 다시 검색해보세요.`);
 
       console.log('Gemini API 응답 received:', response);
 
