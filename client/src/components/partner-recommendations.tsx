@@ -158,7 +158,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     <div className="space-y-6">
       {/* AI 분석 중 로딩 팝업 */}
       <Dialog open={isLoadingAI} onOpenChange={() => {}}>
-        <DialogContent className="w-[85vw] max-w-sm sm:max-w-md bg-white border-2 border-gray-200 shadow-2xl rounded-[7px] mx-auto">
+        <DialogContent className="w-[85vw] max-w-sm sm:max-w-lg lg:max-w-xl bg-white border-2 border-gray-200 shadow-2xl rounded-[7px] mx-auto">
           <DialogHeader className="pb-1 sm:pb-2">
             <DialogTitle className="flex items-center gap-2 sm:gap-3 text-center justify-center text-lg sm:text-xl font-bold text-gray-900">
               <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin text-blue-600" />
@@ -167,10 +167,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
           </DialogHeader>
           <div className="text-center py-4 sm:py-8 px-2 sm:px-4">
             <div className="space-y-3 sm:space-y-4">
-              <div className="text-sm sm:text-base font-semibold text-gray-900">
+              <div className="text-sm sm:text-base font-semibold text-gray-900 whitespace-nowrap">
                 K-BNI.AI가 대표님의 전문분야를 분석하고 있습니다.
               </div>
-              <div className="text-sm sm:text-base text-gray-700">
+              <div className="text-sm sm:text-base text-gray-700 whitespace-nowrap">
                 잠시만 기다려 주세요...!
               </div>
             </div>
