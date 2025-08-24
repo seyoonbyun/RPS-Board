@@ -1033,18 +1033,16 @@ export default function AdminPage() {
                               onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
                               className="mt-1"
                             />
-                            <div className="flex-1 space-y-2">
+                            <div className="flex-1 space-y-1">
                               <div className="font-medium text-sm">{user.email}</div>
-                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                              <div className="space-y-1 text-xs text-gray-600">
                                 <div><span className="font-medium">지역:</span> {user.region}</div>
                                 <div><span className="font-medium">챕터:</span> {user.chapter}</div>
                                 <div><span className="font-medium">멤버:</span> {user.memberName}</div>
                                 <div><span className="font-medium">회사:</span> {user.company}</div>
-                              </div>
-                              <div className="text-xs text-gray-600">
                                 <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
                               </div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2 pt-1">
                                 <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs">
                                   {user.status}
                                 </Badge>
@@ -1308,18 +1306,16 @@ export default function AdminPage() {
                             onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
                             className="mt-1"
                           />
-                          <div className="flex-1 space-y-2">
+                          <div className="flex-1 space-y-1">
                             <div className="font-medium text-sm">{user.email}</div>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                            <div className="space-y-1 text-xs text-gray-600">
                               <div><span className="font-medium">지역:</span> {user.region}</div>
                               <div><span className="font-medium">챕터:</span> {user.chapter}</div>
                               <div><span className="font-medium">멤버:</span> {user.memberName}</div>
                               <div><span className="font-medium">회사:</span> {user.company}</div>
-                            </div>
-                            <div className="text-xs text-gray-600">
                               <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 pt-1">
                               <Badge variant="destructive" className="text-xs">탈퇴</Badge>
                               <span className="text-gray-500 text-xs">파트너 {user.totalPartners}명</span>
                             </div>
