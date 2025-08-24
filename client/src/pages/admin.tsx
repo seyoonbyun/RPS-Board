@@ -942,26 +942,48 @@ export default function AdminPage() {
               {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
               {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                  {/* 데스크탑 헤더 */}
+                  <div className="hidden md:block bg-gray-50 px-4 py-3 border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
+                        <div className="text-sm text-gray-600">
+                          총 {filteredActiveUsers.length}명 표시 (전체 {activeUsers.length}명 중)
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all"
+                          checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(user => selectedUsers.includes(user.email))}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <label htmlFor="select-all" className="text-sm font-medium">
+                          전체 선택 ({filteredActiveUsers.filter(user => selectedUsers.includes(user.email)).length}명 선택됨)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  {/* 모바일 헤더 */}
+                  <div className="md:hidden bg-gray-50 px-4 py-3 border-b">
+                    <div className="space-y-3">
                       <h4 className="font-medium text-gray-900">활동중인 멤버 목록</h4>
                       <div className="text-sm text-gray-600">
                         총 {filteredActiveUsers.length}명 표시 (전체 {activeUsers.length}명 중)
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="select-all"
-                        checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(user => selectedUsers.includes(user.email))}
-                        onCheckedChange={handleSelectAll}
-                      />
-                      <label htmlFor="select-all" className="text-sm font-medium">
-                        전체 선택 ({filteredActiveUsers.filter(user => selectedUsers.includes(user.email)).length}명 선택됨)
-                      </label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all-mobile"
+                          checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(user => selectedUsers.includes(user.email))}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <label htmlFor="select-all-mobile" className="text-sm font-medium">
+                          전체 선택 ({filteredActiveUsers.filter(user => selectedUsers.includes(user.email)).length}명 선택됨)
+                        </label>
+                      </div>
                     </div>
                   </div>
-                  {/* 헤더 */}
-                  <div className="bg-gray-100 py-2 border-b">
+                  {/* 데스크탑 테이블 헤더 */}
+                  <div className="hidden md:block bg-gray-100 py-2 border-b">
                     <div className="flex items-center">
                       <div className="w-[60px] flex-shrink-0"></div> {/* 체크박스 공간 */}
                       <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -978,26 +1000,57 @@ export default function AdminPage() {
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {filteredActiveUsers.map((user) => (
-                      <div key={user.email} className="flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
-                        <div className="w-[60px] flex-shrink-0 flex justify-center">
-                          <Checkbox
-                            checked={selectedUsers.includes(user.email)}
-                            onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
-                          />
+                      <div key={user.email}>
+                        {/* 데스크탑 테이블 행 */}
+                        <div className="hidden md:flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
+                          <div className="w-[60px] flex-shrink-0 flex justify-center">
+                            <Checkbox
+                              checked={selectedUsers.includes(user.email)}
+                              onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
+                            />
+                          </div>
+                          <div className="flex text-sm">
+                            <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
+                            <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
+                            <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
+                            <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
+                            <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
+                            <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
+                            <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
+                            <div className="flex-1 flex items-center text-left space-x-1 px-2">
+                              <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs flex-shrink-0">
+                                {user.status}
+                              </Badge>
+                              <span className="text-gray-500 text-xs flex-shrink-0">{user.totalPartners}명</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex text-sm">
-                          <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
-                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
-                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
-                          <div className="flex-1 flex items-center text-left space-x-1 px-2">
-                            <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs flex-shrink-0">
-                              {user.status}
-                            </Badge>
-                            <span className="text-gray-500 text-xs flex-shrink-0">{user.totalPartners}명</span>
+                        {/* 모바일 카드 레이아웃 */}
+                        <div className="md:hidden border-b last:border-b-0 p-4 hover:bg-gray-50">
+                          <div className="flex items-start space-x-3">
+                            <Checkbox
+                              checked={selectedUsers.includes(user.email)}
+                              onCheckedChange={(checked) => handleUserSelection(user.email, checked as boolean)}
+                              className="mt-1"
+                            />
+                            <div className="flex-1 space-y-2">
+                              <div className="font-medium text-sm">{user.email}</div>
+                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <div><span className="font-medium">지역:</span> {user.region}</div>
+                                <div><span className="font-medium">챕터:</span> {user.chapter}</div>
+                                <div><span className="font-medium">멤버:</span> {user.memberName}</div>
+                                <div><span className="font-medium">회사:</span> {user.company}</div>
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={user.status === '활동중' ? 'default' : 'secondary'} className="text-xs">
+                                  {user.status}
+                                </Badge>
+                                <span className="text-gray-500 text-xs">파트너 {user.totalPartners}명</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1104,21 +1157,73 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                {/* 데스크탑 헤더 */}
+                <div className="hidden md:block bg-gray-50 px-4 py-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
+                      <div className="text-sm text-gray-600">
+                        총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all-withdrawn"
+                          checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
+                          onCheckedChange={handleSelectAllWithdrawnUsers}
+                        />
+                        <label htmlFor="select-all-withdrawn" className="text-sm font-medium">
+                          전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
+                        </label>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
+                            className="bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                          >
+                            <UserCheck className="mr-2 w-4 h-4" />
+                            선택한 멤버 복원하기
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="alert-dialog-content">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
+                            <AlertDialogDescription className="alert-dialog-description">
+                              선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
+                              이 작업으로 해당 멤버들이 다시 활성화됩니다.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleSelectedUsersRestore}
+                              className="alert-dialog-action bg-green-600 hover:bg-green-700"
+                            >
+                              복원 실행
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+                {/* 모바일 헤더 */}
+                <div className="md:hidden bg-gray-50 px-4 py-3 border-b">
+                  <div className="space-y-3">
                     <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
                     <div className="text-sm text-gray-600">
                       총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                       <Checkbox
-                        id="select-all-withdrawn"
+                        id="select-all-withdrawn-mobile"
                         checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
                         onCheckedChange={handleSelectAllWithdrawnUsers}
                       />
-                      <label htmlFor="select-all-withdrawn" className="text-sm font-medium">
+                      <label htmlFor="select-all-withdrawn-mobile" className="text-sm font-medium">
                         전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
                       </label>
                     </div>
@@ -1127,7 +1232,7 @@ export default function AdminPage() {
                         <Button 
                           variant="outline" 
                           disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
-                          className="bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                          className="w-full bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
                         >
                           <UserCheck className="mr-2 w-4 h-4" />
                           선택한 멤버 복원하기
@@ -1154,8 +1259,8 @@ export default function AdminPage() {
                     </AlertDialog>
                   </div>
                 </div>
-                {/* 헤더 */}
-                <div className="bg-gray-100 py-2 border-b">
+                {/* 데스크탑 테이블 헤더 */}
+                <div className="hidden md:block bg-gray-100 py-2 border-b">
                   <div className="flex items-center">
                     <div className="w-[60px] flex-shrink-0"></div> {/* 체크박스 공간 */}
                     <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -1172,24 +1277,53 @@ export default function AdminPage() {
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {filteredWithdrawnUsers.map((user) => (
-                    <div key={user.email} className="flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
-                      <div className="w-[60px] flex-shrink-0 flex justify-center">
-                        <Checkbox
-                          checked={selectedWithdrawnUsers.includes(user.email)}
-                          onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
-                        />
+                    <div key={user.email}>
+                      {/* 데스크탑 테이블 행 */}
+                      <div className="hidden md:flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
+                        <div className="w-[60px] flex-shrink-0 flex justify-center">
+                          <Checkbox
+                            checked={selectedWithdrawnUsers.includes(user.email)}
+                            onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
+                          />
+                        </div>
+                        <div className="flex text-sm">
+                          <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
+                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
+                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
+                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
+                          <div className="flex-1 flex items-center text-left space-x-2 px-2">
+                            <Badge variant="destructive" className="flex-shrink-0">탈퇴</Badge>
+                            <span className="text-gray-500 flex-shrink-0">{user.totalPartners}명</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex text-sm">
-                        <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
-                        <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
-                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
-                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
-                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
-                        <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
-                        <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
-                        <div className="flex-1 flex items-center text-left space-x-2 px-2">
-                          <Badge variant="destructive" className="flex-shrink-0">탈퇴</Badge>
-                          <span className="text-gray-500 flex-shrink-0">{user.totalPartners}명</span>
+                      {/* 모바일 카드 레이아웃 */}
+                      <div className="md:hidden border-b last:border-b-0 p-4 hover:bg-gray-50">
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            checked={selectedWithdrawnUsers.includes(user.email)}
+                            onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 space-y-2">
+                            <div className="font-medium text-sm">{user.email}</div>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                              <div><span className="font-medium">지역:</span> {user.region}</div>
+                              <div><span className="font-medium">챕터:</span> {user.chapter}</div>
+                              <div><span className="font-medium">멤버:</span> {user.memberName}</div>
+                              <div><span className="font-medium">회사:</span> {user.company}</div>
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="destructive" className="text-xs">탈퇴</Badge>
+                              <span className="text-gray-500 text-xs">파트너 {user.totalPartners}명</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
