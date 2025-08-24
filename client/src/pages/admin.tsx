@@ -1381,8 +1381,8 @@ export default function AdminPage() {
 
             {/* 개별 사용자 추가 폼 */}
             {addMode === 'single' && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">이메일 *</label>
                     <Input
