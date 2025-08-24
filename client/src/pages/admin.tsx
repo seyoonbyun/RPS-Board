@@ -1381,8 +1381,8 @@ export default function AdminPage() {
 
             {/* 개별 사용자 추가 폼 */}
             {addMode === 'single' && (
-              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">이메일 *</label>
                     <Input
@@ -1485,55 +1485,55 @@ export default function AdminPage() {
                       className="bg-white border-gray-300 placeholder:text-gray-400 text-gray-900"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">권한 *</label>
-                  <div className="relative" ref={authDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                    >
-                      <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
-                        {newUser.auth ? 
-                          (newUser.auth === 'Admin' ? 'Admin (관리자)' :
-                           newUser.auth === 'Growth' ? 'Growth (성장팀)' :
-                           newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
-                          : '권한 지정하기'}
-                      </span>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
-                    </button>
-                    {authDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                          onClick={() => {
-                            setNewUser({...newUser, auth: 'Admin'});
-                            setAuthDropdownOpen(false);
-                          }}
-                        >
-                          Admin (관리자)
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">권한 *</label>
+                    <div className="relative" ref={authDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                      >
+                        <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
+                          {newUser.auth ? 
+                            (newUser.auth === 'Admin' ? 'Admin (관리자)' :
+                             newUser.auth === 'Growth' ? 'Growth (성장팀)' :
+                             newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
+                            : '권한 지정하기'}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </button>
+                      {authDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                          <div 
+                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                            onClick={() => {
+                              setNewUser({...newUser, auth: 'Admin'});
+                              setAuthDropdownOpen(false);
+                            }}
+                          >
+                            Admin (관리자)
+                          </div>
+                          <div 
+                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                            onClick={() => {
+                              setNewUser({...newUser, auth: 'Growth'});
+                              setAuthDropdownOpen(false);
+                            }}
+                          >
+                            Growth (성장팀)
+                          </div>
+                          <div 
+                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                            onClick={() => {
+                              setNewUser({...newUser, auth: 'Member'});
+                              setAuthDropdownOpen(false);
+                            }}
+                          >
+                            Member (일반회원)
+                          </div>
                         </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                          onClick={() => {
-                            setNewUser({...newUser, auth: 'Growth'});
-                            setAuthDropdownOpen(false);
-                          }}
-                        >
-                          Growth (성장팀)
-                        </div>
-                        <div 
-                          className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                          onClick={() => {
-                            setNewUser({...newUser, auth: 'Member'});
-                            setAuthDropdownOpen(false);
-                          }}
-                        >
-                          Member (일반회원)
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
