@@ -164,7 +164,7 @@ export default function LoginPage() {
 
           <div className="text-xs text-gray-500 text-center mt-4 space-y-1">
             <p>※ 로그인 정보는 BNI Connect에 등록된 이메일주소를 포함합니다.</p>
-            <p>로그인 오류 문의는 각 지역의 오피스를 통해 문의 부탁드립니다.</p>
+            <p>BNI Connect 계정 정보를 토대로 RPS Board가 생성된 멤버에 한해 이용이 가능합니다.</p>
           </div>
         </CardContent>
       </Card>
