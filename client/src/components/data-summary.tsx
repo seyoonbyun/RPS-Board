@@ -90,7 +90,43 @@ export default function DataSummary({ scoreboardData, userProfile, achievement }
           현재 데이터 요약
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* 모바일 레이아웃: 총 파트너 수를 먼저, 그 다음 V,C,P 단계를 한 줄로 */}
+        <div className="md:hidden space-y-3 mb-6">
+          {/* 총 파트너 수 - 별도 표시 */}
+          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="text-3xl font-bold text-blue-600 mb-1">
+              {achievement.total}
+            </div>
+            <div className="text-sm text-gray-600">총 파트너 수</div>
+          </div>
+          
+          {/* V, C, P 단계 - 한 줄로 배치 */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+              <div className="text-2xl font-bold text-yellow-600 mb-1">
+                {achievement.vStage}
+              </div>
+              <div className="text-xs text-gray-600">인지 파트너 (V)</div>
+            </div>
+            
+            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {achievement.cStage}
+              </div>
+              <div className="text-xs text-gray-600">신뢰 파트너 (C)</div>
+            </div>
+            
+            <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+              <div className="text-2xl font-bold text-emerald-600 mb-1">
+                {achievement.current}
+              </div>
+              <div className="text-xs text-gray-600">수익 파트너 (P)</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* 데스크톱 레이아웃: 원래대로 4열 그리드 */}
+        <div className="hidden md:grid md:grid-cols-4 gap-4 mb-6">
           <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
             <div className="text-3xl font-bold text-blue-600 mb-1">
               {achievement.total}
