@@ -269,9 +269,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       variant="outline"
                       size="sm"
                       onClick={() => window.print()}
-                      className="ml-4 flex items-center gap-2"
+                      className="ml-4 flex items-center gap-2 border-[#d12031] text-[#d12031] hover:bg-[#d12031] hover:text-white transition-colors"
                     >
-                      <span style={{ color: '#d12031' }}>🖨️</span> 인쇄하기
+                      🖨️ 인쇄하기
                     </Button>
                   </div>
                 </CardHeader>
