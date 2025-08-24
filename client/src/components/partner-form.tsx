@@ -496,7 +496,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
               {/* 저장 안내 메시지 */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                 <p className="text-sm text-blue-800">
-                  💡 <strong>저장 방법:</strong> 모든 정보 수정 후 아래 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
+                  💡 모든 정보는 수정 후, 아래 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
                 </p>
               </div>
               
