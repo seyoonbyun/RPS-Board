@@ -453,7 +453,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="company"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>회사</FormLabel>
+                      <FormLabel>회사명</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="회사명" readOnly className="bg-gray-50 cursor-not-allowed" />
                       </FormControl>
