@@ -171,18 +171,6 @@
     visibility: visible !important;
   }
   
-  /* 인쇄 시 각 탭 내용 앞에 제목 추가 */
-  [role="tabpanel"]:not(:first-child):before {
-    content: "K-BNI.AI 파워팀 파트너 추천";
-    display: block !important;
-    font-size: 18px !important;
-    font-weight: bold !important;
-    color: #d12031 !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 10px !important;
-    border-bottom: 2px solid #d12031 !important;
-    text-align: center !important;
-  }
   
   /* 제출하기 버튼 섹션 숨김으로 인한 여백 조정 */
   .form-content-wrapper {
