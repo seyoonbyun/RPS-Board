@@ -6,6 +6,8 @@ interface AchievementRingProps {
     current: number;
     percent: number;
     remaining: number;
+    vStage?: number;
+    cStage?: number;
   };
 }
 
@@ -37,7 +39,28 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:ml-8">
+          {/* 모바일: 원형 차트 아래에 3개 항목을 한 줄로 배치 */}
+          <div className="lg:hidden w-full mt-4">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-lg font-bold text-emerald-600">
+                  {achievement.current}명
+                </div>
+                <div className="text-xs text-gray-600">수익 파트너 (P)</div>
+              </div>
+              <div className="text-center p-2 bg-orange-50 rounded-lg border border-orange-100">
+                <div className="text-lg font-bold text-orange-600">{achievement.cStage || 0}명</div>
+                <div className="text-xs text-gray-600">신뢰 파트너 (C)</div>
+              </div>
+              <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-100">
+                <div className="text-lg font-bold text-yellow-600">{achievement.vStage || 0}명</div>
+                <div className="text-xs text-gray-600">인지 파트너 (V)</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 데스크톱: 원래 레이아웃 유지 */}
+          <div className="hidden lg:grid lg:grid-cols-1 gap-4 lg:ml-8">
             <div className="text-center lg:text-left">
               <div className="text-sm text-gray-600 mb-1">목표</div>
               <div className="text-2xl font-bold text-blue-600">4명</div>

@@ -558,8 +558,8 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <div className="bg-white p-6 rounded-lg shadow">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
                   
-                  {/* Top row: Achievement Ring + Stats */}
-                  <div className="flex items-start gap-8 mb-6">
+                  {/* 데스크톱 레이아웃: Achievement Ring + Stats */}
+                  <div className="hidden md:flex items-start gap-8 mb-6">
                     {/* Left: Achievement Ring (a이미지) */}
                     <div className="flex-shrink-0">
                       <div className="relative w-32 h-32">
@@ -635,6 +635,93 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
                         <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 모바일 레이아웃: 원형 차트 중앙, 그 아래 V,C,P 한 줄로 배치 */}
+                  <div className="md:hidden mb-6 space-y-4">
+                    {/* 원형 차트 중앙 배치 */}
+                    <div className="flex justify-center">
+                      <div className="relative w-32 h-32">
+                        <svg className="w-32 h-32" viewBox="0 0 36 36">
+                          {/* Background circle */}
+                          <path
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#f3f4f6"
+                            strokeWidth="2"
+                            transform="rotate(-90 18 18)"
+                          />
+                          {/* Progress circle */}
+                          <path
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#d12031"
+                            strokeWidth="2"
+                            strokeDasharray={`${achievementData.percentage}, 100`}
+                            transform="rotate(-90 18 18)"
+                            className="drop-shadow-sm"
+                          />
+                          {/* SVG text elements - guaranteed to print */}
+                          <text 
+                            x="18" 
+                            y="15" 
+                            textAnchor="middle" 
+                            dominantBaseline="central"
+                            fill="black" 
+                            fontSize="7.5" 
+                            fontWeight="bold"
+                            style={{ 
+                              fill: 'black',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact'
+                            }}
+                          >
+                            {achievementData.percentage}%
+                          </text>
+                          <text 
+                            x="18" 
+                            y="22" 
+                            textAnchor="middle" 
+                            dominantBaseline="central"
+                            fill="black" 
+                            fontSize="3.75"
+                            style={{ 
+                              fill: 'black',
+                              WebkitPrintColorAdjust: 'exact',
+                              printColorAdjust: 'exact'
+                            }}
+                          >
+                            {achievementData.profitable}/4
+                          </text>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* V, C, P 단계 한 줄로 배치 */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div className="text-lg font-bold text-emerald-600">
+                          {achievementData.profitable}명
+                        </div>
+                        <div className="text-xs text-gray-600">수익 파트너 (P)</div>
+                      </div>
+                      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <div className="text-lg font-bold text-orange-600">
+                          {achievementData.credible}명
+                        </div>
+                        <div className="text-xs text-gray-600">신뢰 파트너 (C)</div>
+                      </div>
+                      <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                        <div className="text-lg font-bold text-yellow-600">
+                          {achievementData.visible}명
+                        </div>
+                        <div className="text-xs text-gray-600">인지 파트너 (V)</div>
                       </div>
                     </div>
                   </div>
