@@ -162,6 +162,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
   return (
     <div className="space-y-6">
+      {/* 인쇄용 섹션 제목 5: AI 파워팀 파트너 추천 */}
+      <div className="print-only print-section-title print-ai-recommendation-section">5. AI 파워팀 파트너 추천</div>
+      
       {/* AI 분석 중 로딩 팝업 */}
       <Dialog open={isLoadingAI} onOpenChange={() => {}}>
         <DialogContent className="w-[92vw] max-w-sm sm:max-w-lg lg:max-w-xl bg-white border-2 border-gray-200 shadow-2xl rounded-[7px] mx-auto">
@@ -292,6 +295,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
 
         {/* K-BNI.AI 파워팀 파트너 추천 탭 */}
         <TabsContent value="analytics" className="space-y-4">
+          {/* 인쇄용 섹션 제목 6: 지역 내 파워팀 업체 검색 */}
+          <div className="print-only print-section-title print-regional-business-section">6. 지역 내 파워팀 업체 검색</div>
+          
           {/* 지역 기반 업체 검색 */}
           <Card>
             <CardHeader>

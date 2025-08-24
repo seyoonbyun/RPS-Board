@@ -86,7 +86,7 @@
     display: block !important;
   }
   @page {
-    margin: 0;
+    margin: 15mm;
     size: A4;
   }
   
@@ -114,14 +114,59 @@
     display: block !important;
   }
   
-  /* 탭 내용 간 구분을 위한 페이지 브레이크 */
-  [role="tabpanel"]:not(:first-child) {
+  /* 인쇄용 섹션 제목 스타일 */
+  .print-section-title {
+    display: block !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #d12031 !important;
+    margin-top: 30px !important;
+    margin-bottom: 20px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 2px solid #d12031 !important;
+    text-align: center !important;
+  }
+  
+  /* 각 섹션별 페이지 브레이크 */
+  .print-section-break {
     page-break-before: always !important;
     break-before: page !important;
   }
   
-  /* AI 파트너 추천 탭 내용도 인쇄에 포함 */
-  [role="tabpanel"][data-state="inactive"] {
+  /* 스코어보드 섹션 내 하위 섹션 구분 */
+  .print-my-info-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  .print-partner-form-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  .print-achievement-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  /* AI 추천 섹션은 새 페이지 시작 */
+  .print-ai-recommendation-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  .print-regional-business-section {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  /* 탭 내용을 모두 표시 */
+  [role="tabpanel"] {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  [data-state="inactive"] {
     display: block !important;
     visibility: visible !important;
   }

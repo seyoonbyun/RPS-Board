@@ -364,6 +364,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* 인쇄용 섹션 제목 2: 나의 파워팀 정보 - 나의 정보 */}
+            <div className="print-only print-section-title print-my-info-section">2. 나의 파워팀 정보 - 나의 정보</div>
+            
             {/* 기본 정보 섹션 */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
@@ -500,6 +503,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
 
             </div>
 
+            {/* 인쇄용 섹션 제목 3: 나의 리퍼럴 파트너 정보 입력 */}
+            <div className="print-only print-section-title print-partner-form-section">3. 나의 리퍼럴 파트너 정보 입력</div>
+            
             {/* 나의 리퍼럴 파트너 정보 섹션 */}
             <div className="space-y-4 pt-6 border-t">
               <div className="flex items-center space-x-2 mb-4">
@@ -544,6 +550,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             </div>
             
             {/* Achievement Section */}
+            {/* 인쇄용 섹션 제목 4: 달성률 */}
+            <div className="print-only print-section-title print-achievement-section">4. 달성률</div>
+            
             {achievementData && (
               <div className="mt-2">
                 <div className="bg-white p-6 rounded-lg shadow">
