@@ -1344,7 +1344,10 @@ export default function AdminPage() {
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
         <AlertDialogContent className="max-w-6xl bg-white border border-gray-200 shadow-2xl admin-member-dialog max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>새로운 멤버 추가하기</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center">
+              <UserPlus className="mr-2 w-5 h-5 text-red-600" />
+              새로운 멤버 추가하기
+            </AlertDialogTitle>
             <AlertDialogDescription>
               단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
               <br />
