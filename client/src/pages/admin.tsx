@@ -824,7 +824,7 @@ export default function AdminPage() {
           <div>
             <h3 className="text-lg font-medium mb-3">방법 2: 멤버 목록에서 선택</h3>
             <div className="space-y-3">
-              <div className="flex justify-end">
+              <div className="hidden md:flex justify-end">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
@@ -983,6 +983,39 @@ export default function AdminPage() {
                         <label htmlFor="select-all-mobile" className="text-sm font-medium">
                           전체 선택 ({filteredActiveUsers.filter(user => selectedUsers.includes(user.email)).length}명 선택됨)
                         </label>
+                      </div>
+                      {/* 모바일용 탈퇴 처리 버튼 */}
+                      <div className="mt-3">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="destructive" 
+                              disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
+                              className="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 className="mr-2 w-4 h-4" />
+                              선택한 멤버 탈퇴 처리
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="alert-dialog-content">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="alert-dialog-title">선택한 멤버 탈퇴 처리</AlertDialogTitle>
+                              <AlertDialogDescription className="alert-dialog-description">
+                                선택한 {selectedUsers.length}명의 멤버를 탈퇴 처리 하시겠습니까?
+                                <br />이 작업은 되돌릴 수 없습니다.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleSelectedUsersWithdrawal}
+                                className="alert-dialog-action-destructive"
+                              >
+                                탈퇴 처리 실행
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </div>
