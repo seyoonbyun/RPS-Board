@@ -424,7 +424,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="industry"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>산업군</FormLabel>
+                      <FormLabel>산업군 <span className="text-xs text-gray-500">_BNI 커넥트 기준</span></FormLabel>
                       <FormControl>
                         <TooltipProvider>
                           <Tooltip>
@@ -469,7 +469,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   name="specialty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>전문분야</FormLabel>
+                      <FormLabel>전문분야 <span className="text-xs text-gray-500">_※챕터 경청표에 기재하는 나의 전문분야.</span></FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ""} placeholder="챕터 경청표_나의 전문분야" />
                       </FormControl>
