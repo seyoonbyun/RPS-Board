@@ -526,7 +526,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
             <div className="pt-4 border-t submit-button-section">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-amber-800">
-                  ⚠️ <strong>중요:</strong> 위의 모든 정보를 수정한 후 반드시 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
+                  ⚠️ 위의 모든 정보를 수정한 후 반드시 "제출하기" 버튼을 눌러야 변경사항이 저장됩니다.
                 </p>
               </div>
               <Button
