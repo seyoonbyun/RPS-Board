@@ -859,56 +859,60 @@ export default function AdminPage() {
 
               {/* 필터링 옵션 */}
               <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-gray-700">지역:</label>
-                  <Select value={regionFilter} onValueChange={setRegionFilter}>
-                    <SelectTrigger className="w-32 bg-white">
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="__all__">선택</SelectItem>
-                      {uniqueRegions.map(region => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {regionFilter !== '__all__' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setRegionFilter('__all__')}
-                      className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
-                    >
-                      ✕
-                    </Button>
-                  )}
+                <div className="flex items-center space-x-2 w-full md:w-auto">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
+                  <div className="relative flex-1 md:w-40">
+                    <Select value={regionFilter} onValueChange={setRegionFilter}>
+                      <SelectTrigger className="w-full bg-white pr-8">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="__all__">선택</SelectItem>
+                        {uniqueRegions.map(region => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {regionFilter !== '__all__' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setRegionFilter('__all__')}
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-gray-700">챕터:</label>
-                  <Select value={chapterFilter} onValueChange={setChapterFilter}>
-                    <SelectTrigger className="w-32 bg-white">
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="__all__">선택</SelectItem>
-                      {uniqueChapters.map(chapter => (
-                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {chapterFilter !== '__all__' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setChapterFilter('__all__')}
-                      className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
-                    >
-                      ✕
-                    </Button>
-                  )}
+                <div className="flex items-center space-x-2 w-full md:w-auto">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
+                  <div className="relative flex-1 md:w-40">
+                    <Select value={chapterFilter} onValueChange={setChapterFilter}>
+                      <SelectTrigger className="w-full bg-white pr-8">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="__all__">선택</SelectItem>
+                        {uniqueChapters.map(chapter => (
+                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {chapterFilter !== '__all__' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setChapterFilter('__all__')}
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
-                  <div className="flex items-center">
+                  <div className="flex items-center w-full md:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
@@ -916,7 +920,7 @@ export default function AdminPage() {
                         setRegionFilter('__all__');
                         setChapterFilter('__all__');
                       }}
-                      className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                      className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
                     >
                       모든 필터 해제
                     </Button>
@@ -1075,56 +1079,60 @@ export default function AdminPage() {
           <CardContent>
             {/* 탈퇴 사용자 필터 */}
             <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">지역:</label>
-                <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
-                  <SelectTrigger className="w-32 bg-white">
-                    <SelectValue placeholder="전체" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="__all__">선택</SelectItem>
-                    {withdrawnUniqueRegions.map((region) => (
-                      <SelectItem key={region} value={region}>{region}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {withdrawnRegionFilter !== '__all__' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setWithdrawnRegionFilter('__all__')}
-                    className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
-                  >
-                    ✕
-                  </Button>
-                )}
+              <div className="flex items-center space-x-2 w-full md:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
+                <div className="relative flex-1 md:w-40">
+                  <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
+                    <SelectTrigger className="w-full bg-white pr-8">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="__all__">선택</SelectItem>
+                      {withdrawnUniqueRegions.map((region) => (
+                        <SelectItem key={region} value={region}>{region}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {withdrawnRegionFilter !== '__all__' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setWithdrawnRegionFilter('__all__')}
+                      className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">챕터:</label>
-                <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
-                  <SelectTrigger className="w-32 bg-white">
-                    <SelectValue placeholder="전체" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="__all__">선택</SelectItem>
-                    {withdrawnUniqueChapters.map((chapter) => (
-                      <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {withdrawnChapterFilter !== '__all__' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setWithdrawnChapterFilter('__all__')}
-                    className="h-6 px-2 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50"
-                  >
-                    ✕
-                  </Button>
-                )}
+              <div className="flex items-center space-x-2 w-full md:w-auto">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
+                <div className="relative flex-1 md:w-40">
+                  <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
+                    <SelectTrigger className="w-full bg-white pr-8">
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="__all__">선택</SelectItem>
+                      {withdrawnUniqueChapters.map((chapter) => (
+                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {withdrawnChapterFilter !== '__all__' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setWithdrawnChapterFilter('__all__')}
+                      className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
               </div>
               {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
-                <div className="flex items-center">
+                <div className="flex items-center w-full md:w-auto">
                   <Button
                     size="sm"
                     variant="outline"
@@ -1132,7 +1140,7 @@ export default function AdminPage() {
                       setWithdrawnRegionFilter('__all__');
                       setWithdrawnChapterFilter('__all__');
                     }}
-                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
                   >
                     모든 필터 해제
                   </Button>
