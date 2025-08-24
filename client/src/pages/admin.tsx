@@ -663,13 +663,13 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
               </Button>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {adminPermission?.auth === 'National' && (
                   <Button 
                     onClick={exportUserList} 
                     variant="outline" 
                     size="sm"
-                    className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1"
+                    className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
                   >
                     <Download className="mr-1 w-4 h-4" />
                     RPS 목록 내보내기
@@ -679,7 +679,7 @@ export default function AdminPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setLocation('/dashboard')}
-                  className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 flex-1"
+                  className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
                 >
                   <ArrowLeft className="mr-1 w-4 h-4" />
                   대시보드로 돌아가기
