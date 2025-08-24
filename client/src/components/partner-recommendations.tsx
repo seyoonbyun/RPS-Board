@@ -255,31 +255,29 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               {/* AI 분석 결과 */}
               <Card>
                 <CardHeader>
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-4 md:space-y-0">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Brain className="w-5 h-5" style={{ color: '#d12031' }} />
-                        K-BNI.AI 상세분석
-                      </CardTitle>
-                      <CardDescription>
-                        대표님의 비즈니스 시너지와 확장 가능성에 대한 K-BNI.AI의 분석입니다
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.print()}
-                      className="md:ml-4 flex items-center gap-2 border-[#d12031] text-[#d12031] hover:bg-[#d12031] hover:text-white transition-colors self-start"
-                    >
-                      🖨️ 인쇄하기
-                    </Button>
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5" style={{ color: '#d12031' }} />
+                    K-BNI.AI 상세분석
+                  </CardTitle>
+                  <CardDescription>
+                    대표님의 비즈니스 시너지와 확장 가능성에 대한 K-BNI.AI의 분석입니다
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="prose prose-sm max-w-none">
                     <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
                       {aiAnalysis.analysis}
                     </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.print()}
+                      className="flex items-center gap-2 border-[#d12031] text-[#d12031] hover:bg-[#d12031] hover:text-white transition-colors"
+                    >
+                      🖨️ 인쇄하기
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
