@@ -790,7 +790,7 @@ export default function AdminPage() {
                   <Button 
                     variant="destructive" 
                     disabled={!emailValidation.isValid || bulkWithdrawalMutation.isPending}
-                    className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                    className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed w-full md:w-auto"
                   >
                     <Upload className="mr-2 w-4 h-4" />
                     이메일 목록으로 일괄 탈퇴 처리
