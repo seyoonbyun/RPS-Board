@@ -706,17 +706,17 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     {/* V, C, P 단계 한 줄로 배치 */}
                     <div className="grid grid-cols-3 gap-1">
                       <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <div className="text-xs text-emerald-600">
+                        <div className="text-xs text-emerald-600 whitespace-nowrap">
                           (P) {achievementData.profitable} 명 수익 파트너
                         </div>
                       </div>
                       <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
-                        <div className="text-xs text-orange-600">
+                        <div className="text-xs text-orange-600 whitespace-nowrap">
                           (C) {achievementData.credible} 명 신뢰 파트너
                         </div>
                       </div>
                       <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                        <div className="text-xs text-yellow-600">
+                        <div className="text-xs text-yellow-600 whitespace-nowrap">
                           (V) {achievementData.visible} 명 인지 파트너
                         </div>
                       </div>
