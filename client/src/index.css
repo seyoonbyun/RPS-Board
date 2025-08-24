@@ -290,6 +290,10 @@
     button {
       display: none !important;
     }
+    
+    .print-hidden {
+      display: none !important;
+    }
   }
   
   .print-header {

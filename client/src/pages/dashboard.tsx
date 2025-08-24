@@ -221,7 +221,7 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Guide Section */}
-        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg" style={{ borderLeftColor: '#d12031' }}>
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg print-hidden" style={{ borderLeftColor: '#d12031' }}>
           <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
           <div className="text-sm text-gray-700 space-y-2">
             <p>나의 파워팀_리퍼럴 파트너 스코어보드(RPS)는 BNI코리아 대표님들의 비즈니스 확장 경험을 측정하고 기록하는 데 도움을 주는 기록 툴로, 성취 경험을 향상시킴은 물론, 비즈니스 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
