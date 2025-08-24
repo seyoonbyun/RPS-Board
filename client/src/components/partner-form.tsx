@@ -704,21 +704,24 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* V, C, P 단계 한 줄로 배치 */}
-                    <div className="grid grid-cols-3 gap-1">
-                      <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <div className="text-xs text-emerald-600 whitespace-nowrap">
-                          (P) {achievementData.profitable} 명 수익 파트너
+                    <div className="grid grid-cols-3 gap-0.5">
+                      <div className="text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
+                        <div className="text-[10px] leading-tight text-emerald-600 mb-0.5">
+                          (P) {achievementData.profitable} 명
                         </div>
+                        <div className="text-[9px] leading-tight text-gray-600">수익 파트너</div>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
-                        <div className="text-xs text-orange-600 whitespace-nowrap">
-                          (C) {achievementData.credible} 명 신뢰 파트너
+                      <div className="text-center py-2 px-1 bg-orange-50 rounded-lg border border-orange-100 min-h-[60px] flex flex-col justify-center">
+                        <div className="text-[10px] leading-tight text-orange-600 mb-0.5">
+                          (C) {achievementData.credible} 명
                         </div>
+                        <div className="text-[9px] leading-tight text-gray-600">신뢰 파트너</div>
                       </div>
-                      <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                        <div className="text-xs text-yellow-600 whitespace-nowrap">
-                          (V) {achievementData.visible} 명 인지 파트너
+                      <div className="text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
+                        <div className="text-[10px] leading-tight text-yellow-600 mb-0.5">
+                          (V) {achievementData.visible} 명
                         </div>
+                        <div className="text-[9px] leading-tight text-gray-600">인지 파트너</div>
                       </div>
                     </div>
                   </div>
