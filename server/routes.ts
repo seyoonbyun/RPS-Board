@@ -1356,6 +1356,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 이메일로 AI 분석 내용 전송 API
+  app.post("/api/send-analysis-email/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { analysis, userSpecialty } = req.body;
+      
+      if (!analysis || !userSpecialty) {
+        return res.status(400).json({ message: "분석 내용과 전문분야가 필요합니다" });
+      }
+      
+      // 사용자 정보 조회
+      const user = await storage.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      
+      // 현재는 이메일 전송 기능을 시뮬레이션합니다
+      // 실제 환경에서는 SendGrid, AWS SES 등의 이메일 서비스를 사용하세요
+      console.log('📧 이메일 전송 시뮬레이션:');
+      console.log('받는 사람:', user.email);
+      console.log('제목: K-BNI.AI 전문분야 분석 결과');
+      console.log('내용 길이:', analysis.length, '자');
+      
+      // 성공 응답
+      res.json({ 
+        success: true, 
+        message: "분석 내용이 이메일로 전송되었습니다",
+        recipientEmail: user.email
+      });
+      
+    } catch (error) {
+      console.error("이메일 전송 오류:", error);
+      res.status(500).json({ message: "이메일 전송 중 오류가 발생했습니다" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

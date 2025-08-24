@@ -159,19 +159,6 @@ export default function Dashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handlePrint}
-                style={{ 
-                  color: '#d12031', 
-                  borderColor: '#f5c2c7', 
-                }}
-                className="hover:bg-red-50"
-              >
-                <Printer className="mr-1 w-4 h-4" />
-                인쇄
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={handleLogout}
                 className="text-red-800 border-red-200 hover:bg-red-50"
               >
@@ -217,31 +204,16 @@ export default function Dashboard() {
                   관리자 패널
                 </Button>
               )}
-              {/* 인쇄와 로그아웃 버튼 - 두 번째 줄에 나란히 */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                  style={{ 
-                    color: '#d12031', 
-                    borderColor: '#f5c2c7', 
-                  }}
-                  className="hover:bg-red-50 flex-1"
-                >
-                  <Printer className="mr-1 w-4 h-4" />
-                  인쇄
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-red-800 border-red-200 hover:bg-red-50 flex-1"
-                >
-                  <LogOut className="mr-1 w-4 h-4" />
-                  로그아웃
-                </Button>
-              </div>
+              {/* 로그아웃 버튼 */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="text-red-800 border-red-200 hover:bg-red-50 w-full"
+              >
+                <LogOut className="mr-1 w-4 h-4" />
+                로그아웃
+              </Button>
             </div>
           </div>
         </div>
