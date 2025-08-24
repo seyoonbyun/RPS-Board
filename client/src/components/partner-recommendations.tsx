@@ -269,7 +269,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       {aiAnalysis.analysis}
                     </div>
                   </div>
-                  <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
                     <Button
                       variant="outline"
                       size="sm"
