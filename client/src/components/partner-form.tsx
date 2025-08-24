@@ -704,7 +704,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* V, C, P 단계 한 줄로 배치 */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-1">
                       <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
                         <div className="text-sm font-bold text-emerald-600 mb-1">
                           (P) {achievementData.profitable} 명

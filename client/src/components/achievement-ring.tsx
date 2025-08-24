@@ -41,7 +41,7 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
           
           {/* 모바일: 원형 차트 아래에 3개 항목을 한 줄로 배치 */}
           <div className="lg:hidden w-full mt-4">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1">
               <div className="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100">
                 <div className="text-sm font-bold text-emerald-600 mb-1">
                   (P) {achievement.current} 명
