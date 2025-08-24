@@ -269,12 +269,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       variant="outline"
                       size="sm"
                       onClick={() => window.print()}
-                      className="ml-4 text-white border-red-600 hover:border-red-700"
-                      style={{ backgroundColor: '#d12031' }}
-                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#b91c2b'}
-                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#d12031'}
+                      className="ml-4 flex items-center gap-2"
                     >
-                      🖨️ 인쇄하기
+                      <span style={{ color: '#d12031' }}>🖨️</span> 인쇄하기
                     </Button>
                   </div>
                 </CardHeader>
