@@ -43,17 +43,17 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
           <div className="lg:hidden w-full mt-4">
             <div className="grid grid-cols-3 gap-0.5">
               <div className="text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
-                <div className="text-[10px] leading-tight text-emerald-600 mb-0.5">
+                <div className="text-sm leading-tight text-emerald-600 mb-0.5">
                   (P) {achievement.current} 명
                 </div>
                 <div className="text-[9px] leading-tight text-gray-600">수익 파트너</div>
               </div>
               <div className="text-center py-2 px-1 bg-orange-50 rounded-lg border border-orange-100 min-h-[60px] flex flex-col justify-center">
-                <div className="text-[10px] leading-tight text-orange-600 mb-0.5">(C) {achievement.cStage || 0} 명</div>
+                <div className="text-sm leading-tight text-orange-600 mb-0.5">(C) {achievement.cStage || 0} 명</div>
                 <div className="text-[9px] leading-tight text-gray-600">신뢰 파트너</div>
               </div>
               <div className="text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
-                <div className="text-[10px] leading-tight text-yellow-600 mb-0.5">(V) {achievement.vStage || 0} 명</div>
+                <div className="text-sm leading-tight text-yellow-600 mb-0.5">(V) {achievement.vStage || 0} 명</div>
                 <div className="text-[9px] leading-tight text-gray-600">인지 파트너</div>
               </div>
             </div>
