@@ -66,55 +66,6 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
     }
   };
 
-  // 이메일 전송 함수
-  const handleSendEmail = async () => {
-    if (!aiAnalysis || !userId) {
-      const { toast } = await import('@/hooks/use-toast');
-      toast({
-        title: "오류",
-        description: "전송할 분석 내용이 없습니다",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/send-analysis-email/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          analysis: aiAnalysis.analysis,
-          userSpecialty: aiAnalysis.userSpecialty
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('이메일 전송에 실패했습니다');
-      }
-
-      const result = await response.json();
-      
-      const { toast } = await import('@/hooks/use-toast');
-      toast({
-        title: "📧 이메일 전송 완료",
-        description: `${result.recipientEmail}로 AI 분석 내용이 전송되었습니다`,
-        duration: 4000,
-      });
-      
-    } catch (error) {
-      console.error('이메일 전송 오류:', error);
-      const { toast } = await import('@/hooks/use-toast');
-      toast({
-        title: "전송 실패",
-        description: error instanceof Error ? error.message : '이메일 전송 중 오류가 발생했습니다',
-        variant: "destructive",
-        duration: 4000,
-      });
-    }
-  };
 
   // 컴포넌트 마운트 시 AI 분석 실행
   useEffect(() => {
@@ -319,10 +270,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleSendEmail()}
+                      onClick={() => window.print()}
                       className="ml-4 bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700"
                     >
-                      📧 이메일 전송
+                      🖨️ 인쇄하기
                     </Button>
                   </div>
                 </CardHeader>

@@ -233,6 +233,64 @@
     z-index: 999 !important;
     position: relative !important;
   }
+
+  /* K-BNI.AI 분석 내용 인쇄 스타일 */
+  .prose,
+  .prose * {
+    color: black !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #d12031 !important;
+    font-weight: bold !important;
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+    page-break-after: avoid !important;
+  }
+
+  .prose h1 {
+    font-size: 24px !important;
+    border-bottom: 2px solid #d12031 !important;
+    padding-bottom: 8px !important;
+  }
+
+  .prose h2 {
+    font-size: 20px !important;
+  }
+
+  .prose h3 {
+    font-size: 18px !important;
+  }
+
+  .prose p {
+    margin-bottom: 12px !important;
+    line-height: 1.6 !important;
+  }
+
+  .prose ul, .prose ol {
+    margin-left: 20px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .prose li {
+    margin-bottom: 5px !important;
+    line-height: 1.5 !important;
+  }
+
+  .prose strong {
+    font-weight: bold !important;
+    color: #d12031 !important;
+  }
+
+  /* 인쇄 시 버튼 숨김 */
+  @media print {
+    button {
+      display: none !important;
+    }
+  }
   
   .print-header {
     display: flex;
