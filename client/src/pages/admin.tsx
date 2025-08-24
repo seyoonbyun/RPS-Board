@@ -830,7 +830,7 @@ export default function AdminPage() {
                     <Button 
                       variant="destructive" 
                       disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
-                      className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                      className="bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed w-full md:w-auto"
                     >
                       <Trash2 className="mr-2 w-4 h-4" />
                       선택한 멤버 탈퇴 처리
