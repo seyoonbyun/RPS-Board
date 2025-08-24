@@ -44,17 +44,17 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100">
                 <div className="text-lg font-bold text-emerald-600">
-                  {achievement.current}명
+                  (P) {achievement.current} 명
                 </div>
-                <div className="text-xs text-gray-600">수익 파트너 (P)</div>
+                <div className="text-xs text-gray-600">수익 파트너</div>
               </div>
               <div className="text-center p-2 bg-orange-50 rounded-lg border border-orange-100">
-                <div className="text-lg font-bold text-orange-600">{achievement.cStage || 0}명</div>
-                <div className="text-xs text-gray-600">신뢰 파트너 (C)</div>
+                <div className="text-lg font-bold text-orange-600">(C) {achievement.cStage || 0} 명</div>
+                <div className="text-xs text-gray-600">신뢰 파트너</div>
               </div>
               <div className="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-100">
-                <div className="text-lg font-bold text-yellow-600">{achievement.vStage || 0}명</div>
-                <div className="text-xs text-gray-600">인지 파트너 (V)</div>
+                <div className="text-lg font-bold text-yellow-600">(V) {achievement.vStage || 0} 명</div>
+                <div className="text-xs text-gray-600">인지 파트너</div>
               </div>
             </div>
           </div>
