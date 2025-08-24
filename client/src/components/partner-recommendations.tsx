@@ -258,7 +258,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="flex items-center gap-2">
-                        <Brain className="w-5 h-5 text-purple-600" />
+                        <Brain className="w-5 h-5" style={{ color: '#d12031' }} />
                         K-BNI.AI 상세분석
                       </CardTitle>
                       <CardDescription>
@@ -269,7 +269,10 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       variant="outline"
                       size="sm"
                       onClick={() => window.print()}
-                      className="ml-4 bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700"
+                      className="ml-4 text-white border-red-600 hover:border-red-700"
+                      style={{ backgroundColor: '#d12031' }}
+                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#b91c2b'}
+                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#d12031'}
                     >
                       🖨️ 인쇄하기
                     </Button>
@@ -294,7 +297,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                 <p className="text-gray-600">AI 분석 데이터가 없습니다</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => handleAnalysisClick()}
+                  onClick={() => fetchAIAnalysis()}
                   className="mt-4 bg-red-600 hover:bg-red-700 text-white"
                 >
                   분석 시작
