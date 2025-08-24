@@ -733,9 +733,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                           <span className="text-white font-bold text-sm">R</span>
                         </div>
-                        <span className="text-green-800 font-medium">나의 총 리퍼럴 파트너 수</span>
+                        <span className="text-green-800 font-medium text-sm">나의 총 리퍼럴 파트너 수</span>
                       </div>
-                      <span className="font-bold text-xl text-green-800">{achievementData.profitable}명</span>
+                      <span className="font-bold text-lg text-green-800">{achievementData.profitable}명</span>
                     </div>
                     
                     {/* RPI 확인하기 버튼 */}
