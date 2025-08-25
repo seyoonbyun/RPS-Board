@@ -745,8 +745,24 @@ class GoogleSheetsService {
             targetCustomer: { current: existingRow[7], updating: values[7] }
           });
           
-          // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 6-17)
-          // 총 R파트너 수와 달성율은 새로 계산된 값 사용 (index 18-19)
+          // 파트너 정보는 앱에서 온 최신 데이터 사용 (index 8-19): 실시간 업데이트 보장
+          console.log(`🔄 Partner info update for ${data.userEmail}:`, {
+            rpartner1: { current: existingRow[8], updating: values[8] },
+            rpartner1Specialty: { current: existingRow[9], updating: values[9] },
+            rpartner1Stage: { current: existingRow[10], updating: values[10] },
+            rpartner2: { current: existingRow[11], updating: values[11] },
+            rpartner2Specialty: { current: existingRow[12], updating: values[12] },
+            rpartner2Stage: { current: existingRow[13], updating: values[13] },
+            rpartner3: { current: existingRow[14], updating: values[14] },
+            rpartner3Specialty: { current: existingRow[15], updating: values[15] },
+            rpartner3Stage: { current: existingRow[16], updating: values[16] },
+            rpartner4: { current: existingRow[17], updating: values[17] },
+            rpartner4Specialty: { current: existingRow[18], updating: values[18] },
+            rpartner4Stage: { current: existingRow[19], updating: values[19] }
+          });
+          
+          // 파트너 정보(values[8-19])는 이미 앱에서 전달된 최신 값으로 설정됨 - 기존 값으로 덮어쓰지 않음
+          // 총 R파트너 수와 달성율(values[20-21])도 새로 계산된 값 사용
           
           // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
           let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
