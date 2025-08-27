@@ -39,18 +39,18 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
             </div>
           </div>
           
-          {/* 모바일: 원형 차트 아래에 3개 항목을 한 줄로 배치 */}
+          {/* 모바일: 원형 차트 아래에 3개 항목을 한 줄로 배치 - V C P 순서 */}
           <div className="lg:hidden w-full mt-4">
-            <div className="grid grid-cols-3 gap-0.5">
-              <div className="text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
+            <div className="flex w-full gap-0.5">
+              <div className="flex-1 text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
                 <div className="text-sm leading-tight text-yellow-600 mb-0.5 font-bold">(V) {achievement.vStage || 0} 명</div>
                 <div className="text-[9px] leading-tight text-gray-600">인지 파트너</div>
               </div>
-              <div className="text-center py-2 px-1 bg-orange-50 rounded-lg border border-orange-100 min-h-[60px] flex flex-col justify-center">
+              <div className="flex-1 text-center py-2 px-1 bg-orange-50 rounded-lg border border-orange-100 min-h-[60px] flex flex-col justify-center">
                 <div className="text-sm leading-tight text-orange-600 mb-0.5 font-bold">(C) {achievement.cStage || 0} 명</div>
                 <div className="text-[9px] leading-tight text-gray-600">신뢰 파트너</div>
               </div>
-              <div className="text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
+              <div className="flex-1 text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
                 <div className="text-sm leading-tight text-emerald-600 mb-0.5 font-bold">
                   (P) {achievement.current} 명
                 </div>
