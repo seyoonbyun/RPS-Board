@@ -100,23 +100,23 @@ export default function DataSummary({ scoreboardData, userProfile, achievement }
             <div className="text-sm text-gray-600">총 파트너 수</div>
           </div>
           
-          {/* V, C, P 단계 - 한 줄로 배치 */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+          {/* V, C, P 단계 - 한 줄로 배치: V > C > P 순서 */}
+          <div className="flex gap-2">
+            <div className="flex-1 text-center p-3 bg-yellow-50 rounded-lg border border-yellow-100">
               <div className="text-2xl font-bold text-yellow-600 mb-1">
                 {achievement.vStage}
               </div>
               <div className="text-xs text-gray-600">인지 파트너 (V)</div>
             </div>
             
-            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
+            <div className="flex-1 text-center p-3 bg-orange-50 rounded-lg border border-orange-100">
               <div className="text-2xl font-bold text-orange-600 mb-1">
                 {achievement.cStage}
               </div>
               <div className="text-xs text-gray-600">신뢰 파트너 (C)</div>
             </div>
             
-            <div className="text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+            <div className="flex-1 text-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
               <div className="text-2xl font-bold text-emerald-600 mb-1">
                 {achievement.current}
               </div>
