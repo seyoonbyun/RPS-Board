@@ -623,19 +623,19 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                       </div>
                     </div>
                     
-                    {/* Right: Partner Stats (b이미지) */}
+                    {/* Right: Partner Stats (b이미지) - V > C > P 순서 */}
                     <div className="flex-1 space-y-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">수익 파트너 (P)</span>
-                        <span className="font-medium text-emerald-600">{achievementData.current}명</span>
+                        <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
+                        <span className="font-medium text-yellow-600">{achievementData.vStage}명</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">신뢰 파트너 (C)</span>
                         <span className="font-medium text-orange-600">{achievementData.cStage}명</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
-                        <span className="font-medium text-yellow-600">{achievementData.vStage}명</span>
+                        <span className="text-gray-600 text-sm">수익 파트너 (P)</span>
+                        <span className="font-medium text-emerald-600">{achievementData.current}명</span>
                       </div>
                     </div>
                   </div>
