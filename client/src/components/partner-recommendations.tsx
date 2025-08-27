@@ -293,8 +293,8 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         </div>
       </div>
       
-      {/* 지역 내 파워팀 업체 검색 - K-BNI.AI 탭에서 보모된 컨텐츠 */}
-      <div className="space-y-4">
+      {/* 지역 내 파워팀 업체 검색 - 숨김 처리 */}
+      <div className="space-y-4 hidden">
           
           {/* 지역 기반 업체 검색 */}
           <Card>
