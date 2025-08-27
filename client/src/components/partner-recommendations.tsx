@@ -250,7 +250,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                     BNI.K-AI 상세분석
                   </CardTitle>
                   <CardDescription>
-                    대표님의 비즈니스 시너지와 확장 가능성에 대한 K-BNI.AI의 분석입니다
+                    대표님의 비즈니스 시너지와 확장 가능성에 대한 BNI.K-AI의 분석입니다
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
