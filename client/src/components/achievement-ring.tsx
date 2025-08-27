@@ -39,7 +39,7 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
             </div>
           </div>
           
-          {/* 모바일: 원형 차트 아래에 3개 항목을 한 줄로 배치 - V C P 순서 */}
+          {/* 모바일: V C P 순서로 배치 */}
           <div className="lg:hidden w-full mt-4">
             <div className="flex w-full gap-0.5">
               <div className="flex-1 text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
