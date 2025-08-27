@@ -260,7 +260,7 @@ export default function Dashboard() {
             <TabsTrigger value="recommendations" className="flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
               <span className="hidden md:inline">AI 파워팀 브리핑</span>
-              <span className="md:hidden">AI의 Biz파트너 추천</span>
+              <span className="md:hidden">AI 파워팀 브리핑</span>
             </TabsTrigger>
           </TabsList>
 
