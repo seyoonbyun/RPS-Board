@@ -189,10 +189,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
       {/* 헤더 */}
       <div className="flex items-center gap-2">
         <Lightbulb className="w-6 h-6 text-red-600" />
-        <h2 className="text-2xl font-bold">
-          <span className="block md:hidden">파워팀 파트너 추천</span>
-          <span className="hidden md:block">AI의 파워팀 역량 분석</span>
-        </h2>
+        <h2 className="text-2xl font-bold">AI의 파워팀 역량 분석</h2>
       </div>
 
       {/* 단일 컨텐츠 레이아웃 - K-BNI.AI 파워팀 파트너 추천 탭 제거됨 */}
