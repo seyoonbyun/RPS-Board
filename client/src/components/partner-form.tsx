@@ -617,7 +617,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               printColorAdjust: 'exact'
                             }}
                           >
-                            
+                            {achievementData.current}/4
                           </text>
                         </svg>
                       </div>
@@ -627,15 +627,15 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <div className="flex-1 space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">수익 파트너 (P)</span>
-                        <span className="font-medium text-emerald-600">{achievementData.profitable}명</span>
+                        <span className="font-medium text-emerald-600">{achievementData.current}명</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">신뢰 파트너 (C)</span>
-                        <span className="font-medium text-orange-600">{achievementData.credible}명</span>
+                        <span className="font-medium text-orange-600">{achievementData.cStage}명</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
-                        <span className="font-medium text-yellow-600">{achievementData.visible}명</span>
+                        <span className="font-medium text-yellow-600">{achievementData.vStage}명</span>
                       </div>
                     </div>
                   </div>
@@ -698,7 +698,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               printColorAdjust: 'exact'
                             }}
                           >
-                            
+                            {achievementData.current}/4
                           </text>
                         </svg>
                       </div>
@@ -736,7 +736,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                         </div>
                         <span className="text-green-800 font-medium text-xs md:text-sm whitespace-nowrap">나의 총 리퍼럴 파트너 수</span>
                       </div>
-                      <span className="font-bold text-base text-green-800 whitespace-nowrap">{achievementData.total}명</span>
+                      <span className="font-bold text-base text-green-800 whitespace-nowrap">{achievementData.current}명</span>
                     </div>
                     
                     {/* RPI 확인하기 버튼 */}
