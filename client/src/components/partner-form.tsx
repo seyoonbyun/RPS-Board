@@ -624,17 +624,26 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     </div>
                     
                     {/* Right: Partner Stats (b이미지) - V > C > P 순서 */}
-                    <div className="flex-1 space-y-4">
+                    <div className="flex-1 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">인지 파트너 (V)</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="w-6 h-6 bg-yellow-100 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">V</span>
+                          <span className="text-gray-600 text-sm"><strong>Visibility</strong>: 아는 단계</span>
+                        </div>
                         <span className="font-medium text-yellow-600">{achievementData.vStage}명</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">신뢰 파트너 (C)</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="w-6 h-6 bg-orange-100 text-orange-800 rounded-full flex items-center justify-center text-xs font-bold">C</span>
+                          <span className="text-gray-600 text-sm"><strong>Credibility</strong>: 신뢰 단계</span>
+                        </div>
                         <span className="font-medium text-orange-600">{achievementData.cStage}명</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">수익 파트너 (P)</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center text-xs font-bold">P</span>
+                          <span className="text-gray-600 text-sm"><strong>Profit</strong>: 수익 단계</span>
+                        </div>
                         <span className="font-medium text-emerald-600">{achievementData.current}명</span>
                       </div>
                     </div>
