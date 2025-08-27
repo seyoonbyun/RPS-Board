@@ -90,12 +90,13 @@ export default function Dashboard() {
 
   const achievement = calculateAchievement(scoreboardData, userProfile);
   
-  // Type assertions to fix the property mapping issue
+  // 올바른 프로퍼티 매핑으로 수정
   const achievementData = {
-    percentage: achievement.percentage || 0,
-    profitable: achievement.profitable || 0,
-    credible: achievement.credible || 0,
-    visible: achievement.visible || 0,
+    current: achievement.profitable || 0,  // P 단계 (수익 파트너)
+    percent: achievement.percentage || 0,
+    remaining: Math.max(0, 4 - (achievement.profitable || 0)),
+    vStage: achievement.visible || 0,      // V 단계 (인지 파트너)
+    cStage: achievement.credible || 0,     // C 단계 (신뢰 파트너)
     total: achievement.total || 0,
   };
 
