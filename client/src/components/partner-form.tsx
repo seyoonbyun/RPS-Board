@@ -560,7 +560,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">달성률</h2>
                   
                   {/* 데스크톱 레이아웃: Achievement Ring + Stats */}
-                  <div className="hidden md:flex items-start gap-8 mb-6">
+                  <div className="hidden md:flex items-center gap-8 mb-6">
                     {/* Left: Achievement Ring (a이미지) */}
                     <div className="flex-shrink-0">
                       <div className="relative w-32 h-32">
