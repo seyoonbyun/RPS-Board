@@ -19,10 +19,11 @@ interface PartnerFormProps {
   userId: string;
   initialData?: ScoreboardData | null;
   achievementData?: {
-    percentage: number;
-    profitable: number;
-    credible: number;
-    visible: number;
+    current: number;
+    percent: number;
+    remaining: number;
+    vStage: number;
+    cStage: number;
     total: number;
   };
   onDataSaved: () => void;
@@ -582,7 +583,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             fill="none"
                             stroke="#d12031"
                             strokeWidth="2"
-                            strokeDasharray={`${achievementData.percentage}, 100`}
+                            strokeDasharray={`${achievementData.percent}, 100`}
                             transform="rotate(-90 18 18)"
                             className="drop-shadow-sm"
                           />
@@ -601,7 +602,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               printColorAdjust: 'exact'
                             }}
                           >
-                            {achievementData.percentage}%
+                            {achievementData.percent}%
                           </text>
                           <text 
                             x="18" 
@@ -663,7 +664,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                             fill="none"
                             stroke="#d12031"
                             strokeWidth="2"
-                            strokeDasharray={`${achievementData.percentage}, 100`}
+                            strokeDasharray={`${achievementData.percent}, 100`}
                             transform="rotate(-90 18 18)"
                             className="drop-shadow-sm"
                           />
@@ -682,7 +683,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               printColorAdjust: 'exact'
                             }}
                           >
-                            {achievementData.percentage}%
+                            {achievementData.percent}%
                           </text>
                           <text 
                             x="18" 
@@ -703,25 +704,25 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                       </div>
                     </div>
                     
-                    {/* V, C, P 단계 한 줄로 배치 */}
+                    {/* V, C, P 단계 한 줄로 배치 (V > C > P 순서) */}
                     <div className="grid grid-cols-3 gap-0.5">
-                      <div className="text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
-                        <div className="text-sm leading-tight text-emerald-600 mb-0.5 font-bold">
-                          (P) {achievementData.profitable} 명
+                      <div className="text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
+                        <div className="text-sm leading-tight text-yellow-600 mb-0.5 font-bold">
+                          (V) {achievementData.vStage} 명
                         </div>
-                        <div className="text-[9px] leading-tight text-gray-600">수익 파트너</div>
+                        <div className="text-[9px] leading-tight text-gray-600">인지 파트너</div>
                       </div>
                       <div className="text-center py-2 px-1 bg-orange-50 rounded-lg border border-orange-100 min-h-[60px] flex flex-col justify-center">
                         <div className="text-sm leading-tight text-orange-600 mb-0.5 font-bold">
-                          (C) {achievementData.credible} 명
+                          (C) {achievementData.cStage} 명
                         </div>
                         <div className="text-[9px] leading-tight text-gray-600">신뢰 파트너</div>
                       </div>
-                      <div className="text-center py-2 px-1 bg-yellow-50 rounded-lg border border-yellow-100 min-h-[60px] flex flex-col justify-center">
-                        <div className="text-sm leading-tight text-yellow-600 mb-0.5 font-bold">
-                          (V) {achievementData.visible} 명
+                      <div className="text-center py-2 px-1 bg-emerald-50 rounded-lg border border-emerald-100 min-h-[60px] flex flex-col justify-center">
+                        <div className="text-sm leading-tight text-emerald-600 mb-0.5 font-bold">
+                          (P) {achievementData.current} 명
                         </div>
-                        <div className="text-[9px] leading-tight text-gray-600">인지 파트너</div>
+                        <div className="text-[9px] leading-tight text-gray-600">수익 파트너</div>
                       </div>
                     </div>
                   </div>

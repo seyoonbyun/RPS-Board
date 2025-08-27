@@ -30,7 +30,7 @@ export default function AchievementRing({ achievement }: AchievementRingProps) {
                 <div className="bg-white w-32 h-32 rounded-full flex items-center justify-center shadow-inner">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-gray-800">
-                      {achievement.percent}%
+                      {achievement.percent || 0}%
                     </div>
                     <div className="text-xs text-gray-500">달성률</div>
                   </div>
