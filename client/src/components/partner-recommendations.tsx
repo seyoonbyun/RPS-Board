@@ -181,6 +181,9 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <div className="text-xs sm:text-base text-gray-700 whitespace-nowrap">
                 잠시만 기다려 주세요...!
               </div>
+              <div className="text-xs sm:text-sm text-gray-500 mt-2">
+                (약 10초 정도 기다리시면 분석이 완료됩니다)
+              </div>
             </div>
           </div>
         </DialogContent>
