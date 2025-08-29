@@ -794,6 +794,7 @@ class GoogleSheetsService {
           // 총 R파트너 수와 달성율(values[20-21])도 새로 계산된 값 사용
           
           
+          
           // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
           let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
           const existingStatus = existingRow[24] ? existingRow[24] : '활동중';
@@ -802,6 +803,27 @@ class GoogleSheetsService {
           if (!existingPW && data.userEmail === 'joy.byun@bnikorea.com') {
             existingPW = '1234'; // Joy 사용자 기본 PW
             console.log(`🔑 Setting default PW for Joy user: "${existingPW}"`);
+          }
+          
+          // 🔧 IMPORTRANGE 호환성 보장: U/V열 데이터 무결성 검증
+          const existingU = existingRow[20] ? existingRow[20].toString() : '';
+          const existingV = existingRow[21] ? existingRow[21].toString() : '';
+          
+          // 잘못된 텍스트 데이터 감지 및 자동 수정
+          const isCorruptedData = existingU.includes('PRESERVE') || existingV.includes('PRESERVE') || 
+                                 existingU.includes('undefined') || existingV.includes('undefined') ||
+                                 existingU === '' || existingV === '';
+          
+          if (isCorruptedData) {
+            console.log(`🔧 Auto-fixing corrupted U/V data for ${data.userEmail}:`);
+            console.log(`  Before: U="${existingU}", V="${existingV}"`);
+            console.log(`  After:  U="${profitPartners}", V="${achievement}%"`);
+            values[20] = profitPartners.toString();
+            values[21] = `${achievement}%`;
+          } else {
+            // 유효한 숫자 데이터는 그대로 유지
+            values[20] = existingU;
+            values[21] = existingV;
           }
           
           values[23] = existingPW; // PW 필드 (X열, index 23)
