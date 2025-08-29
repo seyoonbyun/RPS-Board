@@ -133,14 +133,6 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   // Reset form when userProfile data is loaded
   React.useEffect(() => {
     if (userProfile && !isProfileLoading) {
-      // Convert full stage names back to short forms for the form
-      const convertStageToShort = (stage: string) => {
-        if (stage?.includes('Profit')) return 'P';
-        if (stage?.includes('Credibility')) return 'C';
-        if (stage?.includes('Visibility')) return 'V';
-        return stage || 'none';
-      };
-
       form.reset({
         region: userProfile.region || "",
         userIdField: userProfile.targetCustomer || "",
@@ -152,16 +144,16 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         targetCustomer: userProfile.targetCustomer || "",
         rpartner1: userProfile.rpartner1 || "",
         rpartner1Specialty: userProfile.rpartner1Specialty || "",
-        rpartner1Stage: convertStageToShort(userProfile.rpartner1Stage),
+        rpartner1Stage: userProfile.rpartner1Stage || "",
         rpartner2: userProfile.rpartner2 || "",
         rpartner2Specialty: userProfile.rpartner2Specialty || "",
-        rpartner2Stage: convertStageToShort(userProfile.rpartner2Stage),
+        rpartner2Stage: userProfile.rpartner2Stage || "",
         rpartner3: userProfile.rpartner3 || "",
         rpartner3Specialty: userProfile.rpartner3Specialty || "",
-        rpartner3Stage: convertStageToShort(userProfile.rpartner3Stage),
+        rpartner3Stage: userProfile.rpartner3Stage || "",
         rpartner4: userProfile.rpartner4 || "",
         rpartner4Specialty: userProfile.rpartner4Specialty || "",
-        rpartner4Stage: convertStageToShort(userProfile.rpartner4Stage),
+        rpartner4Stage: userProfile.rpartner4Stage || "",
       });
     }
   }, [userProfile, isProfileLoading, form]);
