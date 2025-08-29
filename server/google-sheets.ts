@@ -1279,7 +1279,7 @@ class GoogleSheetsService {
       }
     });
     
-    const profitPartners = partners.filter(p => p.stage === 'P').length;
+    const profitPartners = partners.filter(p => p.stage?.includes('Profit')).length;
     const achievement = Math.round((profitPartners / 4) * 100);
     
     console.log(`Total R-Partners: ${partners.filter(p => p.name).length}`);

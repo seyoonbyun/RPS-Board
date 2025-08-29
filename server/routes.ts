@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       
       const profitPartners = partners.filter(p => 
-        p.name && p.name.trim() !== '' && p.stage === 'P'
+        p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
       ).length;
       
       const calculatedAchievement = Math.round((profitPartners / 4) * 100);
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               { name: savedData.rpartner4, stage: savedData.rpartner4Stage },
             ];
             
-            const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage === 'P').length;
+            const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage?.includes('Profit')).length;
             const achievement = Math.round((profitPartners / 4) * 100);
             
             console.log(`🔄 Real-time achievement calculation:`, {
