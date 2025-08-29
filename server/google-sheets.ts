@@ -694,6 +694,16 @@ class GoogleSheetsService {
         vColumnValue: `${achievement}%` // V열에 저장될 값
       });
       
+      // 🔥 gshutter2@naver.com 사용자 특별 처리: 강제 업데이트 로그
+      if (data.userEmail === 'gshutter2@naver.com') {
+        console.log(`🔥🔥🔥 GSHUTTER2 FORCE UPDATE:`, {
+          beforeUpdate_U: 'Will update to: ' + profitPartners.toString(),
+          beforeUpdate_V: 'Will update to: ' + `${achievement}%`,
+          forceUpdate: true,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       // Add total partners and achievement (U열, V열)
       values.push(profitPartners.toString()); // U열: 총 R파트너 수 - P 단계만 (index 20)
       values.push(`${achievement}%`); // V열: 달성 (index 21)
