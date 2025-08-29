@@ -188,6 +188,75 @@ class GoogleSheetsService {
         const row = rows[i];
         if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
           console.log(`Found user profile for ${email} in row ${i+1}:`, row);
+          
+          // R파트너 정보 수집 및 정규화
+          const rpartner1 = row[8] || '';
+          const rpartner1Stage = this.normalizeStage(row[10] || '');
+          const rpartner2 = row[11] || '';
+          const rpartner2Stage = this.normalizeStage(row[13] || '');
+          const rpartner3 = row[14] || '';
+          const rpartner3Stage = this.normalizeStage(row[16] || '');
+          const rpartner4 = row[17] || '';
+          const rpartner4Stage = this.normalizeStage(row[19] || '');
+          
+          // 실시간 U/V열 계산
+          const partners = [
+            { name: rpartner1, stage: rpartner1Stage },
+            { name: rpartner2, stage: rpartner2Stage },
+            { name: rpartner3, stage: rpartner3Stage },
+            { name: rpartner4, stage: rpartner4Stage },
+          ];
+          
+          const profitPartners = partners.filter(p => 
+            p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
+          ).length;
+          const calculatedAchievement = Math.round((profitPartners / 4) * 100);
+          
+          const currentUValue = row[20] || '';
+          const currentVValue = row[21] || '';
+          const expectedUValue = profitPartners.toString();
+          const expectedVValue = `${calculatedAchievement}%`;
+          
+          console.log(`🔍 U/V열 실시간 검증 for ${email}:`, {
+            partners: partners.map(p => `${p.name} (${p.stage})`),
+            profitPartners,
+            currentUV: `U="${currentUValue}", V="${currentVValue}"`,
+            expectedUV: `U="${expectedUValue}", V="${expectedVValue}"`,
+            needsUpdate: currentUValue !== expectedUValue || currentVValue !== expectedVValue
+          });
+          
+          // U/V열이 실제 파트너 데이터와 맞지 않으면 자동 업데이트
+          if (currentUValue !== expectedUValue || currentVValue !== expectedVValue) {
+            console.log(`🔄 AUTO-UPDATING U/V columns for ${email}: ${currentUValue},${currentVValue} → ${expectedUValue},${expectedVValue}`);
+            
+            // 구글 시트에 올바른 U/V열 값 업데이트
+            try {
+              const accessToken = await this.getAccessToken();
+              const updateRange = `RPS!U${i+1}:V${i+1}`;
+              const updateResponse = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=RAW`,
+                {
+                  method: 'PUT',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    values: [[expectedUValue, expectedVValue]]
+                  })
+                }
+              );
+              
+              if (updateResponse.ok) {
+                console.log(`✅ Successfully updated U/V columns for ${email} to ${expectedUValue},${expectedVValue}`);
+              } else {
+                console.error(`❌ Failed to update U/V columns for ${email}:`, await updateResponse.text());
+              }
+            } catch (updateError) {
+              console.error(`❌ Error updating U/V columns for ${email}:`, updateError);
+            }
+          }
+          
           return {
             email: row[0],
             region: row[1] || '',
@@ -198,20 +267,20 @@ class GoogleSheetsService {
             specialty: row[6] || '', // 전문분야 (bidirectional sync) - index 6: "전문분야"
             targetCustomer: row[7] || '', // 나의 핵심 고객층 (bidirectional sync) - index 7: "나의 핵심 고객층"
             // R파트너 정보 추가 - 전체 텍스트를 V-C-P로 변환
-            rpartner1: row[8] || '', // index 8: " R파트너 1"
+            rpartner1: rpartner1, // index 8: " R파트너 1"
             rpartner1Specialty: row[9] || '', // index 9: " R파트너 1 : 전문분야 "
-            rpartner1Stage: this.normalizeStage(row[10] || ''), // index 10: " R파트너 1 : V-C-P"
-            rpartner2: row[11] || '', // index 11: "R파트너 2"
+            rpartner1Stage: rpartner1Stage, // index 10: " R파트너 1 : V-C-P"
+            rpartner2: rpartner2, // index 11: "R파트너 2"
             rpartner2Specialty: row[12] || '', // index 12: " R파트너 2 :  전문분야 "
-            rpartner2Stage: this.normalizeStage(row[13] || ''), // index 13: " R파트너 2 : V-C-P"
-            rpartner3: row[14] || '', // index 14: "R파트너 3"
+            rpartner2Stage: rpartner2Stage, // index 13: " R파트너 2 : V-C-P"
+            rpartner3: rpartner3, // index 14: "R파트너 3"
             rpartner3Specialty: row[15] || '', // index 15: " R파트너 3 : 전문분야 "
-            rpartner3Stage: this.normalizeStage(row[16] || ''), // index 16: " R파트너 3 : V-C-P"
-            rpartner4: row[17] || '', // index 17: "R파트너 4"
+            rpartner3Stage: rpartner3Stage, // index 16: " R파트너 3 : V-C-P"
+            rpartner4: rpartner4, // index 17: "R파트너 4"
             rpartner4Specialty: row[18] || '', // index 18: " R파트너 4 : 전문분야 "
-            rpartner4Stage: this.normalizeStage(row[19] || ''), // index 19: " R파트너 4 : V-C-P"
-            totalPartners: row[20] || '', // index 20: "3"
-            achievement: row[21] || '', // index 21: "75%"
+            rpartner4Stage: rpartner4Stage, // index 19: " R파트너 4 : V-C-P"
+            totalPartners: expectedUValue, // 실시간 계산된 값 사용
+            achievement: expectedVValue, // 실시간 계산된 값 사용
             auth: row[25] || '' // AUTH 컬럼 추가 (26번째 컬럼, index 25)
           };
         }
