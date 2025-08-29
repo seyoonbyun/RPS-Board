@@ -1426,6 +1426,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ALPHA 사용자 파트너 단계 데이터 수정 API
+  app.post("/api/fix-alpha-stage-data", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+
+      const accessToken = await sheetsService.getAccessToken();
+      
+      // ALPHA 사용자(133행)의 K열과 N열을 "P"에서 "Profit : 수익단계"로 변경
+      const updates = [
+        {
+          range: "RPS!K133",
+          values: [["Profit : 수익단계"]]
+        },
+        {
+          range: "RPS!N133", 
+          values: [["Profit : 수익단계"]]
+        }
+      ];
+
+      for (const update of updates) {
+        const updateResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/${update.range}?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: update.values
+            })
+          }
+        );
+
+        if (!updateResponse.ok) {
+          throw new Error(`구글 시트 업데이트 실패: ${updateResponse.statusText}`);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "ALPHA 사용자 파트너 단계 데이터 수정 완료",
+        updates: ["K133: Profit : 수익단계", "N133: Profit : 수익단계"]
+      });
+      
+    } catch (error) {
+      console.error("ALPHA 데이터 수정 오류:", error);
+      res.status(500).json({ message: "데이터 수정 중 오류 발생" });
+    }
+  });
+
   // 챕터별 U/V열 데이터 형식 비교 분석 API
   app.get("/api/analyze-chapter-data-formats", async (req, res) => {
     try {
