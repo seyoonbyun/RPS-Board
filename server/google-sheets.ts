@@ -778,7 +778,7 @@ class GoogleSheetsService {
           ];
           
           const updatedProfitPartners = updatedPartners.filter(p => 
-            p.name && p.name.trim() !== '' && p.stage === 'P'
+            p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
           ).length;
           const updatedAchievement = Math.round((updatedProfitPartners / 4) * 100);
           
