@@ -244,9 +244,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   };
 
   const stageOptions = [
-    { value: "V", label: "Visibility : 아는단계" },
-    { value: "C", label: "Credibility : 신뢰단계" },
-    { value: "P", label: "Profit : 수익단계" },
+    { value: "Visibility : 아는단계", label: "Visibility : 아는단계" },
+    { value: "Credibility : 신뢰단계", label: "Credibility : 신뢰단계" },
+    { value: "Profit : 수익단계", label: "Profit : 수익단계" },
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (

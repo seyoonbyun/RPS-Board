@@ -200,16 +200,16 @@ class GoogleSheetsService {
             // R파트너 정보 추가 - 전체 텍스트를 V-C-P로 변환
             rpartner1: row[8] || '', // index 8: " R파트너 1"
             rpartner1Specialty: row[9] || '', // index 9: " R파트너 1 : 전문분야 "
-            rpartner1Stage: this.convertFullTextToStage(row[10] || ''), // index 10: " R파트너 1 : V-C-P"
+            rpartner1Stage: this.normalizeStage(row[10] || ''), // index 10: " R파트너 1 : V-C-P"
             rpartner2: row[11] || '', // index 11: "R파트너 2"
             rpartner2Specialty: row[12] || '', // index 12: " R파트너 2 :  전문분야 "
-            rpartner2Stage: this.convertFullTextToStage(row[13] || ''), // index 13: " R파트너 2 : V-C-P"
+            rpartner2Stage: this.normalizeStage(row[13] || ''), // index 13: " R파트너 2 : V-C-P"
             rpartner3: row[14] || '', // index 14: "R파트너 3"
             rpartner3Specialty: row[15] || '', // index 15: " R파트너 3 : 전문분야 "
-            rpartner3Stage: this.convertFullTextToStage(row[16] || ''), // index 16: " R파트너 3 : V-C-P"
+            rpartner3Stage: this.normalizeStage(row[16] || ''), // index 16: " R파트너 3 : V-C-P"
             rpartner4: row[17] || '', // index 17: "R파트너 4"
             rpartner4Specialty: row[18] || '', // index 18: " R파트너 4 : 전문분야 "
-            rpartner4Stage: this.convertFullTextToStage(row[19] || ''), // index 19: " R파트너 4 : V-C-P"
+            rpartner4Stage: this.normalizeStage(row[19] || ''), // index 19: " R파트너 4 : V-C-P"
             totalPartners: row[20] || '', // index 20: "3"
             achievement: row[21] || '', // index 21: "75%"
             auth: row[25] || '' // AUTH 컬럼 추가 (26번째 컬럼, index 25)
@@ -470,49 +470,26 @@ class GoogleSheetsService {
     }
   }
 
-  // V-C-P 단계를 전체 텍스트로 변환하는 함수
-  private convertStageToFullText(stage: string): string {
+  // 단계 정규화 함수 - 모든 형태를 긴 형태로 통일
+  private normalizeStage(stage: string): string {
+    if (!stage || stage === 'none') return '';
+    
+    // 이미 긴 형태라면 그대로 반환
+    if (stage.includes(' : ')) return stage;
+    
+    // 짧은 형태를 긴 형태로 변환
     const stageMap: { [key: string]: string } = {
       'V': 'Visibility : 아는단계',
       'C': 'Credibility : 신뢰단계', 
       'P': 'Profit : 수익단계'
     };
-    // "none" 값은 빈 문자열로 변환
-    if (stage === 'none' || !stage) return '';
+    
     return stageMap[stage] || stage;
   }
 
-  // 전체 텍스트에서 V-C-P 값을 추출하는 함수 (강화된 버전)
-  private convertFullTextToStage(fullText: string): string {
-    if (!fullText) return '';
-    
-    const text = fullText.toString().trim();
-    
-    // 🔥 ALPHA 챕터 사용자 디버깅 로그 추가
-    if (text && text !== 'V' && text !== 'C' && text !== 'P') {
-      console.log(`🔥 Stage conversion debug: "${text}" →`, {
-        hasVisibility: text.includes('Visibility') || text.includes('아는'),
-        hasCredibility: text.includes('Credibility') || text.includes('신뢰'),
-        hasProfit: text.includes('Profit') || text.includes('수익'),
-        originalText: text
-      });
-    }
-    
-    // V 단계 패턴들
-    if (text.includes('Visibility') || text.includes('아는')) return 'V';
-    
-    // C 단계 패턴들  
-    if (text.includes('Credibility') || text.includes('신뢰')) return 'C';
-    
-    // P 단계 패턴들 (가장 중요!)
-    if (text.includes('Profit') || text.includes('수익')) return 'P';
-    
-    // 기존 V, C, P 값은 그대로 반환
-    if (text === 'V' || text === 'C' || text === 'P') return text;
-    
-    // 알 수 없는 형태는 빈 문자열로 처리 (카운트에서 제외)
-    console.log(`⚠️ Unknown stage format: "${text}" - treating as empty`);
-    return '';
+  // 하위 호환성을 위한 기존 함수명 유지 (deprecated)
+  private convertStageToFullText(stage: string): string {
+    return this.normalizeStage(stage);
   }
 
   async addNewUser(userData: {
@@ -658,16 +635,16 @@ class GoogleSheetsService {
         data.targetCustomer || '', // H열: 나의 핵심 고객층 (bidirectional sync)
         data.rpartner1 || '', // I열: R파트너 1 (index 8)
         data.rpartner1Specialty || '', // J열: R파트너 1 전문분야 (index 9)
-        this.convertStageToFullText(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
+        this.normalizeStage(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
         data.rpartner2 || '', // L열: R파트너 2 (index 11)
         data.rpartner2Specialty || '', // M열: R파트너 2 전문분야 (index 12)
-        this.convertStageToFullText(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
+        this.normalizeStage(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
         data.rpartner3 || '', // O열: R파트너 3 (index 14)
         data.rpartner3Specialty || '', // P열: R파트너 3 전문분야 (index 15)
-        this.convertStageToFullText(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
+        this.normalizeStage(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
         data.rpartner4 || '', // R열: R파트너 4 (index 17)
         data.rpartner4Specialty || '', // S열: R파트너 4 전문분야 (index 18)
-        this.convertStageToFullText(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
+        this.normalizeStage(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
       ];
 
       // Calculate total R-Partners (non-empty names)
@@ -678,9 +655,9 @@ class GoogleSheetsService {
         { name: data.rpartner4, stage: data.rpartner4Stage },
       ];
       
-      // 강화된 달성률 계산 - 이름이 있고 P 단계인 파트너만 카운트
+      // 달성률 계산 - 이름이 있고 Profit 단계인 파트너만 카운트 (긴 형태 통일)
       const profitPartners = partners.filter(p => 
-        p.name && p.name.trim() !== '' && (p.stage === 'P' || p.stage === 'Profit : 수익단계')
+        p.name && p.name.trim() !== '' && p.stage === 'Profit : 수익단계'
       ).length;
       const achievement = Math.round((profitPartners / 4) * 100);
       
