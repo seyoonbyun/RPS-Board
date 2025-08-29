@@ -792,7 +792,24 @@ class GoogleSheetsService {
           // 파트너 정보(values[8-19])는 이미 앱에서 전달된 최신 값으로 설정됨 - 기존 값으로 덮어쓰지 않음
           // 총 R파트너 수와 달성율(values[20-21])도 새로 계산된 값 사용
           
+          // 🔥 CRITICAL FIX: 기존 사용자 업데이트 시에도 U/V열 재계산
+          const updatedPartners = [
+            { name: data.rpartner1, stage: data.rpartner1Stage },
+            { name: data.rpartner2, stage: data.rpartner2Stage },
+            { name: data.rpartner3, stage: data.rpartner3Stage },
+            { name: data.rpartner4, stage: data.rpartner4Stage },
+          ];
           
+          const updatedProfitPartners = updatedPartners.filter(p => 
+            p.name && p.name.trim() !== '' && p.stage === 'P'
+          ).length;
+          const updatedAchievement = Math.round((updatedProfitPartners / 4) * 100);
+          
+          console.log(`🔥 RECALCULATED U/V for existing user ${data.userEmail}:`, {
+            partners: updatedPartners,
+            profitPartners: updatedProfitPartners,
+            achievement: updatedAchievement
+          });
           
           // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
           let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
@@ -805,10 +822,10 @@ class GoogleSheetsService {
           }
           
           // ✅ U/V열 항상 최신 계산값으로 업데이트 (IMPORTRANGE 호환성 보장)
-          values[20] = profitPartners.toString(); // U열: 총 R파트너 수
-          values[21] = `${achievement}%`; // V열: 달성률
+          values[20] = updatedProfitPartners.toString(); // U열: 총 R파트너 수
+          values[21] = `${updatedAchievement}%`; // V열: 달성률
           
-          console.log(`📊 U/V columns updated for ${data.userEmail}: U="${profitPartners}", V="${achievement}%"`);
+          console.log(`📊 U/V columns updated for ${data.userEmail}: U="${updatedProfitPartners}", V="${updatedAchievement}%"`);
           
           
           values[23] = existingPW; // PW 필드 (X열, index 23)
