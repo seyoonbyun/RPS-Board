@@ -641,11 +641,6 @@ class GoogleSheetsService {
     try {
       console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
       
-      // 🚨 ALPHA/Admin 챕터 즉시 수정: 손상된 U/V열 강제 정리
-      if (data.userEmail === 'gshutter2@naver.com' || data.userEmail === 'bni.korea.power.team@gmail.com') {
-        console.log(`🚨 EMERGENCY CLEANUP for ${data.userEmail}: Force fixing U/V columns`);
-        await this.forceCleanupUVColumns(data.userEmail);
-      }
       
       // Get access token
       const accessToken = await this.getAccessToken();
@@ -694,8 +689,6 @@ class GoogleSheetsService {
         profitPartners,
         achievement: `${achievement}%`,
         partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`),
-        // 🔥 ALPHA 챕터 사용자 특별 디버깅
-        isAlphaChapter: data.userEmail === 'gshutter2@naver.com',
         uColumnValue: profitPartners.toString(), // U열에 저장될 값
         vColumnValue: `${achievement}%` // V열에 저장될 값
       });
@@ -811,34 +804,12 @@ class GoogleSheetsService {
             console.log(`🔑 Setting default PW for Joy user: "${existingPW}"`);
           }
           
-          // 🔧 IMPORTRANGE 호환성 보장: U/V열 데이터 무결성 검증
-          const existingU = existingRow[20] ? existingRow[20].toString() : '';
-          const existingV = existingRow[21] ? existingRow[21].toString() : '';
+          // ✅ U/V열 항상 최신 계산값으로 업데이트 (IMPORTRANGE 호환성 보장)
+          values[20] = profitPartners.toString(); // U열: 총 R파트너 수
+          values[21] = `${achievement}%`; // V열: 달성률
           
-          // 잘못된 텍스트 데이터 감지 및 자동 수정
-          const isCorruptedData = existingU.includes('PRESERVE') || existingV.includes('PRESERVE') || 
-                                 existingU.includes('undefined') || existingV.includes('undefined') ||
-                                 existingU === '' || existingV === '';
+          console.log(`📊 U/V columns updated for ${data.userEmail}: U="${profitPartners}", V="${achievement}%"`);
           
-          if (isCorruptedData) {
-            console.log(`🔧 IMPORTRANGE FIX: Auto-fixing corrupted U/V data for ${data.userEmail}:`);
-            console.log(`  📊 Before: U="${existingU}", V="${existingV}"`);
-            console.log(`  ✅ After:  U="${profitPartners}", V="${achievement}%"`);
-            values[20] = profitPartners.toString();
-            values[21] = `${achievement}%`;
-          } else {
-            console.log(`✅ U/V data already valid for ${data.userEmail}: U="${existingU}", V="${existingV}"`);
-            // 유효한 숫자 데이터는 그대로 유지
-            values[20] = existingU;
-            values[21] = existingV;
-          }
-          
-          // 🚨 ALPHA/Admin 챕터 강제 U/V열 재계산 (임시)
-          if (data.userEmail === 'gshutter2@naver.com' || data.userEmail === 'bni.korea.power.team@gmail.com') {
-            console.log(`🚨 FORCE UPDATE for ${data.userEmail}: Recalculating U/V columns`);
-            values[20] = profitPartners.toString();
-            values[21] = `${achievement}%`;
-          }
           
           values[23] = existingPW; // PW 필드 (X열, index 23)
           values[24] = existingStatus; // STATUS 필드 (Y열, index 24)
@@ -1322,86 +1293,6 @@ class GoogleSheetsService {
     console.log('='.repeat(60));
   }
 
-  // 🚨 ALPHA/Admin 챕터 U/V열 강제 정리 함수
-  async forceCleanupUVColumns(userEmail: string): Promise<void> {
-    try {
-      console.log(`🚨 Starting emergency U/V cleanup for ${userEmail}`);
-      
-      const accessToken = await this.getAccessToken();
-      const allDataResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          }
-        }
-      );
-
-      if (!allDataResponse.ok) {
-        throw new Error(`Failed to fetch sheet data: ${allDataResponse.status}`);
-      }
-
-      const allData = await allDataResponse.json();
-      const rows = allData.values || [];
-
-      // 해당 사용자 행 찾기
-      const userRowIndex = rows.findIndex((row: any[]) => row[0] === userEmail);
-      if (userRowIndex === -1) {
-        console.log(`❌ User ${userEmail} not found in sheet`);
-        return;
-      }
-
-      const userRow = rows[userRowIndex];
-      
-      // P단계 파트너 수 계산
-      const rpartnerStages = [userRow[10], userRow[13], userRow[16], userRow[19]]; // K, N, Q, T 열
-      const rpartnerNames = [userRow[8], userRow[11], userRow[14], userRow[17]]; // I, L, O, R 열
-      
-      const profitPartners = rpartnerStages.filter((stage, index) => 
-        rpartnerNames[index] && rpartnerNames[index].trim() !== '' && 
-        (stage === 'P' || stage === 'Profit' || stage === '파트너')
-      ).length;
-      
-      const achievement = Math.round((profitPartners / 4) * 100);
-
-      // U, V열만 업데이트 (index 20, 21)
-      const updateRange = `RPS!U${userRowIndex + 1}:V${userRowIndex + 1}`;
-      const updateValues = [[profitPartners.toString(), `${achievement}%`]];
-
-      console.log(`🔧 Forcing U/V update for ${userEmail}:`);
-      console.log(`  Row: ${userRowIndex + 1}`);
-      console.log(`  Range: ${updateRange}`);
-      console.log(`  Values: U=${profitPartners}, V=${achievement}%`);
-      console.log(`  Partner stages: [${rpartnerStages.join(', ')}]`);
-      console.log(`  Partner names: [${rpartnerNames.join(', ')}]`);
-
-      const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: updateValues
-          })
-        }
-      );
-
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        console.error(`❌ Failed to update U/V columns:`, errorData);
-        throw new Error(`Failed to update U/V columns: ${updateResponse.status}`);
-      }
-
-      console.log(`✅ Successfully forced U/V cleanup for ${userEmail}: U=${profitPartners}, V=${achievement}%`);
-      
-    } catch (error) {
-      console.error(`❌ Error in forceCleanupUVColumns for ${userEmail}:`, error);
-      throw error;
-    }
-  }
 }
 
 // Export singleton instance
