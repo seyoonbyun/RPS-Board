@@ -694,19 +694,21 @@ class GoogleSheetsService {
         vColumnValue: `${achievement}%` // V열에 저장될 값
       });
       
-      // 🔥 gshutter2@naver.com 사용자 특별 처리: 강제 업데이트 로그
-      if (data.userEmail === 'gshutter2@naver.com') {
-        console.log(`🔥🔥🔥 GSHUTTER2 FORCE UPDATE:`, {
-          beforeUpdate_U: 'Will update to: ' + profitPartners.toString(),
-          beforeUpdate_V: 'Will update to: ' + `${achievement}%`,
-          forceUpdate: true,
-          timestamp: new Date().toISOString()
-        });
-      }
+      // 🚧 ALPHA/Admin 챕터 U/V열 자동 업데이트 임시 비활성화
+      const userChapter = data.partner || '';
+      const skipUVUpdate = userChapter === 'ALPHA' || userChapter === 'Admin';
       
-      // Add total partners and achievement (U열, V열)
-      values.push(profitPartners.toString()); // U열: 총 R파트너 수 - P 단계만 (index 20)
-      values.push(`${achievement}%`); // V열: 달성 (index 21)
+      if (skipUVUpdate) {
+        console.log(`⚠️ SKIPPING U/V column auto-update for ${userChapter} chapter user: ${data.userEmail}`);
+        console.log(`📊 Calculated values (not applied): U=${profitPartners}, V=${achievement}%`);
+        // U/V열 자동 업데이트 건너뛰기 - 수동 입력된 값 보존
+        values.push('PRESERVE_EXISTING_U'); // U열: 기존 값 유지
+        values.push('PRESERVE_EXISTING_V'); // V열: 기존 값 유지
+      } else {
+        // 다른 챕터는 정상적으로 자동 계산 적용
+        values.push(profitPartners.toString()); // U열: 총 R파트너 수 - P 단계만 (index 20)
+        values.push(`${achievement}%`); // V열: 달성 (index 21)
+      }
       
       // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
       values.push(data.userEmail); // W열: ID (index 22)
@@ -802,6 +804,15 @@ class GoogleSheetsService {
           
           // 파트너 정보(values[8-19])는 이미 앱에서 전달된 최신 값으로 설정됨 - 기존 값으로 덮어쓰지 않음
           // 총 R파트너 수와 달성율(values[20-21])도 새로 계산된 값 사용
+          
+          // ALPHA/Admin 챕터 U/V열 기존 값 보존
+          if (skipUVUpdate) {
+            const existingU = existingRow[20] ? existingRow[20].toString() : '0';
+            const existingV = existingRow[21] ? existingRow[21].toString() : '0%';
+            values[20] = existingU; // U열: 기존 값 유지 (index 20)
+            values[21] = existingV; // V열: 기존 값 유지 (index 21)
+            console.log(`🔒 Preserving U/V values for ${data.partner} chapter: U="${existingU}", V="${existingV}"`);
+          }
           
           // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
           let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
