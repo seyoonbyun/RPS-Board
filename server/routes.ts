@@ -1467,13 +1467,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uValue = userRow[20]; // U열 (index 20)
       const vValue = userRow[21]; // V열 (index 21)
       
+      // 🔍 숨겨진 문자 및 데이터 타입 분석
+      const uAnalysis = uValue ? {
+        value: uValue,
+        type: typeof uValue,
+        length: uValue.toString().length,
+        charCodes: Array.from(uValue.toString()).map(char => char.charCodeAt(0)),
+        hasSpecialChars: /[^\x20-\x7E]/.test(uValue.toString()),
+        isNumeric: !isNaN(Number(uValue)),
+        toString: uValue.toString(),
+        jsonStringify: JSON.stringify(uValue)
+      } : null;
+      
+      const vAnalysis = vValue ? {
+        value: vValue,
+        type: typeof vValue,
+        length: vValue.toString().length,
+        charCodes: Array.from(vValue.toString()).map(char => char.charCodeAt(0)),
+        hasSpecialChars: /[^\x20-\x7E]/.test(vValue.toString()),
+        isNumeric: !isNaN(Number(vValue.replace('%', ''))),
+        toString: vValue.toString(),
+        jsonStringify: JSON.stringify(vValue)
+      } : null;
+      
       res.json({
         found: true,
         userEmail,
         rowNumber: userRowIndex + 1,
         uValue,
         vValue,
-        allRowData: userRow
+        uAnalysis,
+        vAnalysis,
+        allRowData: userRow.slice(18, 25) // U/V열 주변 데이터만
       });
       
     } catch (error) {
