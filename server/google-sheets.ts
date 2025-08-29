@@ -680,7 +680,7 @@ class GoogleSheetsService {
       
       // 강화된 달성률 계산 - 이름이 있고 P 단계인 파트너만 카운트
       const profitPartners = partners.filter(p => 
-        p.name && p.name.trim() !== '' && p.stage === 'P'
+        p.name && p.name.trim() !== '' && (p.stage === 'P' || p.stage === 'Profit : 수익단계')
       ).length;
       const achievement = Math.round((profitPartners / 4) * 100);
       
