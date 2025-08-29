@@ -482,12 +482,37 @@ class GoogleSheetsService {
     return stageMap[stage] || stage;
   }
 
-  // 전체 텍스트에서 V-C-P 값을 추출하는 함수
+  // 전체 텍스트에서 V-C-P 값을 추출하는 함수 (강화된 버전)
   private convertFullTextToStage(fullText: string): string {
-    if (fullText.includes('Visibility')) return 'V';
-    if (fullText.includes('Credibility')) return 'C';
-    if (fullText.includes('Profit')) return 'P';
-    return fullText; // 기존 V, C, P 값 그대로 반환
+    if (!fullText) return '';
+    
+    const text = fullText.toString().trim();
+    
+    // 🔥 ALPHA 챕터 사용자 디버깅 로그 추가
+    if (text && text !== 'V' && text !== 'C' && text !== 'P') {
+      console.log(`🔥 Stage conversion debug: "${text}" →`, {
+        hasVisibility: text.includes('Visibility') || text.includes('아는'),
+        hasCredibility: text.includes('Credibility') || text.includes('신뢰'),
+        hasProfit: text.includes('Profit') || text.includes('수익'),
+        originalText: text
+      });
+    }
+    
+    // V 단계 패턴들
+    if (text.includes('Visibility') || text.includes('아는')) return 'V';
+    
+    // C 단계 패턴들  
+    if (text.includes('Credibility') || text.includes('신뢰')) return 'C';
+    
+    // P 단계 패턴들 (가장 중요!)
+    if (text.includes('Profit') || text.includes('수익')) return 'P';
+    
+    // 기존 V, C, P 값은 그대로 반환
+    if (text === 'V' || text === 'C' || text === 'P') return text;
+    
+    // 알 수 없는 형태는 빈 문자열로 처리 (카운트에서 제외)
+    console.log(`⚠️ Unknown stage format: "${text}" - treating as empty`);
+    return '';
   }
 
   async addNewUser(userData: {
@@ -662,7 +687,11 @@ class GoogleSheetsService {
         allPartners: partners,
         profitPartners,
         achievement: `${achievement}%`,
-        partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`)
+        partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`),
+        // 🔥 ALPHA 챕터 사용자 특별 디버깅
+        isAlphaChapter: data.userEmail === 'gshutter2@naver.com',
+        uColumnValue: profitPartners.toString(), // U열에 저장될 값
+        vColumnValue: `${achievement}%` // V열에 저장될 값
       });
       
       // Add total partners and achievement (U열, V열)

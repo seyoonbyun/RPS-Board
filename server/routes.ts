@@ -62,6 +62,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 🔥 ALPHA 챕터 사용자 디버깅 전용 엔드포인트
+  app.get('/api/debug/user/:email', async (req, res) => {
+    try {
+      const { email } = req.params;
+      console.log(`🔥 DEBUGGING USER: ${email}`);
+      
+      const googleSheetsService = getGoogleSheetsService();
+      const allUsers = await googleSheetsService.getAllUsersFromGoogleSheets();
+      const targetUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      
+      if (!targetUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      console.log(`🔥 FOUND USER DATA:`, {
+        email: targetUser.email,
+        chapter: targetUser.chapter,
+        totalPartners: targetUser.totalPartners,
+        achievement: targetUser.achievement,
+        rpartner1: targetUser.rpartner1,
+        rpartner1Stage: targetUser.rpartner1Stage,
+        rpartner2: targetUser.rpartner2,
+        rpartner2Stage: targetUser.rpartner2Stage,
+        rpartner3: targetUser.rpartner3,
+        rpartner3Stage: targetUser.rpartner3Stage,
+        rpartner4: targetUser.rpartner4,
+        rpartner4Stage: targetUser.rpartner4Stage
+      });
+      
+      // P 단계 파트너 재계산
+      const partners = [
+        { name: targetUser.rpartner1, stage: targetUser.rpartner1Stage },
+        { name: targetUser.rpartner2, stage: targetUser.rpartner2Stage },
+        { name: targetUser.rpartner3, stage: targetUser.rpartner3Stage },
+        { name: targetUser.rpartner4, stage: targetUser.rpartner4Stage }
+      ];
+      
+      const profitPartners = partners.filter(p => 
+        p.name && p.name.trim() !== '' && p.stage === 'P'
+      ).length;
+      
+      const calculatedAchievement = Math.round((profitPartners / 4) * 100);
+      
+      console.log(`🔥 RECALCULATED VALUES:`, {
+        currentTotalPartners: targetUser.totalPartners,
+        currentAchievement: targetUser.achievement,
+        calculatedProfitPartners: profitPartners,
+        calculatedAchievement: `${calculatedAchievement}%`,
+        shouldUpdateU: targetUser.totalPartners !== profitPartners.toString(),
+        shouldUpdateV: targetUser.achievement !== `${calculatedAchievement}%`
+      });
+      
+      res.json({
+        user: targetUser,
+        recalculated: {
+          profitPartners,
+          achievement: `${calculatedAchievement}%`
+        },
+        needsUpdate: {
+          totalPartners: targetUser.totalPartners !== profitPartners.toString(),
+          achievement: targetUser.achievement !== `${calculatedAchievement}%`
+        }
+      });
+      
+    } catch (error) {
+      console.error('Debug endpoint error:', error);
+      res.status(500).json({ error: 'Debug failed' });
+    }
+  });
+
   // Get user profile from Google Sheets with auto-sync
   app.get("/api/user-profile/:userId", async (req, res) => {
     try {
