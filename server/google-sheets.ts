@@ -658,16 +658,16 @@ class GoogleSheetsService {
         data.targetCustomer || '', // H열: 나의 핵심 고객층 (bidirectional sync)
         data.rpartner1 || '', // I열: R파트너 1 (index 8)
         data.rpartner1Specialty || '', // J열: R파트너 1 전문분야 (index 9)
-        this.convertStageToFullText(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
+        data.rpartner1Stage || '', // K열: R파트너 1 V-C-P (index 10) - 짧은 형태로 저장
         data.rpartner2 || '', // L열: R파트너 2 (index 11)
         data.rpartner2Specialty || '', // M열: R파트너 2 전문분야 (index 12)
-        this.convertStageToFullText(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
+        data.rpartner2Stage || '', // N열: R파트너 2 V-C-P (index 13) - 짧은 형태로 저장
         data.rpartner3 || '', // O열: R파트너 3 (index 14)
         data.rpartner3Specialty || '', // P열: R파트너 3 전문분야 (index 15)
-        this.convertStageToFullText(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
+        data.rpartner3Stage || '', // Q열: R파트너 3 V-C-P (index 16) - 짧은 형태로 저장
         data.rpartner4 || '', // R열: R파트너 4 (index 17)
         data.rpartner4Specialty || '', // S열: R파트너 4 전문분야 (index 18)
-        this.convertStageToFullText(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
+        data.rpartner4Stage || '', // T열: R파트너 4 V-C-P (index 19) - 짧은 형태로 저장
       ];
 
       // Calculate total R-Partners (non-empty names)
