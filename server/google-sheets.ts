@@ -234,7 +234,7 @@ class GoogleSheetsService {
               const accessToken = await this.getAccessToken();
               const updateRange = `RPS!U${i+1}:V${i+1}`;
               const updateResponse = await fetch(
-                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=RAW`,
+                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
                 {
                   method: 'PUT',
                   headers: {
@@ -242,7 +242,7 @@ class GoogleSheetsService {
                     'Content-Type': 'application/json'
                   },
                   body: JSON.stringify({
-                    values: [[expectedUValue, expectedVValue]]
+                    values: [[parseInt(expectedUValue), expectedVValue]]
                   })
                 }
               );
@@ -740,7 +740,7 @@ class GoogleSheetsService {
       });
       
       // Add total partners and achievement (U열, V열) - 모든 챕터 정상 적용
-      values.push(profitPartners.toString()); // U열: 총 R파트너 수 - P 단계만 (index 20)
+      values.push(profitPartners); // U열: 총 R파트너 수 - 숫자 타입으로 (index 20)
       values.push(`${achievement}%`); // V열: 달성 (index 21)
       
       // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
@@ -868,7 +868,7 @@ class GoogleSheetsService {
           }
           
           // ✅ U/V열 항상 최신 계산값으로 업데이트 (IMPORTRANGE 호환성 보장)
-          values[20] = updatedProfitPartners.toString(); // U열: 총 R파트너 수
+          values[20] = updatedProfitPartners; // U열: 총 R파트너 수 - 숫자 타입으로
           values[21] = `${updatedAchievement}%`; // V열: 달성률
           
           console.log(`📊 U/V columns updated for ${data.userEmail}: U="${updatedProfitPartners}", V="${updatedAchievement}%"`);
@@ -897,7 +897,7 @@ class GoogleSheetsService {
         });
 
         updateResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
           {
             method: 'PUT',
             headers: {
@@ -980,7 +980,7 @@ class GoogleSheetsService {
         console.log(`🆕 Adding new user ${data.userEmail} in row ${targetRow} with range ${range}`);
         
         updateResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
           {
             method: 'PUT',
             headers: {
