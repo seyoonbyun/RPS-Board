@@ -1426,6 +1426,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 구글 시트 U/V열 실제 값 확인 API  
+  app.get("/api/verify-sheets-uv/:userEmail", async (req, res) => {
+    try {
+      const { userEmail } = req.params;
+      const sheetsService = getGoogleSheetsService();
+      
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+
+      // 직접 구글 시트에서 해당 사용자의 U/V열 값 확인
+      const accessToken = await sheetsService.getAccessToken();
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/RPS!A1:V5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 찾기
+      const userRowIndex = rows.findIndex((row: any[]) => 
+        row[0] && row[0].toString().toLowerCase() === userEmail.toLowerCase()
+      );
+      
+      if (userRowIndex === -1) {
+        return res.json({ 
+          found: false, 
+          message: `사용자 ${userEmail}을 찾을 수 없습니다` 
+        });
+      }
+      
+      const userRow = rows[userRowIndex];
+      const uValue = userRow[20]; // U열 (index 20)
+      const vValue = userRow[21]; // V열 (index 21)
+      
+      res.json({
+        found: true,
+        userEmail,
+        rowNumber: userRowIndex + 1,
+        uValue,
+        vValue,
+        allRowData: userRow
+      });
+      
+    } catch (error) {
+      console.error("구글 시트 검증 오류:", error);
+      res.status(500).json({ message: "구글 시트 검증 중 오류 발생" });
+    }
+  });
+
   // 이메일로 AI 분석 내용 전송 API
   app.post("/api/send-analysis-email/:userId", async (req, res) => {
     try {
