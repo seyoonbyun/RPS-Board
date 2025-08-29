@@ -1426,6 +1426,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 챕터별 U/V열 데이터 형식 비교 분석 API
+  app.get("/api/analyze-chapter-data-formats", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+
+      const accessToken = await sheetsService.getAccessToken();
+      const getResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/RPS!A1:V5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await getResponse.json();
+      const rows = data.values || [];
+      
+      // 챕터별 사용자 분석
+      const chapterAnalysis = {};
+      
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0] || !row[2]) continue; // 이메일과 챕터가 있는 행만
+        
+        const email = row[0];
+        const chapter = row[2];
+        const uValue = row[20]; // U열
+        const vValue = row[21]; // V열
+        
+        // ALPHA, Admin, 기타 챕터 분석
+        if (['ALPHA', 'Admin', 'Ace', 'All-in-One'].includes(chapter)) {
+          if (!chapterAnalysis[chapter]) {
+            chapterAnalysis[chapter] = [];
+          }
+          
+          chapterAnalysis[chapter].push({
+            email,
+            rowNumber: i + 1,
+            uValue,
+            vValue,
+            uAnalysis: uValue ? {
+              value: uValue,
+              type: typeof uValue,
+              length: uValue.toString().length,
+              charCodes: Array.from(uValue.toString()).map(char => char.charCodeAt(0)),
+              hasSpecialChars: /[^\x20-\x7E]/.test(uValue.toString()),
+              isNumeric: !isNaN(Number(uValue)),
+              rawValue: JSON.stringify(uValue)
+            } : null,
+            vAnalysis: vValue ? {
+              value: vValue,
+              type: typeof vValue,
+              length: vValue.toString().length,
+              charCodes: Array.from(vValue.toString()).map(char => char.charCodeAt(0)),
+              hasSpecialChars: /[^\x20-\x7E]/.test(vValue.toString()),
+              isNumeric: !isNaN(Number(vValue.toString().replace('%', ''))),
+              rawValue: JSON.stringify(vValue)
+            } : null
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        chapterAnalysis,
+        summary: Object.keys(chapterAnalysis).map(chapter => ({
+          chapter,
+          userCount: chapterAnalysis[chapter].length,
+          hasUVData: chapterAnalysis[chapter].filter(user => user.uValue && user.vValue).length
+        }))
+      });
+      
+    } catch (error) {
+      console.error("챕터 데이터 분석 오류:", error);
+      res.status(500).json({ message: "챕터 데이터 분석 중 오류 발생" });
+    }
+  });
+
   // 구글 시트 U/V열 실제 값 확인 API  
   app.get("/api/verify-sheets-uv/:userEmail", async (req, res) => {
     try {
