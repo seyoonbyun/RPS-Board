@@ -1116,7 +1116,7 @@ export default function AdminPage() {
                     {regionFilter !== '__all__' && (
                       <button
                         onClick={() => setRegionFilter('__all__')}
-                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
+                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
                       >
                         ×
                       </button>
@@ -1140,7 +1140,7 @@ export default function AdminPage() {
                     {chapterFilter !== '__all__' && (
                       <button
                         onClick={() => setChapterFilter('__all__')}
-                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
+                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
                       >
                         ×
                       </button>
@@ -1161,7 +1161,7 @@ export default function AdminPage() {
                     {memberNameSearch && (
                       <button
                         onClick={() => setMemberNameSearch('')}
-                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
+                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
                       >
                         ×
                       </button>
