@@ -1828,7 +1828,7 @@ export default function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      전문분야 <span className="text-xs text-gray-500 font-normal">_※챕터 경청표 기준</span> *
+                      전문분야 <span className="text-xs text-gray-500 font-normal">_※챕터 경청표 기준</span>
                     </label>
                     <Input
                       placeholder="디자인"
