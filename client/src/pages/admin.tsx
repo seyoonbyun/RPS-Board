@@ -146,7 +146,7 @@ export default function AdminPage() {
       }
       return response.json();
     },
-    enabled: !!adminPermission?.isAdmin && showWithdrawalHistory,
+    enabled: !!adminPermission?.isAdmin, // 관리자 권한이 있으면 항상 로드
     staleTime: 60000, // 1분간 캐시
   });
 
@@ -783,7 +783,7 @@ export default function AdminPage() {
               <AlertTriangle className="h-8 w-8 text-red-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">탈퇴 처리됨</p>
-                <p className="text-2xl font-bold text-gray-900">{withdrawnUsers.length}명</p>
+                <p className="text-2xl font-bold text-gray-900">{withdrawalHistory.length}명</p>
               </div>
             </div>
           </CardContent>
