@@ -925,13 +925,13 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 w-full md:w-auto">
-                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">멤버명:</label>
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">성함:</label>
                   <div className="relative flex-1 md:w-40">
                     <Input
                       type="text"
                       value={memberNameSearch}
                       onChange={(e) => setMemberNameSearch(e.target.value)}
-                      placeholder="이름 검색"
+                      placeholder="멤버명 검색"
                       className="w-full bg-white text-sm"
                       data-testid="input-member-name-search"
                     />
