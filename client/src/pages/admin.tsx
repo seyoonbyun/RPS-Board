@@ -1930,7 +1930,8 @@ export default function AdminPage() {
                   <div className="text-xs text-red-700 space-y-1">
                     <p><strong>CSV 파일 형식 :</strong> 이메일 | 지역 | 챕터 | 멤버명 | 산업군 | 회사 | 권한(선택) | PW(숫자 4자리)</p>
                     <p>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</p>
-                    <p>• 지역 형식: BNI Connect 시스템의 지역명 형식으로 입력해주세요.</p>
+                    <p>• 지역 형식: BNI Connect 시스템의 지역명 형식으로 입력해주세요.<br />
+                      _(ex)"Seoul1 서울1" (영어+숫자 + 한글)</p>
                     <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</p>
                     <p>• 권한(선택사항): Admin, Growth, Member 중 선택 - 생략하면 Member로 설정됩니다.</p>
                     <p>• <strong>중요:</strong> 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하므로 CSV에서 제외됩니다.</p>
