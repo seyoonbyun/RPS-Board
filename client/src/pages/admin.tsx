@@ -918,7 +918,7 @@ export default function AdminPage() {
                 {!hasActiveFilter ? (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Users className="w-12 h-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 font-medium">멤버 목록을 보려면 필터를 선택하세요</p>
+                    <p className="text-gray-600 font-medium">탈퇴 멤버 목록을 보려면 필터를 선택하세요</p>
                     <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주세요. 해당 멤버 목록이 표시됩니다.</p>
                   </div>
                 ) : filteredWithdrawalHistory.length === 0 ? (
