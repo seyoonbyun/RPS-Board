@@ -1831,7 +1831,7 @@ export default function AdminPage() {
                       전문분야 <span className="text-xs text-gray-500 font-normal">_※챕터 경청표 기준</span>
                     </label>
                     <Input
-                      placeholder="디자인"
+                      placeholder="멤버 직접 입력"
                       value={newUser.specialty}
                       onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
                       className="bg-white border-gray-300 placeholder-gray-light"
