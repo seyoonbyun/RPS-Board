@@ -420,6 +420,9 @@ export default function AdminPage() {
         description,
         className: "bg-white text-gray-900"
       });
+      
+      // CSV 업로드 성공 시에도 다이얼로그 닫기 (개별 추가와 동일)
+      setShowAddUserDialog(false);
     },
     onError: (error: any) => {
       toast({
