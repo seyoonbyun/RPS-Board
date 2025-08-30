@@ -82,6 +82,9 @@ export default function AdminPage() {
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
   const [showWithdrawalHistory, setShowWithdrawalHistory] = useState(false);
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
+  const [historyRegionFilter, setHistoryRegionFilter] = useState("전체");
+  const [historyChapterFilter, setHistoryChapterFilter] = useState("전체");
   const [memberNameSearch, setMemberNameSearch] = useState<string>('');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
@@ -634,6 +637,22 @@ export default function AdminPage() {
   const withdrawnUniqueRegions = Array.from(new Set(withdrawnUsers.map(user => user.region).filter(region => region && region.trim() !== ''))).sort();
   const withdrawnUniqueChapters = Array.from(new Set(withdrawnUsers.map(user => user.chapter).filter(chapter => chapter && chapter.trim() !== ''))).sort();
 
+  // 탈퇴 히스토리 필터링 로직
+  const filteredWithdrawalHistory = withdrawalHistory.filter((item: WithdrawalHistoryItem) => {
+    const matchesSearchTerm = historySearchTerm === "" || 
+      item.email.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
+      item.memberName.toLowerCase().includes(historySearchTerm.toLowerCase());
+    
+    const matchesRegion = historyRegionFilter === "전체" || item.region === historyRegionFilter;
+    const matchesChapter = historyChapterFilter === "전체" || item.chapter === historyChapterFilter;
+    
+    return matchesSearchTerm && matchesRegion && matchesChapter;
+  });
+
+  // 탈퇴 히스토리에서 고유한 지역과 챕터 목록 추출
+  const historyRegions = ["전체", ...Array.from(new Set(withdrawalHistory.map((item: WithdrawalHistoryItem) => item.region).filter(Boolean)))];
+  const historyChapters = ["전체", ...Array.from(new Set(withdrawalHistory.map((item: WithdrawalHistoryItem) => item.chapter).filter(Boolean)))];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -804,6 +823,55 @@ export default function AdminPage() {
                 <div className="text-gray-500">탈퇴 히스토리가 없습니다</div>
               </div>
             ) : (
+              <>
+                {/* 검색 필터 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">지역</label>
+                    <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {historyRegions.map(region => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">챕터</label>
+                    <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {historyChapters.map(chapter => (
+                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
+                    <input
+                      type="text"
+                      placeholder="멤버명 검색"
+                      value={historySearchTerm}
+                      onChange={(e) => setHistorySearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    />
+                  </div>
+                </div>
+
+                {/* 필터링된 결과가 없을 때 */}
+                {filteredWithdrawalHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Users className="w-12 h-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600 font-medium">멤버 목록을 보려면 필터를 선택하세요</p>
+                    <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주 해당 멤버 목록이 표시됩니다.</p>
+                  </div>
+                ) : (
               <div className="space-y-3">
                 {/* 데스크톱: 테이블 형태 */}
                 <div className="hidden md:block overflow-x-auto">
@@ -818,7 +886,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                      {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
                         <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
                           <td className="py-2 px-3 text-sm">{item.withdrawalTime}</td>
                           <td className="py-2 px-3 text-sm">{item.email}</td>
@@ -833,7 +901,7 @@ export default function AdminPage() {
 
                 {/* 모바일: 카드 형태 */}
                 <div className="md:hidden space-y-3">
-                  {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                  {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
                     <div key={`withdrawal-mobile-${item.email}-${index}`} className="bg-gray-50 rounded-lg p-4 border">
                       <div className="space-y-2">
                         <p className="text-sm"><span className="text-gray-500">탈퇴일시:</span> {item.withdrawalTime}</p>
@@ -846,6 +914,8 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
