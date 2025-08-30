@@ -660,15 +660,6 @@ export default function AdminPage() {
                 멤버 추가하기
               </Button>
               
-              <Button 
-                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
-                className="bg-gray-600 hover:bg-white hover:text-gray-600 text-white border border-gray-600"
-                size="sm"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                {showWithdrawalHistory ? '탈퇴 히스토리 숨기기' : '탈퇴 히스토리 보기'}
-              </Button>
-              
               {adminPermission?.auth === 'National' && (
                 <Button 
                   onClick={exportUserList} 
@@ -714,15 +705,6 @@ export default function AdminPage() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
-              </Button>
-              
-              <Button 
-                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
-                className="bg-gray-600 hover:bg-white hover:text-gray-600 text-white border border-gray-600 w-full"
-                size="sm"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                {showWithdrawalHistory ? '탈퇴 히스토리 숨기기' : '탈퇴 히스토리 보기'}
               </Button>
               <div className="grid grid-cols-2 gap-2">
                 {adminPermission?.auth === 'National' && (
@@ -779,12 +761,22 @@ export default function AdminPage() {
         </Card>
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">탈퇴 처리됨</p>
-                <p className="text-2xl font-bold text-gray-900">{withdrawalHistory.length}명</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">탈퇴 처리됨</p>
+                  <p className="text-2xl font-bold text-gray-900">{withdrawalHistory.length}명</p>
+                </div>
               </div>
+              <Button 
+                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
+                className="bg-gray-600 hover:bg-gray-700 text-white"
+                size="sm"
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                히스토리
+              </Button>
             </div>
           </CardContent>
         </Card>
