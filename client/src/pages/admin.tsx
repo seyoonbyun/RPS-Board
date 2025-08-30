@@ -1116,7 +1116,7 @@ export default function AdminPage() {
                     {regionFilter !== '__all__' && (
                       <button
                         onClick={() => setRegionFilter('__all__')}
-                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
                       >
                         ×
                       </button>
@@ -1140,7 +1140,7 @@ export default function AdminPage() {
                     {chapterFilter !== '__all__' && (
                       <button
                         onClick={() => setChapterFilter('__all__')}
-                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
                       >
                         ×
                       </button>
@@ -1161,7 +1161,7 @@ export default function AdminPage() {
                     {memberNameSearch && (
                       <button
                         onClick={() => setMemberNameSearch('')}
-                        className="absolute -top-1 -right-1 text-black hover:text-red-600 text-lg font-bold"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
                       >
                         ×
                       </button>
