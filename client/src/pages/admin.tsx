@@ -73,6 +73,7 @@ export default function AdminPage() {
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
+  const [memberNameSearch, setMemberNameSearch] = useState<string>('');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
@@ -221,6 +222,7 @@ export default function AdminPage() {
       // 탈퇴 처리 완료 후 모든 필터 초기화 (활성 멤버와 탈퇴된 멤버 모두)
       setRegionFilter('__all__');
       setChapterFilter('__all__');
+      setMemberNameSearch('');
       setWithdrawnRegionFilter('__all__');
       setWithdrawnChapterFilter('__all__');
       // 강제로 사용자 목록 다시 가져오기
@@ -574,7 +576,8 @@ export default function AdminPage() {
   const filteredActiveUsers = activeUsers.filter(user => {
     const regionMatch = regionFilter === '__all__' || user.region === regionFilter;
     const chapterMatch = chapterFilter === '__all__' || user.chapter === chapterFilter;
-    return regionMatch && chapterMatch;
+    const nameMatch = memberNameSearch === '' || user.memberName.toLowerCase().includes(memberNameSearch.toLowerCase());
+    return regionMatch && chapterMatch && nameMatch;
   });
   
   // 필터링된 탈퇴 사용자 목록
@@ -911,7 +914,30 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
-                {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
+                <div className="flex items-center space-x-2 w-full md:w-auto">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">멤버명:</label>
+                  <div className="relative flex-1 md:w-40">
+                    <Input
+                      type="text"
+                      value={memberNameSearch}
+                      onChange={(e) => setMemberNameSearch(e.target.value)}
+                      placeholder="이름 검색"
+                      className="w-full bg-white text-sm"
+                      data-testid="input-member-name-search"
+                    />
+                    {memberNameSearch && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setMemberNameSearch('')}
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {(regionFilter !== '__all__' || chapterFilter !== '__all__' || memberNameSearch !== '') && (
                   <div className="flex items-center w-full md:w-auto">
                     <Button
                       size="sm"
@@ -919,6 +945,7 @@ export default function AdminPage() {
                       onClick={() => {
                         setRegionFilter('__all__');
                         setChapterFilter('__all__');
+                        setMemberNameSearch('');
                       }}
                       className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
                     >
@@ -929,7 +956,7 @@ export default function AdminPage() {
               </div>
 
               {/* 멤버 목록 안내 메시지 */}
-              {regionFilter === '__all__' && chapterFilter === '__all__' && (
+              {regionFilter === '__all__' && chapterFilter === '__all__' && memberNameSearch === '' && (
                 <div className="border rounded-lg p-8 text-center bg-gray-50">
                   <div className="flex flex-col items-center space-y-3">
                     <Users className="w-12 h-12 text-gray-400" />
@@ -937,14 +964,14 @@ export default function AdminPage() {
                       멤버 목록을 보려면 필터를 선택하세요
                     </div>
                     <div className="text-gray-500 text-xs md:text-sm">
-                      위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                      위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색하면 해당 멤버 목록이 표시됩니다.
                     </div>
                   </div>
                 </div>
               )}
 
               {/* 멤버 목록 테이블 - 필터 선택 시에만 표시 */}
-              {(regionFilter !== '__all__' || chapterFilter !== '__all__') && (
+              {(regionFilter !== '__all__' || chapterFilter !== '__all__' || memberNameSearch !== '') && (
                 <div className="border rounded-lg overflow-hidden">
                   {/* 데스크탑 헤더 */}
                   <div className="hidden md:block bg-gray-50 px-4 py-3 border-b">
