@@ -577,28 +577,14 @@ export default function AdminPage() {
     const regionMatch = regionFilter === '__all__' || user.region === regionFilter;
     const chapterMatch = chapterFilter === '__all__' || user.chapter === chapterFilter;
     
-    // 멤버명 검색 - 정확한 매칭 우선, 부분 매칭은 단어 경계에서만
+    // 멤버명 검색 - 정확한 매칭만
     let nameMatch = true;
     if (memberNameSearch !== '') {
       const searchTerm = memberNameSearch.toLowerCase().trim();
       const memberName = user.memberName.toLowerCase().trim();
       
-      // 1. 정확한 이름 매칭 (최우선)
-      if (memberName === searchTerm) {
-        nameMatch = true;
-      }
-      // 2. 이름이 검색어로 시작하는 경우
-      else if (memberName.startsWith(searchTerm)) {
-        nameMatch = true;
-      }
-      // 3. 공백으로 분리된 단어 중 하나가 검색어로 시작하는 경우 (성/이름 분리)
-      else if (memberName.split(/\s+/).some(part => part.startsWith(searchTerm))) {
-        nameMatch = true;
-      }
-      // 4. 그 외의 경우는 매칭하지 않음 (부분 문자열 검색 제거)
-      else {
-        nameMatch = false;
-      }
+      // 정확한 이름 매칭만 허용 (완전 일치)
+      nameMatch = memberName === searchTerm;
     }
     
     return regionMatch && chapterMatch && nameMatch;
