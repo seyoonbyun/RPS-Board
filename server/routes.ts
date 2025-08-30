@@ -608,9 +608,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // 탈퇴 히스토리 조회 API
+  // 탈퇴 히스토리 조회 API - Google Sheets 실시간 동기화
   app.get("/api/admin/withdrawal-history", async (req, res) => {
     try {
+      // 캐시 방지 헤더 설정
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
       const { getGoogleSheetsService } = await import('./google-sheets.js');
       const googleSheetsService = getGoogleSheetsService();
       if (!googleSheetsService) {
@@ -618,6 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const history = await googleSheetsService.getWithdrawalHistory();
+      console.log(`📋 WithdrawalHistory 조회 완료: ${history.length}개 항목`);
       res.json(history);
     } catch (error) {
       console.error("Get withdrawal history error:", error);

@@ -154,18 +154,24 @@ export default function AdminPage() {
     staleTime: 300000, // 5분간 캐시
   });
 
-  // 탈퇴 히스토리 가져오기
+  // 탈퇴 히스토리 가져오기 - Google Sheets 삭제 즉시 반영을 위해 실시간 동기화
   const { data: withdrawalHistory = [], isLoading: isHistoryLoading, refetch: refetchHistory } = useQuery({
     queryKey: ["/api/admin/withdrawal-history"],
     queryFn: async () => {
-      const response = await fetch('/api/admin/withdrawal-history');
+      const response = await fetch('/api/admin/withdrawal-history', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       if (!response.ok) {
         throw new Error('탈퇴 히스토리를 가져올 수 없습니다');
       }
       return response.json();
     },
     enabled: !!adminPermission?.isAdmin, // 관리자 권한이 있으면 항상 로드
-    staleTime: 60000, // 1분간 캐시
+    staleTime: 0, // 캐시 없음 - Google Sheets 변경사항 즉시 반영
+    refetchInterval: 30000, // 30초마다 자동 새로고침
   });
 
   // 드롭다운 바깥 영역 클릭 감지
@@ -275,9 +281,12 @@ export default function AdminPage() {
       setWithdrawnRegionFilter('__all__');
       setWithdrawnChapterFilter('__all__');
       // 강제로 사용자 목록 다시 가져오기
+      // 탈퇴 처리 후 사용자 목록과 탈퇴 히스토리 강제 새로고침
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/withdrawal-history'] });
       queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
-      refetchHistory(); // 탈퇴 히스토리 새로고침
+      queryClient.refetchQueries({ queryKey: ['/api/admin/withdrawal-history'] });
+      refetchHistory();
     },
     onError: (error: any) => {
       toast({
