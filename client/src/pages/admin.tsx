@@ -340,7 +340,7 @@ export default function AdminPage() {
         company: '',
         specialty: '',
         password: '1234',
-        auth: 'Member'
+        auth: ''
       });
       toast({
         title: "멤버 추가 완료",
