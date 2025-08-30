@@ -560,7 +560,7 @@ export default function AdminPage() {
   };
 
   const handleAddUser = () => {
-    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.specialty || !newUser.password || !newUser.auth) {
+    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.industry || !newUser.company || !newUser.password || !newUser.auth) {
       toast({
         title: "입력 오류",
         description: "모든 항목은 필수 입력 사항입니다",
