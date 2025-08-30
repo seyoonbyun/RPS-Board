@@ -1848,7 +1848,7 @@ export default function AdminPage() {
                             (newUser.auth === 'Admin' ? 'Admin (관리자)' :
                              newUser.auth === 'Growth' ? 'Growth (성장팀)' :
                              newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
-                            : '권한 지정하기'}
+                            : '권한을 선택하세요'}
                         </span>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </button>
