@@ -775,7 +775,7 @@ export default function AdminPage() {
                 size="sm"
               >
                 <FileText className="w-4 h-4 mr-1" />
-                히스토리
+                History
               </Button>
             </div>
           </CardContent>
