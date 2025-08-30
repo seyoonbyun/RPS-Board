@@ -827,42 +827,78 @@ export default function AdminPage() {
             ) : (
               <>
                 {/* 검색 필터 */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">지역</label>
-                    <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {historyRegions.map(region => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">챕터</label>
-                    <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {historyChapters.map(chapter => (
-                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">검색</label>
-                    <input
-                      type="text"
-                      placeholder="멤버명 검색"
-                      value={historySearchTerm}
-                      onChange={(e) => setHistorySearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    />
+                <div className="border border-gray-300 rounded-lg p-4 mb-6">
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">지역:</label>
+                      <div className="relative">
+                        <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {historyRegions.map(region => (
+                              <SelectItem key={region} value={region}>{region}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {historyRegionFilter !== "전체" && (
+                          <button
+                            onClick={() => setHistoryRegionFilter("전체")}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-gray-400 hover:bg-gray-600 text-white rounded-full flex items-center justify-center text-xs"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">챕터:</label>
+                      <div className="relative">
+                        <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {historyChapters.map(chapter => (
+                              <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {historyChapterFilter !== "전체" && (
+                          <button
+                            onClick={() => setHistoryChapterFilter("전체")}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-gray-400 hover:bg-gray-600 text-white rounded-full flex items-center justify-center text-xs"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">검색:</label>
+                      <input
+                        type="text"
+                        placeholder="멤버명 검색"
+                        value={historySearchTerm}
+                        onChange={(e) => setHistorySearchTerm(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      />
+                    </div>
+                    <div className="flex-shrink-0">
+                      <Button
+                        onClick={() => {
+                          setHistoryRegionFilter("전체");
+                          setHistoryChapterFilter("전체");
+                          setHistorySearchTerm("");
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mt-6"
+                      >
+                        모든 필터 해제
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
