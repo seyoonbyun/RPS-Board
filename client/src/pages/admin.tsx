@@ -845,7 +845,7 @@ export default function AdminPage() {
                         {historyRegionFilter !== "전체" && (
                           <button
                             onClick={() => setHistoryRegionFilter("전체")}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 hover:bg-gray-700 text-white rounded-full flex items-center justify-center text-xs leading-none"
+                            className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
                           >
                             ×
                           </button>
@@ -869,7 +869,7 @@ export default function AdminPage() {
                         {historyChapterFilter !== "전체" && (
                           <button
                             onClick={() => setHistoryChapterFilter("전체")}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 hover:bg-gray-700 text-white rounded-full flex items-center justify-center text-xs leading-none"
+                            className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
                           >
                             ×
                           </button>
