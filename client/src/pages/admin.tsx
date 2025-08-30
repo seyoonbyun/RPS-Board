@@ -1827,17 +1827,6 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      전문분야 <span className="text-xs text-gray-500 font-normal">_※챕터 경청표 기준</span>
-                    </label>
-                    <Input
-                      placeholder="멤버 직접 입력"
-                      value={newUser.specialty}
-                      onChange={(e) => setNewUser({...newUser, specialty: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <label className="text-sm font-medium">비밀번호 (휴대전화 뒷 4자리) *</label>
                     <Input
                       placeholder="1234"
