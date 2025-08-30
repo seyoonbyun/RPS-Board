@@ -771,7 +771,7 @@ export default function AdminPage() {
               </div>
               <Button 
                 onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
+                className="bg-white hover:bg-red-50 text-red-600 border border-red-600"
                 size="sm"
               >
                 <FileText className="w-4 h-4 mr-1" />
