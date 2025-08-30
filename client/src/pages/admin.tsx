@@ -540,8 +540,8 @@ export default function AdminPage() {
 
   const downloadCSVTemplate = () => {
     const csvContent = [
-      'ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,전문분야,권한,PW_H.P. 뒷 4자리',
-      'example@test.com,서울,테스트챕터,홍길동,IT,테스트회사,개발자,Member,1234'
+      'ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,권한,PW_H.P. 뒷 4자리',
+      'example@test.com,Seoul1 서울1,테스트챕터,홍길동,IT,테스트회사,Member,1234'
     ].join('\n');
 
     // BOM을 추가하여 Excel에서 한글이 제대로 표시되도록 함
