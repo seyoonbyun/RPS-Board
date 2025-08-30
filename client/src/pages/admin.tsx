@@ -869,51 +869,33 @@ export default function AdminPage() {
                   <div className="flex flex-col items-center justify-center py-8">
                     <Users className="w-12 h-12 text-gray-400 mb-4" />
                     <p className="text-gray-600 font-medium">멤버 목록을 보려면 필터를 선택하세요</p>
-                    <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주 해당 멤버 목록이 표시됩니다.</p>
+                    <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주세요. 해당 멤버 목록이 표시됩니다.</p>
                   </div>
                 ) : (
-              <div className="space-y-3">
-                {/* 데스크톱: 테이블 형태 */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">탈퇴일시</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">이메일</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">지역</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">챕터</th>
-                        <th className="text-left py-2 px-3 font-medium text-gray-700">멤버명</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
-                        <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
-                          <td className="py-2 px-3 text-sm">{item.withdrawalTime}</td>
-                          <td className="py-2 px-3 text-sm">{item.email}</td>
-                          <td className="py-2 px-3 text-sm">{item.region}</td>
-                          <td className="py-2 px-3 text-sm">{item.chapter}</td>
-                          <td className="py-2 px-3 text-sm">{item.memberName}</td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">탈퇴일시</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">이메일</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">지역</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">챕터</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">멤버명</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* 모바일: 카드 형태 */}
-                <div className="md:hidden space-y-3">
-                  {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
-                    <div key={`withdrawal-mobile-${item.email}-${index}`} className="bg-gray-50 rounded-lg p-4 border">
-                      <div className="space-y-2">
-                        <p className="text-sm"><span className="text-gray-500">탈퇴일시:</span> {item.withdrawalTime}</p>
-                        <p className="text-sm"><span className="text-gray-500">이메일:</span> {item.email}</p>
-                        <p className="text-sm"><span className="text-gray-500">지역:</span> {item.region}</p>
-                        <p className="text-sm"><span className="text-gray-500">챕터:</span> {item.chapter}</p>
-                        <p className="text-sm"><span className="text-gray-500">멤버명:</span> {item.memberName}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                      </thead>
+                      <tbody>
+                        {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                          <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4 text-sm">{item.withdrawalTime}</td>
+                            <td className="py-3 px-4 text-sm">{item.email}</td>
+                            <td className="py-3 px-4 text-sm">{item.region}</td>
+                            <td className="py-3 px-4 text-sm">{item.chapter}</td>
+                            <td className="py-3 px-4 text-sm">{item.memberName}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </>
             )}
