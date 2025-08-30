@@ -884,7 +884,8 @@ export default function AdminPage() {
                         value={historySearchTerm}
                         onChange={(e) => setHistorySearchTerm(e.target.value)}
                         placeholder="멤버명 검색"
-                        className="w-full bg-white text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        className="w-full bg-white text-sm px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        style={{ border: '1px solid #d12031' }}
                       />
                       {historySearchTerm && (
                         <button
