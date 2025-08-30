@@ -786,10 +786,10 @@ export default function AdminPage() {
       {showWithdrawalHistory && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-lg">
               <FileText className="mr-2 w-5 h-5 text-gray-600" />
               탈퇴 히스토리
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 text-sm">
                 {withdrawalHistory.length}건
               </Badge>
             </CardTitle>
