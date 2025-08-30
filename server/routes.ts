@@ -62,6 +62,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 구글 시트 특정 행 데이터 확인 API
+  app.post('/api/admin/check-row', async (req, res) => {
+    try {
+      const { rowNumber } = req.body;
+      
+      // 전체 사용자 데이터를 가져와서 특정 행 찾기
+      const googleSheetsService = getGoogleSheetsService();
+      const allUsers = await googleSheetsService.getAllUsersFromGoogleSheets();
+      
+      // 행 번호는 헤더를 제외하고 시작하므로 rowNumber - 2로 계산
+      const userIndex = rowNumber - 2;
+      const userData = allUsers[userIndex];
+      
+      if (!userData) {
+        return res.json({ rowData: null, message: `Row ${rowNumber} is empty or not found` });
+      }
+      
+      res.json({ 
+        rowNumber, 
+        userData: userData,
+        userIndex: userIndex,
+        totalUsers: allUsers.length
+      });
+    } catch (error) {
+      console.error('Check row error:', error);
+      res.status(500).json({ message: 'Failed to check row data' });
+    }
+  });
+
   // 🔥 ALPHA 챕터 사용자 디버깅 전용 엔드포인트
   app.get('/api/debug/user/:email', async (req, res) => {
     try {
@@ -1025,9 +1054,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).map((line, index) => {
         console.log(`🔍 Parsing line ${index + 1}: "${line}"`);
         const parts = line.split(',').map(part => part.trim());
-        console.log(`📝 Parts array:`, parts);
+        console.log(`📝 Parts array (length: ${parts.length}):`, parts);
         
-        // 새로운 필드 구조: 이메일, 지역, 챕터, 멤버명, 산업군, 회사, 전문분야, 권한, 비밀번호
+        // CSV 필드 구조 (정확한 순서):
+        // 1. 이메일, 2. 지역, 3. 챕터, 4. 멤버명, 5. 산업군, 6. 회사 
+        // ⚠️ 주의: 전문분야는 멤버가 직접 관리하므로 CSV에 포함되지 않음
+        // 7. 권한(선택사항), 8. 비밀번호(선택사항)
+        
         // 최소 4개 필드 필요: 이메일, 지역, 챕터, 멤버명
         if (parts.length < 4) {
           throw new Error(`Line ${index + 1}: 최소 4개 필드(이메일, 지역, 챕터, 멤버명)가 필요합니다`);
@@ -1037,24 +1070,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let password = '1234';
         let auth = 'Member';
 
-        // 8번째 필드에서 권한 찾기 (인덱스 7)
-        if (parts.length >= 8) {
-          const authField = parts[7];  // 8번째 필드 (권한)
+        // CSV 필드 매핑 (전문분야 제외):
+        // 1=이메일, 2=지역, 3=챕터, 4=멤버명, 5=산업군, 6=회사, 7=권한, 8=비밀번호
+        
+        // 7번째 필드에서 권한 찾기 (인덱스 6) - 전문분야 제거로 한칸 앞당김
+        if (parts.length >= 7 && parts[6]) {
+          const authField = parts[6];  // 7번째 필드 (권한)
           const authValue = normalizeAuthKeyword(authField);
           if (authValue) {
             auth = authValue;
           }
         }
 
-        // 9번째 필드에서 비밀번호 찾기 (인덱스 8)
-        if (parts.length >= 9 && parts[8]) {
-          password = parts[8];
+        // 8번째 필드에서 비밀번호 찾기 (인덱스 7) - 전문분야 제거로 한칸 앞당김
+        if (parts.length >= 8 && parts[7]) {
+          password = parts[7];
         }
         
         console.log(`🔍 Field analysis for ${parts[0]}:`, {
           partsLength: parts.length,
           auth: auth,
-          password: password
+          password: password,
+          authField: `parts[6]="${parts[6] || 'empty'}"`,
+          passwordField: `parts[7]="${parts[7] || 'empty'}"`,
+          note: "전문분야는 CSV에서 제외됨 (멤버 직접 관리)"
         });
 
         const user = {
@@ -1064,7 +1103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           memberName: parts[3],
           industry: parts[4] || '',
           company: parts[5] || '',
-          specialty: parts[6] || '',
+          specialty: '', // 관리자 추가 시 전문분야는 빈 값으로 설정 (멤버가 직접 관리)
           targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정
           password: password,
           auth: auth
@@ -1072,6 +1111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`👤 Parsed user ${index + 1}:`, {
           email: user.email,
+          specialty: user.specialty,
           password: user.password,
           auth: user.auth
         });

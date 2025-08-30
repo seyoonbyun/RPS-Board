@@ -649,9 +649,18 @@ class GoogleSheetsService {
       ];
 
       console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
-        email: newUserData[0],
-        password: newUserData[23], // X: PW
-        auth: newUserData[25]      // Z: AUTH
+        email: newUserData[0],      // A: 이메일
+        specialty: newUserData[6],  // G: 전문분야 (should be empty)
+        password: newUserData[23],  // X: PW
+        auth: newUserData[25],      // Z: AUTH
+        fullDataLength: newUserData.length
+      });
+      
+      console.log(`🔍 Specialty column verification:`, {
+        specialtyValue: userData.specialty,
+        specialtyInArray: newUserData[6],
+        isSpecialtyEmpty: userData.specialty === '',
+        actualSpecialtyColumnIndex: 6
       });
 
       const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
