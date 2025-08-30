@@ -558,6 +558,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // 탈퇴 히스토리 조회 API
+  app.get("/api/admin/withdrawal-history", async (req, res) => {
+    try {
+      const { getGoogleSheetsService } = await import('./google-sheets.js');
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const history = await googleSheetsService.getWithdrawalHistory();
+      res.json(history);
+    } catch (error) {
+      console.error("Get withdrawal history error:", error);
+      res.status(500).json({ message: "탈퇴 히스토리 조회 중 오류가 발생했습니다" });
+    }
+  });
+
   // Admin API: Bulk withdrawal
   app.post("/api/admin/bulk-withdrawal", async (req, res) => {
     try {

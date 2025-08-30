@@ -1019,10 +1019,259 @@ class GoogleSheetsService {
     }
   }
 
+  // 탈퇴 히스토리 기록
+  async addWithdrawalHistory(userEmail: string, region: string, chapter: string, memberName: string): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // 탈퇴 히스토리 시트 탭 존재 확인 및 생성
+      await this.ensureWithdrawalHistorySheet();
+      
+      const withdrawalTime = new Date().toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      // 헤더 확인 및 추가
+      const headerResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (headerResponse.ok) {
+        const headerData = await headerResponse.json();
+        if (!headerData.values || headerData.values.length === 0) {
+          // 헤더가 없으면 추가
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                values: [['탈퇴일시', '이메일', '지역', '챕터', '멤버명']]
+              })
+            }
+          );
+        }
+      }
+      
+      // 탈퇴 히스토리 데이터 추가
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [[withdrawalTime, userEmail, region, chapter, memberName]]
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('탈퇴 히스토리 기록 실패:', errorText);
+        throw new Error(`탈퇴 히스토리 기록 실패: ${response.status}`);
+      }
+      
+      console.log(`✅ 탈퇴 히스토리 기록 완료: ${userEmail} (${withdrawalTime})`);
+      
+    } catch (error) {
+      console.error('탈퇴 히스토리 기록 중 오류:', error);
+      throw error;
+    }
+  }
+
+  // 탈퇴 히스토리 시트 존재 확인 및 생성
+  private async ensureWithdrawalHistorySheet(): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // 현재 시트 정보 가져오기
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`시트 정보 조회 실패: ${response.status}`);
+      }
+      
+      const spreadsheetData = await response.json();
+      const sheets = spreadsheetData.sheets || [];
+      
+      // WithdrawalHistory 시트가 있는지 확인
+      const historySheetExists = sheets.some((sheet: any) => 
+        sheet.properties?.title === 'WithdrawalHistory'
+      );
+      
+      if (!historySheetExists) {
+        console.log('📋 탈퇴 히스토리 시트 생성 중...');
+        
+        // 새 시트 탭 생성
+        const createSheetResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              requests: [{
+                addSheet: {
+                  properties: {
+                    title: 'WithdrawalHistory',
+                    gridProperties: {
+                      rowCount: 1000,
+                      columnCount: 5
+                    }
+                  }
+                }
+              }]
+            })
+          }
+        );
+        
+        if (!createSheetResponse.ok) {
+          const errorText = await createSheetResponse.text();
+          throw new Error(`시트 생성 실패: ${createSheetResponse.status} - ${errorText}`);
+        }
+        
+        console.log('✅ WithdrawalHistory 시트 생성 완료');
+      }
+      
+    } catch (error) {
+      console.error('탈퇴 히스토리 시트 설정 중 오류:', error);
+      throw error;
+    }
+  }
+
+  // 탈퇴 히스토리 조회
+  async getWithdrawalHistory(): Promise<Array<{
+    withdrawalTime: string;
+    email: string;
+    region: string;
+    chapter: string;
+    memberName: string;
+  }>> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        if (response.status === 400) {
+          // WithdrawalHistory 시트가 없는 경우
+          return [];
+        }
+        throw new Error(`탈퇴 히스토리 조회 실패: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      if (rows.length <= 1) {
+        return []; // 헤더만 있거나 데이터가 없는 경우
+      }
+      
+      // 헤더 제외하고 데이터 변환
+      return rows.slice(1).map((row: string[]) => ({
+        withdrawalTime: row[0] || '',
+        email: row[1] || '',
+        region: row[2] || '',
+        chapter: row[3] || '',
+        memberName: row[4] || ''
+      })).filter(item => item.email); // 이메일이 있는 항목만 반환
+      
+    } catch (error) {
+      console.error('탈퇴 히스토리 조회 중 오류:', error);
+      return [];
+    }
+  }
+
+  // 탈퇴용 사용자 정보 조회
+  private async getUserForWithdrawalHistory(userEmail: string): Promise<{
+    email: string;
+    region: string;
+    chapter: string;
+    memberName: string;
+  } | null> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to read Google Sheets: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      // 사용자 행 검색
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && 
+            rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+          return {
+            email: rows[i][0] || '',
+            region: rows[i][1] || '',
+            chapter: rows[i][2] || '',
+            memberName: rows[i][3] || ''
+          };
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('사용자 정보 조회 중 오류:', error);
+      return null;
+    }
+  }
+
   // 사용자 완전 삭제 - 구글 시트에서 해당 행 자체를 삭제
   async markUserAsWithdrawn(userEmail: string): Promise<void> {
     try {
       const accessToken = await this.getAccessToken();
+      
+      // 삭제 전에 사용자 정보 백업 (히스토리 기록용)
+      const userInfo = await this.getUserForWithdrawalHistory(userEmail);
       
       // 사용자 행 찾기
       const getResponse = await fetch(
@@ -1088,6 +1337,17 @@ class GoogleSheetsService {
       }
 
       console.log(`✅ User ${userEmail} completely deleted from Google Sheets (행 삭제 완료)`);
+      
+      // 탈퇴 히스토리 기록
+      if (userInfo) {
+        try {
+          await this.addWithdrawalHistory(userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName);
+        } catch (historyError) {
+          console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨):', historyError);
+          // 히스토리 기록 실패해도 삭제는 완료되었으므로 계속 진행
+        }
+      }
+      
     } catch (error: any) {
       console.error(`❌ Error deleting user ${userEmail}:`, error);
       throw new Error(`사용자 삭제 실패: ${error?.message || 'Unknown error'}`);

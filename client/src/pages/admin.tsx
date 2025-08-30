@@ -38,6 +38,14 @@ interface UserData {
   achievement: string;
 }
 
+interface WithdrawalHistoryItem {
+  withdrawalTime: string;
+  email: string;
+  region: string;
+  chapter: string;
+  memberName: string;
+}
+
 export default function AdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -73,6 +81,7 @@ export default function AdminPage() {
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
+  const [showWithdrawalHistory, setShowWithdrawalHistory] = useState(false);
   const [memberNameSearch, setMemberNameSearch] = useState<string>('');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
@@ -125,6 +134,20 @@ export default function AdminPage() {
     },
     enabled: !!adminPermission?.isAdmin,
     staleTime: 300000, // 5분간 캐시
+  });
+
+  // 탈퇴 히스토리 가져오기
+  const { data: withdrawalHistory = [], isLoading: isHistoryLoading, refetch: refetchHistory } = useQuery({
+    queryKey: ["/api/admin/withdrawal-history"],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/withdrawal-history');
+      if (!response.ok) {
+        throw new Error('탈퇴 히스토리를 가져올 수 없습니다');
+      }
+      return response.json();
+    },
+    enabled: !!adminPermission?.isAdmin && showWithdrawalHistory,
+    staleTime: 60000, // 1분간 캐시
   });
 
   // 드롭다운 바깥 영역 클릭 감지
@@ -233,6 +256,7 @@ export default function AdminPage() {
       // 강제로 사용자 목록 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
       queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
+      refetchHistory(); // 탈퇴 히스토리 새로고침
     },
     onError: (error: any) => {
       toast({
@@ -635,6 +659,16 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
               </Button>
+              
+              <Button 
+                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
+                className="bg-gray-600 hover:bg-white hover:text-gray-600 text-white border border-gray-600"
+                size="sm"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {showWithdrawalHistory ? '탈퇴 히스토리 숨기기' : '탈퇴 히스토리 보기'}
+              </Button>
+              
               {adminPermission?.auth === 'National' && (
                 <Button 
                   onClick={exportUserList} 
@@ -680,6 +714,15 @@ export default function AdminPage() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 멤버 추가하기
+              </Button>
+              
+              <Button 
+                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
+                className="bg-gray-600 hover:bg-white hover:text-gray-600 text-white border border-gray-600 w-full"
+                size="sm"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {showWithdrawalHistory ? '탈퇴 히스토리 숨기기' : '탈퇴 히스토리 보기'}
               </Button>
               <div className="grid grid-cols-2 gap-2">
                 {adminPermission?.auth === 'National' && (
@@ -746,6 +789,57 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 탈퇴 히스토리 섹션 */}
+      {showWithdrawalHistory && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FileText className="mr-2 w-5 h-5 text-gray-600" />
+              탈퇴 히스토리
+              <Badge variant="secondary" className="ml-2">
+                {withdrawalHistory.length}건
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isHistoryLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="text-gray-500">탈퇴 히스토리를 불러오는 중...</div>
+              </div>
+            ) : withdrawalHistory.length === 0 ? (
+              <div className="flex justify-center py-8">
+                <div className="text-gray-500">탈퇴 히스토리가 없습니다</div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">탈퇴일시</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">이메일</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">지역</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">챕터</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">멤버명</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                      <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
+                        <td className="py-2 px-3 text-sm">{item.withdrawalTime}</td>
+                        <td className="py-2 px-3 text-sm">{item.email}</td>
+                        <td className="py-2 px-3 text-sm">{item.region}</td>
+                        <td className="py-2 px-3 text-sm">{item.chapter}</td>
+                        <td className="py-2 px-3 text-sm">{item.memberName}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 일괄 탈퇴 처리 섹션 */}
       <Card>
