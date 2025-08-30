@@ -88,7 +88,6 @@ export default function AdminPage() {
   const [memberNameSearch, setMemberNameSearch] = useState<string>('');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
-  const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
   const chapterDropdownRef = useRef<HTMLDivElement>(null);
@@ -102,9 +101,7 @@ export default function AdminPage() {
     memberName: '',
     industry: '',
     company: '',
-    specialty: '',
-    password: '',
-    auth: ''
+    password: ''
   });
 
 
@@ -172,9 +169,6 @@ export default function AdminPage() {
   // 드롭다운 바깥 영역 클릭 감지
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (authDropdownRef.current && !authDropdownRef.current.contains(event.target as Node)) {
-        setAuthDropdownOpen(false);
-      }
       if (chapterDropdownRef.current && !chapterDropdownRef.current.contains(event.target as Node)) {
         setChapterDropdownOpen(false);
       }
@@ -183,14 +177,14 @@ export default function AdminPage() {
       }
     };
 
-    if (authDropdownOpen || chapterDropdownOpen || regionDropdownOpen) {
+    if (chapterDropdownOpen || regionDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [authDropdownOpen, chapterDropdownOpen, regionDropdownOpen]);
+  }, [chapterDropdownOpen, regionDropdownOpen]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
@@ -322,7 +316,7 @@ export default function AdminPage() {
 
   // 사용자 추가 관련 mutation
   const addUserMutation = useMutation({
-    mutationFn: async (userData: typeof newUser) => {
+    mutationFn: async (userData: typeof newUser & { auth?: string }) => {
       const response = await apiRequest('POST', '/api/admin/add-user', userData);
       return response.json();
     },
@@ -338,9 +332,7 @@ export default function AdminPage() {
         memberName: '',
         industry: '',
         company: '',
-        specialty: '',
-        password: '1234',
-        auth: ''
+        password: '1234'
       });
       toast({
         title: "멤버 추가 완료",
@@ -540,8 +532,8 @@ export default function AdminPage() {
 
   const downloadCSVTemplate = () => {
     const csvContent = [
-      'ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,권한,PW_H.P. 뒷 4자리',
-      'example@test.com,Seoul1 서울1,테스트챕터,홍길동,IT,테스트회사,Member,1234'
+      'ID_BNI커넥트 등록 이메일,지역,챕터,멤버명,산업군,회사,PW_H.P. 뒷 4자리',
+      'example@test.com,Seoul1 서울1,테스트챕터,홍길동,IT,테스트회사,1234'
     ].join('\n');
 
     // BOM을 추가하여 Excel에서 한글이 제대로 표시되도록 함
@@ -560,7 +552,7 @@ export default function AdminPage() {
   };
 
   const handleAddUser = () => {
-    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.industry || !newUser.company || !newUser.password || !newUser.auth) {
+    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.industry || !newUser.company || !newUser.password) {
       toast({
         title: "입력 오류",
         description: "모든 항목은 필수 입력 사항입니다",
@@ -569,7 +561,7 @@ export default function AdminPage() {
       });
       return;
     }
-    addUserMutation.mutate(newUser);
+    addUserMutation.mutate({...newUser, auth: 'Member' as const});
   };
 
   // 탈퇴된 멤버 선택 관련 핸들러
@@ -1142,7 +1134,7 @@ export default function AdminPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-white">
                         <SelectItem value="__all__">선택</SelectItem>
-                        {uniqueRegions.map(region => (
+                        {uniqueRegions.map((region: string) => (
                           <SelectItem key={region} value={region}>{region}</SelectItem>
                         ))}
                       </SelectContent>
@@ -1166,7 +1158,7 @@ export default function AdminPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-white">
                         <SelectItem value="__all__">선택</SelectItem>
-                        {uniqueChapters.map(chapter => (
+                        {uniqueChapters.map((chapter: string) => (
                           <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
                         ))}
                       </SelectContent>
@@ -1835,56 +1827,6 @@ export default function AdminPage() {
                       className="bg-white border-gray-300 placeholder:text-gray-400 text-gray-900"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">권한 *</label>
-                    <div className="relative" ref={authDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
-                        className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                      >
-                        <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
-                          {newUser.auth ? 
-                            (newUser.auth === 'Admin' ? 'Admin (관리자)' :
-                             newUser.auth === 'Growth' ? 'Growth (성장팀)' :
-                             newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
-                            : '권한을 선택하세요'}
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </button>
-                      {authDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                          <div 
-                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                            onClick={() => {
-                              setNewUser({...newUser, auth: 'Admin'});
-                              setAuthDropdownOpen(false);
-                            }}
-                          >
-                            Admin (관리자)
-                          </div>
-                          <div 
-                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                            onClick={() => {
-                              setNewUser({...newUser, auth: 'Growth'});
-                              setAuthDropdownOpen(false);
-                            }}
-                          >
-                            Growth (성장팀)
-                          </div>
-                          <div 
-                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                            onClick={() => {
-                              setNewUser({...newUser, auth: 'Member'});
-                              setAuthDropdownOpen(false);
-                            }}
-                          >
-                            Member (일반회원)
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
                 <Button 
@@ -1923,10 +1865,10 @@ export default function AdminPage() {
                 <div className="bg-red-50 p-3 rounded border-l-4 border-red-400">
                   <p className="text-sm font-medium text-red-900 mb-2">CSV 파일 형식 안내</p>
                   <div className="text-xs text-red-700 space-y-1">
-                    <p><strong>CSV 파일 형식 :</strong> 이메일 | 지역 | 챕터 | 멤버명 | 산업군 | 회사 | 권한 | PW(숫자 4자리)</p>
+                    <p><strong>CSV 파일 형식 :</strong> 이메일 | 지역 | 챕터 | 멤버명 | 산업군 | 회사 | PW(숫자 4자리)</p>
                     <p>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</p>
                     <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</p>
-                    <p>• 권한 : Admin(관리자) / Growth(성장팀) / Member(일반회원) 으로 총 3 단계로 구분되어 운영됩니다.</p>
+                    <p>• 권한 : 모든 신규 멤버는 기본적으로 Member(일반회원) 권한으로 등록되며, 권한 변경은 National 관리자에서만 가능합니다.</p>
                     <p>• 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하는 정보로, 관리자가 계정 생성 시 추가하는 정보에서 제외됩니다.</p>
                     <p>• 첫 번째 행은 헤더이므로, 두 번째 행부터 사용자 정보를 입력하세요.</p>
                   </div>
