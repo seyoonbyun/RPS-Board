@@ -73,7 +73,7 @@ app.use((req, res, next) => {
     try {
       initializeGoogleSheets({
         apiKey: process.env.GOOGLE_SHEETS_API_KEY || '',
-        spreadsheetId: '1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg', // Direct spreadsheet ID
+        spreadsheetId: process.env.GOOGLE_SHEETS_ID || '1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg', // 환경변수 우선, 기본값 유지
         serviceAccountEmail: serviceAccountEmail,
         serviceAccountPrivateKey: serviceAccountPrivateKey
       });

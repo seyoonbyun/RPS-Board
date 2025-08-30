@@ -133,7 +133,7 @@ class GoogleSheetsService {
       });
       
       // Exchange JWT for access token
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      const tokenResponse = await fetch(process.env.GOOGLE_OAUTH2_TOKEN_URL || 'https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
