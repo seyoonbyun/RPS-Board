@@ -88,11 +88,12 @@ export default function AdminPage() {
   const [memberNameSearch, setMemberNameSearch] = useState<string>('');
   const [withdrawnRegionFilter, setWithdrawnRegionFilter] = useState<string>('__all__');
   const [withdrawnChapterFilter, setWithdrawnChapterFilter] = useState<string>('__all__');
-  const authDropdownRef = useRef<HTMLDivElement>(null);
   const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
   const chapterDropdownRef = useRef<HTMLDivElement>(null);
   const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
   const regionDropdownRef = useRef<HTMLDivElement>(null);
+  const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({
     email: '',
@@ -101,7 +102,8 @@ export default function AdminPage() {
     memberName: '',
     industry: '',
     company: '',
-    password: ''
+    password: '',
+    auth: 'Member'
   });
 
 
@@ -175,16 +177,19 @@ export default function AdminPage() {
       if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
         setRegionDropdownOpen(false);
       }
+      if (authDropdownRef.current && !authDropdownRef.current.contains(event.target as Node)) {
+        setAuthDropdownOpen(false);
+      }
     };
 
-    if (chapterDropdownOpen || regionDropdownOpen) {
+    if (chapterDropdownOpen || regionDropdownOpen || authDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [chapterDropdownOpen, regionDropdownOpen]);
+  }, [chapterDropdownOpen, regionDropdownOpen, authDropdownOpen]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
@@ -316,7 +321,7 @@ export default function AdminPage() {
 
   // 사용자 추가 관련 mutation
   const addUserMutation = useMutation({
-    mutationFn: async (userData: typeof newUser & { auth?: string }) => {
+    mutationFn: async (userData: typeof newUser) => {
       const response = await apiRequest('POST', '/api/admin/add-user', userData);
       return response.json();
     },
@@ -332,7 +337,8 @@ export default function AdminPage() {
         memberName: '',
         industry: '',
         company: '',
-        password: '1234'
+        password: '1234',
+        auth: 'Member'
       });
       toast({
         title: "멤버 추가 완료",
@@ -552,7 +558,7 @@ export default function AdminPage() {
   };
 
   const handleAddUser = () => {
-    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.industry || !newUser.company || !newUser.password) {
+    if (!newUser.email || !newUser.memberName || !newUser.region || !newUser.chapter || !newUser.industry || !newUser.company || !newUser.password || !newUser.auth) {
       toast({
         title: "입력 오류",
         description: "모든 항목은 필수 입력 사항입니다",
@@ -561,7 +567,7 @@ export default function AdminPage() {
       });
       return;
     }
-    addUserMutation.mutate({...newUser, auth: 'Member' as const});
+    addUserMutation.mutate(newUser);
   };
 
   // 탈퇴된 멤버 선택 관련 핸들러
@@ -1827,6 +1833,69 @@ export default function AdminPage() {
                       className="bg-white border-gray-300 placeholder:text-gray-400 text-gray-900"
                     />
                   </div>
+                  {/* 권한 선택 - National과 Admin 권한에서만 표시 */}
+                  {(adminPermission?.auth === 'National' || adminPermission?.auth === 'Admin') && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">권한 *</label>
+                      <div className="relative" ref={authDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                        >
+                          <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
+                            {newUser.auth ? 
+                              (newUser.auth === 'National' ? 'National (최고관리자)' :
+                               newUser.auth === 'Admin' ? 'Admin (관리자)' :
+                               newUser.auth === 'Growth' ? 'Growth (성장팀)' :
+                               newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
+                              : '권한을 선택하세요'}
+                          </span>
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </button>
+                        {authDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                            <div 
+                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                              onClick={() => {
+                                setNewUser({...newUser, auth: 'National'});
+                                setAuthDropdownOpen(false);
+                              }}
+                            >
+                              National (최고관리자)
+                            </div>
+                            <div 
+                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                              onClick={() => {
+                                setNewUser({...newUser, auth: 'Admin'});
+                                setAuthDropdownOpen(false);
+                              }}
+                            >
+                              Admin (관리자)
+                            </div>
+                            <div 
+                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                              onClick={() => {
+                                setNewUser({...newUser, auth: 'Growth'});
+                                setAuthDropdownOpen(false);
+                              }}
+                            >
+                              Growth (성장팀)
+                            </div>
+                            <div 
+                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                              onClick={() => {
+                                setNewUser({...newUser, auth: 'Member'});
+                                setAuthDropdownOpen(false);
+                              }}
+                            >
+                              Member (일반회원)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button 
