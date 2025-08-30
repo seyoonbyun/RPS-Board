@@ -916,10 +916,16 @@ export default function AdminPage() {
 
                 {/* 필터 미선택 시 또는 필터링된 결과가 없을 때 */}
                 {!hasActiveFilter ? (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Users className="w-12 h-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600 font-medium">탈퇴 멤버 목록을 보려면 필터를 선택하세요</p>
-                    <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주세요. 해당 멤버 목록이 표시됩니다.</p>
+                  <div className="border rounded-lg p-8 text-center bg-gray-50">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Users className="w-12 h-12 text-gray-400" />
+                      <div className="text-gray-700 font-medium text-sm md:text-base">
+                        탈퇴 멤버 목록을 보려면 필터를 선택하세요
+                      </div>
+                      <div className="text-gray-500 text-xs md:text-sm">
+                        위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색하면 해당 멤버 목록이 표시됩니다.
+                      </div>
+                    </div>
                   </div>
                 ) : filteredWithdrawalHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8">
