@@ -1807,7 +1807,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">산업군 *</label>
+                    <label className="text-sm font-medium">산업군_BNI 커넥트 기준 *</label>
                     <Input
                       placeholder="IT"
                       value={newUser.industry}
