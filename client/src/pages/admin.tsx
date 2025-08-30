@@ -836,26 +836,11 @@ export default function AdminPage() {
                   {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
                     <div key={`withdrawal-mobile-${item.email}-${index}`} className="bg-gray-50 rounded-lg p-4 border">
                       <div className="space-y-2">
-                        <div>
-                          <span className="text-xs text-gray-500">탈퇴일시</span>
-                          <p className="text-sm font-medium">{item.withdrawalTime}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">이메일</span>
-                          <p className="text-sm">{item.email}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">지역</span>
-                          <p className="text-sm">{item.region}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">챕터</span>
-                          <p className="text-sm">{item.chapter}</p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500">멤버명</span>
-                          <p className="text-sm">{item.memberName}</p>
-                        </div>
+                        <p className="text-sm"><span className="text-gray-500">탈퇴일시:</span> {item.withdrawalTime}</p>
+                        <p className="text-sm"><span className="text-gray-500">이메일:</span> {item.email}</p>
+                        <p className="text-sm"><span className="text-gray-500">지역:</span> {item.region}</p>
+                        <p className="text-sm"><span className="text-gray-500">챕터:</span> {item.chapter}</p>
+                        <p className="text-sm"><span className="text-gray-500">멤버명:</span> {item.memberName}</p>
                       </div>
                     </div>
                   ))}
