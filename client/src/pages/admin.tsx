@@ -1114,14 +1114,12 @@ export default function AdminPage() {
                       </SelectContent>
                     </Select>
                     {regionFilter !== '__all__' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
                         onClick={() => setRegionFilter('__all__')}
-                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
                       >
-                        ✕
-                      </Button>
+                        ×
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1140,14 +1138,12 @@ export default function AdminPage() {
                       </SelectContent>
                     </Select>
                     {chapterFilter !== '__all__' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
                         onClick={() => setChapterFilter('__all__')}
-                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
                       >
-                        ✕
-                      </Button>
+                        ×
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1163,14 +1159,12 @@ export default function AdminPage() {
                       data-testid="input-member-name-search"
                     />
                     {memberNameSearch && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
                         onClick={() => setMemberNameSearch('')}
-                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
+                        className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
                       >
-                        ✕
-                      </Button>
+                        ×
+                      </button>
                     )}
                   </div>
                 </div>
