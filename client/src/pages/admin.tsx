@@ -1858,15 +1858,6 @@ export default function AdminPage() {
                             <div 
                               className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
                               onClick={() => {
-                                setNewUser({...newUser, auth: 'National'});
-                                setAuthDropdownOpen(false);
-                              }}
-                            >
-                              National (최고관리자)
-                            </div>
-                            <div 
-                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                              onClick={() => {
                                 setNewUser({...newUser, auth: 'Admin'});
                                 setAuthDropdownOpen(false);
                               }}
