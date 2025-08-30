@@ -637,8 +637,10 @@ export default function AdminPage() {
   const withdrawnUniqueRegions = Array.from(new Set(withdrawnUsers.map(user => user.region).filter(region => region && region.trim() !== ''))).sort();
   const withdrawnUniqueChapters = Array.from(new Set(withdrawnUsers.map(user => user.chapter).filter(chapter => chapter && chapter.trim() !== ''))).sort();
 
-  // 탈퇴 히스토리 필터링 로직
-  const filteredWithdrawalHistory = withdrawalHistory.filter((item: WithdrawalHistoryItem) => {
+  // 탈퇴 히스토리 필터링 로직 - 필터가 선택되었을 때만 결과 표시
+  const hasActiveFilter = historyRegionFilter !== "전체" || historyChapterFilter !== "전체" || historySearchTerm !== "";
+  
+  const filteredWithdrawalHistory = hasActiveFilter ? withdrawalHistory.filter((item: WithdrawalHistoryItem) => {
     const matchesSearchTerm = historySearchTerm === "" || 
       item.email.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
       item.memberName.toLowerCase().includes(historySearchTerm.toLowerCase());
@@ -647,7 +649,7 @@ export default function AdminPage() {
     const matchesChapter = historyChapterFilter === "전체" || item.chapter === historyChapterFilter;
     
     return matchesSearchTerm && matchesRegion && matchesChapter;
-  });
+  }) : [];
 
   // 탈퇴 히스토리에서 고유한 지역과 챕터 목록 추출
   const historyRegions = ["전체", ...Array.from(new Set(withdrawalHistory.map((item: WithdrawalHistoryItem) => item.region).filter(Boolean)))];
@@ -864,37 +866,61 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 필터링된 결과가 없을 때 */}
-                {filteredWithdrawalHistory.length === 0 ? (
+                {/* 필터 미선택 시 또는 필터링된 결과가 없을 때 */}
+                {!hasActiveFilter ? (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Users className="w-12 h-12 text-gray-400 mb-4" />
                     <p className="text-gray-600 font-medium">멤버 목록을 보려면 필터를 선택하세요</p>
                     <p className="text-gray-500 text-sm mt-1">위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색해주세요. 해당 멤버 목록이 표시됩니다.</p>
                   </div>
+                ) : filteredWithdrawalHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Users className="w-12 h-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600 font-medium">검색 결과가 없습니다</p>
+                    <p className="text-gray-500 text-sm mt-1">다른 조건으로 검색해보세요.</p>
+                  </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">탈퇴일시</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">이메일</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">지역</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">챕터</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-700">멤버명</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
-                          <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm">{item.withdrawalTime}</td>
-                            <td className="py-3 px-4 text-sm">{item.email}</td>
-                            <td className="py-3 px-4 text-sm">{item.region}</td>
-                            <td className="py-3 px-4 text-sm">{item.chapter}</td>
-                            <td className="py-3 px-4 text-sm">{item.memberName}</td>
+                  <div className="space-y-3">
+                    {/* 데스크톱: 테이블 형태 */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-medium text-gray-700">탈퇴일시</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-700">이메일</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-700">지역</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-700">챕터</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-700">멤버명</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                            <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4 text-sm">{item.withdrawalTime}</td>
+                              <td className="py-3 px-4 text-sm">{item.email}</td>
+                              <td className="py-3 px-4 text-sm">{item.region}</td>
+                              <td className="py-3 px-4 text-sm">{item.chapter}</td>
+                              <td className="py-3 px-4 text-sm">{item.memberName}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* 모바일: 카드 형태 */}
+                    <div className="md:hidden space-y-3">
+                      {filteredWithdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                        <div key={`withdrawal-mobile-${item.email}-${index}`} className="bg-gray-50 rounded-lg p-4 border">
+                          <div className="space-y-2">
+                            <p className="text-sm"><span className="text-gray-500">탈퇴일시:</span> {item.withdrawalTime}</p>
+                            <p className="text-sm"><span className="text-gray-500">이메일:</span> {item.email}</p>
+                            <p className="text-sm"><span className="text-gray-500">지역:</span> {item.region}</p>
+                            <p className="text-sm"><span className="text-gray-500">챕터:</span> {item.chapter}</p>
+                            <p className="text-sm"><span className="text-gray-500">멤버명:</span> {item.memberName}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
