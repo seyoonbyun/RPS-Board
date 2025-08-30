@@ -558,6 +558,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Get unique regions for dropdown
+  app.get("/api/admin/regions", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const allUsersData = await storage.getAllUsersFromGoogleSheets();
+      const uniqueRegions = Array.from(new Set(allUsersData
+        .map(user => user.region)
+        .filter(region => region && region.trim())
+      )).sort(); // 오름차순 정렬
+
+      res.json(uniqueRegions);
+    } catch (error: any) {
+      console.error("❌ Error fetching regions:", error);
+      res.status(500).json({ message: "지역 목록 조회 실패" });
+    }
+  });
+
   // 탈퇴 히스토리 조회 API
   app.get("/api/admin/withdrawal-history", async (req, res) => {
     try {

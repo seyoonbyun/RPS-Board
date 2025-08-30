@@ -92,6 +92,8 @@ export default function AdminPage() {
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
   const chapterDropdownRef = useRef<HTMLDivElement>(null);
+  const [regionDropdownOpen, setRegionDropdownOpen] = useState(false);
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState({
     email: '',
@@ -139,6 +141,20 @@ export default function AdminPage() {
     staleTime: 300000, // 5분간 캐시
   });
 
+  // 지역 목록 가져오기
+  const { data: regions = [], isLoading: isRegionsLoading } = useQuery({
+    queryKey: ["/api/admin/regions"],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/regions');
+      if (!response.ok) {
+        throw new Error('지역 목록을 가져올 수 없습니다');
+      }
+      return response.json();
+    },
+    enabled: !!adminPermission?.isAdmin,
+    staleTime: 300000, // 5분간 캐시
+  });
+
   // 탈퇴 히스토리 가져오기
   const { data: withdrawalHistory = [], isLoading: isHistoryLoading, refetch: refetchHistory } = useQuery({
     queryKey: ["/api/admin/withdrawal-history"],
@@ -162,16 +178,19 @@ export default function AdminPage() {
       if (chapterDropdownRef.current && !chapterDropdownRef.current.contains(event.target as Node)) {
         setChapterDropdownOpen(false);
       }
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
+        setRegionDropdownOpen(false);
+      }
     };
 
-    if (authDropdownOpen || chapterDropdownOpen) {
+    if (authDropdownOpen || chapterDropdownOpen || regionDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [authDropdownOpen, chapterDropdownOpen]);
+  }, [authDropdownOpen, chapterDropdownOpen, regionDropdownOpen]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("bni_user");
@@ -1713,12 +1732,41 @@ export default function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">지역 *</label>
-                    <Input
-                      placeholder="서울"
-                      value={newUser.region}
-                      onChange={(e) => setNewUser({...newUser, region: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
-                    />
+                    <div className="relative" ref={regionDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setRegionDropdownOpen(!regionDropdownOpen)}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                      >
+                        <span className={newUser.region ? 'text-gray-900' : 'text-gray-400'}>
+                          {newUser.region || '지역을 선택하세요'}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </button>
+                      {regionDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {isRegionsLoading ? (
+                            <div className="px-3 py-2 text-gray-500">지역 목록을 불러오는 중...</div>
+                          ) : regions.length > 0 ? (
+                            regions.map((region: string) => (
+                              <button
+                                key={region}
+                                type="button"
+                                onClick={() => {
+                                  setNewUser({...newUser, region});
+                                  setRegionDropdownOpen(false);
+                                }}
+                                className="w-full px-3 py-2 text-left text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                              >
+                                {region}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-gray-500">지역 목록이 없습니다</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">챕터 *</label>
