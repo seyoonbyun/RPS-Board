@@ -827,13 +827,13 @@ export default function AdminPage() {
             ) : (
               <>
                 {/* 검색 필터 */}
-                <div className="border border-gray-300 rounded-lg p-4 mb-6">
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">지역:</label>
+                <div className="mb-6">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">지역:</label>
                       <div className="relative">
                         <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-32">
                             <SelectValue placeholder="선택" />
                           </SelectTrigger>
                           <SelectContent>
@@ -852,11 +852,12 @@ export default function AdminPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">챕터:</label>
+                    
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">챕터:</label>
                       <div className="relative">
                         <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-32">
                             <SelectValue placeholder="선택" />
                           </SelectTrigger>
                           <SelectContent>
@@ -875,17 +876,20 @@ export default function AdminPage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">검색:</label>
+                    
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">검색:</label>
                       <input
                         type="text"
                         placeholder="멤버명 검색"
                         value={historySearchTerm}
                         onChange={(e) => setHistorySearchTerm(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        className="w-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                       />
                     </div>
-                    <div className="flex-shrink-0">
+
+                    {/* 모든 필터 해제 버튼 - 필터가 활성화된 경우에만 표시 */}
+                    {hasActiveFilter && (
                       <Button
                         onClick={() => {
                           setHistoryRegionFilter("전체");
@@ -894,11 +898,11 @@ export default function AdminPage() {
                         }}
                         variant="outline"
                         size="sm"
-                        className="mt-6"
+                        className="text-gray-600 hover:text-gray-800"
                       >
                         모든 필터 해제
                       </Button>
-                    </div>
+                    )}
                   </div>
                 </div>
 
