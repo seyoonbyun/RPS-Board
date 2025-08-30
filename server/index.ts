@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeGoogleSheets } from "./google-sheets";
@@ -82,6 +83,9 @@ app.use((req, res, next) => {
       console.error('Google Sheets initialization error:', error);
       // Continue startup even if Google Sheets fails
     }
+
+    // Serve static files for Open Graph images
+    app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
 
     // Register routes with error handling
     const server = await registerRoutes(app);
