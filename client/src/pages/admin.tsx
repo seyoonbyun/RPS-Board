@@ -170,6 +170,11 @@ export default function AdminPage() {
     }
   }, [currentUser, adminPermission, setLocation, toast]);
 
+  // 필터가 변경될 때마다 선택된 사용자 목록 초기화
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [regionFilter, chapterFilter, memberNameSearch]);
+
   // 전체 사용자 목록 조회 - Hook은 항상 조건문 이전에 호출
   const { data: allUsers, isLoading } = useQuery<UserData[]>({
     queryKey: ['/api/admin/users'],
