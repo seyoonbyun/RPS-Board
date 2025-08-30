@@ -804,29 +804,62 @@ export default function AdminPage() {
                 <div className="text-gray-500">탈퇴 히스토리가 없습니다</div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 px-3 font-medium text-gray-700">탈퇴일시</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-700">이메일</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-700">지역</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-700">챕터</th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-700">멤버명</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
-                      <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-3 text-sm">{item.withdrawalTime}</td>
-                        <td className="py-2 px-3 text-sm">{item.email}</td>
-                        <td className="py-2 px-3 text-sm">{item.region}</td>
-                        <td className="py-2 px-3 text-sm">{item.chapter}</td>
-                        <td className="py-2 px-3 text-sm">{item.memberName}</td>
+              <div className="space-y-3">
+                {/* 데스크톱: 테이블 형태 */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">탈퇴일시</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">이메일</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">지역</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">챕터</th>
+                        <th className="text-left py-2 px-3 font-medium text-gray-700">멤버명</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                        <tr key={`withdrawal-${item.email}-${index}`} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-3 text-sm">{item.withdrawalTime}</td>
+                          <td className="py-2 px-3 text-sm">{item.email}</td>
+                          <td className="py-2 px-3 text-sm">{item.region}</td>
+                          <td className="py-2 px-3 text-sm">{item.chapter}</td>
+                          <td className="py-2 px-3 text-sm">{item.memberName}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 모바일: 카드 형태 */}
+                <div className="md:hidden space-y-3">
+                  {withdrawalHistory.map((item: WithdrawalHistoryItem, index: number) => (
+                    <div key={`withdrawal-mobile-${item.email}-${index}`} className="bg-gray-50 rounded-lg p-4 border">
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-xs text-gray-500">탈퇴일시</span>
+                          <p className="text-sm font-medium">{item.withdrawalTime}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500">이메일</span>
+                          <p className="text-sm">{item.email}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500">지역</span>
+                          <p className="text-sm">{item.region}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500">챕터</span>
+                          <p className="text-sm">{item.chapter}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500">멤버명</span>
+                          <p className="text-sm">{item.memberName}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>
