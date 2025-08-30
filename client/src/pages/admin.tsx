@@ -918,7 +918,7 @@ export default function AdminPage() {
                 {!hasActiveFilter ? (
                   <div className="border rounded-lg p-8 text-center bg-gray-50">
                     <div className="flex flex-col items-center space-y-3">
-                      <Users className="w-12 h-12 text-gray-400" />
+                      <UserX className="w-12 h-12 text-gray-400" />
                       <div className="text-gray-700 font-medium text-sm md:text-base">
                         탈퇴 멤버 목록을 보려면 필터를 선택하세요
                       </div>
