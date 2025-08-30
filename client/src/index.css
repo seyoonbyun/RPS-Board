@@ -325,6 +325,12 @@
   font-weight: normal !important;
 }
 
+@media (max-width: 768px) {
+  .admin-email-textarea {
+    font-size: 13px !important;
+  }
+}
+
 .admin-email-textarea:focus {
   color: rgb(17, 24, 39) !important;
 }
