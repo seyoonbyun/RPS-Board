@@ -462,15 +462,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "구글 시트에서 사용자 프로필을 찾을 수 없습니다" });
       }
 
-      // Mark user as withdrawn in Google Sheets - STATUS를 "탈퇴"로 변경
+      // Delete user completely from Google Sheets - 행 자체를 삭제
       await sheetsService.markUserAsWithdrawn(user.email);
 
       // Delete user data from local database
       await storage.deleteUserData(userId);
 
       res.json({ 
-        message: "탈퇴 처리가 완료되었습니다",
-        withdrawnUser: {
+        message: "사용자가 완전히 삭제되었습니다",
+        deletedUser: {
           region: profile.region,
           chapter: profile.chapter,
           memberName: profile.memberName,
@@ -478,8 +478,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error('Error in user withdrawal:', error);
-      res.status(500).json({ message: "탈퇴 처리 중 오류가 발생했습니다" });
+      console.error('Error in user deletion:', error);
+      res.status(500).json({ message: "사용자 삭제 중 오류가 발생했습니다" });
     }
   });
 

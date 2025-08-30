@@ -1019,12 +1019,12 @@ class GoogleSheetsService {
     }
   }
 
-  // 사용자 탈퇴 처리 - STATUS를 "탈퇴"로 변경
+  // 사용자 완전 삭제 - 구글 시트에서 해당 행 자체를 삭제
   async markUserAsWithdrawn(userEmail: string): Promise<void> {
     try {
       const accessToken = await this.getAccessToken();
       
-      // 사용자 행 찾기 - STATUS 컬럼(Y열)까지 포함하여 읽기
+      // 사용자 행 찾기
       const getResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
         {
@@ -1056,55 +1056,41 @@ class GoogleSheetsService {
         throw new Error(`User ${userEmail} not found in Google Sheets`);
       }
       
-      const existingRow = rows[userRowIndex];
+      console.log(`🗑️ Deleting user ${userEmail} from row ${userRowIndex + 1} (완전 삭제)`);
       
-      // 실제 STATUS 컬럼 위치 확인 - 로그에서 보면 24번째 인덱스에 활동중이 있음
-      console.log(`🔍 Row data analysis for ${userEmail}:`, {
-        email_index_0: existingRow[0],
-        status_index_24: existingRow[24],
-        total_columns: existingRow.length,
-        last_few_columns: existingRow.slice(-5)
-      });
-      
-      // STATUS 컬럼 위치 정확히 찾기 - 실제로는 25번째 컬럼(Y열)이지만 배열에서는 24번째 인덱스
-      let statusColumnIndex = 24; // Y열 (1-based: 25, 0-based: 24)
-      
-      // 만약 현재 값이 "활동중"이면 정확한 위치임을 확인
-      if (existingRow[24] && (existingRow[24].toString() === '활동중' || existingRow[24].toString() === '탈퇴')) {
-        statusColumnIndex = 24;
-        console.log(`✅ STATUS column confirmed at index ${statusColumnIndex} (Y열)`);
-      } else {
-        console.log(`⚠️ STATUS column not found at expected index 24, current value: ${existingRow[24]}`);
-        throw new Error(`STATUS 컬럼을 찾을 수 없습니다. 예상 위치: 24, 실제 값: ${existingRow[24]}`);
-      }
-      
-      // Y열(25번째 컬럼, 인덱스 24)에만 "탈퇴" 업데이트
-      const range = `RPS!Y${userRowIndex + 1}`;
-      console.log(`🚫 Marking user ${userEmail} as withdrawn in row ${userRowIndex + 1}, column Y (index ${statusColumnIndex})`);
-      
-      const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+      // 구글 시트 API를 사용하여 행 완전 삭제
+      const deleteResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
         {
-          method: 'PUT',
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            values: [['탈퇴']]
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId: 0, // RPS 시트 ID (대부분 0)
+                  dimension: 'ROWS',
+                  startIndex: userRowIndex, // 0-based index
+                  endIndex: userRowIndex + 1 // exclusive
+                }
+              }
+            }]
           })
         }
       );
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text();
-        throw new Error(`Failed to mark user as withdrawn: ${updateResponse.status} ${errorText}`);
+      if (!deleteResponse.ok) {
+        const errorText = await deleteResponse.text();
+        throw new Error(`Failed to delete user row: ${deleteResponse.status} ${errorText}`);
       }
 
-      console.log(`✅ User ${userEmail} marked as withdrawn (STATUS: 탈퇴)`);
+      console.log(`✅ User ${userEmail} completely deleted from Google Sheets (행 삭제 완료)`);
     } catch (error: any) {
-      console.error(`❌ Error marking user ${userEmail} as withdrawn:`, error);
-      throw new Error(`탈퇴 처리 실패: ${error?.message || 'Unknown error'}`);
+      console.error(`❌ Error deleting user ${userEmail}:`, error);
+      throw new Error(`사용자 삭제 실패: ${error?.message || 'Unknown error'}`);
     }
   }
 
