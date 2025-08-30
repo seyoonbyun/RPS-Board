@@ -827,83 +827,91 @@ export default function AdminPage() {
             ) : (
               <>
                 {/* 검색 필터 */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">지역:</label>
-                      <div className="relative">
-                        <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {historyRegions.map(region => (
-                              <SelectItem key={region} value={region}>{region}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {historyRegionFilter !== "전체" && (
-                          <button
-                            onClick={() => setHistoryRegionFilter("전체")}
-                            className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-6">
+                  <div className="flex items-center space-x-2 w-full md:w-auto">
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
+                    <div className="relative flex-1 md:w-40">
+                      <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
+                        <SelectTrigger className="w-full bg-white pr-8">
+                          <SelectValue placeholder="전체" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="전체">선택</SelectItem>
+                          {historyRegions.filter(region => region !== "전체").map(region => (
+                            <SelectItem key={region} value={region}>{region}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {historyRegionFilter !== "전체" && (
+                        <button
+                          onClick={() => setHistoryRegionFilter("전체")}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">챕터:</label>
-                      <div className="relative">
-                        <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue placeholder="선택" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {historyChapters.map(chapter => (
-                              <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {historyChapterFilter !== "전체" && (
-                          <button
-                            onClick={() => setHistoryChapterFilter("전체")}
-                            className="absolute -top-1 -right-1 text-gray-400 hover:text-gray-600 text-sm font-bold"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
+                  </div>
+                  <div className="flex items-center space-x-2 w-full md:w-auto">
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
+                    <div className="relative flex-1 md:w-40">
+                      <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
+                        <SelectTrigger className="w-full bg-white pr-8">
+                          <SelectValue placeholder="전체" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="전체">선택</SelectItem>
+                          {historyChapters.filter(chapter => chapter !== "전체").map(chapter => (
+                            <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {historyChapterFilter !== "전체" && (
+                        <button
+                          onClick={() => setHistoryChapterFilter("전체")}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">검색:</label>
+                  </div>
+                  <div className="flex items-center space-x-2 w-full md:w-auto">
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">성함:</label>
+                    <div className="relative flex-1 md:w-40">
                       <input
                         type="text"
-                        placeholder="멤버명 검색"
                         value={historySearchTerm}
                         onChange={(e) => setHistorySearchTerm(e.target.value)}
-                        className="w-40 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        placeholder="멤버명 검색"
+                        className="w-full bg-white text-sm px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                       />
+                      {historySearchTerm && (
+                        <button
+                          onClick={() => setHistorySearchTerm('')}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
-
-                    {/* 모든 필터 해제 버튼 - 필터가 활성화된 경우에만 표시 */}
-                    {hasActiveFilter && (
+                  </div>
+                  {hasActiveFilter && (
+                    <div className="flex items-center w-full md:w-auto">
                       <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => {
                           setHistoryRegionFilter("전체");
                           setHistoryChapterFilter("전체");
                           setHistorySearchTerm("");
                         }}
-                        variant="outline"
-                        size="sm"
-                        className="text-gray-600 hover:text-gray-800"
+                        className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
                       >
                         모든 필터 해제
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 필터 미선택 시 또는 필터링된 결과가 없을 때 */}
