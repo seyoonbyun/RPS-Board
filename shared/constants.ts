@@ -79,3 +79,66 @@ export const API_ENDPOINTS = {
   GOOGLE_OAUTH2_TOKEN: process.env.GOOGLE_OAUTH2_TOKEN_URL || 'https://oauth2.googleapis.com/token',
   REPLIT_SIDECAR: process.env.REPLIT_SIDECAR_ENDPOINT || 'http://127.0.0.1:1106'
 } as const;
+
+// Google Sheets 컬럼 인덱스 상수 - 하드코딩 방지
+export const SHEET_COLUMN_INDICES = {
+  EMAIL: 0,           // A열: 이메일
+  REGION: 1,          // B열: 지역
+  CHAPTER: 2,         // C열: 챕터
+  MEMBER_NAME: 3,     // D열: 멤버명
+  INDUSTRY: 4,        // E열: 산업군
+  COMPANY: 5,         // F열: 회사
+  SPECIALTY: 6,       // G열: 전문분야
+  TARGET_CUSTOMER: 7, // H열: 나의 핵심 고객층
+  RPARTNER_1: 8,      // I열: R파트너 1
+  RPARTNER_1_SPECIALTY: 9,  // J열: R파트너 1 전문분야
+  RPARTNER_1_STAGE: 10,     // K열: R파트너 1 단계
+  RPARTNER_2: 11,     // L열: R파트너 2
+  RPARTNER_2_SPECIALTY: 12, // M열: R파트너 2 전문분야
+  RPARTNER_2_STAGE: 13,     // N열: R파트너 2 단계
+  RPARTNER_3: 14,     // O열: R파트너 3
+  RPARTNER_3_SPECIALTY: 15, // P열: R파트너 3 전문분야
+  RPARTNER_3_STAGE: 16,     // Q열: R파트너 3 단계
+  RPARTNER_4: 17,     // R열: R파트너 4
+  RPARTNER_4_SPECIALTY: 18, // S열: R파트너 4 전문분야
+  RPARTNER_4_STAGE: 19,     // T열: R파트너 4 단계
+  TOTAL_PARTNERS: 20, // U열: 총 R파트너 수
+  ACHIEVEMENT: 21,    // V열: 달성
+  ID: 22,             // W열: ID
+  PASSWORD: 23,       // X열: PW
+  STATUS: 24,         // Y열: STATUS
+  AUTH: 25            // Z열: AUTH
+} as const;
+
+// 비즈니스 로직 상수
+export const BUSINESS_CONFIG = {
+  PARTNER_TARGET: 4,          // 목표 파트너 수
+  ACHIEVEMENT_PERIOD_YEARS: 2, // 달성 목표 기간(년)
+  MAX_PARTNERS: 4             // 최대 파트너 수
+} as const;
+
+// 캐시 및 타이밍 설정 상수
+export const CACHE_CONFIG = {
+  ADMIN_PERMISSION_STALE_TIME: 60000,    // 1분 - 관리자 권한 캐시
+  SHEETS_DATA_STALE_TIME: 300000,        // 5분 - 시트 데이터 캐시
+  REALTIME_REFRESH_INTERVAL: 5000,       // 5초 - 실시간 새로고침
+  ADMIN_REFRESH_INTERVAL: 30000,         // 30초 - 관리자 패널 새로고침
+  FAST_REFRESH_INTERVAL: 3000,           // 3초 - 빠른 새로고침
+  NO_CACHE: 0,                           // 캐시 없음
+  TOAST_DURATION: 3000,                  // 3초 - 토스트 지속시간
+  LONG_TOAST_DURATION: 5000              // 5초 - 긴 토스트 지속시간
+} as const;
+
+// AI 모델 설정 상수
+export const AI_CONFIG = {
+  GEMINI_MODEL: 'gemini-2.5-flash',
+  GEMINI_PRO_MODEL: 'gemini-2.5-pro',
+  GEMINI_IMAGE_MODEL: 'gemini-2.0-flash-preview-image-generation'
+} as const;
+
+// 브랜드 컬러 상수
+export const BRAND_COLORS = {
+  PRIMARY: '#d12031',          // BNI Korea 메인 컬러
+  PRIMARY_LIGHT: '#f5c2c7',    // 연한 빨강 (테두리용)
+  PRIMARY_BACKGROUND: '#fef2f2' // 매우 연한 빨강 (배경용)
+} as const;

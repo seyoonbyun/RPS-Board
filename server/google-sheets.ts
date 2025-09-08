@@ -1,4 +1,5 @@
 import type { ScoreboardData } from '@shared/schema';
+import { SHEET_COLUMN_INDICES } from '@shared/constants';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
 
@@ -281,7 +282,7 @@ class GoogleSheetsService {
             rpartner4Stage: rpartner4Stage, // index 19: " R파트너 4 : V-C-P"
             totalPartners: expectedUValue, // 실시간 계산된 값 사용
             achievement: expectedVValue, // 실시간 계산된 값 사용
-            auth: row[25] || '' // AUTH 컬럼 추가 (26번째 컬럼, index 25)
+            auth: row[SHEET_COLUMN_INDICES.AUTH] || '' // AUTH 컬럼
           };
         }
       }
@@ -651,8 +652,8 @@ class GoogleSheetsService {
       console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
         email: newUserData[0],      // A: 이메일
         specialty: newUserData[6],  // G: 전문분야 (should be empty)
-        password: newUserData[23],  // X: PW
-        auth: newUserData[25],      // Z: AUTH
+        password: newUserData[SHEET_COLUMN_INDICES.PASSWORD],  // X: PW
+        auth: newUserData[SHEET_COLUMN_INDICES.AUTH],      // Z: AUTH
         fullDataLength: newUserData.length
       });
       
@@ -867,8 +868,8 @@ class GoogleSheetsService {
           });
           
           // PW와 STATUS 값 유지 (X열, Y열, index 23, 24)
-          let existingPW = existingRow[23] ? existingRow[23].toString().trim() : '';
-          const existingStatus = existingRow[24] ? existingRow[24] : '활동중';
+          let existingPW = existingRow[SHEET_COLUMN_INDICES.PASSWORD] ? existingRow[SHEET_COLUMN_INDICES.PASSWORD].toString().trim() : '';
+          const existingStatus = existingRow[SHEET_COLUMN_INDICES.STATUS] ? existingRow[SHEET_COLUMN_INDICES.STATUS] : '활동중';
           
           // Joy 사용자의 경우 PW가 빈 값이면 기본 PW 설정
           if (!existingPW && data.userEmail === 'joy.byun@bnikorea.com') {
@@ -883,8 +884,8 @@ class GoogleSheetsService {
           console.log(`📊 U/V columns updated for ${data.userEmail}: U="${updatedProfitPartners}", V="${updatedAchievement}%"`);
           
           
-          values[23] = existingPW; // PW 필드 (X열, index 23)
-          values[24] = existingStatus; // STATUS 필드 (Y열, index 24)
+          values[SHEET_COLUMN_INDICES.PASSWORD] = existingPW; // PW 필드 (X열)
+          values[SHEET_COLUMN_INDICES.STATUS] = existingStatus; // STATUS 필드 (Y열)
           
           console.log(`🔐 PW field preserved: "${existingPW}" (length: ${existingPW.length})`);
           console.log(`🔍 Existing row data (length: ${existingRow.length}):`, existingRow.slice(20, 26));
@@ -1503,7 +1504,7 @@ class GoogleSheetsService {
           continue;
         }
         
-        const status = row[24] || '활동중'; // STATUS 컬럼 (index 24, 25번째 컬럼)
+        const status = row[SHEET_COLUMN_INDICES.STATUS] || '활동중'; // STATUS 컬럼
         
         const userData = {
           email: row[0] || '',
