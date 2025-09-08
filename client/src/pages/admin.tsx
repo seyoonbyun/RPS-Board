@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface UserData {
   email: string;
@@ -96,6 +97,7 @@ export default function AdminPage() {
   const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
+  const [showWithdrawalProgress, setShowWithdrawalProgress] = useState(false);
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -256,7 +258,14 @@ export default function AdminPage() {
       const response = await apiRequest('POST', '/api/admin/bulk-withdrawal', { userEmails });
       return response.json();
     },
+    onMutate: () => {
+      // 탈퇴 처리 시작 시 진행중 팝업 표시
+      setShowWithdrawalProgress(true);
+    },
     onSuccess: (data) => {
+      // 진행중 팝업 닫기
+      setShowWithdrawalProgress(false);
+      
       if (data.processedCount === 0) {
         // Case 2: 탈퇴 대상이 없는 경우
         toast({
@@ -290,11 +299,14 @@ export default function AdminPage() {
       refetchHistory();
     },
     onError: (error: any) => {
+      // 진행중 팝업 닫기
+      setShowWithdrawalProgress(false);
+      
       toast({
         title: '일괄 탈퇴 처리 실패',
         description: error.message || '처리 중 오류가 발생했습니다.',
         variant: 'destructive',
-        duration: 3000
+        duration: CACHE_CONFIG.TOAST_DURATION
       });
     },
   });
@@ -1957,6 +1969,21 @@ export default function AdminPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* 멤버 탈퇴 처리 진행중 팝업 */}
+      <Dialog open={showWithdrawalProgress} onOpenChange={setShowWithdrawalProgress}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
+              멤버 일괄 탈퇴 처리 진행중
+            </DialogTitle>
+            <DialogDescription>
+              선택하신 멤버들의 탈퇴 처리를 진행하고 있습니다.<br />
+              잠시만 기다려 주세요...
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
