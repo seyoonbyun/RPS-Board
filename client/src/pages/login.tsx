@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
-import { BRAND_COLORS } from "@shared/constants";
+import { BRAND_COLORS, CACHE_CONFIG } from "@shared/constants";
 import { Handshake, LogIn } from "lucide-react";
 import rpsLogoPath from "@assets/RPS logo 4_1755761676803.png";
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
       toast({
         title: "로그인 성공",
         description: "BNI 코리아 파워팀 스코어보드에 오신 것을 환영합니다!",
-        duration: 3000,
+        duration: CACHE_CONFIG.TOAST_DURATION,
       });
       setLocation("/dashboard");
     },
@@ -73,7 +73,7 @@ export default function LoginPage() {
         title: "잠깐 !",
         description: "대표님의 회원 정보가 확인되지 않습니다.\n담당 오피스로 문의해주시면 바로 안내해드리겠습니다 ! :)",
         variant: "destructive",
-        duration: 3000,
+        duration: CACHE_CONFIG.TOAST_DURATION,
       });
     },
   });

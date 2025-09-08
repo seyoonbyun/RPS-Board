@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { FILE_CONFIG } from '@shared/constants';
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -13,7 +14,7 @@ interface ObjectUploaderProps {
 }
 
 export function ObjectUploader({
-  maxFileSize = 10485760, // 10MB default
+  maxFileSize = FILE_CONFIG.MAX_FILE_SIZE_10MB, // 10MB default
   onComplete,
   buttonClassName,
   children,

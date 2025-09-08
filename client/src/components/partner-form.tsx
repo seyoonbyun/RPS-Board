@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
-import { BRAND_COLORS } from "@shared/constants";
+import { BRAND_COLORS, CACHE_CONFIG } from "@shared/constants";
 import { Save, Edit, User, ExternalLink, Trash2, ChevronDown } from "lucide-react";
 
 interface PartnerFormProps {
@@ -178,7 +178,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       toast({
         title: "저장 완료 ✅",
         description: "파워팀 데이터가 대표님의 RPS 보드에 성공적으로 업데이트 되었습니다.",
-        duration: 2500, // 2.5초로 설정하여 3초 이내 보장
+        duration: CACHE_CONFIG.TOAST_DURATION,
       });
       
       // 백그라운드에서 데이터 새로고침 (팝업 표시에 영향주지 않음)
@@ -192,7 +192,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
           ? "데이터는 저장되었지만 구글 시트 동기화에 실패했습니다" 
           : errorMessage,
         variant: "destructive",
-        duration: 2500, // 2.5초로 설정하여 3초 이내 보장
+        duration: CACHE_CONFIG.TOAST_DURATION,
       });
     },
   });
@@ -206,14 +206,14 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       toast({ 
         title: "대표님의 파워팀 RPS 계정이 삭제되었습니다", 
         description: "소중한 시간을 함께 나눌 수 있어 감사했습니다.\n앞으로의 모든 여정이 평안하고 따뜻하길 바랍니다 :)",
-        duration: 2500
+        duration: CACHE_CONFIG.TOAST_DURATION
       });
       
       // 3초 후 로그인 창으로 리다이렉트
       setTimeout(() => {
         localStorage.removeItem('user');
         window.location.href = '/';
-      }, 3000);
+      }, CACHE_CONFIG.TOAST_DURATION);
     },
     onError: (error) => {
       console.error("Withdrawal error:", error);
@@ -221,7 +221,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         title: "탈퇴 실패", 
         description: "탈퇴 처리 중 오류가 발생했습니다.",
         variant: "destructive",
-        duration: 2500 
+        duration: CACHE_CONFIG.TOAST_DURATION 
       });
     },
   });
@@ -243,7 +243,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   ];
 
   const renderPartnerSection = (partnerNumber: number) => (
-    <div className={`bg-red-50 p-4 rounded-lg border mb-4 ${partnerNumber === 3 ? 'rpartner-3-section' : ''}`} style={{ borderColor: '#f5c2c7' }}>
+    <div className={`bg-red-50 p-4 rounded-lg border mb-4 ${partnerNumber === 3 ? 'rpartner-3-section' : ''}`} style={{ borderColor: BRAND_COLORS.PRIMARY_LIGHT }}>
       <div className="flex items-center mb-3">
         <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}>
           {partnerNumber}

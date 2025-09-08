@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CACHE_CONFIG } from '@shared/constants';
+import { CACHE_CONFIG, FILE_CONFIG } from '@shared/constants';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -263,14 +263,14 @@ export default function AdminPage() {
           title: '탈퇴 대상 없음',
           description: '이미 삭제되었거나 존재하지 않는 사용자입니다.',
           variant: 'destructive',
-          duration: 5000
+          duration: CACHE_CONFIG.LONG_TOAST_DURATION
         });
       } else {
         // Case 1: 탈퇴 처리가 진행된 경우
         toast({
           title: '탈퇴 처리 완료',
           description: `선택한 멤버 탈퇴가 정상적으로 완료되었습니다. (${data.processedCount}명)`,
-          duration: 3000
+          duration: CACHE_CONFIG.TOAST_DURATION
         });
       }
       setSelectedUsers([]);
@@ -1909,7 +1909,7 @@ export default function AdminPage() {
                   하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 멤버의 RPS Board가 생성됩니다.
                 </p>
                 <ObjectUploader
-                  maxFileSize={5242880} // 5MB
+                  maxFileSize={FILE_CONFIG.MAX_FILE_SIZE_5MB}
                   onComplete={handleCSVFileSelected}
                   buttonClassName="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white mb-3"
                   allowedFileTypes={['.csv']}

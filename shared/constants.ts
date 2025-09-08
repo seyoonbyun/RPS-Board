@@ -126,7 +126,8 @@ export const CACHE_CONFIG = {
   FAST_REFRESH_INTERVAL: 3000,           // 3초 - 빠른 새로고침
   NO_CACHE: 0,                           // 캐시 없음
   TOAST_DURATION: 3000,                  // 3초 - 토스트 지속시간
-  LONG_TOAST_DURATION: 5000              // 5초 - 긴 토스트 지속시간
+  LONG_TOAST_DURATION: 5000,             // 5초 - 긴 토스트 지속시간
+  EXTRA_LONG_TOAST_DURATION: 6000        // 6초 - 매우 긴 토스트 지속시간
 } as const;
 
 // AI 모델 설정 상수
@@ -141,4 +142,53 @@ export const BRAND_COLORS = {
   PRIMARY: '#d12031',          // BNI Korea 메인 컬러
   PRIMARY_LIGHT: '#f5c2c7',    // 연한 빨강 (테두리용)
   PRIMARY_BACKGROUND: '#fef2f2' // 매우 연한 빨강 (배경용)
+} as const;
+
+// 서버 포트 및 네트워크 설정 상수
+export const NETWORK_CONFIG = {
+  DEFAULT_PORT: 5000,           // 기본 서버 포트
+  REPLIT_SIDECAR_PORT: 1106,    // Replit Sidecar 포트
+  TIMEOUT_DEFAULT: 10000,       // 기본 타임아웃 (10초)
+  TIMEOUT_SHORT: 5000,          // 짧은 타임아웃 (5초)
+  TIMEOUT_MEDIUM: 30000,        // 중간 타임아웃 (30초)
+  REPLIT_SIDECAR_HOST: '127.0.0.1'
+} as const;
+
+// 파일 및 데이터 크기 제한 상수
+export const FILE_CONFIG = {
+  MAX_FILE_SIZE_5MB: 5 * 1024 * 1024,     // 5MB
+  MAX_FILE_SIZE_10MB: 10 * 1024 * 1024,   // 10MB  
+  SHEETS_MAX_ROWS: 5000,                  // Google Sheets 최대 행 수
+  HISTORY_MAX_ENTRIES: 50,                // 히스토리 최대 항목 수
+  BUSINESS_SEARCH_LIMIT: 10,              // 업체 검색 결과 제한
+  SEARCH_TERMS_LIMIT: 15                  // 검색어 최대 개수
+} as const;
+
+// UI 레이어 (Z-Index) 상수
+export const UI_LAYERS = {
+  MODAL_OVERLAY: 9999,         // 모달 오버레이
+  MODAL_CONTENT: 10000,        // 모달 콘텐츠
+  TOAST: 999999,               // 토스트 알림
+  ALERT_DIALOG_OVERLAY: 9999,  // 알럿 다이얼로그 오버레이
+  ALERT_DIALOG_CONTENT: 10000  // 알럿 다이얼로그 콘텐츠
+} as const;
+
+// 기본값 상수
+export const DEFAULT_VALUES = {
+  PASSWORD: '1234',            // 기본 비밀번호
+  JWT_EXPIRY_HOURS: 1,         // JWT 토큰 만료 시간 (시간)
+  TOKEN_BUFFER_MINUTES: 1,     // 토큰 갱신 버퍼 (분)
+  MAX_SEARCH_RESULTS_PER_CATEGORY: 3,  // 카테고리별 최대 검색 결과
+  ANALYSIS_MIN_LENGTH: 800,    // AI 분석 최소 길이
+  ANALYSIS_MAX_LENGTH: 1000,   // AI 분석 최대 길이
+  MAX_OUTPUT_TOKENS: 1000      // AI 최대 출력 토큰
+} as const;
+
+// Google Sheets 설정 상수
+export const SHEETS_CONFIG = {
+  SPREADSHEET_ID: '1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg',
+  WORKSHEET_NAME: 'RPS',
+  RANGE_FULL: 'A1:Z5000',      // 전체 범위
+  RANGE_PARTIAL: 'A1:Y5000',   // 부분 범위
+  RANGE_EMAIL_ONLY: 'A1:A5000' // 이메일만
 } as const;

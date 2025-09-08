@@ -8,13 +8,13 @@ import { getGoogleSheetsService } from "./google-sheets";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
 import { ObjectStorageService } from "./objectStorage";
 import * as iconv from 'iconv-lite';
-import { BUSINESS_CONFIG } from '@shared/constants';
+import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from '@shared/constants';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: FILE_CONFIG.MAX_FILE_SIZE_5MB,
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
@@ -724,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company: company || '',
         specialty: specialty || '',
         targetCustomer: '', // 관리자 추가 시 타겟고객은 빈 값으로 설정 (사용자가 직접 입력)
-        password: password || '1234', // 기본 비밀번호
+        password: password || DEFAULT_VALUES.PASSWORD, // 기본 비밀번호
         auth: auth || 'Member' // 기본 권한
       });
       
@@ -769,7 +769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           console.log(`🔄 Processing user ${i + 1}/${users.length}: ${user.email}`, {
-            password: user.password || '1234',
+            password: user.password || DEFAULT_VALUES.PASSWORD,
             auth: user.auth || 'Member'
           });
 
@@ -782,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             company: user.company || '',
             specialty: user.specialty || '',
             targetCustomer: user.targetCustomer || '',
-            password: user.password || '1234',
+            password: user.password || DEFAULT_VALUES.PASSWORD,
             auth: user.auth || 'Member'
           });
 
@@ -1076,7 +1076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // 필드 개수에 따라 유연하게 처리
-        let password = '1234';
+        let password = DEFAULT_VALUES.PASSWORD;
         let auth = 'Member';
 
         // CSV 필드 매핑 (전문분야 제외):
@@ -1147,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           console.log(`🔄 Processing user ${i + 1}/${users.length}: ${user.email}`, {
-            password: user.password || '1234',
+            password: user.password || DEFAULT_VALUES.PASSWORD,
             auth: user.auth || 'Member'
           });
 
@@ -1160,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             company: user.company || '',
             specialty: user.specialty || '',
             targetCustomer: user.targetCustomer || '',
-            password: user.password || '1234',
+            password: user.password || DEFAULT_VALUES.PASSWORD,
             auth: user.auth || 'Member'
           });
 

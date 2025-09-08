@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BRAND_COLORS } from '@shared/constants';
+import { BRAND_COLORS, CACHE_CONFIG } from '@shared/constants';
 import { Lightbulb, Users, BarChart3, MapPin, Brain, Sparkles, Target, Clock, Search, Loader2 } from 'lucide-react';
 
 interface PartnerRecommendationsProps {
@@ -115,7 +115,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
             title: "❗ 프로필 정보 필요",
             description: errorData.message,
             variant: "destructive",
-            duration: 5000,
+            duration: CACHE_CONFIG.LONG_TOAST_DURATION,
           });
           setRegionalBusinesses([]);
           return;
@@ -126,7 +126,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
             title: "🧠 AI 분석 먼저 진행",
             description: errorData.message,
             variant: "destructive", 
-            duration: 6000,
+            duration: CACHE_CONFIG.EXTRA_LONG_TOAST_DURATION,
           });
           setRegionalBusinesses([]);
           return;
@@ -146,7 +146,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
         title: "검색 오류",
         description: error instanceof Error ? error.message : '지역 업체 검색 중 오류가 발생했습니다',
         variant: "destructive",
-        duration: 3000,
+        duration: CACHE_CONFIG.TOAST_DURATION,
       });
     } finally {
       setIsLoadingRegionalBusinesses(false);
@@ -268,7 +268,19 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
                       variant="outline"
                       size="sm"
                       onClick={() => window.print()}
-                      className="flex items-center gap-2 border-[#d12031] text-[#d12031] hover:bg-[#d12031] hover:text-white transition-colors"
+                      className="flex items-center gap-2 transition-colors"
+                      style={{ 
+                        borderColor: BRAND_COLORS.PRIMARY, 
+                        color: BRAND_COLORS.PRIMARY 
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY;
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = BRAND_COLORS.PRIMARY;
+                      }}
                     >
                       🖨️ 인쇄하기
                     </Button>
