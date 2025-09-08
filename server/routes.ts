@@ -8,6 +8,7 @@ import { getGoogleSheetsService } from "./google-sheets";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
 import { ObjectStorageService } from "./objectStorage";
 import * as iconv from 'iconv-lite';
+import { BUSINESS_CONFIG } from '@shared/constants';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({
@@ -132,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
       ).length;
       
-      const calculatedAchievement = Math.round((profitPartners / 4) * 100);
+      const calculatedAchievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
       
       console.log(`🔥 RECALCULATED VALUES:`, {
         currentTotalPartners: targetUser.totalPartners,
@@ -327,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ];
             
             const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage?.includes('Profit')).length;
-            const achievement = Math.round((profitPartners / 4) * 100);
+            const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
             
             console.log(`🔄 Real-time achievement calculation:`, {
               partners,

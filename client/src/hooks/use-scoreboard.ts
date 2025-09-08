@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { ScoreboardData } from "@shared/schema";
+import { BUSINESS_CONFIG } from "@shared/constants";
 
 export function useScoreboard(userId?: string) {
   const { toast } = useToast();
@@ -72,7 +73,7 @@ export function useScoreboard(userId?: string) {
       }
     }
 
-    const percentage = Math.min(100, Math.round((pStage / 4) * 100));
+    const percentage = Math.min(100, Math.round((pStage / BUSINESS_CONFIG.PARTNER_TARGET) * 100));
 
     return {
       visible: vStage,

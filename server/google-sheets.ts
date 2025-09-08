@@ -1,5 +1,5 @@
 import type { ScoreboardData } from '@shared/schema';
-import { SHEET_COLUMN_INDICES } from '@shared/constants';
+import { SHEET_COLUMN_INDICES, BUSINESS_CONFIG } from '@shared/constants';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
 
@@ -211,7 +211,7 @@ class GoogleSheetsService {
           const profitPartners = partners.filter(p => 
             p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
           ).length;
-          const calculatedAchievement = Math.round((profitPartners / 4) * 100);
+          const calculatedAchievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
           
           const currentUValue = row[20] || '';
           const currentVValue = row[21] || '';
@@ -738,7 +738,7 @@ class GoogleSheetsService {
       const profitPartners = partners.filter(p => 
         p.name && p.name.trim() !== '' && p.stage === 'Profit : 수익단계'
       ).length;
-      const achievement = Math.round((profitPartners / 4) * 100);
+      const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
       
       console.log(`📊 Achievement calculation for ${data.userEmail}:`, {
         allPartners: partners,
@@ -859,7 +859,7 @@ class GoogleSheetsService {
           const updatedProfitPartners = updatedPartners.filter(p => 
             p.name && p.name.trim() !== '' && p.stage?.includes('Profit')
           ).length;
-          const updatedAchievement = Math.round((updatedProfitPartners / 4) * 100);
+          const updatedAchievement = Math.round((updatedProfitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
           
           console.log(`🔥 RECALCULATED U/V for existing user ${data.userEmail}:`, {
             partners: updatedPartners,
@@ -1605,7 +1605,7 @@ class GoogleSheetsService {
     });
     
     const profitPartners = partners.filter(p => p.stage?.includes('Profit')).length;
-    const achievement = Math.round((profitPartners / 4) * 100);
+    const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
     
     console.log(`Total R-Partners: ${partners.filter(p => p.name).length}`);
     console.log(`Achievement: ${achievement}%`);
