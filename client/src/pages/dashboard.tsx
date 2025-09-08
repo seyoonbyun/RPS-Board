@@ -249,7 +249,7 @@ export default function Dashboard() {
             <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mt-4">
               <div className="space-y-3">
                 <div className="text-center">
-                  <p className="text-sm font-bold text-gray-800">💪 RPS보드를 통해 달성하게 될 나의 파워팀 미션 : 진짜 비즈니스 파트너 4명 만들기 !</p>
+                  <p className="text-sm font-bold text-gray-800">💪 RPS보드를 통해 달성하게 될 나의 파워팀 미션 : 진짜 비즈니스 파트너 4명 만들기<span className="hidden md:inline"> !</span></p>
                   <p className="text-sm font-medium text-gray-700 mt-1">나의 진짜 리퍼럴 파트너는 누구 ???</p>
                 </div>
                 
