@@ -272,7 +272,7 @@ export default function Dashboard() {
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅3단계 : R 파트너와의 관계, P단계(수익창출) 도달 확인</span>
+                      <span className="mr-2">✅3단계 : R파트너와의 관계, P단계(수익창출) 도달 확인</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
