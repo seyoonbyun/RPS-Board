@@ -1971,13 +1971,13 @@ export default function AdminPage() {
 
       {/* 멤버 탈퇴 처리 진행중 팝업 */}
       <Dialog open={showWithdrawalProgress} onOpenChange={setShowWithdrawalProgress}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
+            <DialogTitle className="flex items-center gap-3 text-gray-900 font-semibold">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
               멤버 일괄 탈퇴 처리 진행중
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-600 mt-2">
               선택하신 멤버들의 탈퇴 처리를 진행하고 있습니다.<br />
               잠시만 기다려 주세요...
             </DialogDescription>
