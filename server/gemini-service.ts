@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NaverPlaceService, NaverPlaceBusiness } from './naver-place-service';
 import { PureDynamicSearch } from './pure-dynamic-search';
+import { AI_CONFIG } from '@shared/constants';
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -91,7 +92,7 @@ ${specialty}와 협업할 수 있는 **구체적인 업체 유형들**을 제시
 한국 비즈니스 환경과 BNI 네트워킹 특성을 반영하여 800-1000자로 실용적인 분석을 작성해주세요.`;
 
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: AI_CONFIG.GEMINI_MODEL,
         contents: prompt,
       });
 
@@ -1167,7 +1168,7 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       console.log(`🎯 ${userSpecialty} 전문분야의 시너지 분야 동적 생성 시작`);
       
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: AI_CONFIG.GEMINI_MODEL,
         config: {
           maxOutputTokens: 300,
           temperature: 0.1,
