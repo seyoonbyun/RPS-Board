@@ -272,13 +272,13 @@ export default function Dashboard() {
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅3단계 : 파트너의 P단계(수익창출) 도달 확인</span>
+                      <span className="mr-2">✅3단계 : 파트너와의 관계, P단계(수익창출) 도달 확인</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅4단계 : P(Profit수익창출) 파트너로 인정 🚀</span>
+                      <span className="mr-2">✅4단계 : P(Profit수익창출) 파트너로 RPS 보드에 기록하기 🚀</span>
                     </div>
                   </div>
                 </div>
