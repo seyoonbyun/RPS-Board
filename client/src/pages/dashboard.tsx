@@ -284,7 +284,7 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="space-y-2">
-                  <p className="text-sm"><strong>⚠️</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않아요 !!</p>
+                  <p className="text-sm"><strong>⚠️</strong> 파트너와의 관계가 <strong>수익 창출 단계(P)</strong>가 아니라면 성과로 카운트되지 않아요 !!</p>
                   <p className="text-sm"><strong>🏆 최종 목표:</strong> <strong>2년 안에 4명</strong> 달성 = 100% 성공!</p>
                 </div>
               </div>
