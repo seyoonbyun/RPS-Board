@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { ChangeHistory } from "@shared/schema";
+import { CACHE_CONFIG } from "@shared/constants";
 
 interface ChangeNotificationProps {
   userId: string;
@@ -12,7 +13,7 @@ export default function ChangeNotification({ userId }: ChangeNotificationProps) 
   const { data: changes } = useQuery({
     queryKey: ["/api/changes", userId],
     enabled: !!userId,
-    refetchInterval: 30000, // Check for changes every 30 seconds
+    refetchInterval: CACHE_CONFIG.ADMIN_REFRESH_INTERVAL, // Check for changes every 30 seconds
   });
 
   // Show toast for recent changes (within last 5 minutes)
@@ -31,7 +32,7 @@ export default function ChangeNotification({ userId }: ChangeNotificationProps) 
       toast({
         title: "데이터 변경 알림",
         description: `${change.fieldName}이(가) "${change.oldValue || '빈 값'}"에서 "${change.newValue || '빈 값'}"(으)로 변경되었습니다. (${timeString})`,
-        duration: 5000,
+        duration: CACHE_CONFIG.LONG_TOAST_DURATION,
       });
     });
   };

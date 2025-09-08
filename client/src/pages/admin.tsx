@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CACHE_CONFIG } from '@shared/constants';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -123,7 +124,7 @@ export default function AdminPage() {
       return response.json();
     },
     enabled: !!currentUser?.email,
-    staleTime: 60000, // 1분간 캐시
+    staleTime: CACHE_CONFIG.ADMIN_PERMISSION_STALE_TIME, // 1분간 캐시
   });
 
   // 챕터 목록 가져오기
@@ -137,7 +138,7 @@ export default function AdminPage() {
       return response.json();
     },
     enabled: !!adminPermission?.isAdmin,
-    staleTime: 300000, // 5분간 캐시
+    staleTime: CACHE_CONFIG.SHEETS_DATA_STALE_TIME, // 5분간 캐시
   });
 
   // 지역 목록 가져오기
@@ -151,7 +152,7 @@ export default function AdminPage() {
       return response.json();
     },
     enabled: !!adminPermission?.isAdmin,
-    staleTime: 300000, // 5분간 캐시
+    staleTime: CACHE_CONFIG.SHEETS_DATA_STALE_TIME, // 5분간 캐시
   });
 
   // 탈퇴 히스토리 가져오기 - Google Sheets 삭제 즉시 반영을 위해 실시간 동기화
@@ -170,8 +171,8 @@ export default function AdminPage() {
       return response.json();
     },
     enabled: !!adminPermission?.isAdmin, // 관리자 권한이 있으면 항상 로드
-    staleTime: 0, // 캐시 없음 - Google Sheets 변경사항 즉시 반영
-    refetchInterval: 30000, // 30초마다 자동 새로고침
+    staleTime: CACHE_CONFIG.NO_CACHE, // 캐시 없음 - Google Sheets 변경사항 즉시 반영
+    refetchInterval: CACHE_CONFIG.ADMIN_REFRESH_INTERVAL, // 30초마다 자동 새로고침
   });
 
   // 드롭다운 바깥 영역 클릭 감지
@@ -243,8 +244,8 @@ export default function AdminPage() {
     },
     retry: false,
     enabled: !!currentUser && !!adminPermission?.isAdmin, // 권한이 있을 때만 쿼리 실행
-    staleTime: 0, // 항상 새로운 데이터 가져오기
-    refetchInterval: 3000, // 3초마다 자동 새로고침
+    staleTime: CACHE_CONFIG.NO_CACHE, // 항상 새로운 데이터 가져오기
+    refetchInterval: CACHE_CONFIG.FAST_REFRESH_INTERVAL, // 3초마다 자동 새로고침
     refetchOnWindowFocus: true, // 윈도우 포커스 시 새로고침
     refetchOnMount: true // 마운트 시 새로고침
   });

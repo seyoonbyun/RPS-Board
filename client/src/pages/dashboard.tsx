@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import PartnerForm from "@/components/partner-form";
 import { PartnerRecommendations } from "@/components/partner-recommendations";
 import type { ScoreboardData } from "@shared/schema";
+import { CACHE_CONFIG } from "@shared/constants";
 // import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
@@ -29,7 +30,7 @@ export default function Dashboard() {
   const { data: scoreboardData, refetch } = useQuery<ScoreboardData>({
     queryKey: ["/api/scoreboard", user?.id],
     enabled: !!user?.id,
-    refetchInterval: 5000, // 5초마다 자동 새로고침
+    refetchInterval: CACHE_CONFIG.REALTIME_REFRESH_INTERVAL, // 5초마다 자동 새로고침
   });
 
   const { data: userProfile, refetch: refetchProfile } = useQuery<{
@@ -46,7 +47,7 @@ export default function Dashboard() {
   }>({
     queryKey: ["/api/user-profile", user?.id],
     enabled: !!user?.id,
-    refetchInterval: 5000, // 5초마다 자동 새로고침
+    refetchInterval: CACHE_CONFIG.REALTIME_REFRESH_INTERVAL, // 5초마다 자동 새로고침
   });
 
   // 관리자 권한 확인
@@ -65,7 +66,7 @@ export default function Dashboard() {
       return response.json();
     },
     enabled: !!user?.email,
-    staleTime: 60000, // 1분간 캐시
+    staleTime: CACHE_CONFIG.ADMIN_PERMISSION_STALE_TIME, // 1분간 캐시
   });
 
   const { calculateAchievement } = useScoreboard(user?.id);
@@ -76,7 +77,7 @@ export default function Dashboard() {
     toast({
       title: "로그아웃",
       description: "로그아웃되었습니다",
-      duration: 3000,
+      duration: CACHE_CONFIG.TOAST_DURATION,
     });
   };
 
