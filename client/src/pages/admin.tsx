@@ -1859,7 +1859,6 @@ export default function AdminPage() {
                             {newUser.auth ? 
                               (newUser.auth === 'National' ? 'National (최고관리자)' :
                                newUser.auth === 'Admin' ? 'Admin (관리자)' :
-                               newUser.auth === 'Growth' ? 'Growth (성장팀)' :
                                newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
                               : '권한을 선택하세요'}
                           </span>
@@ -1875,15 +1874,6 @@ export default function AdminPage() {
                               }}
                             >
                               Admin (관리자)
-                            </div>
-                            <div 
-                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                              onClick={() => {
-                                setNewUser({...newUser, auth: 'Growth'});
-                                setAuthDropdownOpen(false);
-                              }}
-                            >
-                              Growth (성장팀)
                             </div>
                             <div 
                               className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
@@ -1942,7 +1932,7 @@ export default function AdminPage() {
                     <p>• 지역 형식: BNI Connect 시스템의 지역명 형식으로 입력해주세요.<br />
                       _(ex)"Seoul1 서울1" (영어+숫자 + 한글)</p>
                     <p>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</p>
-                    <p>• 권한(선택사항): Admin, Growth, Member 중 선택 - 생략하면 Member로 설정됩니다.</p>
+                    <p>• 권한(선택사항): Admin, Member 중 선택 - 생략하면 Member로 설정됩니다.</p>
                     <p>• <strong>중요:</strong> 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하므로 CSV에서 제외됩니다.</p>
                     <p>• 첫 번째 행은 헤더이므로, 두 번째 행부터 사용자 정보를 입력하세요.</p>
                   </div>
