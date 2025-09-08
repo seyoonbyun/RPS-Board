@@ -245,8 +245,45 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg mt-4">
-              <p className="text-sm"><strong>⚠️ 참고:</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않습니다. 2년간 총 4명의 파트너를 영입하시면 100% 달성하게 됩니다.</p>
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mt-4">
+              <div className="space-y-3">
+                <div className="text-center">
+                  <p className="text-sm font-bold text-gray-800">💪 RPS보드를 통해 달성하게 될 나의 파워팀 미션 : 진짜 비즈니스 파트너 4명 만들기 !</p>
+                  <p className="text-sm font-medium text-gray-700 mt-1">나의 진짜 리퍼럴 파트너는 누구 ???</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-bold text-gray-800 mb-2">🔄 P(Profit수익창출)단계 파트너 카운팅 프로세스</p>
+                  <div className="space-y-1 pl-4">
+                    <div className="flex items-center text-xs text-gray-700">
+                      <span className="mr-2">✅1단계 : 파트너 영입</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700 pl-8">
+                      <span>↓</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700">
+                      <span className="mr-2">✅2단계 : T2 상호거래 2회 이상 달성</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700 pl-8">
+                      <span>↓</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700">
+                      <span className="mr-2">✅3단계 : 파트너의 P단계(수익창출) 도달 확인</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700 pl-8">
+                      <span>↓</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-700">
+                      <span className="mr-2">✅4단계 : P(Profit수익창출) 파트너로 인정 🚀</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm"><strong>⚠️</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않아요 !!</p>
+                  <p className="text-sm"><strong>🏆 최종 목표:</strong> 2년 안에 4명 달성 = 100% 성공!</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
