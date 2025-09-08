@@ -76,8 +76,8 @@ export const UI_MESSAGES = {
 
 // API 엔드포인트 상수
 export const API_ENDPOINTS = {
-  GOOGLE_OAUTH2_TOKEN: process.env.GOOGLE_OAUTH2_TOKEN_URL || 'https://oauth2.googleapis.com/token',
-  REPLIT_SIDECAR: process.env.REPLIT_SIDECAR_ENDPOINT || 'http://127.0.0.1:1106'
+  GOOGLE_OAUTH2_TOKEN: 'https://oauth2.googleapis.com/token',
+  REPLIT_SIDECAR: 'http://127.0.0.1:1106'
 } as const;
 
 // Google Sheets 컬럼 인덱스 상수 - 하드코딩 방지
