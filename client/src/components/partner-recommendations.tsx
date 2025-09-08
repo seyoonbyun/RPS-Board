@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { BRAND_COLORS } from '@shared/constants';
 import { Lightbulb, Users, BarChart3, MapPin, Brain, Sparkles, Target, Clock, Search, Loader2 } from 'lucide-react';
 
 interface PartnerRecommendationsProps {
@@ -249,7 +250,7 @@ export function PartnerRecommendations({ userId }: PartnerRecommendationsProps) 
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5" style={{ color: '#d12031' }} />
+                    <Brain className="w-5 h-5" style={{ color: BRAND_COLORS.PRIMARY }} />
                     BNI.K-AI 상세분석
                   </CardTitle>
                   <CardDescription>

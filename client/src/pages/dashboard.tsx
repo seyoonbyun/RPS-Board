@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import PartnerForm from "@/components/partner-form";
 import { PartnerRecommendations } from "@/components/partner-recommendations";
 import type { ScoreboardData } from "@shared/schema";
-import { CACHE_CONFIG } from "@shared/constants";
+import { CACHE_CONFIG, BRAND_COLORS } from "@shared/constants";
 // import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
@@ -128,11 +128,11 @@ export default function Dashboard() {
           {/* 데스크톱 레이아웃 */}
           <div className="hidden md:flex justify-between items-center py-4">
             <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#d12031' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}>
                 <BarChart3 className="text-white w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: '#d12031' }}>파워팀 스코어보드</h1>
+                <h1 className="text-xl font-bold" style={{ color: BRAND_COLORS.PRIMARY }}>파워팀 스코어보드</h1>
                 <span className="text-sm text-gray-500 truncate max-w-xs" title={user.email}>ID : {user.email}</span>
                 {userProfile && (
                   <div className="text-sm text-gray-700 mt-1">
@@ -149,7 +149,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => setLocation('/admin')}
                   style={{ 
-                    color: '#d12031', 
+                    color: BRAND_COLORS.PRIMARY, 
                     borderColor: '#f5c2c7', 
                   }}
                   className="hover:bg-red-50"
@@ -174,11 +174,11 @@ export default function Dashboard() {
           <div className="md:hidden py-4">
             {/* 타이틀과 사용자 정보 - 맨 위 */}
             <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#d12031' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}>
                 <BarChart3 className="text-white w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: '#d12031' }}>파워팀 스코어보드</h1>
+                <h1 className="text-xl font-bold" style={{ color: BRAND_COLORS.PRIMARY }}>파워팀 스코어보드</h1>
                 <span className="text-sm text-gray-500 truncate max-w-xs" title={user.email}>ID : {user.email}</span>
                 {userProfile && (
                   <div className="text-sm text-gray-700 mt-1">
@@ -197,7 +197,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => setLocation('/admin')}
                   style={{ 
-                    color: '#d12031', 
+                    color: BRAND_COLORS.PRIMARY, 
                     borderColor: '#f5c2c7', 
                   }}
                   className="hover:bg-red-50 w-full"
@@ -223,8 +223,8 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Guide Section */}
-        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg print-hidden" style={{ borderLeftColor: '#d12031' }}>
-          <h3 className="text-lg font-medium mb-2" style={{ color: '#d12031' }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 p-6 mb-6 print-friendly rounded-lg print-hidden" style={{ borderLeftColor: BRAND_COLORS.PRIMARY }}>
+          <h3 className="text-lg font-medium mb-2" style={{ color: BRAND_COLORS.PRIMARY }}>🧭 STEP 3: 나의 파워팀 리퍼럴 파트너 스코어 보드</h3>
           <div className="text-sm text-gray-700 space-y-2">
             <p>나의 파워팀_리퍼럴 파트너 스코어보드(RPS)는 BNI코리아 대표님들의 비즈니스 확장 경험을 측정하고 기록하는 데 도움을 주는 기록 툴로, 성취 경험을 향상시킴은 물론, 비즈니스 인사이트를 도출할 수 있는 의미 있는 성장 데이터를 제공하기 위해 기획되었습니다. 😊</p>
             

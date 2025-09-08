@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { loginSchema, type LoginForm } from "@shared/schema";
+import { BRAND_COLORS } from "@shared/constants";
 import { Handshake, LogIn } from "lucide-react";
 import rpsLogoPath from "@assets/RPS logo 4_1755761676803.png";
 
@@ -99,10 +100,10 @@ export default function LoginPage() {
             </div>
             <div className="mb-4">
               <p className="font-bold" style={{ fontFamily: 'Arial, sans-serif', color: '#000000', fontSize: '20px' }}>
-                <span style={{ color: '#d12031' }}>R</span>eferral <span style={{ color: '#d12031' }}>P</span>artner <span style={{ color: '#d12031' }}>S</span>core Board
+                <span style={{ color: BRAND_COLORS.PRIMARY }}>R</span>eferral <span style={{ color: BRAND_COLORS.PRIMARY }}>P</span>artner <span style={{ color: BRAND_COLORS.PRIMARY }}>S</span>core Board
               </p>
             </div>
-            <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: '#d12031' }}></div>
+            <div className="w-16 h-1 mx-auto rounded" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}></div>
           </div>
 
           <Form {...form}>
@@ -147,7 +148,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full text-white transition-all duration-200 transform hover:scale-105"
-                style={{ backgroundColor: '#d12031' }}
+                style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (

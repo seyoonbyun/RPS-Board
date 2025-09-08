@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
+import { BRAND_COLORS } from "@shared/constants";
 import { Save, Edit, User, ExternalLink, Trash2, ChevronDown } from "lucide-react";
 
 interface PartnerFormProps {
@@ -244,10 +245,10 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   const renderPartnerSection = (partnerNumber: number) => (
     <div className={`bg-red-50 p-4 rounded-lg border mb-4 ${partnerNumber === 3 ? 'rpartner-3-section' : ''}`} style={{ borderColor: '#f5c2c7' }}>
       <div className="flex items-center mb-3">
-        <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: '#d12031' }}>
+        <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold mr-2" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}>
           {partnerNumber}
         </div>
-        <h3 className="text-sm font-medium" style={{ color: '#d12031' }}>R파트너 {partnerNumber}</h3>
+        <h3 className="text-sm font-medium" style={{ color: BRAND_COLORS.PRIMARY }}>R파트너 {partnerNumber}</h3>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -301,7 +302,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     type="button"
                     onClick={() => setStageDropdowns(prev => ({...prev, [`stage${partnerNumber}`]: !prev[`stage${partnerNumber}`]}))}
                     className="flex h-9 w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                    style={{borderColor: '#d12031'}}
+                    style={{borderColor: BRAND_COLORS.PRIMARY}}
                   >
                     <span className={field.value ? 'text-gray-900' : 'text-gray-400'}>
                       {field.value ? 
@@ -347,7 +348,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
   );
 
   return (
-    <Card className="w-full border" style={{ borderColor: '#d12031' }}>
+    <Card className="w-full border" style={{ borderColor: BRAND_COLORS.PRIMARY }}>
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
           <Edit className="w-5 h-5 text-blue-600" />
@@ -786,7 +787,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                               <div className="text-sm text-gray-700 mb-3">
                                 지금까지 기록하신 대표님의 모든 R파트너 데이터가 삭제됩니다.
                               </div>
-                              <div className="font-semibold text-center" style={{ color: '#d12031' }}>
+                              <div className="font-semibold text-center" style={{ color: BRAND_COLORS.PRIMARY }}>
                                 ⚠️ 이 작업은 되돌릴 수 없습니다
                               </div>
                             </div>
