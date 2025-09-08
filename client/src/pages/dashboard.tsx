@@ -257,7 +257,7 @@ export default function Dashboard() {
                   <p className="text-sm font-bold text-gray-800 mb-2">🔄 P(Profit수익창출)단계 파트너 카운팅 프로세스</p>
                   <div className="space-y-1 pl-4">
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅1단계 : R(Referral 리퍼럴) 파트너 영입</span>
+                      <span className="mr-2">✅1단계 : <strong>R</strong>(Referral 리퍼럴) 파트너 영입</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
@@ -265,27 +265,27 @@ export default function Dashboard() {
                     <div className="flex items-center text-xs text-gray-700">
                       <span className="mr-2">✅2단계 :</span>
                       <div className="bg-blue-100 border border-blue-300 px-3 py-2 rounded-lg">
-                        <span className="text-blue-800 font-semibold">T2 상호거래 2회 이상 달성</span>
+                        <span className="text-blue-800 font-semibold"><strong>T2</strong> 상호거래 <strong>2회 이상</strong> 달성</span>
                       </div>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅3단계 : R파트너와의 관계, P단계(수익창출) 도달 확인</span>
+                      <span className="mr-2">✅3단계 : <strong>R</strong>파트너와의 관계, <strong>P</strong>단계(수익창출) 도달 확인</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅4단계 : P(Profit수익창출) 파트너로 RPS 보드에 기록하기 🚀</span>
+                      <span className="mr-2">✅4단계 : <strong>P</strong>(Profit수익창출) 파트너로 <strong>RPS 보드</strong>에 기록하기 🚀</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <p className="text-sm"><strong>⚠️</strong> 파트너와의 관계가 수익 창출 단계(P)가 아니라면 성과로 카운트되지 않아요 !!</p>
-                  <p className="text-sm"><strong>🏆 최종 목표:</strong> 2년 안에 4명 달성 = 100% 성공!</p>
+                  <p className="text-sm"><strong>🏆 최종 목표:</strong> <strong>2년 안에 4명</strong> 달성 = 100% 성공!</p>
                 </div>
               </div>
             </div>
