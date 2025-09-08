@@ -257,7 +257,7 @@ export default function Dashboard() {
                   <p className="text-sm font-bold text-gray-800 mb-2">🔄 P(Profit수익창출)단계 파트너 카운팅 프로세스</p>
                   <div className="space-y-1 pl-4">
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅1단계 : 파트너 영입</span>
+                      <span className="mr-2">✅1단계 : R(Referral 리퍼럴) 파트너 영입</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
@@ -272,7 +272,7 @@ export default function Dashboard() {
                       <span>↓</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅3단계 : 파트너와의 관계, P단계(수익창출) 도달 확인</span>
+                      <span className="mr-2">✅3단계 : R 파트너와의 관계, P단계(수익창출) 도달 확인</span>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
