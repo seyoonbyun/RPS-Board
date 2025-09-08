@@ -261,8 +261,10 @@ export default function Dashboard() {
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
                     </div>
-                    <div className="flex items-center text-xs text-gray-700">
-                      <span className="mr-2">✅2단계 : T2 상호거래 2회 이상 달성</span>
+                    <div className="flex items-center text-xs">
+                      <div className="bg-blue-100 border border-blue-300 px-3 py-2 rounded-lg">
+                        <span className="text-blue-800 font-semibold">✅2단계 : T2 상호거래 2회 이상 달성</span>
+                      </div>
                     </div>
                     <div className="flex items-center text-xs text-gray-700 pl-8">
                       <span>↓</span>
