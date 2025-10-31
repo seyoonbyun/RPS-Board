@@ -41,6 +41,21 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    console.log('🚀 Starting BNI Korea RPS System...');
+    
+    // Validate critical environment variables
+    const requiredEnvVars = [
+      'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+      'GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY'
+    ];
+    
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName] && !process.env[varName + '_NEW']);
+    
+    if (missingVars.length > 0) {
+      console.warn('⚠️ Missing environment variables:', missingVars.join(', '));
+      console.warn('⚠️ Google Sheets functionality may be limited');
+    }
+    
     // Initialize Google Sheets service with new credentials if available
     // Check which credentials to use based on what looks like email vs private key
     let serviceAccountEmail = '';
@@ -68,21 +83,26 @@ app.use((req, res, next) => {
       serviceAccountPrivateKey = oldKey;
     }
     
-    console.log('Using service account email:', serviceAccountEmail);
-    console.log('Private key starts with:', serviceAccountPrivateKey.substring(0, 50) + '...');
+    console.log('📧 Using service account email:', serviceAccountEmail || 'NOT SET');
+    console.log('🔑 Private key configured:', serviceAccountPrivateKey ? 'YES' : 'NO');
     
-    // Initialize Google Sheets service
+    // Initialize Google Sheets service with graceful fallback
     try {
+      if (!serviceAccountEmail || !serviceAccountPrivateKey) {
+        throw new Error('Google Sheets credentials not configured');
+      }
+      
       initializeGoogleSheets({
         apiKey: process.env.GOOGLE_SHEETS_API_KEY || '',
-        spreadsheetId: process.env.GOOGLE_SHEETS_ID || SHEETS_CONFIG.SPREADSHEET_ID, // 환경변수 우선, 기본값 유지
+        spreadsheetId: process.env.GOOGLE_SHEETS_ID || SHEETS_CONFIG.SPREADSHEET_ID,
         serviceAccountEmail: serviceAccountEmail,
         serviceAccountPrivateKey: serviceAccountPrivateKey
       });
-      console.log('Google Sheets service initialized successfully');
+      console.log('✅ Google Sheets service initialized successfully');
     } catch (error) {
-      console.error('Google Sheets initialization error:', error);
-      // Continue startup even if Google Sheets fails
+      console.error('❌ Google Sheets initialization error:', error);
+      console.warn('⚠️ Server will continue without Google Sheets - some features may be limited');
+      // Continue startup even if Google Sheets fails - server will still respond to health checks
     }
 
     // Serve static files for Open Graph images

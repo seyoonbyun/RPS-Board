@@ -26,6 +26,24 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for deployment
+  app.get("/health", (req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      service: "RPS System"
+    });
+  });
+
+  // Root health check
+  app.get("/", (req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      message: "BNI Korea RPS System API",
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
