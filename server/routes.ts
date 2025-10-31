@@ -35,8 +35,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Root health check
-  app.get("/", (req, res) => {
+  // API status endpoint
+  app.get("/api/status", (req, res) => {
     res.status(200).json({ 
       status: "ok", 
       message: "BNI Korea RPS System API",
