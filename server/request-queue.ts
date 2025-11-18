@@ -35,6 +35,8 @@ class RequestQueue {
     this.requestTimestamps = this.requestTimestamps.filter(ts => ts > cutoff);
   }
 
+  private lockResolvers = new Map<string, () => void>();
+
   private async acquireLock(lockKey: string, requestId: string): Promise<void> {
     while (this.locks.has(lockKey)) {
       const owner = this.lockOwners.get(lockKey);
@@ -49,6 +51,7 @@ class RequestQueue {
     });
 
     this.locks.set(lockKey, lockPromise);
+    this.lockResolvers.set(lockKey, resolveLock!);
     this.lockOwners.set(lockKey, requestId);
     
     console.log(`🔓 Request ${requestId} acquired lock "${lockKey}"`);
@@ -59,6 +62,11 @@ class RequestQueue {
   private releaseLock(lockKey: string, requestId: string): void {
     const owner = this.lockOwners.get(lockKey);
     if (owner === requestId) {
+      const resolver = this.lockResolvers.get(lockKey);
+      if (resolver) {
+        resolver();
+        this.lockResolvers.delete(lockKey);
+      }
       this.locks.delete(lockKey);
       this.lockOwners.delete(lockKey);
       console.log(`🔓 Request ${requestId} released lock "${lockKey}"`);
@@ -180,6 +188,22 @@ class RequestQueue {
       requestsInWindow: this.requestTimestamps.length,
       canMakeRequest: this.canMakeRequest()
     };
+  }
+
+  async withLock<T>(lockKey: string, operation: () => Promise<T>): Promise<T> {
+    const operationId = `withLock-${lockKey}-${Date.now()}`;
+    
+    try {
+      await this.acquireLock(lockKey, operationId);
+      console.log(`🔐 Starting locked operation for ${lockKey}`);
+      
+      const result = await operation();
+      
+      console.log(`✅ Completed locked operation for ${lockKey}`);
+      return result;
+    } finally {
+      this.releaseLock(lockKey, operationId);
+    }
   }
 
   destroy() {

@@ -235,22 +235,28 @@ class GoogleSheetsService {
           if (currentUValue !== expectedUValue || currentVValue !== expectedVValue) {
             console.log(`🔄 AUTO-UPDATING U/V columns for ${email}: ${currentUValue},${currentVValue} → ${expectedUValue},${expectedVValue}`);
             
-            // 구글 시트에 올바른 U/V열 값 업데이트
+            // 구글 시트에 올바른 U/V열 값 업데이트 (큐를 통해 처리하여 동시 접속 문제 해결)
             try {
               const accessToken = await this.getAccessToken();
               const updateRange = `RPS!U${i+1}:V${i+1}`;
-              const updateResponse = await fetch(
-                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
-                {
-                  method: 'PUT',
-                  headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    values: [[parseInt(expectedUValue), expectedVValue]]
-                  })
-                }
+              
+              // 요청 큐를 통해 처리하고 사용자별 락 사용
+              const updateResponse = await requestQueue.enqueue(
+                `getUserProfile-autoUpdateUV-${email}`,
+                async () => await fetch(
+                  `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
+                  {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${accessToken}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      values: [[parseInt(expectedUValue), expectedVValue]]
+                    })
+                  }
+                ),
+                `user:${email}` // 사용자별 락 키
               );
               
               if (updateResponse.ok) {
@@ -589,203 +595,206 @@ class GoogleSheetsService {
     password?: string;
     auth?: string;
   }): Promise<void> {
-    try {
-      console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`, {
-        password: userData.password || '1234',
-        auth: userData.auth || 'Member'
-      });
-      
-      // Get access token
-      const accessToken = await this.getAccessToken();
-      
-      // Check if user already exists
-      const getResponse = await requestQueue.enqueue(
-        `addNewUser-check-${userData.email}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+    return requestQueue.enqueue(
+      `addNewUser-${userData.email}`,
+      async () => {
+        try {
+          console.log(`🆕 Adding new user to Google Sheets: ${userData.email}`, {
+            password: userData.password || '1234',
+            auth: userData.auth || 'Member'
+          });
+          
+          // Get access token
+          const accessToken = await this.getAccessToken();
+          
+          // Check if user already exists - direct fetch call
+          const getResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!getResponse.ok) {
+            throw new Error(`Failed to read existing data: ${getResponse.status}`);
+          }
+
+          const existingData = await getResponse.json();
+          const existingRows = existingData.values || [];
+          
+          // Check for existing user
+          for (let i = 1; i < existingRows.length; i++) {
+            const row = existingRows[i];
+            if (row && row[0] && row[0].toString().toLowerCase() === userData.email.toLowerCase()) {
+              throw new Error(`User ${userData.email} already exists`);
             }
           }
-        )
-      );
-
-      if (!getResponse.ok) {
-        throw new Error(`Failed to read existing data: ${getResponse.status}`);
-      }
-
-      const existingData = await getResponse.json();
-      const existingRows = existingData.values || [];
-      
-      // Check for existing user
-      for (let i = 1; i < existingRows.length; i++) {
-        const row = existingRows[i];
-        if (row && row[0] && row[0].toString().toLowerCase() === userData.email.toLowerCase()) {
-          throw new Error(`User ${userData.email} already exists`);
-        }
-      }
-      
-      // Find first available row
-      let targetRowIndex = existingRows.length;
-      for (let i = 1; i < existingRows.length; i++) {
-        const row = existingRows[i];
-        if (!row || !row[0] || !row[0].toString().trim()) {
-          targetRowIndex = i;
-          break;
-        }
-      }
-      
-      // Create new user row with all required columns
-      const newUserData = [
-        userData.email,           // A: 이메일
-        userData.region,          // B: 지역  
-        userData.chapter,         // C: 챕터
-        userData.memberName,      // D: 멤버명
-        userData.industry,        // E: 산업군
-        userData.company,         // F: 회사
-        userData.specialty,       // G: 전문분야
-        userData.targetCustomer,  // H: 나의 핵심 고객층
-        '',                       // I: R파트너 1
-        '',                       // J: R파트너 1 전문분야
-        '',                       // K: R파트너 1 V-C-P
-        '',                       // L: R파트너 2
-        '',                       // M: R파트너 2 전문분야
-        '',                       // N: R파트너 2 V-C-P
-        '',                       // O: R파트너 3
-        '',                       // P: R파트너 3 전문분야
-        '',                       // Q: R파트너 3 V-C-P
-        '',                       // R: R파트너 4
-        '',                       // S: R파트너 4 전문분야
-        '',                       // T: R파트너 4 V-C-P
-        '0',                      // U: 총 R파트너 수
-        '0%',                     // V: 달성
-        userData.email,           // W: ID (index 22)
-        userData.password || '1234', // X: PW (index 23)
-        '활동중',                 // Y: STATUS (index 24)
-        userData.auth || 'Member' // Z: AUTH (index 25)
-      ];
-
-      console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
-        email: newUserData[0],      // A: 이메일
-        specialty: newUserData[6],  // G: 전문분야 (should be empty)
-        password: newUserData[SHEET_COLUMN_INDICES.PASSWORD],  // X: PW
-        auth: newUserData[SHEET_COLUMN_INDICES.AUTH],      // Z: AUTH
-        fullDataLength: newUserData.length
-      });
-      
-      console.log(`🔍 Specialty column verification:`, {
-        specialtyValue: userData.specialty,
-        specialtyInArray: newUserData[6],
-        isSpecialtyEmpty: userData.specialty === '',
-        actualSpecialtyColumnIndex: 6
-      });
-
-      const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
-      
-      const updateResponse = await requestQueue.enqueue(
-        `addNewUser-update-${userData.email}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              values: [newUserData]
-            })
+          
+          // Find first available row
+          let targetRowIndex = existingRows.length;
+          for (let i = 1; i < existingRows.length; i++) {
+            const row = existingRows[i];
+            if (!row || !row[0] || !row[0].toString().trim()) {
+              targetRowIndex = i;
+              break;
+            }
           }
-        )
-      );
+          
+          // Create new user row with all required columns
+          const newUserData = [
+            userData.email,           // A: 이메일
+            userData.region,          // B: 지역  
+            userData.chapter,         // C: 챕터
+            userData.memberName,      // D: 멤버명
+            userData.industry,        // E: 산업군
+            userData.company,         // F: 회사
+            userData.specialty,       // G: 전문분야
+            userData.targetCustomer,  // H: 나의 핵심 고객층
+            '',                       // I: R파트너 1
+            '',                       // J: R파트너 1 전문분야
+            '',                       // K: R파트너 1 V-C-P
+            '',                       // L: R파트너 2
+            '',                       // M: R파트너 2 전문분야
+            '',                       // N: R파트너 2 V-C-P
+            '',                       // O: R파트너 3
+            '',                       // P: R파트너 3 전문분야
+            '',                       // Q: R파트너 3 V-C-P
+            '',                       // R: R파트너 4
+            '',                       // S: R파트너 4 전문분야
+            '',                       // T: R파트너 4 V-C-P
+            '0',                      // U: 총 R파트너 수
+            '0%',                     // V: 달성
+            userData.email,           // W: ID (index 22)
+            userData.password || '1234', // X: PW (index 23)
+            '활동중',                 // Y: STATUS (index 24)
+            userData.auth || 'Member' // Z: AUTH (index 25)
+          ];
 
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        throw new Error(`Failed to add user: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
-      }
+          console.log(`📝 Writing data to row ${targetRowIndex + 1}:`, {
+            email: newUserData[0],      // A: 이메일
+            specialty: newUserData[6],  // G: 전문분야 (should be empty)
+            password: newUserData[SHEET_COLUMN_INDICES.PASSWORD],  // X: PW
+            auth: newUserData[SHEET_COLUMN_INDICES.AUTH],      // Z: AUTH
+            fullDataLength: newUserData.length
+          });
+          
+          console.log(`🔍 Specialty column verification:`, {
+            specialtyValue: userData.specialty,
+            specialtyInArray: newUserData[6],
+            isSpecialtyEmpty: userData.specialty === '',
+            actualSpecialtyColumnIndex: 6
+          });
 
-      console.log(`✅ Successfully added user ${userData.email} to row ${targetRowIndex + 1}`);
-      
-    } catch (error) {
-      console.error(`❌ Error adding user ${userData.email}:`, error);
-      throw error;
-    }
+          const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
+          
+          // Direct fetch call for update
+          const updateResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                values: [newUserData]
+              })
+            }
+          );
+
+          if (!updateResponse.ok) {
+            const errorData = await updateResponse.json();
+            throw new Error(`Failed to add user: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
+          }
+
+          console.log(`✅ Successfully added user ${userData.email} to row ${targetRowIndex + 1}`);
+          
+        } catch (error) {
+          console.error(`❌ Error adding user ${userData.email}:`, error);
+          throw error;
+        }
+      },
+      `user:${userData.email}` // lockKey for atomicity
+    );
   }
 
   async syncScoreboardData(data: ScoreboardData & { userEmail: string }): Promise<void> {
-    try {
-      console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
-      
-      
-      // Get access token
-      const accessToken = await this.getAccessToken();
-      
-      // Match the exact order from Google Sheets header starting from A column:
-      // 이메일, 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1, R파트너 1 전문분야, R파트너 1 V-C-P, etc.
-      const values = [
-        data.userEmail, // A열: 이메일
-        data.region || '', // B열: 지역
-        data.partner || '', // C열: 챕터
-        data.memberName || '', // D열: 멤버명
-        data.industry || '', // E열: 산업군 (read-only from Google Sheets)
-        data.company || '', // F열: 회사 (read-only from Google Sheets)
-        data.specialty || '', // G열: 전문분야 (bidirectional sync)
-        data.targetCustomer || '', // H열: 나의 핵심 고객층 (bidirectional sync)
-        data.rpartner1 || '', // I열: R파트너 1 (index 8)
-        data.rpartner1Specialty || '', // J열: R파트너 1 전문분야 (index 9)
-        this.normalizeStage(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
-        data.rpartner2 || '', // L열: R파트너 2 (index 11)
-        data.rpartner2Specialty || '', // M열: R파트너 2 전문분야 (index 12)
-        this.normalizeStage(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
-        data.rpartner3 || '', // O열: R파트너 3 (index 14)
-        data.rpartner3Specialty || '', // P열: R파트너 3 전문분야 (index 15)
-        this.normalizeStage(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
-        data.rpartner4 || '', // R열: R파트너 4 (index 17)
-        data.rpartner4Specialty || '', // S열: R파트너 4 전문분야 (index 18)
-        this.normalizeStage(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
-      ];
+    return requestQueue.enqueue(
+      `syncScoreboardData-${data.userEmail}`,
+      async () => {
+        try {
+          console.log(`Starting Google Sheets sync for ${data.userEmail}...`);
+          
+          
+          // Get access token
+          const accessToken = await this.getAccessToken();
+        
+        // Match the exact order from Google Sheets header starting from A column:
+        // 이메일, 지역, 챕터, 멤버명, 전문분야, 나의 핵심 고객층, R파트너 1, R파트너 1 전문분야, R파트너 1 V-C-P, etc.
+        const values = [
+          data.userEmail, // A열: 이메일
+          data.region || '', // B열: 지역
+          data.partner || '', // C열: 챕터
+          data.memberName || '', // D열: 멤버명
+          data.industry || '', // E열: 산업군 (read-only from Google Sheets)
+          data.company || '', // F열: 회사 (read-only from Google Sheets)
+          data.specialty || '', // G열: 전문분야 (bidirectional sync)
+          data.targetCustomer || '', // H열: 나의 핵심 고객층 (bidirectional sync)
+          data.rpartner1 || '', // I열: R파트너 1 (index 8)
+          data.rpartner1Specialty || '', // J열: R파트너 1 전문분야 (index 9)
+          this.normalizeStage(data.rpartner1Stage || ''), // K열: R파트너 1 V-C-P (index 10)
+          data.rpartner2 || '', // L열: R파트너 2 (index 11)
+          data.rpartner2Specialty || '', // M열: R파트너 2 전문분야 (index 12)
+          this.normalizeStage(data.rpartner2Stage || ''), // N열: R파트너 2 V-C-P (index 13)
+          data.rpartner3 || '', // O열: R파트너 3 (index 14)
+          data.rpartner3Specialty || '', // P열: R파트너 3 전문분야 (index 15)
+          this.normalizeStage(data.rpartner3Stage || ''), // Q열: R파트너 3 V-C-P (index 16)
+          data.rpartner4 || '', // R열: R파트너 4 (index 17)
+          data.rpartner4Specialty || '', // S열: R파트너 4 전문분야 (index 18)
+          this.normalizeStage(data.rpartner4Stage || ''), // T열: R파트너 4 V-C-P (index 19)
+        ];
 
-      // Calculate total R-Partners (non-empty names)
-      const partners = [
-        { name: data.rpartner1, stage: data.rpartner1Stage },
-        { name: data.rpartner2, stage: data.rpartner2Stage },
-        { name: data.rpartner3, stage: data.rpartner3Stage },
-        { name: data.rpartner4, stage: data.rpartner4Stage },
-      ];
-      
-      // 달성률 계산 - 이름이 있고 Profit 단계인 파트너만 카운트 (긴 형태 통일)
-      const profitPartners = partners.filter(p => 
-        p.name && p.name.trim() !== '' && p.stage === 'Profit : 수익단계'
-      ).length;
-      const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
-      
-      console.log(`📊 Achievement calculation for ${data.userEmail}:`, {
-        allPartners: partners,
-        profitPartners,
-        achievement: `${achievement}%`,
-        partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`),
-        uColumnValue: profitPartners.toString(), // U열에 저장될 값
-        vColumnValue: `${achievement}%` // V열에 저장될 값
-      });
-      
-      // Add total partners and achievement (U열, V열) - 모든 챕터 정상 적용
-      values.push(profitPartners.toString()); // U열: 총 R파트너 수 - 문자열로 (index 20)
-      values.push(`${achievement}%`); // V열: 달성 (index 21)
-      
-      // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
-      values.push(data.userEmail); // W열: ID (index 22)
-      // PW 필드는 나중에 기존 값으로 교체할 것이므로 일단 placeholder 추가
-      values.push('PRESERVE_EXISTING_PW'); // X열: PW (index 23) - 기존 값 유지
-      values.push('활동중'); // Y열: STATUS (index 24) - 기본값
-      
-      console.log('Data to sync to Google Sheets (with full stage text):', values);
+        // Calculate total R-Partners (non-empty names)
+        const partners = [
+          { name: data.rpartner1, stage: data.rpartner1Stage },
+          { name: data.rpartner2, stage: data.rpartner2Stage },
+          { name: data.rpartner3, stage: data.rpartner3Stage },
+          { name: data.rpartner4, stage: data.rpartner4Stage },
+        ];
+        
+        // 달성률 계산 - 이름이 있고 Profit 단계인 파트너만 카운트 (긴 형태 통일)
+        const profitPartners = partners.filter(p => 
+          p.name && p.name.trim() !== '' && p.stage === 'Profit : 수익단계'
+        ).length;
+        const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
+        
+        console.log(`📊 Achievement calculation for ${data.userEmail}:`, {
+          allPartners: partners,
+          profitPartners,
+          achievement: `${achievement}%`,
+          partnerDetails: partners.map((p, i) => `Partner ${i+1}: "${p.name}" (${p.stage})`),
+          uColumnValue: profitPartners.toString(), // U열에 저장될 값
+          vColumnValue: `${achievement}%` // V열에 저장될 값
+        });
+        
+        // Add total partners and achievement (U열, V열) - 모든 챕터 정상 적용
+        values.push(profitPartners.toString()); // U열: 총 R파트너 수 - 문자열로 (index 20)
+        values.push(`${achievement}%`); // V열: 달성 (index 21)
+        
+        // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
+        values.push(data.userEmail); // W열: ID (index 22)
+        // PW 필드는 나중에 기존 값으로 교체할 것이므로 일단 placeholder 추가
+        values.push('PRESERVE_EXISTING_PW'); // X열: PW (index 23) - 기존 값 유지
+        values.push('활동중'); // Y열: STATUS (index 24) - 기본값
+        
+        console.log('Data to sync to Google Sheets (with full stage text):', values);
 
-      // 동적 사용자 관리: 전체 시트에서 사용자 검색 (PW와 STATUS 포함해서 Y열까지, 최대 5000행)
-      const getResponse = await requestQueue.enqueue(
-        `syncScoreboardData-read-${data.userEmail}`,
-        async () => await fetch(
+        // 동적 사용자 관리: 전체 시트에서 사용자 검색 (PW와 STATUS 포함해서 Y열까지, 최대 5000행)
+        // Direct fetch call
+        const getResponse = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Y5000`,
           {
             headers: {
@@ -793,8 +802,7 @@ class GoogleSheetsService {
               'Content-Type': 'application/json'
             }
           }
-        )
-      );
+        );
 
       if (!getResponse.ok) {
         throw new Error(`Failed to read existing data: ${getResponse.status}`);
@@ -930,19 +938,17 @@ class GoogleSheetsService {
           accessTokenStart: accessToken.substring(0, 20) + '...'
         });
 
-        updateResponse = await requestQueue.enqueue(
-          `syncScoreboardData-update-${data.userEmail}`,
-          async () => await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-            {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: requestBody
-            }
-          )
+        // Direct fetch call for update
+        updateResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: requestBody
+          }
         );
 
         // 🔥 CRITICAL DEBUG: 응답 상세 분석
@@ -958,19 +964,17 @@ class GoogleSheetsService {
         // 🔥 IMMEDIATE VERIFICATION: 업데이트 직후 즉시 구글 시트에서 값 재확인
         console.log(`🔥 IMMEDIATE VERIFICATION: Checking if update actually persisted in Google Sheets...`);
         try {
-          const verifyResponse = await requestQueue.enqueue(
-            `syncScoreboardData-verify-${data.userEmail}`,
-            async () => await fetch(
-              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}`,
-              {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json',
-                  'Cache-Control': 'no-cache, no-store, must-revalidate'
-                }
+          // Direct fetch call for verification
+          const verifyResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}`,
+            {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
               }
-            )
+            }
           );
           
           if (verifyResponse.ok) {
@@ -1019,21 +1023,19 @@ class GoogleSheetsService {
         const range = `RPS!A${targetRow}:W${targetRow}`;
         console.log(`🆕 Adding new user ${data.userEmail} in row ${targetRow} with range ${range}`);
         
-        updateResponse = await requestQueue.enqueue(
-          `syncScoreboardData-newuser-${data.userEmail}`,
-          async () => await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-            {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                values: [values]
-              })
-            }
-          )
+        // Direct fetch call for new user
+        updateResponse = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [values]
+            })
+          }
         );
       }
 
@@ -1046,20 +1048,23 @@ class GoogleSheetsService {
       const updateResult = await updateResponse.json();
       console.log('Google Sheets update result:', updateResult);
       console.log(`✅ Successfully synced data to Google Sheets for ${data.userEmail}`);
-    } catch (error: any) {
-      console.error('❌ Google Sheets sync error for', data.userEmail, ':', error);
-      
-      // 구체적인 에러 정보 로그
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        status: error?.status,
-        stack: error?.stack?.split('\n').slice(0, 3)
-      });
-      
-      // 실제 Google Sheets API 에러인 경우 재시도 로직 없이 에러 던지기
-      throw new Error(`Google Sheets 동기화 실패 - ${data.userEmail}: ${error?.message || 'Unknown error'}`);
-    }
+        } catch (error: any) {
+          console.error('❌ Google Sheets sync error for', data.userEmail, ':', error);
+          
+          // 구체적인 에러 정보 로그
+          console.error('Error details:', {
+            message: error?.message,
+            code: error?.code,
+            status: error?.status,
+            stack: error?.stack?.split('\n').slice(0, 3)
+          });
+          
+          // 실제 Google Sheets API 에러인 경우 재시도 로직 없이 에러 던지기
+          throw new Error(`Google Sheets 동기화 실패 - ${data.userEmail}: ${error?.message || 'Unknown error'}`);
+        }
+      },
+      `user:${data.userEmail}` // lockKey for atomicity
+    );
   }
 
   // 탈퇴 히스토리 기록
@@ -1331,170 +1336,171 @@ class GoogleSheetsService {
 
   // 사용자 완전 삭제 - 구글 시트에서 해당 행 자체를 삭제
   async markUserAsWithdrawn(userEmail: string): Promise<void> {
-    try {
-      const accessToken = await this.getAccessToken();
-      
-      // 삭제 전에 사용자 정보 백업 (히스토리 기록용)
-      const userInfo = await this.getUserForWithdrawalHistory(userEmail);
-      
-      // 사용자 행 찾기
-      const getResponse = await requestQueue.enqueue(
-        `markUserAsWithdrawn-read-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+    return requestQueue.enqueue(
+      `markUserAsWithdrawn-${userEmail}`,
+      async () => {
+        try {
+          const accessToken = await this.getAccessToken();
+          
+          // 삭제 전에 사용자 정보 백업 (히스토리 기록용)
+          const userInfo = await this.getUserForWithdrawalHistory(userEmail);
+          
+          // 사용자 행 찾기 - direct fetch call
+          const getResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!getResponse.ok) {
+            throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+          }
+
+          const data = await getResponse.json();
+          const rows = data.values || [];
+          
+          // 사용자 행 검색
+          let userRowIndex = -1;
+          for (let i = 1; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] && 
+                rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+              userRowIndex = i;
+              break;
             }
           }
-        )
-      );
-
-      if (!getResponse.ok) {
-        throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
-      }
-
-      const data = await getResponse.json();
-      const rows = data.values || [];
-      
-      // 사용자 행 검색
-      let userRowIndex = -1;
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i] && rows[i][0] && 
-            rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
-          userRowIndex = i;
-          break;
-        }
-      }
-      
-      if (userRowIndex === -1) {
-        throw new Error(`User ${userEmail} not found in Google Sheets`);
-      }
-      
-      console.log(`🗑️ Deleting user ${userEmail} from row ${userRowIndex + 1} (완전 삭제)`);
-      
-      // 구글 시트 API를 사용하여 행 완전 삭제
-      const deleteResponse = await requestQueue.enqueue(
-        `markUserAsWithdrawn-delete-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              requests: [{
-                deleteDimension: {
-                  range: {
-                    sheetId: 0, // RPS 시트 ID (대부분 0)
-                    dimension: 'ROWS',
-                    startIndex: userRowIndex, // 0-based index
-                    endIndex: userRowIndex + 1 // exclusive
-                  }
-                }
-              }]
-            })
+          
+          if (userRowIndex === -1) {
+            throw new Error(`User ${userEmail} not found in Google Sheets`);
           }
-        )
-      );
+          
+          console.log(`🗑️ Deleting user ${userEmail} from row ${userRowIndex + 1} (완전 삭제)`);
+          
+          // 구글 시트 API를 사용하여 행 완전 삭제 - direct fetch call
+          const deleteResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                requests: [{
+                  deleteDimension: {
+                    range: {
+                      sheetId: 0, // RPS 시트 ID (대부분 0)
+                      dimension: 'ROWS',
+                      startIndex: userRowIndex, // 0-based index
+                      endIndex: userRowIndex + 1 // exclusive
+                    }
+                  }
+                }]
+              })
+            }
+          );
 
-      if (!deleteResponse.ok) {
-        const errorText = await deleteResponse.text();
-        throw new Error(`Failed to delete user row: ${deleteResponse.status} ${errorText}`);
-      }
+          if (!deleteResponse.ok) {
+            const errorText = await deleteResponse.text();
+            throw new Error(`Failed to delete user row: ${deleteResponse.status} ${errorText}`);
+          }
 
-      console.log(`✅ User ${userEmail} completely deleted from Google Sheets (행 삭제 완료)`);
-      
-      // 탈퇴 히스토리 기록
-      if (userInfo) {
-        try {
-          await this.addWithdrawalHistory(userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName);
-        } catch (historyError) {
-          console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨):', historyError);
-          // 히스토리 기록 실패해도 삭제는 완료되었으므로 계속 진행
+          console.log(`✅ User ${userEmail} completely deleted from Google Sheets (행 삭제 완료)`);
+          
+          // 탈퇴 히스토리 기록
+          if (userInfo) {
+            try {
+              await this.addWithdrawalHistory(userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName);
+            } catch (historyError) {
+              console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨):', historyError);
+              // 히스토리 기록 실패해도 삭제는 완료되었으므로 계속 진행
+            }
+          }
+          
+        } catch (error: any) {
+          console.error(`❌ Error deleting user ${userEmail}:`, error);
+          throw new Error(`사용자 삭제 실패: ${error?.message || 'Unknown error'}`);
         }
-      }
-      
-    } catch (error: any) {
-      console.error(`❌ Error deleting user ${userEmail}:`, error);
-      throw new Error(`사용자 삭제 실패: ${error?.message || 'Unknown error'}`);
-    }
+      },
+      `user:${userEmail}` // lockKey for atomicity
+    );
   }
 
   // 사용자 상태 업데이트 (복원용)
   async updateUserStatus(userEmail: string, newStatus: string): Promise<void> {
-    try {
-      const accessToken = await this.getAccessToken();
-      
-      // 사용자 행 찾기
-      const getResponse = await requestQueue.enqueue(
-        `updateUserStatus-read-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+    return requestQueue.enqueue(
+      `updateUserStatus-${userEmail}`,
+      async () => {
+        try {
+          const accessToken = await this.getAccessToken();
+          
+          // 사용자 행 찾기 - direct fetch call
+          const getResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!getResponse.ok) {
+            throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+          }
+
+          const data = await getResponse.json();
+          const rows = data.values || [];
+          
+          // 사용자 행 검색
+          let userRowIndex = -1;
+          for (let i = 1; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] && 
+                rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+              userRowIndex = i;
+              break;
             }
           }
-        )
-      );
-
-      if (!getResponse.ok) {
-        throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
-      }
-
-      const data = await getResponse.json();
-      const rows = data.values || [];
-      
-      // 사용자 행 검색
-      let userRowIndex = -1;
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i] && rows[i][0] && 
-            rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
-          userRowIndex = i;
-          break;
-        }
-      }
-      
-      if (userRowIndex === -1) {
-        throw new Error(`User ${userEmail} not found in Google Sheets`);
-      }
-      
-      // STATUS 컬럼 업데이트 (Y열, 인덱스 24)
-      const range = `RPS!Y${userRowIndex + 1}`;
-      console.log(`🔄 Updating user ${userEmail} status to "${newStatus}" in row ${userRowIndex + 1}`);
-      
-      const updateResponse = await requestQueue.enqueue(
-        `updateUserStatus-update-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              values: [[newStatus]]
-            })
+          
+          if (userRowIndex === -1) {
+            throw new Error(`User ${userEmail} not found in Google Sheets`);
           }
-        )
-      );
+          
+          // STATUS 컬럼 업데이트 (Y열, 인덱스 24)
+          const range = `RPS!Y${userRowIndex + 1}`;
+          console.log(`🔄 Updating user ${userEmail} status to "${newStatus}" in row ${userRowIndex + 1}`);
+          
+          // Direct fetch call for update
+          const updateResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                values: [[newStatus]]
+              })
+            }
+          );
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text();
-        throw new Error(`Failed to update user status: ${updateResponse.status} ${errorText}`);
-      }
+          if (!updateResponse.ok) {
+            const errorText = await updateResponse.text();
+            throw new Error(`Failed to update user status: ${updateResponse.status} ${errorText}`);
+          }
 
-      console.log(`✅ User ${userEmail} status updated to "${newStatus}"`);
-    } catch (error: any) {
-      console.error(`❌ Error updating user ${userEmail} status:`, error);
-      throw new Error(`상태 업데이트 실패: ${error?.message || 'Unknown error'}`);
-    }
+          console.log(`✅ User ${userEmail} status updated to "${newStatus}"`);
+        } catch (error: any) {
+          console.error(`❌ Error updating user ${userEmail} status:`, error);
+          throw new Error(`상태 업데이트 실패: ${error?.message || 'Unknown error'}`);
+        }
+      },
+      `user:${userEmail}` // lockKey for atomicity
+    );
   }
 
   // 관리자용: 모든 사용자 데이터 가져오기
