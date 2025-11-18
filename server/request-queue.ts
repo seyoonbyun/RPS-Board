@@ -7,6 +7,7 @@ interface QueuedRequest<T> {
   reject: (error: Error) => void;
   timestamp: number;
   retryCount: number;
+  lockKey?: string;
 }
 
 class RequestQueue {
@@ -15,6 +16,8 @@ class RequestQueue {
   private requestTimestamps: number[] = [];
   private isProcessing = false;
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private locks = new Map<string, Promise<void>>();
+  private lockOwners = new Map<string, string>();
 
   constructor() {
     this.startCleanupInterval();
@@ -30,6 +33,36 @@ class RequestQueue {
     const now = Date.now();
     const cutoff = now - API_RATE_LIMITS.RATE_LIMIT_WINDOW_MS;
     this.requestTimestamps = this.requestTimestamps.filter(ts => ts > cutoff);
+  }
+
+  private async acquireLock(lockKey: string, requestId: string): Promise<void> {
+    while (this.locks.has(lockKey)) {
+      const owner = this.lockOwners.get(lockKey);
+      console.log(`🔒 Request ${requestId} waiting for lock "${lockKey}" (currently held by ${owner})`);
+      await this.locks.get(lockKey);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    let resolveLock: () => void;
+    const lockPromise = new Promise<void>((resolve) => {
+      resolveLock = resolve;
+    });
+
+    this.locks.set(lockKey, lockPromise);
+    this.lockOwners.set(lockKey, requestId);
+    
+    console.log(`🔓 Request ${requestId} acquired lock "${lockKey}"`);
+
+    return;
+  }
+
+  private releaseLock(lockKey: string, requestId: string): void {
+    const owner = this.lockOwners.get(lockKey);
+    if (owner === requestId) {
+      this.locks.delete(lockKey);
+      this.lockOwners.delete(lockKey);
+      console.log(`🔓 Request ${requestId} released lock "${lockKey}"`);
+    }
   }
 
   private canMakeRequest(): boolean {
@@ -50,6 +83,10 @@ class RequestQueue {
     const startTime = Date.now();
     
     try {
+      if (request.lockKey) {
+        await this.acquireLock(request.lockKey, request.id);
+      }
+
       this.activeRequests++;
       this.requestTimestamps.push(startTime);
 
@@ -82,6 +119,10 @@ class RequestQueue {
       }
     } finally {
       this.activeRequests--;
+      
+      if (request.lockKey) {
+        this.releaseLock(request.lockKey, request.id);
+      }
     }
   }
 
@@ -107,7 +148,7 @@ class RequestQueue {
     this.isProcessing = false;
   }
 
-  async enqueue<T>(id: string, execute: () => Promise<T>): Promise<T> {
+  async enqueue<T>(id: string, execute: () => Promise<T>, lockKey?: string): Promise<T> {
     if (this.queue.length >= API_RATE_LIMITS.MAX_QUEUE_SIZE) {
       throw new Error('Queue is full. Too many concurrent requests.');
     }
@@ -119,12 +160,14 @@ class RequestQueue {
         resolve,
         reject,
         timestamp: Date.now(),
-        retryCount: 0
+        retryCount: 0,
+        lockKey
       };
 
       this.queue.push(request);
       
-      console.log(`📝 Enqueued request ${id} (queue size: ${this.queue.length}, active: ${this.activeRequests})`);
+      const lockInfo = lockKey ? ` [LOCK: ${lockKey}]` : '';
+      console.log(`📝 Enqueued request ${id}${lockInfo} (queue size: ${this.queue.length}, active: ${this.activeRequests})`);
       
       this.processQueue();
     });
