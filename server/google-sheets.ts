@@ -2,6 +2,7 @@ import type { ScoreboardData } from '@shared/schema';
 import { SHEET_COLUMN_INDICES, BUSINESS_CONFIG } from '@shared/constants';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
+import { requestQueue } from './request-queue';
 
 interface GoogleSheetsConfig {
   apiKey: string;
@@ -167,14 +168,18 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      // 요청 큐를 통해 처리하여 동시 접속 문제 해결
+      const getResponse = await requestQueue.enqueue(
+        `getUserProfile-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -299,14 +304,18 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       // 동적 사용자 관리를 위해 전체 시트 데이터 조회 (최대 5000행)
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      // 요청 큐를 통해 처리하여 동시 접속 문제 해결
+      const getResponse = await requestQueue.enqueue(
+        `checkUserCredentials-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -415,14 +424,17 @@ class GoogleSheetsService {
 
   async getUserAuth(email: string): Promise<string | null> {
     try {
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
+      const response = await requestQueue.enqueue(
+        `getUserAuth-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
           }
-        }
+        )
       );
 
       if (!response.ok) {
@@ -477,14 +489,17 @@ class GoogleSheetsService {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);
       
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
+      const response = await requestQueue.enqueue(
+        `checkAdminPermission-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
           }
-        }
+        )
       );
 
       if (!response.ok) {
@@ -584,14 +599,17 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       // Check if user already exists
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const getResponse = await requestQueue.enqueue(
+        `addNewUser-check-${userData.email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -666,18 +684,21 @@ class GoogleSheetsService {
 
       const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
       
-      const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: [newUserData]
-          })
-        }
+      const updateResponse = await requestQueue.enqueue(
+        `addNewUser-update-${userData.email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [newUserData]
+            })
+          }
+        )
       );
 
       if (!updateResponse.ok) {
@@ -750,7 +771,7 @@ class GoogleSheetsService {
       });
       
       // Add total partners and achievement (U열, V열) - 모든 챕터 정상 적용
-      values.push(profitPartners); // U열: 총 R파트너 수 - 숫자 타입으로 (index 20)
+      values.push(profitPartners.toString()); // U열: 총 R파트너 수 - 문자열로 (index 20)
       values.push(`${achievement}%`); // V열: 달성 (index 21)
       
       // Add ID, PW and STATUS columns (W열, X열, Y열) - 기존 값 유지  
@@ -762,14 +783,17 @@ class GoogleSheetsService {
       console.log('Data to sync to Google Sheets (with full stage text):', values);
 
       // 동적 사용자 관리: 전체 시트에서 사용자 검색 (PW와 STATUS 포함해서 Y열까지, 최대 5000행)
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Y5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const getResponse = await requestQueue.enqueue(
+        `syncScoreboardData-read-${data.userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Y5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -878,7 +902,7 @@ class GoogleSheetsService {
           }
           
           // ✅ U/V열 항상 최신 계산값으로 업데이트 (IMPORTRANGE 호환성 보장)
-          values[20] = updatedProfitPartners; // U열: 총 R파트너 수 - 숫자 타입으로
+          values[20] = updatedProfitPartners.toString(); // U열: 총 R파트너 수 - 문자열로
           values[21] = `${updatedAchievement}%`; // V열: 달성률
           
           console.log(`📊 U/V columns updated for ${data.userEmail}: U="${updatedProfitPartners}", V="${updatedAchievement}%"`);
@@ -906,16 +930,19 @@ class GoogleSheetsService {
           accessTokenStart: accessToken.substring(0, 20) + '...'
         });
 
-        updateResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: requestBody
-          }
+        updateResponse = await requestQueue.enqueue(
+          `syncScoreboardData-update-${data.userEmail}`,
+          async () => await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: requestBody
+            }
+          )
         );
 
         // 🔥 CRITICAL DEBUG: 응답 상세 분석
@@ -931,16 +958,19 @@ class GoogleSheetsService {
         // 🔥 IMMEDIATE VERIFICATION: 업데이트 직후 즉시 구글 시트에서 값 재확인
         console.log(`🔥 IMMEDIATE VERIFICATION: Checking if update actually persisted in Google Sheets...`);
         try {
-          const verifyResponse = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}`,
-            {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate'
+          const verifyResponse = await requestQueue.enqueue(
+            `syncScoreboardData-verify-${data.userEmail}`,
+            async () => await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!G${userRowIndex + 1}:G${userRowIndex + 1}`,
+              {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate'
+                }
               }
-            }
+            )
           );
           
           if (verifyResponse.ok) {
@@ -989,18 +1019,21 @@ class GoogleSheetsService {
         const range = `RPS!A${targetRow}:W${targetRow}`;
         console.log(`🆕 Adding new user ${data.userEmail} in row ${targetRow} with range ${range}`);
         
-        updateResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              values: [values]
-            })
-          }
+        updateResponse = await requestQueue.enqueue(
+          `syncScoreboardData-newuser-${data.userEmail}`,
+          async () => await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                values: [values]
+              })
+            }
+          )
         );
       }
 
@@ -1048,49 +1081,58 @@ class GoogleSheetsService {
       });
       
       // 헤더 확인 및 추가
-      const headerResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const headerResponse = await requestQueue.enqueue(
+        `addWithdrawalHistory-header-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
       
       if (headerResponse.ok) {
         const headerData = await headerResponse.json();
         if (!headerData.values || headerData.values.length === 0) {
           // 헤더가 없으면 추가
-          await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1?valueInputOption=USER_ENTERED`,
-            {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                values: [['탈퇴일시', '이메일', '지역', '챕터', '멤버명']]
-              })
-            }
+          await requestQueue.enqueue(
+            `addWithdrawalHistory-createheader-${userEmail}`,
+            async () => await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1?valueInputOption=USER_ENTERED`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  values: [['탈퇴일시', '이메일', '지역', '챕터', '멤버명']]
+                })
+              }
+            )
           );
         }
       }
       
       // 탈퇴 히스토리 데이터 추가
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: [[withdrawalTime, userEmail, region, chapter, memberName]]
-          })
-        }
+      const response = await requestQueue.enqueue(
+        `addWithdrawalHistory-append-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [[withdrawalTime, userEmail, region, chapter, memberName]]
+            })
+          }
+        )
       );
       
       if (!response.ok) {
@@ -1113,14 +1155,17 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       // 현재 시트 정보 가져오기
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const response = await requestQueue.enqueue(
+        'ensureWithdrawalHistorySheet-read',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
       
       if (!response.ok) {
@@ -1139,28 +1184,31 @@ class GoogleSheetsService {
         console.log('📋 탈퇴 히스토리 시트 생성 중...');
         
         // 새 시트 탭 생성
-        const createSheetResponse = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              requests: [{
-                addSheet: {
-                  properties: {
-                    title: 'WithdrawalHistory',
-                    gridProperties: {
-                      rowCount: 1000,
-                      columnCount: 5
+        const createSheetResponse = await requestQueue.enqueue(
+          'ensureWithdrawalHistorySheet-create',
+          async () => await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                requests: [{
+                  addSheet: {
+                    properties: {
+                      title: 'WithdrawalHistory',
+                      gridProperties: {
+                        rowCount: 1000,
+                        columnCount: 5
+                      }
                     }
                   }
-                }
-              }]
-            })
-          }
+                }]
+              })
+            }
+          )
         );
         
         if (!createSheetResponse.ok) {
@@ -1188,14 +1236,17 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const response = await requestQueue.enqueue(
+        'getWithdrawalHistory',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
       
       if (!response.ok) {
@@ -1220,7 +1271,7 @@ class GoogleSheetsService {
         region: row[2] || '',
         chapter: row[3] || '',
         memberName: row[4] || ''
-      })).filter(item => item.email); // 이메일이 있는 항목만 반환
+      })).filter((item: { withdrawalTime: string; email: string; region: string; chapter: string; memberName: string }) => item.email); // 이메일이 있는 항목만 반환
       
     } catch (error) {
       console.error('탈퇴 히스토리 조회 중 오류:', error);
@@ -1238,14 +1289,17 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const response = await requestQueue.enqueue(
+        `getUserForWithdrawalHistory-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!response.ok) {
@@ -1284,14 +1338,17 @@ class GoogleSheetsService {
       const userInfo = await this.getUserForWithdrawalHistory(userEmail);
       
       // 사용자 행 찾기
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const getResponse = await requestQueue.enqueue(
+        `markUserAsWithdrawn-read-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -1318,27 +1375,30 @@ class GoogleSheetsService {
       console.log(`🗑️ Deleting user ${userEmail} from row ${userRowIndex + 1} (완전 삭제)`);
       
       // 구글 시트 API를 사용하여 행 완전 삭제
-      const deleteResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            requests: [{
-              deleteDimension: {
-                range: {
-                  sheetId: 0, // RPS 시트 ID (대부분 0)
-                  dimension: 'ROWS',
-                  startIndex: userRowIndex, // 0-based index
-                  endIndex: userRowIndex + 1 // exclusive
+      const deleteResponse = await requestQueue.enqueue(
+        `markUserAsWithdrawn-delete-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              requests: [{
+                deleteDimension: {
+                  range: {
+                    sheetId: 0, // RPS 시트 ID (대부분 0)
+                    dimension: 'ROWS',
+                    startIndex: userRowIndex, // 0-based index
+                    endIndex: userRowIndex + 1 // exclusive
+                  }
                 }
-              }
-            }]
-          })
-        }
+              }]
+            })
+          }
+        )
       );
 
       if (!deleteResponse.ok) {
@@ -1370,14 +1430,17 @@ class GoogleSheetsService {
       const accessToken = await this.getAccessToken();
       
       // 사용자 행 찾기
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const getResponse = await requestQueue.enqueue(
+        `updateUserStatus-read-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:X5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -1405,18 +1468,21 @@ class GoogleSheetsService {
       const range = `RPS!Y${userRowIndex + 1}`;
       console.log(`🔄 Updating user ${userEmail} status to "${newStatus}" in row ${userRowIndex + 1}`);
       
-      const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: [[newStatus]]
-          })
-        }
+      const updateResponse = await requestQueue.enqueue(
+        `updateUserStatus-update-${userEmail}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              values: [[newStatus]]
+            })
+          }
+        )
       );
 
       if (!updateResponse.ok) {
@@ -1436,14 +1502,17 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      const response = await requestQueue.enqueue(
+        `findUserByEmail-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!response.ok) {
@@ -1473,15 +1542,18 @@ class GoogleSheetsService {
       
       // 캐시 방지를 위한 타임스탬프 추가
       const timestamp = Date.now();
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000?t=${timestamp}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
+      const getResponse = await requestQueue.enqueue(
+        `getAllUsers-${timestamp}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000?t=${timestamp}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {
@@ -1549,14 +1621,18 @@ class GoogleSheetsService {
     try {
       const accessToken = await this.getAccessToken();
       
-      const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A5000`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      // 요청 큐를 통해 처리하여 동시 접속 문제 해결
+      const getResponse = await requestQueue.enqueue(
+        'getActiveUsers',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A5000`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
+        )
       );
 
       if (!getResponse.ok) {

@@ -192,3 +192,25 @@ export const SHEETS_CONFIG = {
   RANGE_PARTIAL: 'A1:Y5000',   // 부분 범위
   RANGE_EMAIL_ONLY: 'A1:A5000' // 이메일만
 } as const;
+
+// Google Sheets API Rate Limiting 및 동시성 제어 상수
+export const API_RATE_LIMITS = {
+  // Google Sheets API 공식 제한: 100 requests per 100 seconds per user
+  MAX_REQUESTS_PER_WINDOW: 60,        // 여유를 두고 60으로 설정
+  RATE_LIMIT_WINDOW_MS: 100000,       // 100초 윈도우
+  
+  // 동시 요청 제어
+  MAX_CONCURRENT_REQUESTS: 5,         // 최대 5개 동시 요청
+  
+  // Retry 설정
+  MAX_RETRY_ATTEMPTS: 3,              // 최대 3번 재시도
+  RETRY_DELAY_MS: 1000,               // 1초 대기 후 재시도
+  RETRY_BACKOFF_MULTIPLIER: 2,        // 지수 백오프 (1초 -> 2초 -> 4초)
+  
+  // 요청 타임아웃
+  REQUEST_TIMEOUT_MS: 30000,          // 30초 타임아웃
+  
+  // 큐 관리
+  QUEUE_CLEANUP_INTERVAL_MS: 60000,   // 1분마다 큐 정리
+  MAX_QUEUE_SIZE: 100                 // 최대 큐 크기
+} as const;
