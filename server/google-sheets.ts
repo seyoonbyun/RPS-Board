@@ -1342,10 +1342,7 @@ class GoogleSheetsService {
         try {
           const accessToken = await this.getAccessToken();
           
-          // 삭제 전에 사용자 정보 백업 (히스토리 기록용)
-          const userInfo = await this.getUserForWithdrawalHistory(userEmail);
-          
-          // 사용자 행 찾기 - direct fetch call
+          // 사용자 행 찾기 - direct fetch call (히스토리용 정보도 여기서 추출)
           const getResponse = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
             {
@@ -1363,12 +1360,20 @@ class GoogleSheetsService {
           const data = await getResponse.json();
           const rows = data.values || [];
           
-          // 사용자 행 검색
+          // 사용자 행 검색 및 정보 추출 (히스토리용)
           let userRowIndex = -1;
+          let userInfo: { email: string; region: string; chapter: string; memberName: string } | null = null;
+          
           for (let i = 1; i < rows.length; i++) {
             if (rows[i] && rows[i][0] && 
                 rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
               userRowIndex = i;
+              userInfo = {
+                email: rows[i][0] || '',
+                region: rows[i][1] || '',
+                chapter: rows[i][2] || '',
+                memberName: rows[i][3] || ''
+              };
               break;
             }
           }
@@ -1410,10 +1415,39 @@ class GoogleSheetsService {
 
           console.log(`✅ User ${userEmail} completely deleted from Google Sheets (행 삭제 완료)`);
           
-          // 탈퇴 히스토리 기록
+          // 탈퇴 히스토리 기록 - 직접 fetch로 처리 (중첩 enqueue 방지)
           if (userInfo) {
             try {
-              await this.addWithdrawalHistory(userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName);
+              const withdrawalTime = new Date().toLocaleString('ko-KR', {
+                timeZone: 'Asia/Seoul',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+              
+              // 직접 append API 호출
+              const historyResponse = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    values: [[withdrawalTime, userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName]]
+                  })
+                }
+              );
+              
+              if (historyResponse.ok) {
+                console.log(`✅ 탈퇴 히스토리 기록 완료: ${userEmail} (${withdrawalTime})`);
+              } else {
+                console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨)');
+              }
             } catch (historyError) {
               console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨):', historyError);
               // 히스토리 기록 실패해도 삭제는 완료되었으므로 계속 진행
