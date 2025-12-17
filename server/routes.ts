@@ -652,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin API: Bulk withdrawal
+  // Admin API: Bulk withdrawal (최적화됨 - 단일 batchUpdate로 여러 사용자 삭제)
   app.post("/api/admin/bulk-withdrawal", async (req, res) => {
     try {
       const { userEmails } = req.body;
@@ -661,55 +661,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "유효한 이메일 목록을 제공해주세요" });
       }
 
-      console.log(`🔄 Starting bulk withdrawal for ${userEmails.length} users:`, userEmails);
+      console.log(`🔄 Starting optimized bulk withdrawal for ${userEmails.length} users:`, userEmails);
       
-      let processedCount = 0;
-      const errors: string[] = [];
-
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+      
+      // 최적화된 일괄 삭제 메서드 사용 (단일 API 호출로 여러 행 삭제)
+      const result = await sheetsService.bulkMarkUsersAsWithdrawn(userEmails);
+      
+      // 로컬 데이터베이스에서도 사용자 데이터 삭제
       for (const email of userEmails) {
         try {
-          // Check if user exists in Google Sheets
-          const profile = await storage.getUserProfileFromGoogleSheets(email);
-          if (!profile) {
-            errors.push(`${email}: 사용자를 찾을 수 없습니다`);
-            continue;
-          }
-
-          // Mark user as withdrawn in Google Sheets
-          const sheetsService = getGoogleSheetsService();
-          if (!sheetsService) {
-            errors.push(`${email}: 구글 시트 서비스 초기화 실패`);
-            continue;
-          }
-          
-          await sheetsService.markUserAsWithdrawn(email);
-          
-          // Delete local user data if exists
           const localUser = await storage.getUserByEmail(email);
           if (localUser) {
             await storage.deleteUserData(localUser.id);
           }
-
-          processedCount++;
-          console.log(`✅ Bulk withdrawal completed for ${email}`);
-        } catch (error: any) {
-          console.error(`❌ Bulk withdrawal error for ${email}:`, error);
-          errors.push(`${email}: ${error.message}`);
+        } catch (localError) {
+          console.error(`⚠️ Local user data deletion failed for ${email}:`, localError);
         }
       }
 
-      const responseMessage = `${processedCount}명 탈퇴 처리 완료`;
+      const responseMessage = `${result.processedCount}명 탈퇴 처리 완료`;
       const response: any = { 
         message: responseMessage,
-        processedCount,
+        processedCount: result.processedCount,
         totalRequested: userEmails.length
       };
 
-      if (errors.length > 0) {
-        response.errors = errors;
-        response.message += ` (${errors.length}건 실패)`;
+      if (result.errors.length > 0) {
+        response.errors = result.errors;
+        response.message += ` (${result.errors.length}건 실패)`;
       }
 
+      console.log(`✅ Bulk withdrawal completed: ${result.processedCount}/${userEmails.length}`);
       res.json(response);
     } catch (error: any) {
       console.error("❌ Bulk withdrawal error:", error);

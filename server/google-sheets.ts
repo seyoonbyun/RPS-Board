@@ -1463,6 +1463,156 @@ class GoogleSheetsService {
     );
   }
 
+  // 일괄 사용자 삭제 - 여러 사용자를 한 번에 삭제 (최적화)
+  async bulkMarkUsersAsWithdrawn(userEmails: string[]): Promise<{ processedCount: number; errors: string[] }> {
+    return requestQueue.enqueue(
+      `bulkMarkUsersAsWithdrawn`,
+      async () => {
+        const errors: string[] = [];
+        let processedCount = 0;
+        
+        try {
+          const accessToken = await this.getAccessToken();
+          
+          // 1. 시트 데이터 한 번만 읽기
+          const getResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!getResponse.ok) {
+            throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+          }
+
+          const data = await getResponse.json();
+          const rows = data.values || [];
+          
+          // 2. 삭제할 사용자들의 행 인덱스와 정보 수집
+          const usersToDelete: { rowIndex: number; email: string; region: string; chapter: string; memberName: string }[] = [];
+          
+          for (const email of userEmails) {
+            const normalizedEmail = email.trim().toLowerCase();
+            let found = false;
+            
+            for (let i = 1; i < rows.length; i++) {
+              if (rows[i] && rows[i][0] && 
+                  rows[i][0].toString().trim().toLowerCase() === normalizedEmail) {
+                usersToDelete.push({
+                  rowIndex: i,
+                  email: rows[i][0] || '',
+                  region: rows[i][1] || '',
+                  chapter: rows[i][2] || '',
+                  memberName: rows[i][3] || ''
+                });
+                found = true;
+                break;
+              }
+            }
+            
+            if (!found) {
+              errors.push(`${email}: 사용자를 찾을 수 없습니다`);
+            }
+          }
+          
+          if (usersToDelete.length === 0) {
+            console.log('⚠️ 삭제할 사용자가 없습니다');
+            return { processedCount: 0, errors };
+          }
+          
+          // 3. 행 인덱스를 내림차순으로 정렬 (뒤에서부터 삭제해야 인덱스가 밀리지 않음)
+          usersToDelete.sort((a, b) => b.rowIndex - a.rowIndex);
+          
+          console.log(`🗑️ Bulk deleting ${usersToDelete.length} users: ${usersToDelete.map(u => u.email).join(', ')}`);
+          
+          // 4. batchUpdate로 여러 행 한 번에 삭제
+          const deleteRequests = usersToDelete.map(user => ({
+            deleteDimension: {
+              range: {
+                sheetId: 0,
+                dimension: 'ROWS',
+                startIndex: user.rowIndex,
+                endIndex: user.rowIndex + 1
+              }
+            }
+          }));
+          
+          const deleteResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ requests: deleteRequests })
+            }
+          );
+
+          if (!deleteResponse.ok) {
+            const errorText = await deleteResponse.text();
+            throw new Error(`Failed to bulk delete users: ${deleteResponse.status} ${errorText}`);
+          }
+          
+          processedCount = usersToDelete.length;
+          console.log(`✅ Bulk deleted ${processedCount} users from Google Sheets`);
+          
+          // 5. 탈퇴 히스토리 일괄 기록
+          const withdrawalTime = new Date().toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          
+          const historyRows = usersToDelete.map(user => [
+            withdrawalTime,
+            user.email,
+            user.region,
+            user.chapter,
+            user.memberName
+          ]);
+          
+          try {
+            const historyResponse = await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ values: historyRows })
+              }
+            );
+            
+            if (historyResponse.ok) {
+              console.log(`✅ 탈퇴 히스토리 일괄 기록 완료: ${processedCount}명`);
+            } else {
+              console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨)');
+            }
+          } catch (historyError) {
+            console.error('⚠️ 탈퇴 히스토리 기록 실패 (삭제는 완료됨):', historyError);
+          }
+          
+          return { processedCount, errors };
+          
+        } catch (error: any) {
+          console.error(`❌ Bulk withdrawal error:`, error);
+          throw new Error(`일괄 삭제 실패: ${error?.message || 'Unknown error'}`);
+        }
+      },
+      'bulk-withdrawal' // lockKey
+    );
+  }
+
   // 사용자 상태 업데이트 (복원용)
   async updateUserStatus(userEmail: string, newStatus: string): Promise<void> {
     return requestQueue.enqueue(
