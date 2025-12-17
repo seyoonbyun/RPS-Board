@@ -1975,7 +1975,7 @@ export default function AdminPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 text-gray-900 font-semibold">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
-              멤버 일괄 탈퇴 처리 진행중
+              선택된 멤버 탈퇴 진행중
             </DialogTitle>
             <DialogDescription className="text-gray-600 mt-2">
               선택하신 멤버들의 탈퇴 처리를 진행하고 있습니다.<br />
