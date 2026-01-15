@@ -851,8 +851,8 @@ class GoogleSheetsService {
           values[1] = existingRow[1] || data.region || ''; // 지역 (구글 시트 우선)
           values[2] = existingRow[2] || data.partner || ''; // 챕터 (구글 시트 우선)
           values[3] = existingRow[3] || data.memberName || ''; // 멤버명 (구글 시트 우선)
-          values[4] = existingRow[4] || data.industry || ''; // 산업군 - 구글 시트 우선 (read-only)
-          values[5] = existingRow[5] || data.company || ''; // 회사 - 구글 시트 우선 (read-only)
+          values[4] = data.industry || existingRow[4] || ''; // 산업군 - 앱에서 수정 가능 (Admin만 프론트엔드에서 수정 허용)
+          values[5] = data.company || existingRow[5] || ''; // 회사 - 앱에서 수정 가능 (모든 사용자)
           // 양방향 연동 필드 (specialty, targetCustomer)는 앱에서 전달된 최신 데이터 사용
           // values[6] = specialty (G열) - 앱에서 업데이트된 값 사용
           // values[7] = targetCustomer (H열) - 앱에서 업데이트된 값 사용

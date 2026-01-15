@@ -53,6 +53,7 @@ interface UserProfile {
   rpartner4Stage: string;
   totalPartners: string;
   achievement: string;
+  auth?: string;
 }
 
 export default function PartnerForm({ userId, initialData, achievementData, onDataSaved }: PartnerFormProps) {
@@ -416,30 +417,33 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                 <FormField
                   control={form.control}
                   name="industry"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>산업군 <span className="text-xs text-gray-500">_BNI 커넥트 기준</span></FormLabel>
-                      <FormControl>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Input 
-                                {...field} 
-                                value={field.value || ""} 
-                                placeholder="BNI Connect 산업 대분류" 
-                                readOnly 
-                                className="bg-gray-50 cursor-not-allowed truncate"
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">
-                              <p className="whitespace-normal">{field.value || "BNI Connect 산업 대분류"}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const isAdmin = userProfile?.auth === 'Admin' || userProfile?.auth === 'Growth';
+                    return (
+                      <FormItem>
+                        <FormLabel>산업군 <span className="text-xs text-gray-500">_BNI 커넥트 기준</span></FormLabel>
+                        <FormControl>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Input 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  placeholder="BNI Connect 산업 대분류" 
+                                  readOnly={!isAdmin}
+                                  className={isAdmin ? "truncate" : "bg-gray-50 cursor-not-allowed truncate"}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p className="whitespace-normal">{field.value || "BNI Connect 산업 대분류"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
                 
                 <FormField
@@ -449,7 +453,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                     <FormItem>
                       <FormLabel>회사명</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} placeholder="회사명" readOnly className="bg-gray-50 cursor-not-allowed" />
+                        <Input {...field} value={field.value || ""} placeholder="회사명" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
