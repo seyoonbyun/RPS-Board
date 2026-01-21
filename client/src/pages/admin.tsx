@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -98,6 +98,19 @@ export default function AdminPage() {
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [showWithdrawalProgress, setShowWithdrawalProgress] = useState(false);
+  const [activeSection, setActiveSection] = useState<'none' | 'withdrawal' | 'add' | 'edit'>('none');
+  const [withdrawalMethod, setWithdrawalMethod] = useState<'email' | 'list'>('list');
+  const [editSearchTerm, setEditSearchTerm] = useState('');
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    region: '',
+    chapter: '',
+    memberName: '',
+    industry: '',
+    company: '',
+    password: '',
+    auth: 'Member'
+  });
   const [newUser, setNewUser] = useState({
     email: '',
     region: '',
@@ -844,6 +857,722 @@ export default function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 3개 카드 박스 네비게이션 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* 카드 1: 멤버 탈퇴 처리 */}
+        <div 
+          onClick={() => setActiveSection(activeSection === 'withdrawal' ? 'none' : 'withdrawal')}
+          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
+            activeSection === 'withdrawal' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
+          }`}
+        >
+          <div className="p-6 text-center">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                1
+              </div>
+            </div>
+            <div className="mt-4 mb-4">
+              <UserMinus className="w-12 h-12 mx-auto text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">멤버 탈퇴 처리</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              이메일 직접 입력 또는<br/>멤버 목록에서 선택하여 탈퇴 처리
+            </p>
+            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+              activeSection === 'withdrawal' 
+                ? 'bg-red-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
+            }`}>
+              {activeSection === 'withdrawal' ? '닫기' : '탈퇴 처리하기'}
+            </button>
+          </div>
+        </div>
+
+        {/* 카드 2: 새로운 멤버 추가 */}
+        <div 
+          onClick={() => setActiveSection(activeSection === 'add' ? 'none' : 'add')}
+          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
+            activeSection === 'add' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
+          }`}
+        >
+          <div className="p-6 text-center">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                2
+              </div>
+            </div>
+            <div className="mt-4 mb-4">
+              <UserPlus className="w-12 h-12 mx-auto text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">새로운 멤버 추가</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              개별 멤버 추가 또는<br/>CSV 파일로 일괄 등록
+            </p>
+            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+              activeSection === 'add' 
+                ? 'bg-red-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
+            }`}>
+              {activeSection === 'add' ? '닫기' : '멤버 추가하기'}
+            </button>
+          </div>
+        </div>
+
+        {/* 카드 3: 기존 멤버 정보 수정 */}
+        <div 
+          onClick={() => setActiveSection(activeSection === 'edit' ? 'none' : 'edit')}
+          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
+            activeSection === 'edit' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
+          }`}
+        >
+          <div className="p-6 text-center">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                3
+              </div>
+            </div>
+            <div className="mt-4 mb-4">
+              <Edit3 className="w-12 h-12 mx-auto text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">기존 멤버 정보 수정</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              멤버를 검색하여<br/>정보를 수정합니다
+            </p>
+            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+              activeSection === 'edit' 
+                ? 'bg-red-600 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
+            }`}>
+              {activeSection === 'edit' ? '닫기' : '정보 수정하기'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 섹션 1: 멤버 탈퇴 처리 */}
+      {activeSection === 'withdrawal' && (
+        <Card className="border-2 border-red-200">
+          <CardHeader className="bg-red-50">
+            <CardTitle className="flex items-center text-lg text-red-700">
+              <UserMinus className="mr-2 w-5 h-5" />
+              멤버 탈퇴 처리
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {/* 방법 선택 */}
+            <div className="flex gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="withdrawalMethod" 
+                  checked={withdrawalMethod === 'email'} 
+                  onChange={() => setWithdrawalMethod('email')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={withdrawalMethod === 'email' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  이메일 직접 입력
+                </span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="withdrawalMethod" 
+                  checked={withdrawalMethod === 'list'} 
+                  onChange={() => setWithdrawalMethod('list')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={withdrawalMethod === 'list' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  멤버 목록에서 선택
+                </span>
+              </label>
+            </div>
+
+            {/* 방법 1: 이메일 직접 입력 */}
+            {withdrawalMethod === 'email' && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    탈퇴할 멤버 이메일 (여러 명은 줄바꿈으로 구분)
+                  </Label>
+                  <textarea
+                    value={bulkEmails}
+                    onChange={(e) => setBulkEmails(e.target.value)}
+                    placeholder="user1@example.com&#10;user2@example.com&#10;user3@example.com"
+                    className="w-full mt-2 p-3 border rounded-lg h-32 resize-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                  {bulkEmails.trim() && (
+                    <div className="mt-2 text-sm">
+                      {emailValidation.isValid ? (
+                        <span className="text-green-600">입력된 이메일: {emailValidation.validCount}개</span>
+                      ) : (
+                        <span className="text-red-600">
+                          잘못된 이메일 형식: {emailValidation.invalidEmails?.join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      disabled={!emailValidation.isValid || bulkWithdrawalMutation.isPending}
+                    >
+                      <UserMinus className="w-4 h-4 mr-2" />
+                      {bulkWithdrawalMutation.isPending ? '처리 중...' : '입력한 멤버 탈퇴 처리'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {emailValidation.validCount}명의 멤버를 탈퇴 처리하시겠습니까?
+                        이 작업은 되돌릴 수 있습니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => {
+                          const emails = bulkEmails.trim().split('\n').map(e => e.trim()).filter(e => e);
+                          bulkWithdrawalMutation.mutate(emails);
+                        }}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        탈퇴 처리
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+
+            {/* 방법 2: 멤버 목록에서 선택 */}
+            {withdrawalMethod === 'list' && (
+              <div className="space-y-4">
+                {/* 필터 */}
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm whitespace-nowrap">지역:</Label>
+                    <Select value={regionFilter} onValueChange={setRegionFilter}>
+                      <SelectTrigger className="w-32 bg-white">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="__all__">전체</SelectItem>
+                        {uniqueRegions.map(region => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm whitespace-nowrap">챕터:</Label>
+                    <Select value={chapterFilter} onValueChange={setChapterFilter}>
+                      <SelectTrigger className="w-32 bg-white">
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="__all__">전체</SelectItem>
+                        {uniqueChapters.map(chapter => (
+                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2 flex-1">
+                    <Label className="text-sm whitespace-nowrap">검색:</Label>
+                    <Input 
+                      placeholder="멤버명 검색..."
+                      value={memberNameSearch}
+                      onChange={(e) => setMemberNameSearch(e.target.value)}
+                      className="max-w-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* 선택 현황 및 전체 선택 */}
+                <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(u => selectedUsers.includes(u.email))}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-sm text-gray-600">전체 선택</span>
+                  </div>
+                  <Badge variant="secondary">
+                    선택됨: {selectedUsers.length}명
+                  </Badge>
+                </div>
+
+                {/* 멤버 목록 */}
+                <div className="max-h-80 overflow-y-auto border rounded-lg">
+                  {filteredActiveUsers.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      조건에 맞는 멤버가 없습니다
+                    </div>
+                  ) : (
+                    filteredActiveUsers.map(user => (
+                      <div 
+                        key={user.email} 
+                        className={`flex items-center p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                          selectedUsers.includes(user.email) ? 'bg-red-50' : ''
+                        }`}
+                      >
+                        <Checkbox 
+                          checked={selectedUsers.includes(user.email)}
+                          onCheckedChange={(checked) => handleUserSelection(user.email, checked === true)}
+                          className="mr-3"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{user.memberName}</div>
+                          <div className="text-sm text-gray-500">
+                            {user.region} / {user.chapter} - {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* 탈퇴 버튼 */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
+                    >
+                      <UserMinus className="w-4 h-4 mr-2" />
+                      {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
+                        이 작업은 되돌릴 수 있습니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleSelectedUsersWithdrawal}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        탈퇴 처리
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+
+            {/* 탈퇴 멤버 복원 링크 */}
+            <Separator className="my-6" />
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                탈퇴된 멤버를 다시 활성화하려면 히스토리를 확인하세요
+              </div>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
+                className="border-gray-300"
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                탈퇴 히스토리 {showWithdrawalHistory ? '닫기' : '보기'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 섹션 2: 멤버 추가 */}
+      {activeSection === 'add' && (
+        <Card className="border-2 border-red-200">
+          <CardHeader className="bg-red-50">
+            <CardTitle className="flex items-center text-lg text-red-700">
+              <UserPlus className="mr-2 w-5 h-5" />
+              새로운 멤버 추가
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {/* 방법 선택 */}
+            <div className="flex gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="addMode" 
+                  checked={addMode === 'single'} 
+                  onChange={() => setAddMode('single')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={addMode === 'single' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  개별 추가
+                </span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="addMode" 
+                  checked={addMode === 'csv'} 
+                  onChange={() => setAddMode('csv')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={addMode === 'csv' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  CSV 일괄 등록
+                </span>
+              </label>
+            </div>
+
+            {/* 개별 추가 폼 */}
+            {addMode === 'single' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">이메일 *</Label>
+                    <Input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                      placeholder="email@example.com"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">비밀번호 * (4자리)</Label>
+                    <Input
+                      type="text"
+                      maxLength={4}
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({...newUser, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                      placeholder="1234"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">지역 *</Label>
+                    <Select value={newUser.region} onValueChange={(value) => setNewUser({...newUser, region: value})}>
+                      <SelectTrigger className="mt-1 bg-white">
+                        <SelectValue placeholder="지역 선택" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {(regions as string[]).map((region: string) => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">챕터 *</Label>
+                    <Select value={newUser.chapter} onValueChange={(value) => setNewUser({...newUser, chapter: value})}>
+                      <SelectTrigger className="mt-1 bg-white">
+                        <SelectValue placeholder="챕터 선택" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {(chapters as string[]).map((chapter: string) => (
+                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">멤버명 *</Label>
+                    <Input
+                      value={newUser.memberName}
+                      onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
+                      placeholder="홍길동"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">산업군</Label>
+                    <Input
+                      value={newUser.industry}
+                      onChange={(e) => setNewUser({...newUser, industry: e.target.value})}
+                      placeholder="IT / 디자인 / 건설 등"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">회사명</Label>
+                    <Input
+                      value={newUser.company}
+                      onChange={(e) => setNewUser({...newUser, company: e.target.value})}
+                      placeholder="회사명"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">권한</Label>
+                    <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
+                      <SelectTrigger className="mt-1 bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="Member">Member</SelectItem>
+                        <SelectItem value="Growth">Growth</SelectItem>
+                        <SelectItem value="Admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleAddUser}
+                  disabled={addUserMutation.isPending || !newUser.email || !newUser.region || !newUser.chapter || !newUser.memberName || newUser.password.length !== 4}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {addUserMutation.isPending ? '추가 중...' : '멤버 추가'}
+                </Button>
+              </div>
+            )}
+
+            {/* CSV 일괄 등록 */}
+            {addMode === 'csv' && (
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                  <ObjectUploader 
+                    onComplete={(file: File) => {
+                      console.log('CSV uploaded:', file.name);
+                    }}
+                    allowedFileTypes={['.csv', '.xlsx']}
+                  >
+                    <div className="flex flex-col items-center">
+                      <Upload className="w-12 h-12 text-gray-400 mb-4" />
+                      <span className="text-gray-600">파일을 드래그하거나 클릭하여 선택</span>
+                      <p className="text-sm text-gray-500 mt-2">.csv, .xlsx 파일 지원</p>
+                    </div>
+                  </ObjectUploader>
+                </div>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const csvContent = "이메일,지역,챕터,멤버명,산업군,회사명,비밀번호,권한\nexample@email.com,서울,하이,홍길동,IT,테크회사,1234,Member";
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'member_template.csv';
+                    link.click();
+                  }}
+                  className="border-gray-300"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  양식 다운로드
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 섹션 3: 기존 멤버 정보 수정 */}
+      {activeSection === 'edit' && (
+        <Card className="border-2 border-red-200">
+          <CardHeader className="bg-red-50">
+            <CardTitle className="flex items-center text-lg text-red-700">
+              <Edit3 className="mr-2 w-5 h-5" />
+              기존 멤버 정보 수정
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {/* 검색 */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1">
+                <Input 
+                  placeholder="이메일 또는 멤버명으로 검색..."
+                  value={editSearchTerm}
+                  onChange={(e) => setEditSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Button variant="outline" className="border-gray-300">
+                <Search className="w-4 h-4 mr-2" />
+                검색
+              </Button>
+            </div>
+
+            {/* 검색 결과 */}
+            {editSearchTerm && (
+              <div className="space-y-3">
+                {activeUsers
+                  .filter(user => 
+                    user.email.toLowerCase().includes(editSearchTerm.toLowerCase()) ||
+                    user.memberName.toLowerCase().includes(editSearchTerm.toLowerCase())
+                  )
+                  .slice(0, 10)
+                  .map(user => (
+                    <div 
+                      key={user.email}
+                      className={`p-4 border rounded-lg ${
+                        editingUser?.email === user.email ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
+                      }`}
+                    >
+                      {editingUser?.email === user.email ? (
+                        /* 편집 모드 */
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-medium text-red-700">정보 수정 중: {user.memberName}</h4>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setEditingUser(null)}
+                            >
+                              취소
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-sm">지역</Label>
+                              <Select 
+                                value={editFormData.region} 
+                                onValueChange={(value) => setEditFormData({...editFormData, region: value})}
+                              >
+                                <SelectTrigger className="mt-1 bg-white">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  {(regions as string[]).map((region: string) => (
+                                    <SelectItem key={region} value={region}>{region}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">챕터</Label>
+                              <Select 
+                                value={editFormData.chapter} 
+                                onValueChange={(value) => setEditFormData({...editFormData, chapter: value})}
+                              >
+                                <SelectTrigger className="mt-1 bg-white">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                  {(chapters as string[]).map((chapter: string) => (
+                                    <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-sm">멤버명</Label>
+                              <Input
+                                value={editFormData.memberName}
+                                onChange={(e) => setEditFormData({...editFormData, memberName: e.target.value})}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">산업군</Label>
+                              <Input
+                                value={editFormData.industry}
+                                onChange={(e) => setEditFormData({...editFormData, industry: e.target.value})}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">회사명</Label>
+                              <Input
+                                value={editFormData.company}
+                                onChange={(e) => setEditFormData({...editFormData, company: e.target.value})}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">비밀번호 재설정 (4자리)</Label>
+                              <Input
+                                type="text"
+                                maxLength={4}
+                                value={editFormData.password}
+                                onChange={(e) => setEditFormData({...editFormData, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                                placeholder="변경 시 입력"
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-4">
+                            <Button 
+                              onClick={() => {
+                                // TODO: API 호출하여 수정 저장
+                                toast({
+                                  title: '저장 완료',
+                                  description: `${editFormData.memberName}님의 정보가 수정되었습니다.`,
+                                  duration: 2500
+                                });
+                                setEditingUser(null);
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              저장
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              onClick={() => setEditingUser(null)}
+                            >
+                              취소
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* 목록 모드 */
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-gray-900">{user.memberName}</div>
+                            <div className="text-sm text-gray-500">
+                              {user.region} / {user.chapter} - {user.email}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {user.industry} / {user.company}
+                            </div>
+                          </div>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingUser(user);
+                              setEditFormData({
+                                region: user.region,
+                                chapter: user.chapter,
+                                memberName: user.memberName,
+                                industry: user.industry,
+                                company: user.company,
+                                password: '',
+                                auth: 'Member'
+                              });
+                            }}
+                            className="border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            <Edit3 className="w-4 h-4 mr-1" />
+                            정보 수정
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                }
+                {activeUsers.filter(user => 
+                  user.email.toLowerCase().includes(editSearchTerm.toLowerCase()) ||
+                  user.memberName.toLowerCase().includes(editSearchTerm.toLowerCase())
+                ).length === 0 && (
+                  <div className="p-8 text-center text-gray-500">
+                    검색 결과가 없습니다
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!editSearchTerm && (
+              <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg">
+                <Search className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                <p>수정할 멤버를 검색해주세요</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 탈퇴 히스토리 섹션 */}
       {showWithdrawalHistory && (
