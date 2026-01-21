@@ -491,10 +491,131 @@ class GoogleSheetsService {
     }
   }
 
+  // Admin 시트에서 관리자 인증 확인 (별도 시트 관리)
+  // found: 이메일이 Admin 시트에 존재하는지
+  // valid: 비밀번호가 일치하는지
+  // auth: 권한 (Admin, Growth 등)
+  async checkAdminSheetCredentials(email: string, password: string): Promise<{ found: boolean; valid: boolean; auth: string | null }> {
+    try {
+      console.log(`🔐 Checking Admin sheet for ${email}...`);
+      
+      const accessToken = await this.getAccessToken();
+      
+      const response = await requestQueue.enqueue(
+        `checkAdminSheet-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:D?access_token=${accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+      );
+      
+      if (!response.ok) {
+        console.log('Admin sheet not found or not accessible');
+        return { found: false, valid: false, auth: null };
+      }
+      
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      if (rows.length < 2) {
+        console.log('Admin sheet is empty');
+        return { found: false, valid: false, auth: null };
+      }
+      
+      // Admin 시트 구조: 이메일(A), 비밀번호(B), 권한(C), 이름(D)
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0]) continue;
+        
+        const emailInSheet = row[0].toString().trim().toLowerCase();
+        const passwordInSheet = row[1]?.toString().trim() || '';
+        const rawAuth = row[2]?.toString().trim() || 'Admin';
+        
+        // 권한 정규화: 대소문자 구분 없이 처리
+        const normalizedAuth = rawAuth.charAt(0).toUpperCase() + rawAuth.slice(1).toLowerCase();
+        const authInSheet = ['Admin', 'Growth', 'National'].includes(normalizedAuth) ? normalizedAuth : 'Admin';
+        
+        if (emailInSheet === email.toLowerCase()) {
+          console.log(`✅ Found admin ${email} in Admin sheet with auth: ${authInSheet}`);
+          
+          if (passwordInSheet === password) {
+            console.log(`✅ Admin ${email} password verified`);
+            return { found: true, valid: true, auth: authInSheet };
+          } else {
+            console.log(`❌ Admin ${email} password mismatch (found in Admin sheet but wrong password)`);
+            return { found: true, valid: false, auth: null };
+          }
+        }
+      }
+      
+      console.log(`📋 ${email} not found in Admin sheet`);
+      return { found: false, valid: false, auth: null };
+      
+    } catch (error) {
+      console.error('Error checking Admin sheet:', error);
+      return { found: false, valid: false, auth: null };
+    }
+  }
+
+  // Admin 시트에서 권한만 확인 (로그인 후 권한 체크용)
+  async getAdminSheetAuth(email: string): Promise<string | null> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await requestQueue.enqueue(
+        `getAdminSheetAuth-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:C?access_token=${accessToken}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        )
+      );
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0]) continue;
+        
+        const emailInSheet = row[0].toString().trim().toLowerCase();
+        if (emailInSheet === email.toLowerCase()) {
+          return row[2]?.toString().trim() || 'Admin';
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting admin sheet auth:', error);
+      return null;
+    }
+  }
+
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);
       
+      // 먼저 Admin 시트에서 확인
+      const adminSheetAuth = await this.getAdminSheetAuth(email);
+      if (adminSheetAuth) {
+        console.log(`✅ ${email} found in Admin sheet with auth: ${adminSheetAuth}`);
+        return true;
+      }
+      
+      // Admin 시트에 없으면 RPS 시트에서 확인
       const response = await requestQueue.enqueue(
         `checkAdminPermission-${email}`,
         async () => await fetch(

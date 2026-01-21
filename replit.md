@@ -8,6 +8,19 @@ Preferred communication style: Simple, everyday language.
 Form consistency preference: All form fields must require submit button activation for saving - no auto-save functionality to avoid user confusion.
 
 ## Recent Changes and Fixes
+- **2026-01-21**: ADMIN SHEET SEPARATION - 관리자 계정 별도 시트 관리 시스템 구현
+  - ✅ ADMIN SHEET SUPPORT: 구글 시트에 'Admin' 시트를 별도로 생성하여 관리자 계정 관리
+  - ✅ ADMIN SHEET STRUCTURE: 이메일(A열), 비밀번호(B열), 권한(C열), 이름(D열)
+  - ✅ PRIORITY AUTH CHECK: 로그인 시 Admin 시트 먼저 확인 → 없으면 RPS 시트에서 일반 멤버 확인
+  - ✅ ADMIN REDIRECT: Admin/Growth 권한 사용자는 로그인 시 자동으로 관리자 패널(/admin)로 이동
+  - ✅ LEGACY SUPPORT: RPS 시트의 AUTH 컬럼도 계속 지원 (하위 호환성)
+
+- **2026-01-21**: ADMIN PANEL UI RENEWAL - 관리자 패널 3개 카드 박스 네비게이션 리뉴얼
+  - ✅ CARD NAVIGATION: 멤버 탈퇴 처리 / 멤버 추가 / 정보 수정 3개 카드 박스 UI
+  - ✅ WITHDRAWAL METHODS: 이메일 직접 입력 또는 멤버 목록에서 선택 가능
+  - ✅ ADD MEMBER METHODS: 개별 추가 또는 CSV 일괄 등록 지원
+  - ✅ EDIT MEMBER: 검색을 통한 기존 멤버 정보 수정 기능 추가
+
 - **2025-08-22**: CHAPTER MEMBER RECOMMENDATION REMOVAL - 챕터 내 파워팀 멤버 추천 기능 완전 제거
   - ✅ UI SECTION REMOVED: 챕터 내 파워팀 멤버 추천 UI 섹션 완전 제거
   - ✅ API ENDPOINT REMOVED: `/api/chapter-synergy-members/:userId` 엔드포인트 제거
