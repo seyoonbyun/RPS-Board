@@ -60,12 +60,18 @@ export default function LoginPage() {
     onSuccess: (data) => {
       console.log('Login successful:', data);
       localStorage.setItem("bni_user", JSON.stringify(data.user));
+      
+      const isAdmin = data.user.auth === 'Admin' || data.user.auth === 'Growth';
+      
       toast({
         title: "로그인 성공",
-        description: "BNI 코리아 파워팀 스코어보드에 오신 것을 환영합니다!",
+        description: isAdmin 
+          ? "BNI 코리아 관리자 패널에 오신 것을 환영합니다!" 
+          : "BNI 코리아 파워팀 스코어보드에 오신 것을 환영합니다!",
         duration: CACHE_CONFIG.TOAST_DURATION,
       });
-      setLocation("/dashboard");
+      
+      setLocation(isAdmin ? "/admin" : "/dashboard");
     },
     onError: (error: any) => {
       console.error('Login error:', error);

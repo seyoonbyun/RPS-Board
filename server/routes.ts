@@ -74,7 +74,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Note: Password validation is now done against Google Sheets, not local storage
       
-      res.json({ user: { id: user.id, email: user.email } });
+      // Get user auth role from Google Sheets
+      const googleSheetsService = getGoogleSheetsService();
+      const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
+      
+      res.json({ user: { id: user.id, email: user.email, auth: userAuth || 'Member' } });
     } catch (error) {
       console.error("Login error:", error);
       res.status(400).json({ message: "올바른 이메일과 4자리 비밀번호를 입력해주세요" });
