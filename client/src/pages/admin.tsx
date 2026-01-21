@@ -608,6 +608,55 @@ export default function AdminPage() {
     addUserMutation.mutate(newUser);
   };
 
+  const handleAddAdmin = async () => {
+    if (!newUser.region || !newUser.memberName || !newUser.email || !newUser.password) {
+      toast({
+        title: "입력 오류",
+        description: "지역명, 담당자명, 이메일, 비밀번호는 필수 입력 사항입니다",
+        variant: "destructive",
+        className: "bg-white text-gray-900"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/add-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          region: newUser.region,
+          memberName: newUser.memberName,
+          email: newUser.email,
+          password: newUser.password,
+          auth: newUser.auth || 'Admin'
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "관리자 등록 완료",
+          description: `${newUser.email} 관리자가 Admin 시트에 등록되었습니다.`,
+          duration: 2500
+        });
+        setShowAddUserDialog(false);
+        setNewUser({ email: '', region: '', chapter: '', memberName: '', industry: '', company: '', password: '', auth: 'Admin' });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "등록 실패",
+          description: error.message || "관리자 등록에 실패했습니다.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "등록 실패",
+        description: "서버 오류가 발생했습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // 탈퇴된 멤버 선택 관련 핸들러
   const handleWithdrawnUserSelection = (email: string, checked: boolean) => {
     if (checked) {
@@ -733,7 +782,7 @@ export default function AdminPage() {
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                멤버 추가하기
+                관리자 추가하기
               </Button>
               
               {adminPermission?.auth === 'National' && (
@@ -750,11 +799,13 @@ export default function AdminPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setLocation('/dashboard')}
+                onClick={() => {
+                  localStorage.removeItem('currentUser');
+                  setLocation('/');
+                }}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
               >
-                <ArrowLeft className="mr-1 w-4 h-4" />
-                대시보드로 돌아가기
+                로그아웃
               </Button>
             </div>
           </div>
@@ -780,7 +831,7 @@ export default function AdminPage() {
                 size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                멤버 추가하기
+                관리자 추가하기
               </Button>
               <div className="grid grid-cols-2 gap-2">
                 {adminPermission?.auth === 'National' && (
@@ -797,11 +848,13 @@ export default function AdminPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setLocation('/dashboard')}
+                  onClick={() => {
+                    localStorage.removeItem('currentUser');
+                    setLocation('/');
+                  }}
                   className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
                 >
-                  <ArrowLeft className="mr-1 w-4 h-4" />
-                  대시보드로 돌아가기
+                  로그아웃
                 </Button>
               </div>
             </div>
@@ -2423,72 +2476,28 @@ export default function AdminPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
               <UserPlus className="mr-2 w-5 h-5 text-red-600" />
-              새로운 멤버 추가하기
+              새로운 관리자 추가하기
             </AlertDialogTitle>
             <AlertDialogDescription>
-              단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
+              Admin 시트에 새로운 관리자를 추가합니다.
               <br />
-              <small className="text-gray-500">* 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하는 정보로, 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</small>
+              <small className="text-gray-500">* 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW/비밀번호(D), AUTH/권한(E)</small>
             </AlertDialogDescription>
           </AlertDialogHeader>
           
           <div className="space-y-6">
-            {/* 탭 선택 */}
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setAddMode('single')}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  addMode === 'single'
-                    ? 'bg-red-600 text-white shadow border border-red-600'
-                    : 'text-gray-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600'
-                }`}
-              >
-                <Plus className="w-4 h-4 inline mr-2" />
-                멤버 개별 추가
-              </button>
-              <button
-                onClick={() => setAddMode('csv')}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  addMode === 'csv'
-                    ? 'bg-red-600 text-white shadow border border-red-600'
-                    : 'text-gray-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600'
-                }`}
-              >
-                <Plus className="w-4 h-4 inline mr-2" />
-                일괄 등록
-              </button>
-            </div>
+            {/* 관리자 추가는 개별 추가만 지원 */}
 
-            {/* 개별 사용자 추가 폼 */}
-            {addMode === 'single' && (
+            {/* 관리자 추가 폼 */}
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">이메일 *</label>
-                    <Input
-                      placeholder="user@example.com"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                      className="bg-white border border-red-600 placeholder-gray-light admin-input-field"
-                      style={{ "--placeholder-color": "rgb(107, 114, 128)" } as any}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">멤버명 *</label>
-                    <Input
-                      placeholder="홍길동"
-                      value={newUser.memberName}
-                      onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
-                      className="bg-white border-gray-300 placeholder-gray-light"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">지역 *</label>
+                    <label className="text-sm font-medium">지역명 *</label>
                     <div className="relative" ref={regionDropdownRef}>
                       <button
                         type="button"
                         onClick={() => setRegionDropdownOpen(!regionDropdownOpen)}
-                        className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-red-600 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                       >
                         <span className={newUser.region ? 'text-gray-900' : 'text-gray-400'}>
                           {newUser.region || '지역을 선택하세요'}
@@ -2521,65 +2530,25 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">챕터 *</label>
-                    <div className="relative" ref={chapterDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
-                        className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                      >
-                        <span className={newUser.chapter ? 'text-gray-900' : 'text-gray-400'}>
-                          {newUser.chapter || '챕터를 선택하세요'}
-                        </span>
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </button>
-                      {chapterDropdownOpen && (
-                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {isChaptersLoading ? (
-                            <div className="px-3 py-2 text-gray-500">챕터 목록을 불러오는 중...</div>
-                          ) : chapters.length > 0 ? (
-                            chapters.map((chapter: string) => (
-                              <button
-                                key={chapter}
-                                type="button"
-                                onClick={() => {
-                                  setNewUser({...newUser, chapter});
-                                  setChapterDropdownOpen(false);
-                                }}
-                                className="w-full px-3 py-2 text-left text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                              >
-                                {chapter}
-                              </button>
-                            ))
-                          ) : (
-                            <div className="px-3 py-2 text-gray-500">챕터 목록이 없습니다</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      산업군 <span className="text-xs text-gray-500 font-normal">_BNI 커넥트 기준</span> *
-                    </label>
+                    <label className="text-sm font-medium">담당자명 *</label>
                     <Input
-                      placeholder="IT"
-                      value={newUser.industry}
-                      onChange={(e) => setNewUser({...newUser, industry: e.target.value})}
+                      placeholder="홍길동"
+                      value={newUser.memberName}
+                      onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
                       className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">회사 *</label>
+                    <label className="text-sm font-medium">ID/이메일 *</label>
                     <Input
-                      placeholder="회사명"
-                      value={newUser.company}
-                      onChange={(e) => setNewUser({...newUser, company: e.target.value})}
+                      placeholder="admin@example.com"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                       className="bg-white border-gray-300 placeholder-gray-light"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">비밀번호 (휴대전화 뒷 4자리) *</label>
+                    <label className="text-sm font-medium">PW/비밀번호 (4자리) *</label>
                     <Input
                       placeholder="1234"
                       value={newUser.password}
@@ -2587,64 +2556,47 @@ export default function AdminPage() {
                       className="bg-white border-gray-300 placeholder:text-gray-400 text-gray-900"
                     />
                   </div>
-                  {/* 권한 선택 - National과 Admin 권한에서만 표시 */}
-                  {(adminPermission?.auth === 'National' || adminPermission?.auth === 'Admin') && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">권한 *</label>
-                      <div className="relative" ref={authDropdownRef}>
-                        <button
-                          type="button"
-                          onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
-                          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                        >
-                          <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
-                            {newUser.auth ? 
-                              (newUser.auth === 'National' ? 'National (최고관리자)' :
-                               newUser.auth === 'Admin' ? 'Admin (관리자)' :
-                               newUser.auth === 'Member' ? 'Member (일반회원)' : newUser.auth) 
-                              : '권한을 선택하세요'}
-                          </span>
-                          <ChevronDown className="h-4 w-4 opacity-50" />
-                        </button>
-                        {authDropdownOpen && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                            <div 
-                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                              onClick={() => {
-                                setNewUser({...newUser, auth: 'Admin'});
-                                setAuthDropdownOpen(false);
-                              }}
-                            >
-                              Admin (관리자)
-                            </div>
-                            <div 
-                              className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
-                              onClick={() => {
-                                setNewUser({...newUser, auth: 'Member'});
-                                setAuthDropdownOpen(false);
-                              }}
-                            >
-                              Member (일반회원)
-                            </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">AUTH/권한 *</label>
+                    <div className="relative" ref={authDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                      >
+                        <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
+                          {newUser.auth === 'Admin' ? 'Admin' : 'Admin'}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </button>
+                      {authDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                          <div 
+                            className="px-3 py-2 text-sm cursor-pointer hover:bg-red-600 hover:text-white transition-colors"
+                            onClick={() => {
+                              setNewUser({...newUser, auth: 'Admin'});
+                              setAuthDropdownOpen(false);
+                            }}
+                          >
+                            Admin
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <Button 
-                  onClick={handleAddUser}
+                  onClick={handleAddAdmin}
                   disabled={addUserMutation.isPending}
                   className="w-full bg-red-600 hover:bg-white hover:text-red-600 hover:border hover:border-red-600 text-white"
                 >
-                  {addUserMutation.isPending ? "등록 중..." : "멤버 등록"}
+                  {addUserMutation.isPending ? "등록 중..." : "관리자 등록"}
                 </Button>
               </div>
-            )}
 
-            {/* CSV 파일 업로드 섹션 */}
-            {addMode === 'csv' && (
+            {/* CSV 파일 업로드 섹션 - 관리자 추가에서는 미사용 */}
+            {false && (
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <p className="text-sm text-red-800 mb-3">
                   하단의 '일괄 등록 양식의 CSV 파일을 업로드하시면, 새로운 멤버의 RPS Board가 생성됩니다.

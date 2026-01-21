@@ -604,6 +604,45 @@ class GoogleSheetsService {
     }
   }
 
+  // Admin 시트에 새 관리자 추가
+  async addAdminToSheet(region: string, memberName: string, email: string, password: string, auth: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      console.log(`📝 Adding admin to Admin sheet: ${email}`);
+      
+      const accessToken = await this.getAccessToken();
+      
+      // Admin 시트 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW/비밀번호(D), AUTH/권한(E)
+      const values = [[region, memberName, email, password, auth]];
+      
+      const response = await requestQueue.enqueue(
+        `addAdmin-${email}`,
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&access_token=${accessToken}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ values })
+          }
+        )
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to add admin:', errorText);
+        return { success: false, message: 'Admin 시트에 관리자 추가 실패' };
+      }
+      
+      console.log(`✅ Admin ${email} added successfully to Admin sheet`);
+      return { success: true };
+      
+    } catch (error: any) {
+      console.error('Error adding admin to sheet:', error);
+      return { success: false, message: error.message || '관리자 추가 중 오류 발생' };
+    }
+  }
+
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);

@@ -116,6 +116,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin 시트에 관리자 추가 API
+  app.post('/api/admin/add-admin', async (req, res) => {
+    try {
+      const { region, memberName, email, password, auth } = req.body;
+      
+      if (!region || !memberName || !email || !password) {
+        return res.status(400).json({ message: '지역명, 담당자명, 이메일, 비밀번호는 필수 입력 사항입니다' });
+      }
+
+      const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: 'Google Sheets 서비스가 초기화되지 않았습니다' });
+      }
+
+      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, auth || 'Admin');
+      
+      if (result.success) {
+        res.json({ success: true, message: `${email} 관리자가 Admin 시트에 등록되었습니다` });
+      } else {
+        res.status(400).json({ message: result.message || '관리자 등록에 실패했습니다' });
+      }
+    } catch (error: any) {
+      console.error('Add admin error:', error);
+      res.status(500).json({ message: error.message || '서버 오류가 발생했습니다' });
+    }
+  });
+
   // 구글 시트 특정 행 데이터 확인 API
   app.post('/api/admin/check-row', async (req, res) => {
     try {
