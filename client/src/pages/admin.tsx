@@ -1146,80 +1146,99 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 선택 현황 및 전체 선택 */}
-                <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Checkbox 
-                      checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(u => selectedUsers.includes(u.email))}
-                      onCheckedChange={handleSelectAll}
-                    />
-                    <span className="text-sm text-gray-600">전체 선택</span>
-                  </div>
-                  <Badge variant="secondary">
-                    선택됨: {selectedUsers.length}명
-                  </Badge>
-                </div>
-
-                {/* 멤버 목록 */}
-                <div className="max-h-80 overflow-y-auto border rounded-lg">
-                  {filteredActiveUsers.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
-                      조건에 맞는 멤버가 없습니다
-                    </div>
-                  ) : (
-                    filteredActiveUsers.map(user => (
-                      <div 
-                        key={user.email} 
-                        className={`flex items-center p-3 border-b last:border-b-0 hover:bg-gray-50 ${
-                          selectedUsers.includes(user.email) ? 'bg-red-50' : ''
-                        }`}
-                      >
-                        <Checkbox 
-                          checked={selectedUsers.includes(user.email)}
-                          onCheckedChange={(checked) => handleUserSelection(user.email, checked === true)}
-                          className="mr-3"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{user.memberName}</div>
-                          <div className="text-sm text-gray-500">
-                            {user.region} / {user.chapter} - {user.email}
-                          </div>
-                        </div>
+                {/* 필터 선택 전 안내 메시지 */}
+                {regionFilter === '__all__' && chapterFilter === '__all__' && !memberNameSearch && (
+                  <div className="border rounded-lg p-8 text-center bg-gray-50">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Users className="w-12 h-12 text-gray-400" />
+                      <div className="text-gray-700 font-medium">
+                        멤버 목록을 보려면 필터를 선택하세요
                       </div>
-                    ))
-                  )}
-                </div>
+                      <div className="text-gray-500 text-sm">
+                        위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색하면 해당 멤버 목록이 표시됩니다.
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                {/* 탈퇴 버튼 */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                      disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
-                    >
-                      <UserMinus className="w-4 h-4 mr-2" />
-                      {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
-                        이 작업은 되돌릴 수 있습니다.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleSelectedUsersWithdrawal}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        탈퇴 처리
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                {/* 선택 현황 및 전체 선택 - 필터 선택 시에만 표시 */}
+                {(regionFilter !== '__all__' || chapterFilter !== '__all__' || memberNameSearch) && (
+                  <>
+                    <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(u => selectedUsers.includes(u.email))}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-sm text-gray-600">전체 선택</span>
+                      </div>
+                      <Badge variant="secondary">
+                        선택됨: {selectedUsers.length}명
+                      </Badge>
+                    </div>
+
+                    {/* 멤버 목록 */}
+                    <div className="max-h-80 overflow-y-auto border rounded-lg">
+                      {filteredActiveUsers.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                          조건에 맞는 멤버가 없습니다
+                        </div>
+                      ) : (
+                        filteredActiveUsers.map(user => (
+                          <div 
+                            key={user.email} 
+                            className={`flex items-center p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                              selectedUsers.includes(user.email) ? 'bg-red-50' : ''
+                            }`}
+                          >
+                            <Checkbox 
+                              checked={selectedUsers.includes(user.email)}
+                              onCheckedChange={(checked) => handleUserSelection(user.email, checked === true)}
+                              className="mr-3"
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{user.memberName}</div>
+                              <div className="text-sm text-gray-500">
+                                {user.region} / {user.chapter} - {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* 탈퇴 버튼 */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
+                        >
+                          <UserMinus className="w-4 h-4 mr-2" />
+                          {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
+                            이 작업은 되돌릴 수 있습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleSelectedUsersWithdrawal}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            탈퇴 처리
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
               </div>
             )}
 
