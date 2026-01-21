@@ -10,7 +10,7 @@ Form consistency preference: All form fields must require submit button activati
 ## Recent Changes and Fixes
 - **2026-01-21**: ADMIN SHEET SEPARATION - 관리자 계정 별도 시트 관리 시스템 구현
   - ✅ ADMIN SHEET SUPPORT: 구글 시트에 'Admin' 시트를 별도로 생성하여 관리자 계정 관리
-  - ✅ ADMIN SHEET STRUCTURE: 이메일(A열), 비밀번호(B열), 권한(C열), 이름(D열)
+  - ✅ ADMIN SHEET STRUCTURE: 지역명(A열), 담당자명(B열), ID/이메일(C열), PW/비밀번호(D열), AUTH/권한(E열)
   - ✅ PRIORITY AUTH CHECK: 로그인 시 Admin 시트 먼저 확인 → 없으면 RPS 시트에서 일반 멤버 확인
   - ✅ ADMIN REDIRECT: Admin/Growth 권한 사용자는 로그인 시 자동으로 관리자 패널(/admin)로 이동
   - ✅ LEGACY SUPPORT: RPS 시트의 AUTH 컬럼도 계속 지원 (하위 호환성)

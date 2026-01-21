@@ -504,7 +504,7 @@ class GoogleSheetsService {
       const response = await requestQueue.enqueue(
         `checkAdminSheet-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:D?access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:E?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
@@ -527,14 +527,14 @@ class GoogleSheetsService {
         return { found: false, valid: false, auth: null };
       }
       
-      // Admin 시트 구조: 이메일(A), 비밀번호(B), 권한(C), 이름(D)
+      // Admin 시트 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW/비밀번호(D), AUTH/권한(E)
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || !row[0]) continue;
+        if (!row || !row[2]) continue; // C열(이메일)이 없으면 스킵
         
-        const emailInSheet = row[0].toString().trim().toLowerCase();
-        const passwordInSheet = row[1]?.toString().trim() || '';
-        const rawAuth = row[2]?.toString().trim() || 'Admin';
+        const emailInSheet = row[2].toString().trim().toLowerCase(); // C열: ID/이메일
+        const passwordInSheet = row[3]?.toString().trim() || ''; // D열: PW/비밀번호
+        const rawAuth = row[4]?.toString().trim() || 'Admin'; // E열: AUTH/권한
         
         // 권한 정규화: 대소문자 구분 없이 처리
         const normalizedAuth = rawAuth.charAt(0).toUpperCase() + rawAuth.slice(1).toLowerCase();
