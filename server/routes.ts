@@ -884,6 +884,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Update user info
+  app.put("/api/admin/update-user", async (req, res) => {
+    try {
+      const { email, region, chapter, memberName, industry, company, password } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "이메일은 필수 항목입니다" });
+      }
+
+      console.log(`🔄 Updating user info: ${email}`);
+      
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      }
+      
+      const updates: any = {};
+      if (region !== undefined) updates.region = region;
+      if (chapter !== undefined) updates.chapter = chapter;
+      if (memberName !== undefined) updates.memberName = memberName;
+      if (industry !== undefined) updates.industry = industry;
+      if (company !== undefined) updates.company = company;
+      if (password !== undefined && password !== '') updates.password = password;
+
+      const result = await sheetsService.updateUserInfo(email, updates);
+      
+      if (result.success) {
+        console.log(`✅ User ${email} info updated successfully`);
+        res.json({ message: result.message || "정보가 성공적으로 수정되었습니다" });
+      } else {
+        console.error(`❌ Failed to update user ${email}:`, result.message);
+        res.status(400).json({ message: result.message || "정보 수정에 실패했습니다" });
+      }
+    } catch (error: any) {
+      console.error("❌ Error updating user info:", error);
+      res.status(500).json({ message: "정보 수정 중 오류가 발생했습니다" });
+    }
+  });
+
   // Admin API: Fix user password manually
   app.put("/api/admin/fix-user-password", async (req, res) => {
     try {
