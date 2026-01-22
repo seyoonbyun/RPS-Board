@@ -839,7 +839,7 @@ export default function AdminPage() {
                   localStorage.removeItem('currentUser');
                   setLocation('/');
                 }}
-                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
+                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
               >
                 로그아웃
               </Button>
