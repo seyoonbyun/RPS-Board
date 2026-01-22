@@ -1281,13 +1281,13 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent className="p-6">
             {/* 탭 버튼 */}
-            <div className="flex mb-6">
+            <div className="grid grid-cols-2 gap-0 mb-6">
               <button 
                 onClick={() => setAddMode('single')}
-                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-l-lg whitespace-nowrap ${
+                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-l-lg whitespace-nowrap ${
                   addMode === 'single' 
                     ? 'bg-red-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 <Plus className="w-4 h-4 flex-shrink-0" />
@@ -1295,10 +1295,10 @@ export default function AdminPage() {
               </button>
               <button 
                 onClick={() => setAddMode('csv')}
-                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap ${
+                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap ${
                   addMode === 'csv' 
-                    ? 'bg-red-600 text-white border-2 border-red-700' 
-                    : 'bg-white text-gray-700 border-2 border-red-600 text-red-600 hover:bg-red-50'
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-red-600 text-white border-[3px] border-red-700 rounded-lg'
                 }`}
               >
                 <Plus className="w-4 h-4 flex-shrink-0" />
