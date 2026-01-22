@@ -869,30 +869,28 @@ export default function AdminPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 관리자 추가하기
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                {adminPermission?.auth === 'National' && (
-                  <Button 
-                    onClick={exportUserList} 
-                    variant="outline" 
-                    size="sm"
-                    className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
-                  >
-                    <Download className="mr-1 w-4 h-4" />
-                    RPS 목록 내보내기
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
+              {adminPermission?.auth === 'National' && (
+                <Button 
+                  onClick={exportUserList} 
+                  variant="outline" 
                   size="sm"
-                  onClick={() => {
-                    localStorage.removeItem('currentUser');
-                    setLocation('/');
-                  }}
-                  className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
+                  className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
                 >
-                  로그아웃
+                  <Download className="mr-1 w-4 h-4" />
+                  RPS 목록 내보내기
                 </Button>
-              </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem('currentUser');
+                  setLocation('/');
+                }}
+                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
+              >
+                로그아웃
+              </Button>
             </div>
           </div>
         </div>
