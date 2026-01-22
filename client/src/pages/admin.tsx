@@ -947,101 +947,41 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* 3개 카드 박스 네비게이션 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 3개 카드 박스 네비게이션 - 각 카드 아래에 해당 콘텐츠 배치 */}
+      <div className="space-y-6">
         {/* 카드 1: 멤버 탈퇴 처리 */}
-        <div 
-          onClick={() => setActiveSection(activeSection === 'withdrawal' ? 'none' : 'withdrawal')}
-          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-            activeSection === 'withdrawal' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-          }`}
-        >
-          <div className="p-6 text-center">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                1
+        <div className="space-y-4">
+          <div 
+            onClick={() => setActiveSection(activeSection === 'withdrawal' ? 'none' : 'withdrawal')}
+            className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
+              activeSection === 'withdrawal' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
+            }`}
+          >
+            <div className="p-6 text-center">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                  1
+                </div>
               </div>
-            </div>
-            <div className="mt-4 mb-4">
-              <UserMinus className="w-12 h-12 mx-auto text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">멤버 탈퇴 처리</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              이메일 직접 입력 또는<br/>멤버 목록에서 선택하여 탈퇴 처리
-            </p>
-            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-              activeSection === 'withdrawal' 
-                ? 'bg-red-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-            }`}>
-              {activeSection === 'withdrawal' ? '닫기' : '탈퇴 처리하기'}
-            </button>
-          </div>
-        </div>
-
-        {/* 카드 2: 새로운 멤버 추가 */}
-        <div 
-          onClick={() => setActiveSection(activeSection === 'add' ? 'none' : 'add')}
-          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-            activeSection === 'add' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-          }`}
-        >
-          <div className="p-6 text-center">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                2
+              <div className="mt-4 mb-4">
+                <UserMinus className="w-12 h-12 mx-auto text-red-600" />
               </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">멤버 탈퇴 처리</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                이메일 직접 입력 또는<br/>멤버 목록에서 선택하여 탈퇴 처리
+              </p>
+              <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                activeSection === 'withdrawal' 
+                  ? 'bg-red-600 text-white' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
+              }`}>
+                {activeSection === 'withdrawal' ? '닫기' : '탈퇴 처리하기'}
+              </button>
             </div>
-            <div className="mt-4 mb-4">
-              <UserPlus className="w-12 h-12 mx-auto text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">새로운 멤버 추가</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              개별 멤버 추가 또는<br/>CSV 파일로 일괄 등록
-            </p>
-            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-              activeSection === 'add' 
-                ? 'bg-red-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-            }`}>
-              {activeSection === 'add' ? '닫기' : '멤버 추가하기'}
-            </button>
           </div>
-        </div>
-
-        {/* 카드 3: 기존 멤버 정보 수정 */}
-        <div 
-          onClick={() => setActiveSection(activeSection === 'edit' ? 'none' : 'edit')}
-          className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-            activeSection === 'edit' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-          }`}
-        >
-          <div className="p-6 text-center">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                3
-              </div>
-            </div>
-            <div className="mt-4 mb-4">
-              <Edit3 className="w-12 h-12 mx-auto text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">기존 멤버 정보 수정</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              멤버를 검색하여<br/>정보를 수정합니다
-            </p>
-            <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-              activeSection === 'edit' 
-                ? 'bg-red-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-            }`}>
-              {activeSection === 'edit' ? '닫기' : '정보 수정하기'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 섹션 1: 멤버 탈퇴 처리 */}
-      {activeSection === 'withdrawal' && (
+          
+          {/* 섹션 1: 멤버 탈퇴 처리 콘텐츠 */}
+          {activeSection === 'withdrawal' && (
         <Card className="border-2 border-red-200">
           <CardHeader className="bg-red-50">
             <CardTitle className="flex items-center text-lg text-red-700">
