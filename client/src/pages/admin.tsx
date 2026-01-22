@@ -1284,24 +1284,24 @@ export default function AdminPage() {
             <div className="flex mb-6">
               <button 
                 onClick={() => setAddMode('single')}
-                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-l-lg ${
+                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-l-lg whitespace-nowrap ${
                   addMode === 'single' 
                     ? 'bg-red-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 flex-shrink-0" />
                 멤버 개별 추가
               </button>
               <button 
                 onClick={() => setAddMode('csv')}
-                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-lg ${
+                className={`flex-1 py-4 px-6 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap ${
                   addMode === 'csv' 
                     ? 'bg-red-600 text-white border-2 border-red-700' 
                     : 'bg-white text-gray-700 border-2 border-red-600 text-red-600 hover:bg-red-50'
                 }`}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 flex-shrink-0" />
                 일괄 등록
               </button>
             </div>
