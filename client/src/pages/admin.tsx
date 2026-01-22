@@ -1295,10 +1295,10 @@ export default function AdminPage() {
               </button>
               <button 
                 onClick={() => setAddMode('csv')}
-                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap ${
+                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap border-2 ${
                   addMode === 'csv' 
-                    ? 'bg-red-600 text-white' 
-                    : 'bg-red-600 text-white border-[3px] border-red-700 rounded-lg'
+                    ? 'bg-red-600 text-white border-red-700' 
+                    : 'bg-white text-red-600 border-red-600 hover:bg-red-50'
                 }`}
               >
                 <Plus className="w-4 h-4 flex-shrink-0" />
