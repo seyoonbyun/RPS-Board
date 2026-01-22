@@ -1270,177 +1270,217 @@ export default function AdminPage() {
 
           {/* 섹션 2: 멤버 추가 콘텐츠 */}
           {activeSection === 'add' && (
-        <Card className="border-2 border-red-200">
-          <CardHeader className="bg-red-50">
-            <CardTitle className="flex items-center text-lg text-red-700">
-              <UserPlus className="mr-2 w-5 h-5" />
-              새로운 멤버 추가
+        <Card className="border border-gray-200 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center text-xl text-red-600">
+              <UserPlus className="mr-2 w-6 h-6" />
+              새로운 멤버 추가하기
             </CardTitle>
+            <p className="text-gray-700 mt-2">단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.</p>
+            <p className="text-sm text-gray-500 mt-1">* 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하는 정보로, 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</p>
           </CardHeader>
           <CardContent className="p-6">
-            {/* 방법 선택 */}
-            <div className="flex gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-              <label className="flex items-center cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="addMode" 
-                  checked={addMode === 'single'} 
-                  onChange={() => setAddMode('single')}
-                  className="mr-2 accent-red-600"
-                />
-                <span className={addMode === 'single' ? 'font-medium text-red-600' : 'text-gray-600'}>
-                  개별 추가
-                </span>
-              </label>
-              <label className="flex items-center cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="addMode" 
-                  checked={addMode === 'csv'} 
-                  onChange={() => setAddMode('csv')}
-                  className="mr-2 accent-red-600"
-                />
-                <span className={addMode === 'csv' ? 'font-medium text-red-600' : 'text-gray-600'}>
-                  CSV 일괄 등록
-                </span>
-              </label>
+            {/* 탭 버튼 */}
+            <div className="grid grid-cols-2 gap-0 mb-6">
+              <button 
+                onClick={() => setAddMode('single')}
+                className={`py-3 px-4 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-l-lg border ${
+                  addMode === 'single' 
+                    ? 'bg-red-600 text-white border-red-600' 
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+                멤버 개별 추가
+              </button>
+              <button 
+                onClick={() => setAddMode('csv')}
+                className={`py-3 px-4 font-medium text-center transition-colors flex items-center justify-center gap-2 rounded-r-lg border-t border-r border-b ${
+                  addMode === 'csv' 
+                    ? 'bg-red-600 text-white border-red-600' 
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+                일괄 등록
+              </button>
             </div>
 
             {/* 개별 추가 폼 */}
             {addMode === 'single' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">이메일 *</Label>
-                    <Input
-                      type="email"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                      placeholder="email@example.com"
-                      className="mt-1"
-                    />
+              <div className="space-y-6">
+                <div className="border border-red-200 rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">이메일 *</Label>
+                      <Input
+                        type="email"
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        placeholder="user@example.com"
+                        className="mt-1 border-red-200 focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">멤버명 *</Label>
+                      <Input
+                        value={newUser.memberName}
+                        onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
+                        placeholder="홍길동"
+                        className="mt-1 border-red-200 focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">지역 *</Label>
+                      <Select value={newUser.region} onValueChange={(value) => setNewUser({...newUser, region: value})}>
+                        <SelectTrigger className="mt-1 bg-white border-red-200">
+                          <SelectValue placeholder="지역을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          {(regions as string[]).map((region: string) => (
+                            <SelectItem key={region} value={region}>{region}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">챕터 *</Label>
+                      <Select value={newUser.chapter} onValueChange={(value) => setNewUser({...newUser, chapter: value})}>
+                        <SelectTrigger className="mt-1 bg-white border-red-200">
+                          <SelectValue placeholder="챕터를 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          {(chapters as string[]).map((chapter: string) => (
+                            <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">산업군 _BNI 커넥트 기준 *</Label>
+                      <Input
+                        value={newUser.industry}
+                        onChange={(e) => setNewUser({...newUser, industry: e.target.value})}
+                        placeholder="IT"
+                        className="mt-1 border-red-200 focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">회사 *</Label>
+                      <Input
+                        value={newUser.company}
+                        onChange={(e) => setNewUser({...newUser, company: e.target.value})}
+                        placeholder="회사명"
+                        className="mt-1 border-red-200 focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">비밀번호 (휴대전화 뒷 4자리) *</Label>
+                      <Input
+                        type="text"
+                        maxLength={4}
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                        placeholder="1234"
+                        className="mt-1 border-red-200 focus:border-red-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">권한 *</Label>
+                      <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
+                        <SelectTrigger className="mt-1 bg-white border-red-200">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="Member">Member (일반회원)</SelectItem>
+                          <SelectItem value="Growth">Growth</SelectItem>
+                          <SelectItem value="Admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium">비밀번호 * (4자리)</Label>
-                    <Input
-                      type="text"
-                      maxLength={4}
-                      value={newUser.password}
-                      onChange={(e) => setNewUser({...newUser, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
-                      placeholder="1234"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">지역 *</Label>
-                    <Select value={newUser.region} onValueChange={(value) => setNewUser({...newUser, region: value})}>
-                      <SelectTrigger className="mt-1 bg-white">
-                        <SelectValue placeholder="지역 선택" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        {(regions as string[]).map((region: string) => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">챕터 *</Label>
-                    <Select value={newUser.chapter} onValueChange={(value) => setNewUser({...newUser, chapter: value})}>
-                      <SelectTrigger className="mt-1 bg-white">
-                        <SelectValue placeholder="챕터 선택" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        {(chapters as string[]).map((chapter: string) => (
-                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">멤버명 *</Label>
-                    <Input
-                      value={newUser.memberName}
-                      onChange={(e) => setNewUser({...newUser, memberName: e.target.value})}
-                      placeholder="홍길동"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">산업군</Label>
-                    <Input
-                      value={newUser.industry}
-                      onChange={(e) => setNewUser({...newUser, industry: e.target.value})}
-                      placeholder="IT / 디자인 / 건설 등"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">회사명</Label>
-                    <Input
-                      value={newUser.company}
-                      onChange={(e) => setNewUser({...newUser, company: e.target.value})}
-                      placeholder="회사명"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">권한</Label>
-                    <Select value={newUser.auth} onValueChange={(value) => setNewUser({...newUser, auth: value})}>
-                      <SelectTrigger className="mt-1 bg-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="Member">Member</SelectItem>
-                        <SelectItem value="Growth">Growth</SelectItem>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Button 
+                    onClick={handleAddUser}
+                    disabled={addUserMutation.isPending || !newUser.email || !newUser.region || !newUser.chapter || !newUser.memberName || newUser.password.length !== 4}
+                    className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white py-3"
+                  >
+                    {addUserMutation.isPending ? '추가 중...' : '멤버 등록'}
+                  </Button>
                 </div>
-                <Button 
-                  onClick={handleAddUser}
-                  disabled={addUserMutation.isPending || !newUser.email || !newUser.region || !newUser.chapter || !newUser.memberName || newUser.password.length !== 4}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  {addUserMutation.isPending ? '추가 중...' : '멤버 추가'}
-                </Button>
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setActiveSection('none')}
+                    className="border-gray-300"
+                  >
+                    취소
+                  </Button>
+                </div>
               </div>
             )}
 
             {/* CSV 일괄 등록 */}
             {addMode === 'csv' && (
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
-                  <ObjectUploader 
-                    onComplete={(file: File) => {
-                      console.log('CSV uploaded:', file.name);
-                    }}
-                    allowedFileTypes={['.csv', '.xlsx']}
-                  >
-                    <div className="flex flex-col items-center">
-                      <Upload className="w-12 h-12 text-gray-400 mb-4" />
-                      <span className="text-gray-600">파일을 드래그하거나 클릭하여 선택</span>
-                      <p className="text-sm text-gray-500 mt-2">.csv, .xlsx 파일 지원</p>
-                    </div>
-                  </ObjectUploader>
-                </div>
+              <div className="space-y-6">
+                <p className="text-gray-700">하단의 '일괄 등록' 양식의 <span className="text-red-600 font-medium">CSV 파일</span>을 업로드하시면, 새로운 멤버의 <span className="text-red-600 font-medium">RPS Board</span>가 생성됩니다.</p>
+                
                 <Button 
                   variant="outline"
+                  className="w-full py-6 border-red-600 text-red-600 hover:bg-red-50"
                   onClick={() => {
-                    const csvContent = "이메일,지역,챕터,멤버명,산업군,회사명,비밀번호,권한\nexample@email.com,서울,하이,홍길동,IT,테크회사,1234,Member";
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'member_template.csv';
-                    link.click();
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.csv';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        console.log('CSV uploaded:', file.name);
+                      }
+                    };
+                    input.click();
                   }}
-                  className="border-gray-300"
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  양식 다운로드
+                  <FileText className="w-5 h-5 mr-2" />
+                  CSV 파일 업로드
                 </Button>
+
+                <div className="border-l-4 border-red-200 bg-red-50 p-4 rounded-r-lg">
+                  <h4 className="font-medium text-gray-900 mb-3">CSV 파일 형식 안내</h4>
+                  <p className="text-red-600 font-medium mb-2">CSV 파일 형식 : 이메일 | 지역 | 챕터 | 멤버명 | 산업군 | 회사 | 권한(선택) | PW(숫자 4자리)</p>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• 이메일 주소는 ID로 사용되며, BNI Connect 시스템에 등록된 정보와 동일합니다.</li>
+                    <li>• 지역 형식: BNI Connect 시스템의 지역명 형식으로 입력해주세요.</li>
+                    <li className="ml-4 text-gray-500">_(ex)"Seoul1 서울1" (영어+숫자 + 한글)</li>
+                    <li>• PW는 BNI Connect 시스템에 등록된 멤버의 휴대전화 번호의 뒷 4자리(010-1234-****) 정보를 기본으로 합니다.</li>
+                    <li>• 권한(선택사항): Admin, Member 중 선택 - 생략하면 Member로 설정됩니다.</li>
+                    <li className="text-red-600 font-medium">• 중요: 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하므로 CSV에서 제외됩니다.</li>
+                    <li>• 첫 번째 행은 헤더이므로, 두 번째 행부터 사용자 정보를 입력하세요.</li>
+                  </ul>
+                  <button 
+                    onClick={() => {
+                      const csvContent = "이메일,지역,챕터,멤버명,산업군,회사,권한,비밀번호\nexample@email.com,Seoul1 서울1,하이,홍길동,IT,테크회사,Member,1234";
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const link = document.createElement('a');
+                      link.href = URL.createObjectURL(blob);
+                      link.download = 'member_template.csv';
+                      link.click();
+                    }}
+                    className="flex items-center text-red-600 hover:text-red-700 mt-4 text-sm font-medium"
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    CSV 템플릿 파일 다운로드
+                  </button>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setActiveSection('none')}
+                    className="border-gray-300"
+                  >
+                    취소
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
