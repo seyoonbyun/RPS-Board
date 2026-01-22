@@ -428,6 +428,42 @@ export default function AdminPage() {
     }
   });
 
+  // 멤버 정보 수정 mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async (data: { 
+      email: string; 
+      region?: string; 
+      chapter?: string; 
+      memberName?: string; 
+      industry?: string; 
+      company?: string; 
+      password?: string;
+    }) => {
+      const response = await apiRequest('PUT', '/api/admin/update-user', data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/users'] });
+      setEditingUser(null);
+      setEditFormData({ region: '', chapter: '', memberName: '', industry: '', company: '', password: '', auth: 'Member' });
+      toast({
+        title: "정보 수정 완료",
+        description: data.message || "멤버 정보가 성공적으로 수정되었습니다.",
+        className: "bg-white text-gray-900",
+        duration: 2500
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "정보 수정 오류",
+        description: error.message || "멤버 정보 수정 중 오류가 발생했습니다",
+        variant: "destructive",
+        className: "bg-white text-gray-900"
+      });
+    }
+  });
+
   // CSV 파일 업로드 처리
   const csvProcessMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -1568,17 +1604,22 @@ export default function AdminPage() {
                           <div className="flex gap-2 pt-4">
                             <Button 
                               onClick={() => {
-                                // TODO: API 호출하여 수정 저장
-                                toast({
-                                  title: '저장 완료',
-                                  description: `${editFormData.memberName}님의 정보가 수정되었습니다.`,
-                                  duration: 2500
-                                });
-                                setEditingUser(null);
+                                if (editingUser) {
+                                  updateUserMutation.mutate({
+                                    email: editingUser.email,
+                                    region: editFormData.region,
+                                    chapter: editFormData.chapter,
+                                    memberName: editFormData.memberName,
+                                    industry: editFormData.industry,
+                                    company: editFormData.company,
+                                    password: editFormData.password || undefined
+                                  });
+                                }
                               }}
+                              disabled={updateUserMutation.isPending}
                               className="bg-red-600 hover:bg-red-700 text-white"
                             >
-                              저장
+                              {updateUserMutation.isPending ? '저장 중...' : '저장'}
                             </Button>
                             <Button 
                               variant="outline"
