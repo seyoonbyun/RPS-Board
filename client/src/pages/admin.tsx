@@ -948,9 +948,9 @@ export default function AdminPage() {
       </div>
 
       {/* 3개 카드 박스 네비게이션 - 각 카드 아래에 해당 콘텐츠 배치 */}
-      <div className="space-y-6">
-        {/* 카드 1: 멤버 탈퇴 처리 */}
-        <div className="space-y-4">
+      <div className="flex flex-col gap-6">
+        {/* 카드 3: 멤버 탈퇴 처리 */}
+        <div className="space-y-4 order-3">
           <div 
             onClick={() => setActiveSection(activeSection === 'withdrawal' ? 'none' : 'withdrawal')}
             className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
@@ -960,7 +960,7 @@ export default function AdminPage() {
             <div className="p-6 text-center">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  1
+                  3
                 </div>
               </div>
               <div className="mt-4 mb-4">
@@ -1239,8 +1239,8 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* 카드 2: 새로운 멤버 추가 */}
-        <div className="space-y-4">
+        {/* 카드 1: 새로운 멤버 추가 */}
+        <div className="space-y-4 order-1">
           <div 
             onClick={() => setActiveSection(activeSection === 'add' ? 'none' : 'add')}
             className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
@@ -1250,7 +1250,7 @@ export default function AdminPage() {
             <div className="p-6 text-center">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  2
+                  1
                 </div>
               </div>
               <div className="mt-4 mb-4">
@@ -1450,8 +1450,8 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* 카드 3: 기존 멤버 정보 수정 */}
-        <div className="space-y-4">
+        {/* 카드 2: 기존 멤버 정보 수정 */}
+        <div className="space-y-4 order-2">
           <div 
             onClick={() => setActiveSection(activeSection === 'edit' ? 'none' : 'edit')}
             className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
@@ -1461,7 +1461,7 @@ export default function AdminPage() {
             <div className="p-6 text-center">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  3
+                  2
                 </div>
               </div>
               <div className="mt-4 mb-4">
