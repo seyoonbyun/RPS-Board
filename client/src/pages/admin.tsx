@@ -1254,19 +1254,19 @@ export default function AdminPage() {
                           {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="bg-white border-2 border-gray-300 shadow-2xl">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <AlertDialogTitle className="text-gray-900">멤버 탈퇴 확인</AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-600">
                             {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
                             이 작업은 되돌릴 수 있습니다.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300">취소</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={handleSelectedUsersWithdrawal}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                           >
                             탈퇴 처리
                           </AlertDialogAction>
