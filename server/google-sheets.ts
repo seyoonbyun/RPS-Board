@@ -1847,6 +1847,128 @@ class GoogleSheetsService {
     );
   }
 
+  // 관리자용: 사용자 정보 업데이트 (지역, 챕터, 멤버명, 산업군, 회사, 비밀번호)
+  async updateUserInfo(userEmail: string, updates: {
+    region?: string;
+    chapter?: string;
+    memberName?: string;
+    industry?: string;
+    company?: string;
+    password?: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return requestQueue.enqueue(
+      `updateUserInfo-${userEmail}`,
+      async () => {
+        try {
+          const accessToken = await this.getAccessToken();
+          
+          // 사용자 행 찾기
+          const getResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (!getResponse.ok) {
+            throw new Error(`Failed to read Google Sheets: ${getResponse.status}`);
+          }
+
+          const data = await getResponse.json();
+          const rows = data.values || [];
+          const headers = rows[0] || [];
+          
+          // 사용자 행 검색
+          let userRowIndex = -1;
+          for (let i = 1; i < rows.length; i++) {
+            if (rows[i] && rows[i][0] && 
+                rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+              userRowIndex = i;
+              break;
+            }
+          }
+          
+          if (userRowIndex === -1) {
+            return { success: false, message: `사용자 ${userEmail}을(를) 찾을 수 없습니다` };
+          }
+
+          // 컬럼 인덱스 찾기
+          const columnMap: Record<string, number> = {};
+          headers.forEach((header: string, index: number) => {
+            const h = header?.toString().toLowerCase().trim();
+            if (h === 'id' || h === '이메일' || h === 'email') columnMap['email'] = index;
+            if (h === 'region' || h === '지역' || h === '지역명') columnMap['region'] = index;
+            if (h === 'chapter' || h === '챕터' || h === '챕터명') columnMap['chapter'] = index;
+            if (h === 'member' || h === 'member name' || h === '담당자명') columnMap['memberName'] = index;
+            if (h === 'industry' || h === '산업군' || h === '업종') columnMap['industry'] = index;
+            if (h === 'company' || h === '회사' || h === '회사명') columnMap['company'] = index;
+            if (h === 'pw' || h === '비밀번호' || h === 'password') columnMap['password'] = index;
+          });
+
+          // 업데이트할 데이터 준비
+          const requests: any[] = [];
+          const rowNumber = userRowIndex + 1;
+          
+          const fieldToColumn: Record<string, string> = {
+            region: 'B',
+            chapter: 'C', 
+            memberName: 'D',
+            industry: 'E',
+            company: 'F',
+            password: 'X'
+          };
+
+          Object.entries(updates).forEach(([field, value]) => {
+            if (value !== undefined && value !== '' && fieldToColumn[field]) {
+              const columnLetter = fieldToColumn[field];
+              requests.push({
+                range: `RPS!${columnLetter}${rowNumber}`,
+                values: [[value]]
+              });
+            }
+          });
+
+          if (requests.length === 0) {
+            return { success: true, message: '업데이트할 정보가 없습니다' };
+          }
+
+          console.log(`🔄 Updating user ${userEmail} info with ${requests.length} fields`);
+
+          // batchUpdate 사용하여 여러 필드 한번에 업데이트
+          const batchUpdateResponse = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                valueInputOption: 'USER_ENTERED',
+                data: requests
+              })
+            }
+          );
+
+          if (!batchUpdateResponse.ok) {
+            const error = await batchUpdateResponse.text();
+            throw new Error(`Failed to update: ${error}`);
+          }
+
+          console.log(`✅ User ${userEmail} info updated successfully`);
+          return { success: true, message: '정보가 성공적으로 수정되었습니다' };
+        } catch (error: any) {
+          console.error(`❌ Error updating user ${userEmail} info:`, error);
+          return { success: false, message: `수정 실패: ${error?.message || 'Unknown error'}` };
+        }
+      },
+      `user:${userEmail}` // lockKey for atomicity
+    );
+  }
+
   // 관리자용: 모든 사용자 데이터 가져오기
   async findUserByEmail(email: string): Promise<any[] | null> {
     try {
