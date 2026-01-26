@@ -2204,9 +2204,59 @@ class GoogleSheetsService {
     }
   }
 
+  // Master 탭 생성
+  private async createMasterSheet(): Promise<boolean> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await requestQueue.enqueue(
+        'createMasterSheet',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              requests: [{
+                addSheet: {
+                  properties: {
+                    title: 'Master'
+                  }
+                }
+              }]
+            })
+          }
+        )
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // 이미 존재하는 경우 성공으로 처리
+        if (errorText.includes('already exists')) {
+          console.log('Master sheet already exists');
+          return true;
+        }
+        console.error('Failed to create Master sheet:', errorText);
+        return false;
+      }
+
+      console.log('✅ Master sheet created successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ Error creating Master sheet:', error);
+      return false;
+    }
+  }
+
   // Master 탭 초기화 (지역/챕터 데이터 생성)
   async initializeMasterSheet(regions: string[], chapters: string[]): Promise<boolean> {
     try {
+      // 먼저 Master 탭이 있는지 확인하고 없으면 생성
+      await this.createMasterSheet();
+      
       const accessToken = await this.getAccessToken();
       
       // 헤더 + 데이터 구성
