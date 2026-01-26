@@ -1284,7 +1284,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-2 gap-0 mb-6">
               <button 
                 onClick={() => setAddMode('single')}
-                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-l-lg whitespace-nowrap ${
+                className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap ${
                   addMode === 'single' 
                     ? 'bg-red-600 text-white' 
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
