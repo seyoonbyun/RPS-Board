@@ -900,7 +900,7 @@ export default function AdminPage() {
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-2 border-red-600">
+        <Card className="border border-red-600">
           <CardContent className="p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
@@ -911,7 +911,7 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-red-600">
+        <Card className="border border-red-600">
           <CardContent className="p-6">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-green-600" />
@@ -922,7 +922,7 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-2 border-red-600">
+        <Card className="border border-red-600">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
