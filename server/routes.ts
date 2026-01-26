@@ -647,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin API: Get unique chapters for dropdown
+  // Admin API: Get chapters from Master sheet
   app.get("/api/admin/chapters", async (req, res) => {
     try {
       const sheetsService = getGoogleSheetsService();
@@ -655,20 +655,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
       }
 
-      const allUsersData = await storage.getAllUsersFromGoogleSheets();
-      const uniqueChapters = Array.from(new Set(allUsersData
-        .map(user => user.chapter)
-        .filter(chapter => chapter && chapter.trim())
-      )).sort(); // 오름차순 정렬
-
-      res.json(uniqueChapters);
+      const chapters = await sheetsService.getChaptersFromMaster();
+      res.json(chapters);
     } catch (error: any) {
       console.error("❌ Error fetching chapters:", error);
       res.status(500).json({ message: "챕터 목록 조회 실패" });
     }
   });
 
-  // Admin API: Get unique regions for dropdown
+  // Admin API: Get regions from Master sheet
   app.get("/api/admin/regions", async (req, res) => {
     try {
       const sheetsService = getGoogleSheetsService();
@@ -676,16 +671,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
       }
 
-      const allUsersData = await storage.getAllUsersFromGoogleSheets();
-      const uniqueRegions = Array.from(new Set(allUsersData
-        .map(user => user.region)
-        .filter(region => region && region.trim())
-      )).sort(); // 오름차순 정렬
-
-      res.json(uniqueRegions);
+      const regions = await sheetsService.getRegionsFromMaster();
+      res.json(regions);
     } catch (error: any) {
       console.error("❌ Error fetching regions:", error);
       res.status(500).json({ message: "지역 목록 조회 실패" });
+    }
+  });
+
+  // Admin API: Initialize Master sheet with regions and chapters
+  app.post("/api/admin/initialize-master", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const { regions, chapters } = req.body;
+      
+      if (!Array.isArray(regions) || !Array.isArray(chapters)) {
+        return res.status(400).json({ message: "지역과 챕터 배열이 필요합니다" });
+      }
+
+      const success = await sheetsService.initializeMasterSheet(regions, chapters);
+      
+      if (success) {
+        res.json({ message: "Master 시트가 성공적으로 초기화되었습니다", regions: regions.length, chapters: chapters.length });
+      } else {
+        res.status(500).json({ message: "Master 시트 초기화 실패" });
+      }
+    } catch (error: any) {
+      console.error("❌ Error initializing master sheet:", error);
+      res.status(500).json({ message: "Master 시트 초기화 실패" });
     }
   });
 

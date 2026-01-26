@@ -2128,6 +2128,127 @@ class GoogleSheetsService {
     }
   }
   
+  // Master 탭에서 지역 목록 가져오기
+  async getRegionsFromMaster(): Promise<string[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await requestQueue.enqueue(
+        'getRegionsFromMaster',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A2:A100`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+      );
+
+      if (!response.ok) {
+        console.error('Failed to read Master sheet for regions');
+        return [];
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      const regions = rows
+        .filter((row: any) => row && row[0] && row[0].toString().trim())
+        .map((row: any) => row[0].toString().trim());
+      
+      console.log(`📋 Regions from Master sheet: ${regions.length} items`);
+      return regions;
+    } catch (error) {
+      console.error('❌ Error getting regions from Master sheet:', error);
+      return [];
+    }
+  }
+
+  // Master 탭에서 챕터 목록 가져오기
+  async getChaptersFromMaster(): Promise<string[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      const response = await requestQueue.enqueue(
+        'getChaptersFromMaster',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!B2:B200`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+      );
+
+      if (!response.ok) {
+        console.error('Failed to read Master sheet for chapters');
+        return [];
+      }
+
+      const data = await response.json();
+      const rows = data.values || [];
+      
+      const chapters = rows
+        .filter((row: any) => row && row[0] && row[0].toString().trim())
+        .map((row: any) => row[0].toString().trim());
+      
+      console.log(`📋 Chapters from Master sheet: ${chapters.length} items`);
+      return chapters;
+    } catch (error) {
+      console.error('❌ Error getting chapters from Master sheet:', error);
+      return [];
+    }
+  }
+
+  // Master 탭 초기화 (지역/챕터 데이터 생성)
+  async initializeMasterSheet(regions: string[], chapters: string[]): Promise<boolean> {
+    try {
+      const accessToken = await this.getAccessToken();
+      
+      // 헤더 + 데이터 구성
+      const maxRows = Math.max(regions.length, chapters.length);
+      const values: string[][] = [['지역', '챕터']];
+      
+      for (let i = 0; i < maxRows; i++) {
+        values.push([
+          regions[i] || '',
+          chapters[i] || ''
+        ]);
+      }
+      
+      const response = await requestQueue.enqueue(
+        'initializeMasterSheet',
+        async () => await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A1:B${maxRows + 1}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ values })
+          }
+        )
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to initialize Master sheet:', errorText);
+        return false;
+      }
+
+      console.log(`✅ Master sheet initialized with ${regions.length} regions and ${chapters.length} chapters`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error initializing Master sheet:', error);
+      return false;
+    }
+  }
+
   private logSyncData(data: ScoreboardData & { userEmail: string }): void {
     console.log('\n📊 GOOGLE SHEETS SYNC DATA (for manual entry if needed):');
     console.log('='.repeat(60));
