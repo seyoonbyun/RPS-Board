@@ -136,12 +136,11 @@ app.use((req, res, next) => {
     // It is the only port that is not firewalled.
     const port = parseInt(process.env.PORT || NETWORK_CONFIG.DEFAULT_PORT.toString(), 10);
     
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`serving on port ${port}`);
+    const host = process.env.HOST || (process.platform === "win32" ? "127.0.0.1" : "0.0.0.0");
+    const listenOpts: { port: number; host: string; reusePort?: boolean } = { port, host };
+    if (process.platform !== "win32") listenOpts.reusePort = true;
+    server.listen(listenOpts, () => {
+      log(`serving on ${host}:${port}`);
     });
 
   } catch (error) {
