@@ -1,14 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
-import { storage } from "./storage";
-import { loginSchema, scoreboardFormSchema, scoreboardPartialUpdateSchema, type InsertScoreboardData } from "./schema";
+import { storage } from "./storage.js";
+import { loginSchema, scoreboardFormSchema, scoreboardPartialUpdateSchema, type InsertScoreboardData } from "./schema.js";
 import { z } from "zod";
-import { getGoogleSheetsService } from "./google-sheets";
+import { getGoogleSheetsService } from "./google-sheets.js";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
-import { ObjectStorageService } from "./objectStorage";
+import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
-import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants';
+import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({

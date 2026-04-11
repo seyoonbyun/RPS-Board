@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
-import { NaverPlaceService, NaverPlaceBusiness } from './naver-place-service';
-import { PureDynamicSearch } from './pure-dynamic-search';
-import { AI_CONFIG } from './constants';
+import { NaverPlaceService, NaverPlaceBusiness } from './naver-place-service.js';
+import { PureDynamicSearch } from './pure-dynamic-search.js';
+import { AI_CONFIG } from './constants.js';
 
 export class GeminiService {
   private ai: GoogleGenAI;

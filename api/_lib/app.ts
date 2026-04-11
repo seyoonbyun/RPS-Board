@@ -1,10 +1,10 @@
 import express, { type Request, Response, NextFunction, type Express } from "express";
 import path from "path";
 import type { Server } from "http";
-import { registerRoutes } from "./routes";
-import { log } from "./prod-static";
-import { initializeGoogleSheets } from "./google-sheets";
-import { SHEETS_CONFIG } from "./constants";
+import { registerRoutes } from "./routes.js";
+import { log } from "./prod-static.js";
+import { initializeGoogleSheets } from "./google-sheets.js";
+import { SHEETS_CONFIG } from "./constants.js";
 
 let cachedApp: Express | null = null;
 let cachedServer: Server | null = null;

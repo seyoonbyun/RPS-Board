@@ -1,11 +1,11 @@
-import { HELLO } from "./_hello.js";
+import { createApp } from "./_lib/app.js";
 
-export default function handler(req: any, res: any) {
-  res.status(200).json({
-    ok: true,
-    step: "1c — explicit .js extension",
-    hello: HELLO,
-    url: req.url,
-    method: req.method,
-  });
+let appPromise: Promise<any> | null = null;
+
+export default async function handler(req: any, res: any) {
+  if (!appPromise) {
+    appPromise = createApp().then(({ app }) => app);
+  }
+  const app = await appPromise;
+  return app(req, res);
 }

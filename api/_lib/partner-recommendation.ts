@@ -1,5 +1,5 @@
 // 산업 호환성 기반 파트너 추천 엔진
-import { GoogleSheetsService } from './google-sheets';
+import { GoogleSheetsService } from './google-sheets.js';
 
 export interface IndustryCompatibility {
   industry: string;

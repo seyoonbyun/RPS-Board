@@ -1,5 +1,5 @@
-import { users, scoreboardData, changeHistory, type User, type InsertUser, type ScoreboardData, type InsertScoreboardData, type ChangeHistory, type InsertChangeHistory } from "./schema";
-import { db } from "./db";
+import { users, scoreboardData, changeHistory, type User, type InsertUser, type ScoreboardData, type InsertScoreboardData, type ChangeHistory, type InsertChangeHistory } from "./schema.js";
+import { db } from "./db.js";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 

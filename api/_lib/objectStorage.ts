@@ -2,7 +2,7 @@ import { Storage, File } from "@google-cloud/storage";
 import { Response } from "express";
 import { randomUUID } from "crypto";
 import iconv from "iconv-lite";
-import { NETWORK_CONFIG } from "./constants";
+import { NETWORK_CONFIG } from "./constants.js";
 
 const REPLIT_SIDECAR_ENDPOINT = process.env.REPLIT_SIDECAR_ENDPOINT || `http://${NETWORK_CONFIG.REPLIT_SIDECAR_HOST}:${NETWORK_CONFIG.REPLIT_SIDECAR_PORT}`;
 

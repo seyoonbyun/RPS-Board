@@ -1,8 +1,8 @@
-import type { ScoreboardData } from './schema';
-import { SHEET_COLUMN_INDICES, BUSINESS_CONFIG } from './constants';
+import type { ScoreboardData } from './schema.js';
+import { SHEET_COLUMN_INDICES, BUSINESS_CONFIG } from './constants.js';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
-import { requestQueue } from './request-queue';
+import { requestQueue } from './request-queue.js';
 
 interface GoogleSheetsConfig {
   apiKey: string;

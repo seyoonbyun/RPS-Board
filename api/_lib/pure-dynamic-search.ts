@@ -1,4 +1,4 @@
-import { NaverPlaceBusiness } from './naver-place-service';
+import { NaverPlaceBusiness } from './naver-place-service.js';
 
 export class PureDynamicSearch {
   private clientId: string;

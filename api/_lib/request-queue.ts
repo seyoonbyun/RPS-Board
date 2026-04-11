@@ -1,4 +1,4 @@
-import { API_RATE_LIMITS } from './constants';
+import { API_RATE_LIMITS } from './constants.js';
 
 interface QueuedRequest<T> {
   id: string;
