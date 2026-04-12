@@ -504,7 +504,7 @@ class GoogleSheetsService {
       const response = await requestQueue.enqueue(
         `checkAdminSheet-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:E?access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:E?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
@@ -570,7 +570,7 @@ class GoogleSheetsService {
       const response = await requestQueue.enqueue(
         `getAdminSheetAuth-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:C?access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:C?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
@@ -617,7 +617,7 @@ class GoogleSheetsService {
       const response = await requestQueue.enqueue(
         `addAdmin-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&access_token=${accessToken}`,
           {
             method: 'POST',
             headers: {
@@ -2166,7 +2166,7 @@ class GoogleSheetsService {
   async getAdminList(): Promise<{ region: string; memberName: string; email: string; auth: string }[]> {
     const accessToken = await this.getAccessToken();
     const resp = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A2:E200`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A2:E200`,
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     );
     if (!resp.ok) return [];
@@ -2184,7 +2184,7 @@ class GoogleSheetsService {
   async deleteAdminFromSheet(email: string): Promise<void> {
     const accessToken = await this.getAccessToken();
     const resp = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A2:E200`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A2:E200`,
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     );
     if (!resp.ok) throw new Error('Admin 시트를 읽을 수 없습니다');
@@ -2198,7 +2198,7 @@ class GoogleSheetsService {
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     );
     const meta = await metaResp.json();
-    const adminSheet = meta.sheets?.find((s: any) => s.properties.title === 'Admin');
+    const adminSheet = meta.sheets?.find((s: any) => s.properties.title === 'Auth');
     if (!adminSheet) throw new Error('Admin 시트를 찾을 수 없습니다');
     await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,

@@ -228,9 +228,9 @@ function AdminListBody({ currentUserEmail, queryClient, toast, apiRequest }: any
           <td className="px-3 py-2">{admin.memberName}</td>
           <td className="px-3 py-2 text-gray-600 text-xs">{admin.email}</td>
           <td className="px-3 py-2 text-gray-600 text-xs">{admin.region}</td>
-          <td className="px-3 py-2"><span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">{admin.auth}</span></td>
+          <td className="px-3 py-2"><span className={`text-xs px-2 py-0.5 rounded ${admin.auth === 'National' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>{admin.auth}</span></td>
           <td className="px-3 py-2 text-right">
-            {admin.email.toLowerCase() !== currentUserEmail.toLowerCase() && (
+            {admin.email.toLowerCase() !== currentUserEmail.toLowerCase() && admin.auth !== 'National' && (
               <button
                 className="text-red-500 hover:text-red-700 p-1"
                 onClick={async () => {
