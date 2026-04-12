@@ -751,6 +751,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Delete chapter from Master sheet
+  app.delete("/api/admin/delete-chapter", async (req, res) => {
+    try {
+      const { chapter } = req.body;
+      if (!chapter) {
+        return res.status(400).json({ message: "챕터명은 필수입니다" });
+      }
+
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      await sheetsService.deleteChapterFromMaster(chapter.trim());
+      sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '챕터 삭제', `${chapter}`);
+      sheetsService.logChapterActivity(req.body.adminEmail || 'admin', '챕터 삭제', `챕터: ${chapter}`);
+      res.json({ success: true, message: `'${chapter}' 챕터가 삭제되었습니다` });
+    } catch (error: any) {
+      console.error("❌ Error deleting chapter:", error);
+      res.status(500).json({ message: error.message || "챕터 삭제 중 오류가 발생했습니다" });
+    }
+  });
+
+  // Admin API: List all admins from Admin sheet
+  app.get("/api/admin/list-admins", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      const admins = await sheetsService.getAdminList();
+      res.json(admins);
+    } catch (error: any) {
+      console.error("❌ Error listing admins:", error);
+      res.status(500).json({ message: "관리자 목록 조회 실패" });
+    }
+  });
+
+  // Admin API: Delete admin from Admin sheet
+  app.delete("/api/admin/delete-admin", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "이메일은 필수입니다" });
+
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+
+      await sheetsService.deleteAdminFromSheet(email.trim());
+      sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 삭제', `${email}`);
+      res.json({ success: true, message: `'${email}' 관리자가 삭제되었습니다` });
+    } catch (error: any) {
+      console.error("❌ Error deleting admin:", error);
+      res.status(500).json({ message: error.message || "관리자 삭제 중 오류가 발생했습니다" });
+    }
+  });
+
+  // Admin API: Get board posts
+  app.get("/api/admin/board", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      const posts = await sheetsService.getBoardPosts();
+      res.json(posts);
+    } catch (error: any) {
+      res.status(500).json({ message: "게시판 조회 실패" });
+    }
+  });
+
+  // Admin API: Create board post (question/request)
+  app.post("/api/admin/board", async (req, res) => {
+    try {
+      const { email, name, role, content } = req.body;
+      if (!content?.trim()) return res.status(400).json({ message: "내용을 입력해주세요" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      await sheetsService.addBoardPost(email, name, role, '요청', content.trim());
+      sheetsService.logAdminActivity(email, '게시판 글 작성', content.trim().substring(0, 50));
+      res.json({ success: true, message: "등록되었습니다" });
+    } catch (error: any) {
+      res.status(500).json({ message: "게시글 등록 실패" });
+    }
+  });
+
+  // Admin API: Reply to board post (master only)
+  app.post("/api/admin/board/reply", async (req, res) => {
+    try {
+      const { email, name, role, content, parentIndex } = req.body;
+      if (!content?.trim()) return res.status(400).json({ message: "내용을 입력해주세요" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      await sheetsService.addBoardPost(email, name, role, '답변', content.trim(), String(parentIndex));
+      sheetsService.logAdminActivity(email, '게시판 답변', content.trim().substring(0, 50));
+      res.json({ success: true, message: "답변이 등록되었습니다" });
+    } catch (error: any) {
+      res.status(500).json({ message: "답변 등록 실패" });
+    }
+  });
+
+  // Admin API: Delete board post
+  app.post("/api/admin/board/delete", async (req, res) => {
+    try {
+      const { rowIndex } = req.body;
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "초기화 실패" });
+      await sheetsService.deleteBoardPost(rowIndex);
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: "삭제 실패" }); }
+  });
+
+  // Admin API: Update board post
+  app.post("/api/admin/board/update", async (req, res) => {
+    try {
+      const { rowIndex, content } = req.body;
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "초기화 실패" });
+      await sheetsService.updateBoardPost(rowIndex, content);
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: "수정 실패" }); }
+  });
+
+  // Admin API: Restore single member from WithdrawalHistory to RPS
+  app.post("/api/admin/restore-member", async (req, res) => {
+    try {
+      const { email, region, chapter, memberName } = req.body;
+      if (!email) return res.status(400).json({ message: "이메일은 필수입니다" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      await sheetsService.restoreMemberFromHistory(email, region, chapter, memberName);
+      sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '멤버 복원', `${memberName} (${email})`);
+      res.json({ success: true, message: `${memberName} 멤버가 복원되었습니다` });
+    } catch (error: any) {
+      console.error("❌ Error restoring member:", error);
+      res.status(500).json({ message: error.message || "복원 중 오류" });
+    }
+  });
+
+  // Admin API: Get master notices from MasterLog sheet
+  app.get("/api/admin/master-notices", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "초기화 실패" });
+      const notices = await sheetsService.getMasterNotices();
+      res.json(notices);
+    } catch (error: any) {
+      res.status(500).json({ message: "공지 조회 실패" });
+    }
+  });
+
   // Admin API: Get regions from Master sheet
   app.get("/api/admin/regions", async (req, res) => {
     try {

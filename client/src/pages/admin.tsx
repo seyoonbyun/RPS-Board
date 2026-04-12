@@ -27,6 +27,241 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
+  const [newContent, setNewContent] = useState('');
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const queryClient = useQueryClient();
+  const isMaster = adminPermission?.auth === 'National';
+
+  const { data: posts = [], isLoading } = useQuery({
+    queryKey: ["/api/admin/board"],
+    queryFn: async () => {
+      const resp = await fetch('/api/admin/board');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const { data: masterNotices = [] } = useQuery({
+    queryKey: ["/api/admin/master-notices"],
+    queryFn: async () => {
+      const resp = await fetch('/api/admin/master-notices');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const allQuestions = posts.filter((p: any) => p.type === '요청');
+  const questions = boardSearch.trim()
+    ? allQuestions.filter((q: any) => q.content?.toLowerCase().includes(boardSearch.toLowerCase()) || q.name?.toLowerCase().includes(boardSearch.toLowerCase()))
+    : allQuestions;
+  const replies = posts.filter((p: any) => p.type === '답변');
+
+  const submitPost = async () => {
+    if (!newContent.trim()) return;
+    await fetch('/api/admin/board', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: newContent.trim() })
+    });
+    setNewContent('');
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
+  };
+
+  const deletePost = async (rowIndex: number) => {
+    if (!confirm('이 글을 삭제하시겠습니까?')) return;
+    await fetch('/api/admin/board/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowIndex })
+    });
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
+  };
+
+  const updatePost = async (rowIndex: number) => {
+    if (!editContent.trim()) return;
+    await fetch('/api/admin/board/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowIndex, content: editContent.trim() })
+    });
+    setEditingIndex(null);
+    setEditContent('');
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
+  };
+
+  const submitReply = async (parentIndex: number) => {
+    if (!replyContent.trim()) return;
+    await fetch('/api/admin/board/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: replyContent.trim(), parentIndex })
+    });
+    setReplyContent('');
+    setReplyTo(null);
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
+  };
+
+  const renderContent = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) =>
+      urlRegex.test(part) ? (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{part}</a>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  };
+
+  return (
+    <div className="flex flex-col flex-1">
+      <div className="flex-1 overflow-y-auto max-h-[200px] divide-y divide-gray-100">
+        {isLoading ? (
+          <div className="p-4 text-center text-gray-400 text-xs">불러오는 중...</div>
+        ) : (masterNotices.length === 0 && questions.length === 0) ? (
+          <div className="p-4 text-center text-gray-400 text-xs py-6">등록된 글이 없습니다</div>
+        ) : (<>
+          {/* 마스터 공지 (MasterLog 시트에서 읽기, 상단 고정) */}
+          {masterNotices.slice().reverse().map((n: any, i: number) => (
+            <div key={`notice-${i}`} className="p-3 bg-red-50 border-b border-red-100">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded font-semibold">공지</span>
+                <span className="text-[10px] text-gray-400">{n.timestamp}</span>
+              </div>
+              <p className="text-xs text-gray-900 font-medium">{renderContent(n.content)}</p>
+            </div>
+          ))}
+          {/* 어드민 요청 글 */}
+          {questions.slice().reverse().map((q: any) => {
+            const qReplies = replies.filter((r: any) => String(r.parentIndex) === String(q.index));
+            return (
+              <div key={q.index} className="p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-gray-900">{q.name}</span>
+                      <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">{q.role}</span>
+                      <span className="text-[10px] text-gray-400">{q.timestamp}</span>
+                    </div>
+                    {editingIndex === q.index ? (
+                      <div className="flex gap-1 mt-1">
+                        <input value={editContent} onChange={(e) => setEditContent(e.target.value)} className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" onKeyDown={(e) => e.key === 'Enter' && updatePost(q.index)} />
+                        <button onClick={() => updatePost(q.index)} className="text-[10px] bg-red-600 text-white px-2 py-1 rounded">저장</button>
+                        <button onClick={() => setEditingIndex(null)} className="text-[10px] text-gray-500 px-1">취소</button>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-700">{renderContent(q.content)}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    {q.email === currentUser?.email && editingIndex !== q.index && (
+                      <>
+                        <button onClick={() => { setEditingIndex(q.index); setEditContent(q.content); }} className="text-gray-400 hover:text-gray-600 p-0.5"><Edit3 className="w-3 h-3" /></button>
+                        <button onClick={() => deletePost(q.index)} className="text-gray-400 hover:text-red-600 p-0.5"><Trash2 className="w-3 h-3" /></button>
+                      </>
+                    )}
+                    {isMaster && (
+                      <button onClick={() => { setReplyTo(q.index); setReplyContent(''); }} className="text-[10px] text-red-600 hover:underline whitespace-nowrap">답변</button>
+                    )}
+                  </div>
+                </div>
+                {qReplies.map((r: any) => (
+                  <div key={r.index} className="ml-4 mt-2 pl-3 border-l-2 border-red-200">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-semibold text-red-700">{r.name}</span>
+                      <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">답변</span>
+                      <span className="text-[10px] text-gray-400">{r.timestamp}</span>
+                    </div>
+                    <p className="text-xs text-gray-600">{renderContent(r.content)}</p>
+                  </div>
+                ))}
+                {replyTo === q.index && (
+                  <div className="ml-4 mt-2 flex gap-1">
+                    <input value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="답변 입력..." className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" onKeyDown={(e) => e.key === 'Enter' && submitReply(q.index)} />
+                    <button onClick={() => submitReply(q.index)} className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">전송</button>
+                    <button onClick={() => setReplyTo(null)} className="text-xs text-gray-500 px-1">취소</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          </>
+        )}
+      </div>
+      <div className="p-3 border-t border-gray-100 flex gap-2">
+        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문을 입력하세요..." className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
+        <button onClick={submitPost} className="text-xs bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 whitespace-nowrap">등록</button>
+      </div>
+    </div>
+  );
+}
+
+function AdminListBody({ currentUserEmail, queryClient, toast, apiRequest }: any) {
+  const { data: admins = [], isLoading } = useQuery({
+    queryKey: ["/api/admin/list-admins"],
+    queryFn: async () => {
+      const resp = await fetch('/api/admin/list-admins');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+  });
+
+  const filteredAdmins = admins.filter((a: any) => {
+    const auth = a.auth?.toLowerCase() || '';
+    return auth === 'admin' || auth === 'master' || auth === 'national' || auth === 'growth';
+  });
+
+  if (isLoading) return <tbody><tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400">불러오는 중...</td></tr></tbody>;
+
+  return (
+    <tbody>
+      {filteredAdmins.length === 0 ? (
+        <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400">등록된 관리자가 없습니다</td></tr>
+      ) : filteredAdmins.map((admin: any) => (
+        <tr key={admin.email} className="border-t hover:bg-gray-50">
+          <td className="px-3 py-2">{admin.memberName}</td>
+          <td className="px-3 py-2 text-gray-600 text-xs">{admin.email}</td>
+          <td className="px-3 py-2 text-gray-600 text-xs">{admin.region}</td>
+          <td className="px-3 py-2"><span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">{admin.auth}</span></td>
+          <td className="px-3 py-2 text-right">
+            {admin.email.toLowerCase() !== currentUserEmail.toLowerCase() && (
+              <button
+                className="text-red-500 hover:text-red-700 p-1"
+                onClick={async () => {
+                  if (!confirm(`'${admin.memberName}' (${admin.email}) 관리자를 삭제하시겠습니까?`)) return;
+                  try {
+                    const resp = await apiRequest('DELETE', '/api/admin/delete-admin', {
+                      email: admin.email,
+                      adminEmail: currentUserEmail,
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                      toast({ title: data.message });
+                      queryClient.invalidateQueries({ queryKey: ['/api/admin/list-admins'] });
+                    } else {
+                      alert(data.message || '삭제 실패');
+                    }
+                  } catch (err: any) {
+                    alert(err.message || '삭제 중 오류');
+                  }
+                }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
 interface UserData {
   email: string;
   region: string;
@@ -81,12 +316,13 @@ export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddChapterDialog, setShowAddChapterDialog] = useState(false);
+  const [boardSearch, setBoardSearch] = useState('');
   const [newChapterName, setNewChapterName] = useState('');
   const [newChapterRegion, setNewChapterRegion] = useState('');
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
-  const [showWithdrawalHistory, setShowWithdrawalHistory] = useState(false);
+  // showWithdrawalHistory replaced by activeModal === 'history'
   const [historySearchTerm, setHistorySearchTerm] = useState("");
   const [historyRegionFilter, setHistoryRegionFilter] = useState("전체");
   const [historyChapterFilter, setHistoryChapterFilter] = useState("전체");
@@ -101,7 +337,7 @@ export default function AdminPage() {
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const [selectedWithdrawnUsers, setSelectedWithdrawnUsers] = useState<string[]>([]);
   const [showWithdrawalProgress, setShowWithdrawalProgress] = useState(false);
-  const [activeSection, setActiveSection] = useState<'none' | 'withdrawal' | 'add' | 'edit'>('none');
+  const [activeModal, setActiveModal] = useState<string | null>(null);
   const [withdrawalMethod, setWithdrawalMethod] = useState<'email' | 'list'>('list');
   const [editSearchTerm, setEditSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -677,7 +913,7 @@ export default function AdminPage() {
           description: `${newUser.email} 관리자가 Admin 시트에 등록되었습니다.`,
           duration: 2500
         });
-        setShowAddUserDialog(false);
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/list-admins'] });
         setNewUser({ email: '', region: '', chapter: '', memberName: '', industry: '', company: '', password: '', auth: 'Admin' });
       } else {
         const error = await response.json();
@@ -810,33 +1046,15 @@ export default function AdminPage() {
                 <Users className="text-white w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-red-600">BNI Korea 관리자 패널</h1>
-                <span className="text-sm text-gray-500">파워팀 멤버 관리 (입회/탈퇴)</span>
+                <h1 className="text-xl font-bold text-red-600">COMMAND CENTER</h1>
+                <span className="text-sm text-gray-500">BNI Korea 파워팀 관리자 대시보드</span>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => setShowAddChapterDialog(true)}
-                variant="outline"
-                size="sm"
-                className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                신규 챕터 생성
-              </Button>
-              <Button
-                onClick={() => setShowAddUserDialog(true)}
-                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600"
-                size="sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                관리자 추가하기
-              </Button>
-              
+            <div className="flex items-center space-x-3">
               {adminPermission?.auth === 'National' && (
-                <Button 
-                  onClick={exportUserList} 
-                  variant="outline" 
+                <Button
+                  onClick={exportUserList}
+                  variant="outline"
                   size="sm"
                   className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600"
                 >
@@ -851,7 +1069,7 @@ export default function AdminPage() {
                   localStorage.removeItem('currentUser');
                   setLocation('/');
                 }}
-                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
+                className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
               >
                 로그아웃
               </Button>
@@ -860,40 +1078,20 @@ export default function AdminPage() {
 
           {/* 모바일 레이아웃 */}
           <div className="md:hidden py-4">
-            {/* 타이틀과 서브텍스트 - 맨 위 */}
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center mr-3">
                 <Users className="text-white w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-red-600">BNI Korea 관리자 패널</h1>
-                <span className="text-sm text-gray-500">파워팀 멤버 관리 (입회/탈퇴)</span>
+                <h1 className="text-xl font-bold text-red-600">COMMAND CENTER</h1>
+                <span className="text-sm text-gray-500">BNI Korea 관리자 대시보드</span>
               </div>
             </div>
-
-            {/* 버튼들 - 아래에 수직 배치 */}
             <div className="space-y-2">
-              <Button
-                onClick={() => setShowAddChapterDialog(true)}
-                variant="outline"
-                size="sm"
-                className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white w-full"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                신규 챕터 생성
-              </Button>
-              <Button
-                onClick={() => setShowAddUserDialog(true)}
-                className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600 w-full"
-                size="sm"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                관리자 추가하기
-              </Button>
               {adminPermission?.auth === 'National' && (
-                <Button 
-                  onClick={exportUserList} 
-                  variant="outline" 
+                <Button
+                  onClick={exportUserList}
+                  variant="outline"
                   size="sm"
                   className="border-gray-300 text-gray-700 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
                 >
@@ -917,408 +1115,213 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border border-red-600">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">멤버 ALL (탈퇴 포함)</p>
-                <p className="text-2xl font-bold text-gray-900">{allUsers?.length || 0}명</p>
-              </div>
+        {/* 통계 카드 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 총 멤버수 */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-gray-300 cursor-default">
+            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">멤버 ALL(탈퇴포함)</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold text-gray-900">{(allUsers?.length || 0).toLocaleString()}</span>
+              <span className="text-sm font-medium text-gray-400">ALL MEMBERS</span>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border border-red-600">
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">활동중</p>
-                <p className="text-2xl font-bold text-gray-900">{activeUsers.length}명</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border border-red-600">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">탈퇴 처리됨</p>
-                  <p className="text-2xl font-bold text-gray-900">{withdrawalHistory.length}명</p>
-                </div>
-              </div>
-              <Button 
-                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
-                className="bg-white hover:bg-red-50 text-red-600 border border-red-600"
-                size="sm"
-              >
-                <FileText className="w-4 h-4 mr-1" />
-                History
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 3개 카드 박스 네비게이션 - 각 카드 아래에 해당 콘텐츠 배치 */}
-      <div className="flex flex-col gap-6">
-        {/* 카드 3: 멤버 탈퇴 처리 */}
-        <div className="space-y-4 order-3">
-          <div 
-            onClick={() => setActiveSection(activeSection === 'withdrawal' ? 'none' : 'withdrawal')}
-            className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
-              activeSection === 'withdrawal' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-            }`}
-          >
-            <div className="p-6 text-center">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  3
-                </div>
-              </div>
-              <div className="mt-4 mb-4">
-                <UserMinus className="w-12 h-12 mx-auto text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">멤버 탈퇴 처리</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                이메일 직접 입력 또는<br/>멤버 목록에서 선택하여 탈퇴 처리
-              </p>
-              <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                activeSection === 'withdrawal' 
-                  ? 'bg-red-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-              }`}>
-                {activeSection === 'withdrawal' ? '닫기' : '탈퇴 처리하기'}
-              </button>
-            </div>
+            <p className="text-xs text-gray-400 mt-3">전체 등록 멤버 현황</p>
           </div>
-          
-          {/* 섹션 1: 멤버 탈퇴 처리 콘텐츠 */}
-          {activeSection === 'withdrawal' && (
-        <Card className="border-2 border-red-200">
-          <CardHeader className="bg-red-50">
-            <CardTitle className="flex items-center text-lg text-red-700">
-              <UserMinus className="mr-2 w-5 h-5" />
-              멤버 탈퇴 처리
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            {/* 방법 선택 */}
-            <div className="flex gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-              <label className="flex items-center cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="withdrawalMethod" 
-                  checked={withdrawalMethod === 'email'} 
-                  onChange={() => setWithdrawalMethod('email')}
-                  className="mr-2 accent-red-600"
-                />
-                <span className={withdrawalMethod === 'email' ? 'font-medium text-red-600' : 'text-gray-600'}>
-                  이메일 직접 입력
-                </span>
-              </label>
-              <label className="flex items-center cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="withdrawalMethod" 
-                  checked={withdrawalMethod === 'list'} 
-                  onChange={() => setWithdrawalMethod('list')}
-                  className="mr-2 accent-red-600"
-                />
-                <span className={withdrawalMethod === 'list' ? 'font-medium text-red-600' : 'text-gray-600'}>
-                  멤버 목록에서 선택
-                </span>
-              </label>
+          {/* 활동중 멤버 */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-300 cursor-default">
+            <div className="absolute left-0 top-4 bottom-4 w-1 bg-red-600 rounded-r"></div>
+            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">활동중 멤버</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold text-red-600">{activeUsers.length.toLocaleString()}</span>
+              <span className="text-sm font-medium text-gray-400">ACTIVE MEMBERS</span>
             </div>
-
-            {/* 방법 1: 이메일 직접 입력 */}
-            {withdrawalMethod === 'email' && (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    탈퇴할 멤버 이메일 (여러 명은 줄바꿈으로 구분)
-                  </Label>
-                  <textarea
-                    value={bulkEmails}
-                    onChange={(e) => setBulkEmails(e.target.value)}
-                    placeholder="user1@example.com&#10;user2@example.com&#10;user3@example.com"
-                    className="w-full mt-2 p-3 border rounded-lg h-32 resize-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  />
-                  {bulkEmails.trim() && (
-                    <div className="mt-2 text-sm">
-                      {emailValidation.isValid ? (
-                        <span className="text-green-600">입력된 이메일: {emailValidation.validCount}개</span>
-                      ) : (
-                        <span className="text-red-600">
-                          잘못된 이메일 형식: {emailValidation.invalidEmails?.join(', ')}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                      disabled={!emailValidation.isValid || bulkWithdrawalMutation.isPending}
-                    >
-                      <UserMinus className="w-4 h-4 mr-2" />
-                      {bulkWithdrawalMutation.isPending ? '처리 중...' : '입력한 멤버 탈퇴 처리'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {emailValidation.validCount}명의 멤버를 탈퇴 처리하시겠습니까?
-                        이 작업은 되돌릴 수 있습니다.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>취소</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => {
-                          const emails = bulkEmails.trim().split('\n').map(e => e.trim()).filter(e => e);
-                          bulkWithdrawalMutation.mutate(emails);
-                        }}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        탈퇴 처리
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-
-            {/* 방법 2: 멤버 목록에서 선택 */}
-            {withdrawalMethod === 'list' && (
-              <div className="space-y-4">
-                {/* 필터 */}
-                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Label className="text-sm whitespace-nowrap">지역:</Label>
-                    <Select value={regionFilter} onValueChange={setRegionFilter}>
-                      <SelectTrigger className="w-32 bg-white">
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="__all__">전체</SelectItem>
-                        {uniqueRegions.map(region => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Label className="text-sm whitespace-nowrap">챕터:</Label>
-                    <Select value={chapterFilter} onValueChange={setChapterFilter}>
-                      <SelectTrigger className="w-32 bg-white">
-                        <SelectValue placeholder="전체" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white">
-                        <SelectItem value="__all__">전체</SelectItem>
-                        {uniqueChapters.map(chapter => (
-                          <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center space-x-2 flex-1">
-                    <Label className="text-sm whitespace-nowrap">검색:</Label>
-                    <Input 
-                      placeholder="멤버명 검색..."
-                      value={memberNameSearch}
-                      onChange={(e) => setMemberNameSearch(e.target.value)}
-                      className="max-w-xs"
-                    />
-                  </div>
-                </div>
-
-                {/* 필터 선택 전 안내 메시지 */}
-                {regionFilter === '__all__' && chapterFilter === '__all__' && !memberNameSearch && (
-                  <div className="border rounded-lg p-8 text-center bg-gray-50">
-                    <div className="flex flex-col items-center space-y-3">
-                      <Users className="w-12 h-12 text-gray-400" />
-                      <div className="text-gray-700 font-medium">
-                        멤버 목록을 보려면 필터를 선택하세요
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색하면 해당 멤버 목록이 표시됩니다.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 선택 현황 및 전체 선택 - 필터 선택 시에만 표시 */}
-                {(regionFilter !== '__all__' || chapterFilter !== '__all__' || memberNameSearch) && (
-                  <>
-                    <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Checkbox 
-                          checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(u => selectedUsers.includes(u.email))}
-                          onCheckedChange={handleSelectAll}
-                        />
-                        <span className="text-sm text-gray-600">전체 선택</span>
-                      </div>
-                      <Badge variant="secondary">
-                        선택됨: {selectedUsers.length}명
-                      </Badge>
-                    </div>
-
-                    {/* 멤버 목록 */}
-                    <div className="max-h-80 overflow-y-auto border rounded-lg">
-                      {filteredActiveUsers.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500">
-                          조건에 맞는 멤버가 없습니다
-                        </div>
-                      ) : (
-                        filteredActiveUsers.map(user => (
-                          <div 
-                            key={user.email} 
-                            className={`flex items-center p-3 border-b last:border-b-0 hover:bg-gray-50 ${
-                              selectedUsers.includes(user.email) ? 'bg-red-50' : ''
-                            }`}
-                          >
-                            <Checkbox 
-                              checked={selectedUsers.includes(user.email)}
-                              onCheckedChange={(checked) => handleUserSelection(user.email, checked === true)}
-                              className="mr-3"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900">{user.memberName}</div>
-                              <div className="text-sm text-gray-500">
-                                {user.region} / {user.chapter} - {user.email}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-
-                    {/* 탈퇴 버튼 */}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                          disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
-                        >
-                          <UserMinus className="w-4 h-4 mr-2" />
-                          {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-white border-2 border-gray-300 shadow-2xl">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-gray-900">멤버 탈퇴 확인</AlertDialogTitle>
-                          <AlertDialogDescription className="text-gray-600">
-                            {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
-                            이 작업은 되돌릴 수 있습니다.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300">취소</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleSelectedUsersWithdrawal}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            탈퇴 처리
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* 탈퇴 멤버 복원 링크 */}
-            <Separator className="my-6" />
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                탈퇴된 멤버를 다시 활성화하려면 히스토리를 확인하세요
-              </div>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setShowWithdrawalHistory(!showWithdrawalHistory)}
-                className="border-gray-300"
-              >
-                <FileText className="w-4 h-4 mr-1" />
-                탈퇴 히스토리 {showWithdrawalHistory ? '닫기' : '보기'}
-              </Button>
+            <p className="text-xs text-gray-400 mt-3">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+              {allUsers?.length ? Math.round((activeUsers.length / allUsers.length) * 100) : 0}% RETENTION INDEX
+            </p>
+          </div>
+          {/* 탈퇴 멤버 */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-gray-300 cursor-default">
+            <p className="text-xs font-semibold text-gray-400 tracking-wider mb-3">탈퇴 멤버</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold text-gray-900">{withdrawalHistory.length.toLocaleString()}</span>
+              <span className="text-sm font-medium text-gray-400">INACTIVE</span>
             </div>
-          </CardContent>
-        </Card>
-          )}
+            <p className="text-xs text-gray-400 mt-3">시스템 운영 이후 누적 기록</p>
+          </div>
         </div>
 
-        {/* 카드 1: 새로운 멤버 추가 */}
-        <div className="space-y-4 order-1">
-          <div 
-            onClick={() => setActiveSection(activeSection === 'add' ? 'none' : 'add')}
-            className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
-              activeSection === 'add' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-            }`}
+        {/* Feature Cards Grid */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 tracking-wider mb-3 pl-2">Administrative Protocol</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Card: 새로운 멤버 추가 */}
+          <div
+            onClick={() => setActiveModal('add')}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-red-300 p-5 flex flex-col justify-between min-h-[200px]"
           >
-            <div className="p-6 text-center">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  1
-                </div>
-              </div>
-              <div className="mt-4 mb-4">
-                <UserPlus className="w-12 h-12 mx-auto text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">새로운 멤버 추가</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                개별 멤버 추가 또는<br/>CSV 파일로 일괄 등록
-              </p>
-              <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                activeSection === 'add' 
-                  ? 'bg-red-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-              }`}>
-                {activeSection === 'add' ? '닫기' : '멤버 추가하기'}
-              </button>
+            <div>
+              <UserPlus className="w-5 h-5 text-red-600 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">새로운 멤버 추가</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">개별 멤버 추가 또는 CSV 파일로 일괄 등록합니다. 챕터 인증서 및 승인 문서가 필요합니다.</p>
+            </div>
+            <button className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors">
+              OPEN APPLICATION →
+            </button>
+          </div>
+
+          {/* Card: 멤버 관리 */}
+          <div
+            onClick={() => setActiveModal('edit')}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-400 p-5 flex flex-col justify-between min-h-[200px]"
+          >
+            <div>
+              <Users className="w-5 h-5 text-gray-700 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">멤버 관리</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">멤버의 연락처, 산업군, 챕터 배정 등 기존 멤버 정보를 조회하고 수정합니다.</p>
+            </div>
+            <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
+              ACCESS RECORDS 📋
+            </button>
+          </div>
+
+          {/* Card: 탈퇴 멤버 삭제 */}
+          <div
+            onClick={() => setActiveModal('withdrawal')}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-red-300 p-5 flex flex-col justify-between min-h-[200px]"
+          >
+            <div>
+              <UserMinus className="w-5 h-5 text-red-600 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">탈퇴 멤버 삭제</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">멤버를 비활성 상태로 전환합니다. 탈퇴 면담 확인 및 책임 해제 절차가 필요합니다.</p>
+            </div>
+            <button className="mt-4 w-full border border-red-600 hover:bg-red-50 text-red-600 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
+              INITIATE EXIT ↗
+            </button>
+          </div>
+
+          {/* Card: 챕터 관리 */}
+          <div
+            onClick={() => setShowAddChapterDialog(true)}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-400 p-5 flex flex-col justify-between min-h-[200px]"
+          >
+            <div>
+              <Plus className="w-5 h-5 text-gray-700 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">챕터 관리</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">새로운 챕터를 생성하거나 기존 챕터를 삭제합니다.</p>
+            </div>
+            <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
+              MANAGE CHAPTERS 📋
+            </button>
+          </div>
+
+          {/* Card: 관리자 관리 */}
+          <div
+            onClick={() => setShowAddUserDialog(true)}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-400 p-5 flex flex-col justify-between min-h-[200px]"
+          >
+            <div>
+              <UserCheck className="w-5 h-5 text-gray-700 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">관리자 관리</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">관리자를 추가하거나 기존 관리자를 삭제합니다.</p>
+            </div>
+            <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
+              MANAGE ADMINS 📋
+            </button>
+          </div>
+
+          {/* Card: 탈퇴 히스토리 */}
+          <div
+            onClick={() => setActiveModal('history')}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-400 p-5 flex flex-col justify-between min-h-[200px]"
+          >
+            <div>
+              <FileText className="w-5 h-5 text-gray-700 mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">탈퇴 히스토리</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">탈퇴 이력을 조회하고 멤버를 복원할 수 있습니다.</p>
+            </div>
+            <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
+              VIEW HISTORY 📋
+            </button>
+          </div>
+        </div>
+
+        {/* 하단 섹션: 매뉴얼 영상 + 공지사항 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 !mt-8">
+          {/* 매뉴얼 영상 */}
+          <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg">
+            <div className="p-4">
+              <h3 className="text-white font-bold text-sm mb-0.5">관리자 매뉴얼</h3>
+              <p className="text-gray-400 text-xs">시스템 사용 가이드 영상</p>
+            </div>
+            <div className="aspect-[2.25/1]">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/vZcyOdyu6bg?autoplay=1&mute=1&loop=1&playlist=vZcyOdyu6bg&controls=1"
+                title="관리자 매뉴얼"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              />
             </div>
           </div>
 
-          {/* 섹션 2: 멤버 추가 콘텐츠 */}
-          {activeSection === 'add' && (
-        <Card className="border border-gray-200 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center text-xl text-red-600">
+          {/* 요청/답변 게시판 */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm mb-0.5">Admin Board</h3>
+                <p className="text-gray-500 text-xs">시스템 관련 공지 & 수정 건의 및 질문 게시판</p>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                <input
+                  value={boardSearch}
+                  onChange={(e) => setBoardSearch(e.target.value)}
+                  placeholder="검색..."
+                  className="text-xs border border-gray-300 rounded-md pl-7 pr-2 py-1.5 w-32"
+                />
+              </div>
+            </div>
+            <BoardWidget currentUser={currentUser} adminPermission={adminPermission} boardSearch={boardSearch} />
+          </div>
+        </div>
+      </div>
+
+      {/* ========== MODAL: 새로운 멤버 추가 ========== */}
+      <Dialog open={activeModal === 'add'} onOpenChange={(open) => setActiveModal(open ? 'add' : null)}>
+        <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl text-red-600">
               <UserPlus className="mr-2 w-6 h-6" />
               새로운 멤버 추가하기
-            </CardTitle>
-            <p className="text-gray-700 mt-2">단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.</p>
-            <p className="text-sm text-gray-500 mt-1">* 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하는 정보로, 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</p>
-          </CardHeader>
-          <CardContent className="p-6">
+            </DialogTitle>
+            <DialogDescription>
+              단일 멤버 추가 또는 CSV 파일로 일괄 추가할 수 있습니다.
+              <br />
+              <span className="text-xs text-gray-400">* 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하는 정보로, 관리자가 계정 생성 추가하는 정보에서 제외됩니다.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
             {/* 탭 버튼 */}
-            <div className="grid grid-cols-2 gap-2 mb-6">
-              <button 
+            <div className="grid grid-cols-2 gap-2">
+              <button
                 onClick={() => setAddMode('single')}
                 className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap border-2 ${
-                  addMode === 'single' 
-                    ? 'bg-red-600 text-white border-red-700' 
+                  addMode === 'single'
+                    ? 'bg-red-600 text-white border-red-700'
                     : 'bg-white text-red-600 border-red-600 hover:bg-red-50'
                 }`}
               >
                 <Plus className="w-4 h-4 flex-shrink-0" />
                 멤버 개별 추가
               </button>
-              <button 
+              <button
                 onClick={() => setAddMode('csv')}
                 className={`py-3 px-4 font-medium transition-colors flex items-center justify-center gap-2 rounded-lg whitespace-nowrap border-2 ${
-                  addMode === 'csv' 
-                    ? 'bg-red-600 text-white border-red-700' 
+                  addMode === 'csv'
+                    ? 'bg-red-600 text-white border-red-700'
                     : 'bg-white text-red-600 border-red-600 hover:bg-red-50'
                 }`}
               >
@@ -1420,21 +1423,12 @@ export default function AdminPage() {
                       </Select>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleAddUser}
                     disabled={addUserMutation.isPending || !newUser.email || !newUser.region || !newUser.chapter || !newUser.memberName || newUser.password.length !== 4}
                     className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white py-3"
                   >
                     {addUserMutation.isPending ? '추가 중...' : '멤버 등록'}
-                  </Button>
-                </div>
-                <div className="flex justify-end">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setActiveSection('none')}
-                    className="border-gray-300"
-                  >
-                    취소
                   </Button>
                 </div>
               </div>
@@ -1444,8 +1438,8 @@ export default function AdminPage() {
             {addMode === 'csv' && (
               <div className="space-y-6">
                 <p className="text-gray-700">하단의 '일괄 등록' 양식의 <span className="text-red-600 font-medium">CSV 파일</span>을 업로드하시면, 새로운 멤버의 <span className="text-red-600 font-medium">RPS Board</span>가 생성됩니다.</p>
-                
-                <Button 
+
+                <Button
                   variant="outline"
                   className="w-full py-6 border-red-600 text-red-600 hover:bg-red-50"
                   onClick={() => {
@@ -1477,7 +1471,7 @@ export default function AdminPage() {
                     <li className="text-red-600 font-medium">• 중요: 전문분야 & 타겟고객(나의 핵심 고객층)은 멤버가 직접 관리하므로 CSV에서 제외됩니다.</li>
                     <li>• 첫 번째 행은 헤더이므로, 두 번째 행부터 사용자 정보를 입력하세요.</li>
                   </ul>
-                  <button 
+                  <button
                     onClick={() => {
                       const csvContent = "이메일,지역,챕터,멤버명,산업군,회사,권한,비밀번호\nexample@email.com,Seoul1 서울1,하이,홍길동,IT,테크회사,Member,1234";
                       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1492,68 +1486,29 @@ export default function AdminPage() {
                     CSV 템플릿 파일 다운로드
                   </button>
                 </div>
-
-                <div className="flex justify-end">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setActiveSection('none')}
-                    className="border-gray-300"
-                  >
-                    취소
-                  </Button>
-                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-          )}
-        </div>
-
-        {/* 카드 2: 기존 멤버 정보 수정 */}
-        <div className="space-y-4 order-2">
-          <div 
-            onClick={() => setActiveSection(activeSection === 'edit' ? 'none' : 'edit')}
-            className={`relative bg-white rounded-2xl shadow-lg border-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.01] ${
-              activeSection === 'edit' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200 hover:border-red-300'
-            }`}
-          >
-            <div className="p-6 text-center">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
-                  2
-                </div>
-              </div>
-              <div className="mt-4 mb-4">
-                <Edit3 className="w-12 h-12 mx-auto text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">기존 멤버 정보 수정</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                멤버를 검색하여<br/>정보를 수정합니다
-              </p>
-              <button className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                activeSection === 'edit' 
-                  ? 'bg-red-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white'
-              }`}>
-                {activeSection === 'edit' ? '닫기' : '정보 수정하기'}
-              </button>
-            </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* 섹션 3: 기존 멤버 정보 수정 콘텐츠 */}
-          {activeSection === 'edit' && (
-        <Card className="border-2 border-red-200">
-          <CardHeader className="bg-red-50">
-            <CardTitle className="flex items-center text-lg text-red-700">
+      {/* ========== MODAL: 멤버 관리 (정보 수정) ========== */}
+      <Dialog open={activeModal === 'edit'} onOpenChange={(open) => setActiveModal(open ? 'edit' : null)}>
+        <DialogContent className="max-w-7xl bg-white max-h-[90vh] overflow-y-auto w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg text-red-700">
               <Edit3 className="mr-2 w-5 h-5" />
-              기존 멤버 정보 수정
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+              멤버 관리 - 정보 수정
+            </DialogTitle>
+            <DialogDescription>
+              이메일 또는 멤버명으로 검색하여 멤버 정보를 수정할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
             {/* 검색 */}
-            <div className="flex gap-4 mb-6">
+            <div className="flex gap-4">
               <div className="flex-1">
-                <Input 
+                <Input
                   placeholder="이메일 또는 멤버명으로 검색..."
                   value={editSearchTerm}
                   onChange={(e) => setEditSearchTerm(e.target.value)}
@@ -1570,25 +1525,24 @@ export default function AdminPage() {
             {editSearchTerm && (
               <div className="space-y-3">
                 {activeUsers
-                  .filter(user => 
+                  .filter(user =>
                     user.email.toLowerCase().includes(editSearchTerm.toLowerCase()) ||
                     user.memberName.toLowerCase().includes(editSearchTerm.toLowerCase())
                   )
                   .slice(0, 10)
                   .map(user => (
-                    <div 
+                    <div
                       key={user.email}
                       className={`p-4 border rounded-lg ${
                         editingUser?.email === user.email ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
                       }`}
                     >
                       {editingUser?.email === user.email ? (
-                        /* 편집 모드 */
                         <div className="space-y-4">
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="font-medium text-red-700">정보 수정 중: {user.memberName}</h4>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => setEditingUser(null)}
                             >
@@ -1598,8 +1552,8 @@ export default function AdminPage() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <Label className="text-sm">지역</Label>
-                              <Select 
-                                value={editFormData.region} 
+                              <Select
+                                value={editFormData.region}
                                 onValueChange={(value) => setEditFormData({...editFormData, region: value})}
                               >
                                 <SelectTrigger className="mt-1 bg-white">
@@ -1614,8 +1568,8 @@ export default function AdminPage() {
                             </div>
                             <div>
                               <Label className="text-sm">챕터</Label>
-                              <Select 
-                                value={editFormData.chapter} 
+                              <Select
+                                value={editFormData.chapter}
                                 onValueChange={(value) => setEditFormData({...editFormData, chapter: value})}
                               >
                                 <SelectTrigger className="mt-1 bg-white">
@@ -1665,7 +1619,7 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div className="flex gap-2 pt-4">
-                            <Button 
+                            <Button
                               onClick={() => {
                                 if (editingUser) {
                                   updateUserMutation.mutate({
@@ -1684,7 +1638,7 @@ export default function AdminPage() {
                             >
                               {updateUserMutation.isPending ? '저장 중...' : '저장'}
                             </Button>
-                            <Button 
+                            <Button
                               variant="outline"
                               onClick={() => setEditingUser(null)}
                             >
@@ -1693,7 +1647,6 @@ export default function AdminPage() {
                           </div>
                         </div>
                       ) : (
-                        /* 목록 모드 */
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium text-gray-900">{user.memberName}</div>
@@ -1704,7 +1657,7 @@ export default function AdminPage() {
                               {user.industry} / {user.company}
                             </div>
                           </div>
-                          <Button 
+                          <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
@@ -1729,7 +1682,7 @@ export default function AdminPage() {
                     </div>
                   ))
                 }
-                {activeUsers.filter(user => 
+                {activeUsers.filter(user =>
                   user.email.toLowerCase().includes(editSearchTerm.toLowerCase()) ||
                   user.memberName.toLowerCase().includes(editSearchTerm.toLowerCase())
                 ).length === 0 && (
@@ -1746,25 +1699,283 @@ export default function AdminPage() {
                 <p>수정할 멤버를 검색해주세요</p>
               </div>
             )}
-          </CardContent>
-        </Card>
-          )}
-        </div>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      {/* 탈퇴 히스토리 섹션 */}
-      {showWithdrawalHistory && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
+      {/* ========== MODAL: 탈퇴 멤버 삭제 ========== */}
+      <Dialog open={activeModal === 'withdrawal'} onOpenChange={(open) => setActiveModal(open ? 'withdrawal' : null)}>
+        <DialogContent className="max-w-4xl bg-white max-h-[90vh] w-[95vw] sm:w-auto overflow-visible">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg text-red-700">
+              <UserMinus className="mr-2 w-5 h-5" />
+              탈퇴 멤버 삭제
+            </DialogTitle>
+            <DialogDescription>
+              이메일 직접 입력 또는 멤버 목록에서 선택하여 탈퇴 처리할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* 방법 선택 */}
+            <div className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="withdrawalMethod"
+                  checked={withdrawalMethod === 'email'}
+                  onChange={() => setWithdrawalMethod('email')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={withdrawalMethod === 'email' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  이메일 직접 입력
+                </span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="withdrawalMethod"
+                  checked={withdrawalMethod === 'list'}
+                  onChange={() => setWithdrawalMethod('list')}
+                  className="mr-2 accent-red-600"
+                />
+                <span className={withdrawalMethod === 'list' ? 'font-medium text-red-600' : 'text-gray-600'}>
+                  멤버 목록에서 선택
+                </span>
+              </label>
+            </div>
+
+            {/* 방법 1: 이메일 직접 입력 */}
+            {withdrawalMethod === 'email' && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    탈퇴할 멤버 이메일 (여러 명은 줄바꿈으로 구분)
+                  </Label>
+                  <textarea
+                    value={bulkEmails}
+                    onChange={(e) => setBulkEmails(e.target.value)}
+                    placeholder="user1@example.com&#10;user2@example.com&#10;user3@example.com"
+                    className="w-full mt-2 p-3 border rounded-lg h-32 resize-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                  {bulkEmails.trim() && (
+                    <div className="mt-2 text-sm">
+                      {emailValidation.isValid ? (
+                        <span className="text-green-600">입력된 이메일: {emailValidation.validCount}개</span>
+                      ) : (
+                        <span className="text-red-600">
+                          잘못된 이메일 형식: {emailValidation.invalidEmails?.join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      disabled={!emailValidation.isValid || bulkWithdrawalMutation.isPending}
+                    >
+                      <UserMinus className="w-4 h-4 mr-2" />
+                      {bulkWithdrawalMutation.isPending ? '처리 중...' : '입력한 탈퇴 멤버 삭제'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>멤버 탈퇴 확인</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {emailValidation.validCount}명의 멤버를 탈퇴 처리하시겠습니까?
+                        이 작업은 되돌릴 수 있습니다.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          const emails = bulkEmails.trim().split('\n').map(e => e.trim()).filter(e => e);
+                          bulkWithdrawalMutation.mutate(emails);
+                        }}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        탈퇴 처리
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+
+            {/* 방법 2: 멤버 목록에서 선택 */}
+            {withdrawalMethod === 'list' && (
+              <div className="space-y-4">
+                {/* 필터 */}
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm whitespace-nowrap">지역:</Label>
+                    <select
+                      value={regionFilter}
+                      onChange={(e) => { setRegionFilter(e.target.value); setChapterFilter("__all__"); setMemberNameSearch(""); }}
+                      className="h-10 w-32 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="__all__">전체</option>
+                      {uniqueRegions.map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm whitespace-nowrap">챕터:</Label>
+                    <select
+                      value={chapterFilter}
+                      onChange={(e) => { setChapterFilter(e.target.value); setRegionFilter("__all__"); setMemberNameSearch(""); }}
+                      className="h-10 w-32 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                    >
+                      <option value="__all__">전체</option>
+                      {uniqueChapters.map(chapter => (
+                        <option key={chapter} value={chapter}>{chapter}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-2 flex-1">
+                    <Label className="text-sm whitespace-nowrap">검색:</Label>
+                    <Input
+                      placeholder="멤버명 검색..."
+                      value={memberNameSearch}
+                      onChange={(e) => { setMemberNameSearch(e.target.value); setRegionFilter("__all__"); setChapterFilter("__all__"); }}
+                      className="max-w-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* 필터 선택 전 안내 메시지 */}
+                {regionFilter === '__all__' && chapterFilter === '__all__' && !memberNameSearch && (
+                  <div className="border rounded-lg p-8 text-center bg-gray-50">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Users className="w-12 h-12 text-gray-400" />
+                      <div className="text-gray-700 font-medium">
+                        멤버 목록을 보려면 필터를 선택하세요
+                      </div>
+                      <div className="text-gray-500 text-sm">
+                        위의 필터에서 지역, 챕터를 선택하거나 멤버명을 검색하면 해당 멤버 목록이 표시됩니다.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 선택 현황 및 전체 선택 */}
+                {(regionFilter !== '__all__' || chapterFilter !== '__all__' || memberNameSearch) && (
+                  <>
+                    <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          checked={filteredActiveUsers.length > 0 && filteredActiveUsers.every(u => selectedUsers.includes(u.email))}
+                          onCheckedChange={handleSelectAll}
+                        />
+                        <span className="text-sm text-gray-600">전체 선택</span>
+                      </div>
+                      <Badge variant="secondary">
+                        선택됨: {selectedUsers.length}명
+                      </Badge>
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto border rounded-lg">
+                      {filteredActiveUsers.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                          조건에 맞는 멤버가 없습니다
+                        </div>
+                      ) : (
+                        filteredActiveUsers.map(user => (
+                          <div
+                            key={user.email}
+                            className={`flex items-center p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                              selectedUsers.includes(user.email) ? 'bg-red-50' : ''
+                            }`}
+                          >
+                            <Checkbox
+                              checked={selectedUsers.includes(user.email)}
+                              onCheckedChange={(checked) => handleUserSelection(user.email, checked === true)}
+                              className="mr-3"
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{user.memberName}</div>
+                              <div className="text-sm text-gray-500">
+                                {user.region} / {user.chapter} - {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          disabled={selectedUsers.length === 0 || bulkWithdrawalMutation.isPending}
+                        >
+                          <UserMinus className="w-4 h-4 mr-2" />
+                          {bulkWithdrawalMutation.isPending ? '처리 중...' : `선택한 ${selectedUsers.length}명 탈퇴 처리`}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-white border-2 border-gray-300 shadow-2xl">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-gray-900">멤버 탈퇴 확인</AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-600">
+                            {selectedUsers.length}명의 멤버를 탈퇴 처리하시겠습니까?
+                            이 작업은 되돌릴 수 있습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300">취소</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleSelectedUsersWithdrawal}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            탈퇴 처리
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 탈퇴 멤버 복원 링크 */}
+            <Separator className="my-4" />
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                탈퇴된 멤버를 다시 활성화하려면 히스토리를 확인하세요
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setActiveModal('history')}
+                className="border-gray-300"
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                탈퇴 히스토리 보기
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== MODAL: 탈퇴 히스토리 + 탈퇴된 사용자 복원 ========== */}
+      <Dialog open={activeModal === 'history'} onOpenChange={(open) => setActiveModal(open ? 'history' : null)}>
+        <DialogContent className="max-w-7xl bg-white max-h-[90vh] w-[95vw] overflow-visible">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg">
               <FileText className="mr-2 w-5 h-5 text-gray-600" />
               탈퇴 히스토리
               <Badge variant="secondary" className="ml-2 text-sm">
                 {withdrawalHistory.length}건
               </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </DialogTitle>
+            <DialogDescription>
+              탈퇴 이력을 조회하고 멤버를 복원할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             {isHistoryLoading ? (
               <div className="flex justify-center py-8">
                 <div className="text-gray-500">탈퇴 히스토리를 불러오는 중...</div>
@@ -1776,53 +1987,35 @@ export default function AdminPage() {
             ) : (
               <>
                 {/* 검색 필터 */}
-                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-6">
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
                   <div className="flex items-center space-x-2 w-full md:w-auto">
                     <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
-                    <div className="relative flex-1 md:w-40">
-                      <Select value={historyRegionFilter} onValueChange={setHistoryRegionFilter}>
-                        <SelectTrigger className="w-full bg-white pr-8">
-                          <SelectValue placeholder="전체" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="전체">선택</SelectItem>
-                          {historyRegions.filter(region => region !== "전체").map(region => (
-                            <SelectItem key={region} value={region}>{region}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {historyRegionFilter !== "전체" && (
-                        <button
-                          onClick={() => setHistoryRegionFilter("전체")}
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
-                        >
-                          ×
-                        </button>
-                      )}
+                    <div className="flex-1 md:w-40">
+                      <select
+                        value={historyRegionFilter}
+                        onChange={(e) => { setHistoryRegionFilter(e.target.value); setHistoryChapterFilter("전체"); setHistorySearchTerm(""); }}
+                        className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="전체">전체</option>
+                        {historyRegions.filter(region => region !== "전체").map(region => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 w-full md:w-auto">
                     <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
-                    <div className="relative flex-1 md:w-40">
-                      <Select value={historyChapterFilter} onValueChange={setHistoryChapterFilter}>
-                        <SelectTrigger className="w-full bg-white pr-8">
-                          <SelectValue placeholder="전체" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="전체">선택</SelectItem>
-                          {historyChapters.filter(chapter => chapter !== "전체").map(chapter => (
-                            <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {historyChapterFilter !== "전체" && (
-                        <button
-                          onClick={() => setHistoryChapterFilter("전체")}
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-red-600 text-xs"
-                        >
-                          ×
-                        </button>
-                      )}
+                    <div className="flex-1 md:w-40">
+                      <select
+                        value={historyChapterFilter}
+                        onChange={(e) => { setHistoryChapterFilter(e.target.value); setHistoryRegionFilter("전체"); setHistorySearchTerm(""); }}
+                        className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                      >
+                        <option value="전체">전체</option>
+                        {historyChapters.filter(chapter => chapter !== "전체").map(chapter => (
+                          <option key={chapter} value={chapter}>{chapter}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 w-full md:w-auto">
@@ -1831,7 +2024,7 @@ export default function AdminPage() {
                       <input
                         type="text"
                         value={historySearchTerm}
-                        onChange={(e) => setHistorySearchTerm(e.target.value)}
+                        onChange={(e) => { setHistorySearchTerm(e.target.value); setHistoryRegionFilter("전체"); setHistoryChapterFilter("전체"); }}
                         placeholder="멤버명 검색"
                         className="w-full bg-white text-sm px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                         style={{ border: '1px solid #d12031' }}
@@ -1864,7 +2057,6 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                {/* 필터 미선택 시 또는 필터링된 결과가 없을 때 */}
                 {!hasActiveFilter ? (
                   <div className="border rounded-lg p-8 text-center bg-gray-50">
                     <div className="flex flex-col items-center space-y-3">
@@ -1904,7 +2096,37 @@ export default function AdminPage() {
                               <td className="py-3 px-4 text-sm">{item.email}</td>
                               <td className="py-3 px-4 text-sm">{item.region}</td>
                               <td className="py-3 px-4 text-sm">{item.chapter}</td>
-                              <td className="py-3 px-4 text-sm">{item.memberName}</td>
+                              <td className="py-3 px-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  {item.memberName}
+                                  <button
+                                    onClick={async () => {
+                                      if (!confirm(`'${item.memberName}' (${item.email}) 멤버를 복원하시겠습니까?`)) return;
+                                      try {
+                                        const resp = await apiRequest('POST', '/api/admin/restore-member', {
+                                          email: item.email,
+                                          region: item.region,
+                                          chapter: item.chapter,
+                                          memberName: item.memberName,
+                                        });
+                                        const data = await resp.json();
+                                        if (data.success) {
+                                          toast({ title: `${item.memberName} 멤버가 복원되었습니다` });
+                                          queryClient.invalidateQueries({ queryKey: ['/api/admin/withdrawal-history'] });
+                                          queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+                                        } else {
+                                          alert(data.message || '복원 실패');
+                                        }
+                                      } catch (err: any) {
+                                        alert(err.message || '복원 중 오류');
+                                      }
+                                    }}
+                                    className="text-[10px] bg-green-600 hover:bg-green-700 text-white px-2 py-0.5 rounded font-semibold transition-colors"
+                                  >
+                                    복원
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1929,323 +2151,346 @@ export default function AdminPage() {
                 )}
               </>
             )}
-          </CardContent>
-        </Card>
-      )}
 
-      {/* 탈퇴된 사용자 목록 */}
-      {withdrawnUsers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2 mb-3">
-              <UserX className="w-5 h-5 text-red-600" />
-              <h3 className="text-lg font-medium">탈퇴 처리된 멤버 목록</h3>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* 탈퇴 사용자 필터 */}
-            <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-4">
-              <div className="flex items-center space-x-2 w-full md:w-auto">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
-                <div className="relative flex-1 md:w-40">
-                  <Select value={withdrawnRegionFilter} onValueChange={setWithdrawnRegionFilter}>
-                    <SelectTrigger className="w-full bg-white pr-8">
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="__all__">선택</SelectItem>
-                      {withdrawnUniqueRegions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {withdrawnRegionFilter !== '__all__' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setWithdrawnRegionFilter('__all__')}
-                      className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 w-full md:w-auto">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
-                <div className="relative flex-1 md:w-40">
-                  <Select value={withdrawnChapterFilter} onValueChange={setWithdrawnChapterFilter}>
-                    <SelectTrigger className="w-full bg-white pr-8">
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="__all__">선택</SelectItem>
-                      {withdrawnUniqueChapters.map((chapter) => (
-                        <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {withdrawnChapterFilter !== '__all__' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setWithdrawnChapterFilter('__all__')}
-                      className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full bg-white border border-gray-200"
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
-              </div>
-              {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
-                <div className="flex items-center w-full md:w-auto">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setWithdrawnRegionFilter('__all__');
-                      setWithdrawnChapterFilter('__all__');
-                    }}
-                    className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
-                  >
-                    모든 필터 해제
-                  </Button>
-                </div>
-              )}
-            </div>
+            {/* 탈퇴된 사용자 복원 섹션 */}
+            {withdrawnUsers.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <UserX className="w-5 h-5 text-red-600" />
+                    <h3 className="text-lg font-medium">탈퇴 처리된 멤버 복원</h3>
+                  </div>
 
-            {/* 필터링된 결과 표시 */}
-            {(withdrawnRegionFilter === '__all__' && withdrawnChapterFilter === '__all__') ? (
-              <div className="border rounded-lg p-8 text-center bg-gray-50">
-                <div className="flex flex-col items-center space-y-3">
-                  <Users className="w-12 h-12 text-gray-400" />
-                  <div className="text-gray-700 font-medium text-sm md:text-base">
-                    멤버 목록을 보려면 필터를 선택하세요
-                  </div>
-                  <div className="text-gray-500 text-xs md:text-sm">
-                    위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                {/* 데스크탑 헤더 */}
-                <div className="hidden md:block bg-gray-50 px-4 py-3 border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
-                      <div className="text-sm text-gray-600">
-                        총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="select-all-withdrawn"
-                          checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
-                          onCheckedChange={handleSelectAllWithdrawnUsers}
-                        />
-                        <label htmlFor="select-all-withdrawn" className="text-sm font-medium">
-                          전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
-                        </label>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
-                            className="bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
-                          >
-                            <UserCheck className="mr-2 w-4 h-4" />
-                            선택한 멤버 복원하기
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="alert-dialog-content">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
-                            <AlertDialogDescription className="alert-dialog-description">
-                              선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
-                              이 작업으로 해당 멤버들이 다시 활성화됩니다.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleSelectedUsersRestore}
-                              className="alert-dialog-action bg-green-600 hover:bg-green-700"
-                            >
-                              복원 실행
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-                {/* 모바일 헤더 */}
-                <div className="md:hidden bg-gray-50 px-4 py-3 border-b">
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
-                    <div className="text-sm text-gray-600">
-                      총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="select-all-withdrawn-mobile"
-                        checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
-                        onCheckedChange={handleSelectAllWithdrawnUsers}
-                      />
-                      <label htmlFor="select-all-withdrawn-mobile" className="text-sm font-medium">
-                        전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
-                      </label>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
-                          className="w-full bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                  {/* 탈퇴 사용자 필터 */}
+                  <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border mb-4">
+                    <div className="flex items-center space-x-2 w-full md:w-auto">
+                      <label className="text-sm font-medium text-gray-700 whitespace-nowrap">지역:</label>
+                      <div className="flex-1 md:w-40">
+                        <select
+                          value={withdrawnRegionFilter}
+                          onChange={(e) => { setWithdrawnRegionFilter(e.target.value); setWithdrawnChapterFilter("__all__"); }}
+                          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
                         >
-                          <UserCheck className="mr-2 w-4 h-4" />
-                          선택한 멤버 복원하기
+                          <option value="__all__">전체</option>
+                          {withdrawnUniqueRegions.map((region) => (
+                            <option key={region} value={region}>{region}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 w-full md:w-auto">
+                      <label className="text-sm font-medium text-gray-700 whitespace-nowrap">챕터:</label>
+                      <div className="flex-1 md:w-40">
+                        <select
+                          value={withdrawnChapterFilter}
+                          onChange={(e) => { setWithdrawnChapterFilter(e.target.value); setWithdrawnRegionFilter("__all__"); }}
+                          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                        >
+                          <option value="__all__">전체</option>
+                          {withdrawnUniqueChapters.map((chapter) => (
+                            <option key={chapter} value={chapter}>{chapter}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    {(withdrawnRegionFilter !== '__all__' || withdrawnChapterFilter !== '__all__') && (
+                      <div className="flex items-center w-full md:w-auto">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setWithdrawnRegionFilter('__all__');
+                            setWithdrawnChapterFilter('__all__');
+                          }}
+                          className="h-8 px-3 text-xs text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 w-full md:w-auto"
+                        >
+                          모든 필터 해제
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="alert-dialog-content">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
-                          <AlertDialogDescription className="alert-dialog-description">
-                            선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
-                            이 작업으로 해당 멤버들이 다시 활성화됩니다.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleSelectedUsersRestore}
-                            className="alert-dialog-action bg-green-600 hover:bg-green-700"
-                          >
-                            복원 실행
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-                {/* 데스크탑 테이블 헤더 */}
-                <div className="hidden md:block bg-gray-100 py-2 border-b">
-                  <div className="flex items-center">
-                    <div className="w-[60px] flex-shrink-0"></div> {/* 체크박스 공간 */}
-                    <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
-                      <div className="w-[200px] text-left px-2">ID</div>
-                      <div className="w-[120px] text-left px-2">지역</div>
-                      <div className="w-[100px] text-left px-2">챕터</div>
-                      <div className="w-[100px] text-left px-2">멤버명</div>
-                      <div className="w-[100px] text-left px-2">산업군</div>
-                      <div className="w-[100px] text-left px-2">회사</div>
-                      <div className="w-[120px] text-left px-2">전문분야</div>
-                      <div className="flex-1 text-left px-2">상태/파트너수</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {filteredWithdrawnUsers.map((user) => (
-                    <div key={user.email}>
-                      {/* 데스크탑 테이블 행 */}
-                      <div className="hidden md:flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
-                        <div className="w-[60px] flex-shrink-0 flex justify-center">
-                          <Checkbox
-                            checked={selectedWithdrawnUsers.includes(user.email)}
-                            onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
-                          />
-                        </div>
-                        <div className="flex text-sm">
-                          <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
-                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
-                          <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
-                          <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
-                          <div className="flex-1 flex items-center text-left space-x-2 px-2">
-                            <Badge variant="destructive" className="flex-shrink-0">탈퇴</Badge>
-                            <span className="text-gray-500 flex-shrink-0">{user.totalPartners}명</span>
-                          </div>
-                        </div>
                       </div>
-                      {/* 모바일 카드 레이아웃 */}
-                      <div className="md:hidden border-b last:border-b-0 p-4 hover:bg-gray-50">
-                        <div className="flex items-start space-x-3">
-                          <Checkbox
-                            checked={selectedWithdrawnUsers.includes(user.email)}
-                            onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 space-y-1">
-                            <div className="font-medium text-sm">{user.email}</div>
-                            <div className="space-y-1 text-xs text-gray-600">
-                              <div><span className="font-medium">지역:</span> {user.region}</div>
-                              <div><span className="font-medium">챕터:</span> {user.chapter}</div>
-                              <div><span className="font-medium">멤버:</span> {user.memberName}</div>
-                              <div><span className="font-medium">회사:</span> {user.company}</div>
-                              <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
-                            </div>
-                            <div className="flex items-center space-x-2 pt-1">
-                              <Badge variant="destructive" className="text-xs">탈퇴</Badge>
-                              <span className="text-gray-500 text-xs">파트너 {user.totalPartners}명</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-      </div>
+                    )}
+                  </div>
 
-      {/* 신규 챕터 생성 다이얼로그 */}
-      <AlertDialog open={showAddChapterDialog} onOpenChange={setShowAddChapterDialog}>
-        <AlertDialogContent className="max-w-md bg-white border border-gray-200 shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center">
-              <Plus className="mr-2 w-5 h-5 text-red-600" />
-              신규 챕터 생성
-            </AlertDialogTitle>
-          </AlertDialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">지역 선택 *</label>
-              <select
-                value={newChapterRegion}
-                onChange={(e) => setNewChapterRegion(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="">지역을 선택하세요</option>
-                {(regions as string[]).map((r: string) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">챕터명 *</label>
-              <input
-                type="text"
-                value={newChapterName}
-                onChange={(e) => setNewChapterName(e.target.value)}
-                placeholder="새 챕터명을 입력하세요"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              />
-            </div>
+                  {(withdrawnRegionFilter === '__all__' && withdrawnChapterFilter === '__all__') ? (
+                    <div className="border rounded-lg p-8 text-center bg-gray-50">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Users className="w-12 h-12 text-gray-400" />
+                        <div className="text-gray-700 font-medium text-sm md:text-base">
+                          멤버 목록을 보려면 필터를 선택하세요
+                        </div>
+                        <div className="text-gray-500 text-xs md:text-sm">
+                          위의 필터에서 지역이나 챕터를 선택하면 해당 멤버 목록이 표시됩니다.
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      {/* 데스크탑 헤더 */}
+                      <div className="hidden md:block bg-gray-50 px-4 py-3 border-b">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
+                            <div className="text-sm text-gray-600">
+                              총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="select-all-withdrawn"
+                                checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
+                                onCheckedChange={handleSelectAllWithdrawnUsers}
+                              />
+                              <label htmlFor="select-all-withdrawn" className="text-sm font-medium">
+                                전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
+                              </label>
+                            </div>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
+                                  className="bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                                >
+                                  <UserCheck className="mr-2 w-4 h-4" />
+                                  선택한 멤버 복원하기
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="alert-dialog-content">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
+                                  <AlertDialogDescription className="alert-dialog-description">
+                                    선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
+                                    이 작업으로 해당 멤버들이 다시 활성화됩니다.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleSelectedUsersRestore}
+                                    className="alert-dialog-action bg-green-600 hover:bg-green-700"
+                                  >
+                                    복원 실행
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </div>
+                      {/* 모바일 헤더 */}
+                      <div className="md:hidden bg-gray-50 px-4 py-3 border-b">
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-gray-900">탈퇴 처리된 멤버 목록</h4>
+                          <div className="text-sm text-gray-600">
+                            총 {filteredWithdrawnUsers.length}명 표시 (전체 {withdrawnUsers.length}명 중)
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="select-all-withdrawn-mobile"
+                              checked={filteredWithdrawnUsers.length > 0 && filteredWithdrawnUsers.every(user => selectedWithdrawnUsers.includes(user.email))}
+                              onCheckedChange={handleSelectAllWithdrawnUsers}
+                            />
+                            <label htmlFor="select-all-withdrawn-mobile" className="text-sm font-medium">
+                              전체 선택 ({filteredWithdrawnUsers.filter(user => selectedWithdrawnUsers.includes(user.email)).length}명 선택됨)
+                            </label>
+                          </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                disabled={selectedWithdrawnUsers.length === 0 || restoreUsersMutation.isPending}
+                                className="w-full bg-green-600 hover:bg-white hover:text-green-600 hover:border hover:border-green-600 text-white disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300 disabled:cursor-not-allowed"
+                              >
+                                <UserCheck className="mr-2 w-4 h-4" />
+                                선택한 멤버 복원하기
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="alert-dialog-content">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="alert-dialog-title">선택한 멤버 복원</AlertDialogTitle>
+                                <AlertDialogDescription className="alert-dialog-description">
+                                  선택한 {selectedWithdrawnUsers.length}명의 멤버를 활동중 상태로 복원하시겠습니까?
+                                  이 작업으로 해당 멤버들이 다시 활성화됩니다.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="alert-dialog-cancel">취소</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleSelectedUsersRestore}
+                                  className="alert-dialog-action bg-green-600 hover:bg-green-700"
+                                >
+                                  복원 실행
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                      {/* 데스크탑 테이블 헤더 */}
+                      <div className="hidden md:block bg-gray-100 py-2 border-b">
+                        <div className="flex items-center">
+                          <div className="w-[60px] flex-shrink-0"></div>
+                          <div className="flex text-xs font-medium text-gray-600 uppercase tracking-wide">
+                            <div className="w-[200px] text-left px-2">ID</div>
+                            <div className="w-[120px] text-left px-2">지역</div>
+                            <div className="w-[100px] text-left px-2">챕터</div>
+                            <div className="w-[100px] text-left px-2">멤버명</div>
+                            <div className="w-[100px] text-left px-2">산업군</div>
+                            <div className="w-[100px] text-left px-2">회사</div>
+                            <div className="w-[120px] text-left px-2">전문분야</div>
+                            <div className="flex-1 text-left px-2">상태/파트너수</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {filteredWithdrawnUsers.map((user) => (
+                          <div key={user.email}>
+                            <div className="hidden md:flex items-center py-3 border-b last:border-b-0 hover:bg-gray-50">
+                              <div className="w-[60px] flex-shrink-0 flex justify-center">
+                                <Checkbox
+                                  checked={selectedWithdrawnUsers.includes(user.email)}
+                                  onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
+                                />
+                              </div>
+                              <div className="flex text-sm">
+                                <div className="w-[200px] font-medium truncate text-left text-ellipsis overflow-hidden px-2" title={user.email}>{user.email}</div>
+                                <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.region}>{user.region}</div>
+                                <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.chapter}>{user.chapter}</div>
+                                <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.memberName}>{user.memberName}</div>
+                                <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.industry}>{user.industry}</div>
+                                <div className="w-[100px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.company}>{user.company}</div>
+                                <div className="w-[120px] truncate text-left text-ellipsis overflow-hidden px-2" title={user.specialty}>{user.specialty}</div>
+                                <div className="flex-1 flex items-center text-left space-x-2 px-2">
+                                  <Badge variant="destructive" className="flex-shrink-0">탈퇴</Badge>
+                                  <span className="text-gray-500 flex-shrink-0">{user.totalPartners}명</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="md:hidden border-b last:border-b-0 p-4 hover:bg-gray-50">
+                              <div className="flex items-start space-x-3">
+                                <Checkbox
+                                  checked={selectedWithdrawnUsers.includes(user.email)}
+                                  onCheckedChange={(checked) => handleWithdrawnUserSelection(user.email, checked as boolean)}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 space-y-1">
+                                  <div className="font-medium text-sm">{user.email}</div>
+                                  <div className="space-y-1 text-xs text-gray-600">
+                                    <div><span className="font-medium">지역:</span> {user.region}</div>
+                                    <div><span className="font-medium">챕터:</span> {user.chapter}</div>
+                                    <div><span className="font-medium">멤버:</span> {user.memberName}</div>
+                                    <div><span className="font-medium">회사:</span> {user.company}</div>
+                                    <div><span className="font-medium">전문분야:</span> {user.specialty}</div>
+                                  </div>
+                                  <div className="flex items-center space-x-2 pt-1">
+                                    <Badge variant="destructive" className="text-xs">탈퇴</Badge>
+                                    <span className="text-gray-500 text-xs">파트너 {user.totalPartners}명</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => { setNewChapterName(''); setNewChapterRegion(''); }}>
-              취소
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+        </DialogContent>
+      </Dialog>
+
+      {/* 챕터 관리 다이얼로그 (생성 + 삭제) */}
+      <Dialog open={showAddChapterDialog} onOpenChange={setShowAddChapterDialog}>
+        <DialogContent className="max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg">
+              <Plus className="mr-2 w-5 h-5 text-red-600" />
+              챕터 관리
+            </DialogTitle>
+            <DialogDescription className="text-gray-500">챕터를 생성하거나 기존 챕터를 삭제합니다</DialogDescription>
+          </DialogHeader>
+
+          {/* 기존 챕터 목록 */}
+          <div className="border rounded-md max-h-48 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">챕터명</th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600 w-20"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(chapters as string[]).length === 0 ? (
+                  <tr><td colSpan={2} className="px-3 py-4 text-center text-gray-400">등록된 챕터가 없습니다</td></tr>
+                ) : (chapters as string[]).map((ch: string) => (
+                  <tr key={ch} className="border-t hover:bg-gray-50">
+                    <td className="px-3 py-2">{ch}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 px-2"
+                        onClick={async () => {
+                          if (!confirm(`'${ch}' 챕터를 삭제하시겠습니까?`)) return;
+                          try {
+                            const resp = await apiRequest('DELETE', '/api/admin/delete-chapter', {
+                              chapter: ch,
+                              adminEmail: currentUser?.email || 'admin',
+                            });
+                            const data = await resp.json();
+                            if (data.success) {
+                              toast({ title: data.message });
+                              queryClient.invalidateQueries({ queryKey: ['/api/admin/chapters'] });
+                            } else {
+                              alert(data.message || '삭제 실패');
+                            }
+                          } catch (err: any) {
+                            alert(err.message || '삭제 중 오류');
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 새 챕터 생성 폼 */}
+          <div className="border-t pt-4 mt-2 space-y-3">
+            <p className="text-sm font-medium text-gray-700">새 챕터 생성</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">지역 *</label>
+                <select
+                  value={newChapterRegion}
+                  onChange={(e) => setNewChapterRegion(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                >
+                  <option value="">선택</option>
+                  {(regions as string[]).map((r: string) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">챕터명 *</label>
+                <input
+                  type="text"
+                  value={newChapterName}
+                  onChange={(e) => setNewChapterName(e.target.value)}
+                  placeholder="챕터명"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <Button
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
               onClick={async () => {
                 if (!newChapterName.trim() || !newChapterRegion) {
                   alert('챕터명과 지역을 모두 입력해주세요');
@@ -2259,11 +2504,10 @@ export default function AdminPage() {
                   });
                   const data = await resp.json();
                   if (data.success) {
-                    alert(data.message);
+                    toast({ title: data.message });
                     queryClient.invalidateQueries({ queryKey: ['/api/admin/chapters'] });
                     setNewChapterName('');
                     setNewChapterRegion('');
-                    setShowAddChapterDialog(false);
                   } else {
                     alert(data.message || '챕터 추가 실패');
                   }
@@ -2272,30 +2516,45 @@ export default function AdminPage() {
                 }
               }}
             >
+              <Plus className="w-4 h-4 mr-2" />
               챕터 생성
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 단일 사용자 추가 다이얼로그 */}
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <AlertDialogContent className="max-w-6xl bg-white border border-gray-200 shadow-2xl admin-member-dialog max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
+        <AlertDialogContent className="max-w-2xl bg-white border border-gray-200 shadow-2xl admin-member-dialog max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
               <UserPlus className="mr-2 w-5 h-5 text-red-600" />
-              새로운 관리자 추가하기
+              관리자 관리
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Admin 시트에 새로운 관리자를 추가합니다.
-              <br />
-              <small className="text-gray-500">* 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW/비밀번호(D), AUTH/권한(E)</small>
+              관리자를 추가하거나 기존 관리자를 삭제합니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
-          <div className="space-y-6">
-            {/* 관리자 추가는 개별 추가만 지원 */}
 
+          {/* 기존 관리자 목록 */}
+          <div className="border rounded-md max-h-48 overflow-y-auto mb-4">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">이름</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">이메일</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">지역</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">권한</th>
+                  <th className="w-16"></th>
+                </tr>
+              </thead>
+              <AdminListBody currentUserEmail={currentUser?.email || ''} queryClient={queryClient} toast={toast} apiRequest={apiRequest} />
+            </table>
+          </div>
+
+          <Separator />
+          <p className="text-sm font-medium text-gray-700 mt-2">새 관리자 추가</p>
+          <div className="space-y-6">
             {/* 관리자 추가 폼 */}
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2458,7 +2717,7 @@ export default function AdminPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 멤버 탈퇴 처리 진행중 팝업 */}
+      {/* 탈퇴 멤버 삭제 진행중 팝업 */}
       <Dialog open={showWithdrawalProgress} onOpenChange={setShowWithdrawalProgress}>
         <DialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-lg">
           <DialogHeader>

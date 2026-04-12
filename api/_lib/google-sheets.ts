@@ -1249,82 +1249,68 @@ class GoogleSheetsService {
   async addWithdrawalHistory(userEmail: string, region: string, chapter: string, memberName: string): Promise<void> {
     try {
       const accessToken = await this.getAccessToken();
-      
-      // 탈퇴 히스토리 시트 탭 존재 확인 및 생성
       await this.ensureWithdrawalHistorySheet();
-      
-      const withdrawalTime = new Date().toLocaleString('ko-KR', {
-        timeZone: 'Asia/Seoul',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      
-      // 헤더 확인 및 추가
-      const headerResponse = await requestQueue.enqueue(
-        `addWithdrawalHistory-header-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1`,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
+
+      // 1. RPS에서 전체 행 데이터(A~Z) 읽기
+      const rpsResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      let fullRowData: string[] = [];
+      if (rpsResp.ok) {
+        const rpsData = await rpsResp.json();
+        const rpsRows = rpsData.values || [];
+        const headerRow = rpsRows[0] || [];
+        const idColIdx = headerRow.findIndex((h: string) => h?.toString().trim().toUpperCase() === 'ID');
+        if (idColIdx >= 0) {
+          for (let i = 1; i < rpsRows.length; i++) {
+            if (rpsRows[i][idColIdx]?.toString().trim().toLowerCase() === userEmail.toLowerCase()) {
+              fullRowData = rpsRows[i].map((cell: any) => cell?.toString() || '');
+              break;
             }
           }
-        )
+        }
+      }
+
+      const withdrawalTime = new Date().toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+
+      // 2. WithdrawalHistory 헤더 확인
+      const headerResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA1`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
       );
-      
-      if (headerResponse.ok) {
-        const headerData = await headerResponse.json();
-        if (!headerData.values || headerData.values.length === 0) {
-          // 헤더가 없으면 추가
-          await requestQueue.enqueue(
-            `addWithdrawalHistory-createheader-${userEmail}`,
-            async () => await fetch(
-              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:E1?valueInputOption=USER_ENTERED`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  values: [['탈퇴일시', '이메일', '지역', '챕터', '멤버명']]
-                })
-              }
-            )
+      if (headerResp.ok) {
+        const hd = await headerResp.json();
+        if (!hd.values || hd.values.length === 0) {
+          const rpsHeaderResp = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z1`,
+            { headers: { 'Authorization': `Bearer ${accessToken}` } }
+          );
+          let rpsHeader = ['이메일', '지역', '챕터', '멤버명'];
+          if (rpsHeaderResp.ok) { const rhd = await rpsHeaderResp.json(); if (rhd.values?.[0]) rpsHeader = rhd.values[0]; }
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA1?valueInputOption=USER_ENTERED`,
+            { method: 'PUT', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [['탈퇴일시', ...rpsHeader]] }) }
           );
         }
       }
-      
-      // 탈퇴 히스토리 데이터 추가
-      const response = await requestQueue.enqueue(
-        `addWithdrawalHistory-append-${userEmail}`,
-        async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              values: [[withdrawalTime, userEmail, region, chapter, memberName]]
-            })
-          }
-        )
+
+      // 3. 탈퇴일시 + 전체 행 데이터 저장
+      const rowToAppend = fullRowData.length > 0
+        ? [withdrawalTime, ...fullRowData]
+        : [withdrawalTime, userEmail, region, chapter, memberName];
+
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AA:append?valueInputOption=USER_ENTERED`,
+        { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [rowToAppend] }) }
       );
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('탈퇴 히스토리 기록 실패:', errorText);
-        throw new Error(`탈퇴 히스토리 기록 실패: ${response.status}`);
-      }
-      
-      console.log(`✅ 탈퇴 히스토리 기록 완료: ${userEmail} (${withdrawalTime})`);
+
+      console.log(`✅ 탈퇴 히스토리 기록 완료 (전체 데이터): ${userEmail} (${withdrawalTime})`);
       
     } catch (error) {
       console.error('탈퇴 히스토리 기록 중 오류:', error);
@@ -2415,6 +2401,104 @@ class GoogleSheetsService {
     console.log(`📝 New chapter added to Master: ${chapter} (${region})`);
   }
 
+  async getAdminList(): Promise<{ region: string; memberName: string; email: string; auth: string }[]> {
+    const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A2:E200`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return (data.values || [])
+      .filter((row: any[]) => row[2]?.toString().trim())
+      .map((row: any[]) => ({
+        region: row[0]?.toString().trim() || '',
+        memberName: row[1]?.toString().trim() || '',
+        email: row[2]?.toString().trim() || '',
+        auth: row[4]?.toString().trim() || 'Admin',
+      }));
+  }
+
+  async deleteAdminFromSheet(email: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Admin!A2:E200`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!resp.ok) throw new Error('Admin 시트를 읽을 수 없습니다');
+    const data = await resp.json();
+    const rows = data.values || [];
+    const rowIndex = rows.findIndex((row: any[]) => row[2]?.toString().trim().toLowerCase() === email.toLowerCase());
+    if (rowIndex === -1) throw new Error(`'${email}' 관리자를 찾을 수 없습니다`);
+
+    const sheetRowNumber = rowIndex + 2;
+    const metaResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    const meta = await metaResp.json();
+    const adminSheet = meta.sheets?.find((s: any) => s.properties.title === 'Admin');
+    if (!adminSheet) throw new Error('Admin 시트를 찾을 수 없습니다');
+
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            deleteDimension: {
+              range: { sheetId: adminSheet.properties.sheetId, dimension: 'ROWS', startIndex: sheetRowNumber - 1, endIndex: sheetRowNumber }
+            }
+          }]
+        })
+      }
+    );
+    console.log(`🗑️ Admin deleted: ${email}`);
+  }
+
+  async deleteChapterFromMaster(chapter: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A2:B200`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!resp.ok) throw new Error('Master 시트를 읽을 수 없습니다');
+    const data = await resp.json();
+    const rows = data.values || [];
+
+    const rowIndex = rows.findIndex((row: any[]) => row[1]?.toString().trim() === chapter);
+    if (rowIndex === -1) throw new Error(`'${chapter}' 챕터를 찾을 수 없습니다`);
+
+    const sheetRowNumber = rowIndex + 2; // header row offset
+
+    // Get Master sheet ID
+    const metaResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    const meta = await metaResp.json();
+    const masterSheet = meta.sheets?.find((s: any) => s.properties.title === 'Master');
+    if (!masterSheet) throw new Error('Master 시트를 찾을 수 없습니다');
+    const sheetId = masterSheet.properties.sheetId;
+
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            deleteDimension: {
+              range: { sheetId, dimension: 'ROWS', startIndex: sheetRowNumber - 1, endIndex: sheetRowNumber }
+            }
+          }]
+        })
+      }
+    );
+    console.log(`🗑️ Chapter deleted from Master: ${chapter}`);
+  }
+
   async logChapterActivity(adminEmail: string, action: string, details: string = ''): Promise<void> {
     try {
       const accessToken = await this.getAccessToken();
@@ -2504,6 +2588,221 @@ class GoogleSheetsService {
       console.log(`📝 Admin activity logged: ${action} by ${adminEmail}`);
     } catch (error) {
       console.error('Failed to log admin activity:', error);
+    }
+  }
+
+  async restoreMemberFromHistory(email: string, region: string, chapter: string, memberName: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+
+    // 1. WithdrawalHistory 헤더 + 전체 행 데이터 읽기
+    const histResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA5000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!histResp.ok) throw new Error('WithdrawalHistory 시트를 읽을 수 없습니다');
+    const histData = await histResp.json();
+    const allRows = histData.values || [];
+    if (allRows.length < 2) throw new Error('WithdrawalHistory에 데이터가 없습니다');
+
+    const headerRow = allRows[0];
+    const histRows = allRows.slice(1);
+
+    // 헤더에서 ID 열 찾기
+    let idColIdx = -1;
+    for (let j = 0; j < headerRow.length; j++) {
+      const h = headerRow[j]?.toString().trim().toUpperCase() || '';
+      if (h === 'ID' || h === '이메일') { idColIdx = j; break; }
+    }
+    let histRowIndex = -1;
+    for (let i = histRows.length - 1; i >= 0; i--) {
+      if (idColIdx >= 0) {
+        if (histRows[i][idColIdx]?.toString().trim().toLowerCase() === email.toLowerCase()) { histRowIndex = i; break; }
+      } else {
+        if (histRows[i].some((cell: any) => cell?.toString().trim().toLowerCase() === email.toLowerCase())) { histRowIndex = i; break; }
+      }
+    }
+    if (histRowIndex === -1) throw new Error(`WithdrawalHistory에서 '${email}'을 찾을 수 없습니다`);
+
+    const fullRow = histRows[histRowIndex];
+    const rpsRowData = fullRow.slice(1);
+
+    // 2. RPS에 복원
+    const rpsResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    let alreadyExists = false;
+    if (rpsResp.ok) {
+      const rpsData = await rpsResp.json();
+      const rpsRows = rpsData.values || [];
+      const rpsHeader = rpsRows[0] || [];
+      const rpsIdCol = rpsHeader.findIndex((h: string) => h?.toString().trim().toUpperCase() === 'ID');
+      if (rpsIdCol >= 0) {
+        alreadyExists = rpsRows.some((row: any[], i: number) => i > 0 && row[rpsIdCol]?.toString().trim().toLowerCase() === email.toLowerCase());
+      }
+    }
+    if (!alreadyExists) {
+      if (rpsRowData.length >= 10) {
+        const rpsDataResp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A5000`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        let targetRow = 2;
+        if (rpsDataResp.ok) {
+          const rpsD = await rpsDataResp.json();
+          const col = rpsD.values || [];
+          for (let i = col.length - 1; i >= 1; i--) { if (col[i] && col[i][0]?.toString().trim()) { targetRow = i + 2; break; } }
+        }
+        const range = `RPS!A${targetRow}:Z${targetRow}`;
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`, {
+          method: 'PUT', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [rpsRowData] })
+        });
+      } else {
+        try {
+          await this.addNewUser({ email, region: region || '', chapter: chapter || '', memberName: memberName || '', industry: '', company: '', specialty: '', targetCustomer: '', password: '0000', auth: 'Member' });
+        } catch (e: any) { if (!e.message?.includes('already exists')) throw e; }
+      }
+    } else {
+      console.log(`ℹ️ ${email} already in RPS, skipping add`);
+    }
+
+    // 3. WithdrawalHistory에서 삭제
+    const sheetRowNumber = histRowIndex + 2;
+    const metaResp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    const meta = await metaResp.json();
+    const histSheet = meta.sheets?.find((s: any) => s.properties.title === 'WithdrawalHistory');
+    if (!histSheet) throw new Error('WithdrawalHistory 시트를 찾을 수 없습니다');
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`, {
+      method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests: [{ deleteDimension: { range: { sheetId: histSheet.properties.sheetId, dimension: 'ROWS', startIndex: sheetRowNumber - 1, endIndex: sheetRowNumber } } }] })
+    });
+    console.log(`✅ Member restored with full data: ${memberName} (${email})`);
+  }
+
+  async deleteBoardPost(rowIndex: number): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const metaResp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    const meta = await metaResp.json();
+    const sheet = meta.sheets?.find((s: any) => s.properties.title === 'BoardLog');
+    if (!sheet) throw new Error('BoardLog 시트를 찾을 수 없습니다');
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests: [{ deleteDimension: { range: { sheetId: sheet.properties.sheetId, dimension: 'ROWS', startIndex: rowIndex - 1, endIndex: rowIndex } } }] })
+    });
+  }
+
+  async updateBoardPost(rowIndex: number, content: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/BoardLog!F${rowIndex}?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [[content]] })
+      }
+    );
+  }
+
+  async getMasterNotices(): Promise<any[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const sheetName = 'MasterLog';
+      const checkResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1?access_token=${accessToken}`
+      );
+      if (!checkResp.ok) {
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requests: [{ addSheet: { properties: { title: sheetName } } }] })
+        });
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:B1?valueInputOption=RAW`, {
+          method: 'PUT', headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [['Timestamp', 'Content']] })
+        });
+        return [];
+      }
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A2:B100`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      return (data.values || [])
+        .filter((row: any[]) => row[1]?.toString().trim())
+        .map((row: any[]) => ({
+          timestamp: row[0]?.toString().trim() || '',
+          content: row[1]?.toString().trim() || '',
+        }));
+    } catch (error) {
+      console.error('Failed to get master notices:', error);
+      return [];
+    }
+  }
+
+  async getBoardPosts(): Promise<any[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const sheetName = 'BoardLog';
+      const checkResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1?access_token=${accessToken}`
+      );
+      if (!checkResp.ok) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requests: [{ addSheet: { properties: { title: sheetName } } }] })
+          }
+        );
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:G1?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: [['Timestamp', 'Email', 'Name', 'Role', 'Type', 'Content', 'ParentIndex']] })
+          }
+        );
+        return [];
+      }
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A2:G500`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      return (data.values || []).map((row: any[], i: number) => ({
+        index: i + 2,
+        timestamp: row[0] || '',
+        email: row[1] || '',
+        name: row[2] || '',
+        role: row[3] || '',
+        type: row[4] || '',
+        content: row[5] || '',
+        parentIndex: row[6] || '',
+      }));
+    } catch (error) {
+      console.error('Failed to get board posts:', error);
+      return [];
+    }
+  }
+
+  async addBoardPost(email: string, name: string, role: string, type: string, content: string, parentIndex: string = ''): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())},${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent('BoardLog')}!A:G:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [[timestamp, email, name, role, type, content, parentIndex]] })
+        }
+      );
+    } catch (error) {
+      console.error('Failed to add board post:', error);
     }
   }
 
