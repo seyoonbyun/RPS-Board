@@ -53,15 +53,24 @@ class GoogleSheetsService {
       
       // Clean private key format
       let privateKey = this.serviceAccountPrivateKey;
-      
+
       // Remove JSON string quotes if present
       if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
         privateKey = privateKey.slice(1, -1);
       }
-      
+
       // Replace escaped newlines with actual newlines
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+
+      // Reconstruct PEM format if newlines are missing entirely
+      if (!privateKey.includes('\n')) {
+        const begin = '-----BEGIN PRIVATE KEY-----';
+        const end = '-----END PRIVATE KEY-----';
+        let body = privateKey.replace(begin, '').replace(end, '').replace(/\s/g, '');
+        const wrapped = body.match(/.{1,64}/g)?.join('\n') || body;
+        privateKey = `${begin}\n${wrapped}\n${end}\n`;
       }
       
       // Create service account credentials
@@ -118,15 +127,24 @@ class GoogleSheetsService {
 
       // Clean private key format
       let privateKey = this.serviceAccountPrivateKey;
-      
+
       // Remove JSON string quotes if present
       if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
         privateKey = privateKey.slice(1, -1);
       }
-      
+
       // Replace escaped newlines with actual newlines
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+
+      // Reconstruct PEM format if newlines are missing entirely
+      if (!privateKey.includes('\n')) {
+        const begin = '-----BEGIN PRIVATE KEY-----';
+        const end = '-----END PRIVATE KEY-----';
+        let body = privateKey.replace(begin, '').replace(end, '').replace(/\s/g, '');
+        const wrapped = body.match(/.{1,64}/g)?.join('\n') || body;
+        privateKey = `${begin}\n${wrapped}\n${end}\n`;
       }
       
       // Create the JWT for OAuth2

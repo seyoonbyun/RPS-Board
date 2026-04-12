@@ -1,19 +1,47 @@
-export default function handler(req: any, res: any) {
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "";
-  const keyAfterReplace = key.replace(/\\n/g, '\n');
+import { initializeGoogleSheets, getGoogleSheetsService } from "./_lib/google-sheets.js";
 
-  res.status(200).json({
-    keyLength: key.length,
-    keyAfterReplaceLength: keyAfterReplace.length,
-    startsWithDash: key.startsWith("-----"),
-    startsWithQuote: key.startsWith('"'),
-    first30: key.substring(0, 30),
-    last30: key.substring(key.length - 30),
-    containsLiteralBackslashN: key.includes("\\n"),
-    containsRealNewline: key.includes("\n"),
-    newlineCount: (key.match(/\n/g) || []).length,
-    literalBackslashNCount: (key.match(/\\n/g) || []).length,
-    afterReplace_startsWithDash: keyAfterReplace.startsWith("-----"),
-    afterReplace_newlineCount: (keyAfterReplace.match(/\n/g) || []).length,
-  });
+let initialized = false;
+
+function ensureInit() {
+  if (initialized) return;
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
+  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "";
+  if (email && key) {
+    initializeGoogleSheets({
+      apiKey: process.env.GOOGLE_SHEETS_API_KEY || "",
+      spreadsheetId: process.env.GOOGLE_SHEETS_ID || "",
+      serviceAccountEmail: email,
+      serviceAccountPrivateKey: key,
+    });
+    initialized = true;
+  }
+}
+
+export default async function handler(req: any, res: any) {
+  ensureInit();
+  const url: string = req.url || "";
+
+  // Diagnostic endpoint
+  if (url.includes("/api/diag")) {
+    const svc = getGoogleSheetsService();
+    if (!svc) return res.status(500).json({ error: "no sheets service" });
+    try {
+      const adminCheck = await svc.checkAdminSheetCredentials("joy.byun@bnikorea.com", "1234");
+      const userCheck = await svc.checkUserCredentials("joy.byun@bnikorea.com", "1234");
+      let allUsers: any = null;
+      try { allUsers = (await svc.getAllUsers())?.slice(0, 3); } catch {}
+      return res.status(200).json({ ok: true, adminCheck, userCheck, allUsers });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // Full Express app
+  try {
+    const { createApp } = await import("./_lib/app.js");
+    const { app } = await createApp();
+    return app(req, res);
+  } catch (err: any) {
+    return res.status(500).json({ error: "App init failed", message: err.message });
+  }
 }
