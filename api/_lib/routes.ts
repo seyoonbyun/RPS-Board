@@ -427,6 +427,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`✅ Successfully synced data to Google Sheets for ${user.email} with ${profitPartners} profit partners (${achievement}%)`);
 
             sheetsService.logActivity(user.email, existingData ? '데이터 수정' : '데이터 입력', `달성률: ${achievement}%`);
+
+            // R파트너 개별 변경사항 상세 로깅
+            const partnerFields = [
+              { idx: 1, name: 'rpartner1', spec: 'rpartner1Specialty', stage: 'rpartner1Stage' },
+              { idx: 2, name: 'rpartner2', spec: 'rpartner2Specialty', stage: 'rpartner2Stage' },
+              { idx: 3, name: 'rpartner3', spec: 'rpartner3Specialty', stage: 'rpartner3Stage' },
+              { idx: 4, name: 'rpartner4', spec: 'rpartner4Specialty', stage: 'rpartner4Stage' },
+            ];
+            for (const pf of partnerFields) {
+              const oldName = (existingData as any)?.[pf.name]?.trim() || '';
+              const newName = (savedData as any)?.[pf.name]?.trim() || '';
+              const oldSpec = (existingData as any)?.[pf.spec]?.trim() || '';
+              const newSpec = (savedData as any)?.[pf.spec]?.trim() || '';
+              const oldStage = (existingData as any)?.[pf.stage]?.trim() || '';
+              const newStage = (savedData as any)?.[pf.stage]?.trim() || '';
+
+              if (!oldName && newName) {
+                sheetsService.logActivity(user.email, `R파트너${pf.idx} 영입`, `${newName}`);
+              }
+              if (oldName && !newName) {
+                sheetsService.logActivity(user.email, `R파트너${pf.idx} 삭제`, `${oldName}`);
+              }
+              if (oldSpec !== newSpec && newSpec) {
+                sheetsService.logActivity(user.email, `R파트너${pf.idx} 전문분야 변경`, `${newName}: ${oldSpec || '없음'} → ${newSpec}`);
+              }
+              if (oldStage !== newStage && newStage) {
+                const stageLabel = newStage.includes('Visibility') ? 'V단계' : newStage.includes('Credibility') ? 'C단계' : newStage.includes('Profit') ? 'P단계' : newStage;
+                sheetsService.logActivity(user.email, `R파트너${pf.idx} 단계변경`, `${newName}: ${oldStage || '없음'} → ${newStage} (${stageLabel})`);
+              }
+            }
           }
         }
       } catch (syncError) {
