@@ -135,8 +135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, auth || 'Admin');
-      
+
       if (result.success) {
+        googleSheetsService.logAdminActivity(email, '관리자 추가', `${memberName} (${email}), 권한: ${auth || 'Admin'}, 지역: ${region}`);
         res.json({ success: true, message: `${email} 관리자가 Admin 시트에 등록되었습니다` });
       } else {
         res.status(400).json({ message: result.message || '관리자 등록에 실패했습니다' });
@@ -834,6 +835,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`✅ Bulk withdrawal completed: ${result.processedCount}/${userEmails.length}`);
+      const svcW = getGoogleSheetsService();
+      if (svcW) svcW.logAdminActivity('admin', '유저 계정 삭제 (탈퇴)', `${result.processedCount}명: ${userEmails.join(', ')}`);
       res.json(response);
     } catch (error: any) {
       console.error("❌ Bulk withdrawal error:", error);
@@ -871,6 +874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log(`✅ New user added successfully: ${email}`);
+      sheetsService.logAdminActivity('admin', '신규 유저 추가', `${memberName} (${email}), 챕터: ${chapter || '-'}, 지역: ${region || '-'}`);
       res.json({ message: "멤버가 성공적으로 추가되었습니다", email });
       
     } catch (error: any) {
@@ -953,6 +957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`📊 Bulk user addition processed: ${processedCount}/${users.length} users`);
+      if (sheetsService) sheetsService.logAdminActivity('admin', '대량 유저 추가', `${processedCount}/${users.length}명 추가 완료`);
       res.json(response);
     } catch (error: any) {
       console.error("❌ Error in bulk user addition:", error);
@@ -987,6 +992,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await sheetsService.updateUserInfo(email, updates);
       
       if (result.success) {
+        const changedFields = Object.entries(updates).map(([k, v]) => `${k}: ${v}`).join(', ');
+        sheetsService.logAdminActivity('admin', '유저 정보 수정', `${email} → ${changedFields}`);
         console.log(`✅ User ${email} info updated successfully`);
         res.json({ message: result.message || "정보가 성공적으로 수정되었습니다" });
       } else {
@@ -1066,8 +1073,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('PW 업데이트 실패');
       }
       
+      const svcLog = getGoogleSheetsService();
+      if (svcLog) svcLog.logAdminActivity('admin', '비밀번호 수정', `${email}`);
       res.json({ message: `${email} 사용자의 비밀번호가 ${password}로 수정되었습니다` });
-      
+
     } catch (error: any) {
       console.error("❌ Error fixing user password:", error);
       res.status(500).json({ message: "비밀번호 수정 중 오류가 발생했습니다" });
@@ -1141,6 +1150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('AUTH 업데이트 실패');
       }
       
+      const svcLog2 = getGoogleSheetsService();
+      if (svcLog2) svcLog2.logAdminActivity('admin', '권한 수정', `${email} → ${auth}`);
       res.json({ message: `${email} 사용자의 권한이 ${auth}로 수정되었습니다` });
       
     } catch (error: any) {
@@ -1426,6 +1437,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`📊 Bulk user restoration completed: ${restoredCount}/${userEmails.length} users restored`);
+      const svcR = getGoogleSheetsService();
+      if (svcR) svcR.logAdminActivity('admin', '유저 계정 복원', `${restoredCount}명: ${userEmails.join(', ')}`);
       res.json(response);
       
     } catch (error: any) {

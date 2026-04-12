@@ -2402,6 +2402,52 @@ class GoogleSheetsService {
     }
   }
 
+  async logAdminActivity(adminEmail: string, action: string, details: string = ''): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())},${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+
+      const sheetName = 'AdminLog';
+      const row = [timestamp, adminEmail, action, details];
+
+      const checkResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1?access_token=${accessToken}`
+      );
+      if (!checkResp.ok) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requests: [{ addSheet: { properties: { title: sheetName } } }] })
+          }
+        );
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:D1?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: [['Timestamp', 'Admin Email', 'Action', 'Details']] })
+          }
+        );
+      }
+
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A:D:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [row] })
+        }
+      );
+      console.log(`📝 Admin activity logged: ${action} by ${adminEmail}`);
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
+    }
+  }
+
   async readSheetRange(sheetName: string, range: string): Promise<any[][]> {
     const accessToken = await this.getAccessToken();
     const r = await fetch(
