@@ -428,34 +428,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             sheetsService.logActivity(user.email, existingData ? '데이터 수정' : '데이터 입력', `달성률: ${achievement}%`);
 
-            // R파트너 개별 변경사항 상세 로깅
-            const partnerFields = [
-              { idx: 1, name: 'rpartner1', spec: 'rpartner1Specialty', stage: 'rpartner1Stage' },
-              { idx: 2, name: 'rpartner2', spec: 'rpartner2Specialty', stage: 'rpartner2Stage' },
-              { idx: 3, name: 'rpartner3', spec: 'rpartner3Specialty', stage: 'rpartner3Stage' },
-              { idx: 4, name: 'rpartner4', spec: 'rpartner4Specialty', stage: 'rpartner4Stage' },
-            ];
-            for (const pf of partnerFields) {
-              const oldName = (existingData as any)?.[pf.name]?.trim() || '';
-              const newName = (savedData as any)?.[pf.name]?.trim() || '';
-              const oldSpec = (existingData as any)?.[pf.spec]?.trim() || '';
-              const newSpec = (savedData as any)?.[pf.spec]?.trim() || '';
-              const oldStage = (existingData as any)?.[pf.stage]?.trim() || '';
-              const newStage = (savedData as any)?.[pf.stage]?.trim() || '';
+            // 유저 수정 가능 필드 전체 변경사항 개별 로깅
+            const fieldLabels: Record<string, string> = {
+              specialty: '전문분야',
+              company: '회사명',
+              targetCustomer: '핵심 고객층',
+              industry: '산업군',
+              memberName: '멤버명',
+              rpartner1: 'R파트너1',
+              rpartner1Specialty: 'R파트너1 전문분야',
+              rpartner1Stage: 'R파트너1 단계',
+              rpartner2: 'R파트너2',
+              rpartner2Specialty: 'R파트너2 전문분야',
+              rpartner2Stage: 'R파트너2 단계',
+              rpartner3: 'R파트너3',
+              rpartner3Specialty: 'R파트너3 전문분야',
+              rpartner3Stage: 'R파트너3 단계',
+              rpartner4: 'R파트너4',
+              rpartner4Specialty: 'R파트너4 전문분야',
+              rpartner4Stage: 'R파트너4 단계',
+            };
+            for (const [field, label] of Object.entries(fieldLabels)) {
+              const oldVal = (existingData as any)?.[field]?.toString().trim() || '';
+              const newVal = (savedData as any)?.[field]?.toString().trim() || '';
+              if (oldVal === newVal) continue;
 
-              if (!oldName && newName) {
-                sheetsService.logActivity(user.email, `R파트너${pf.idx} 영입`, `${newName}`);
+              let action: string;
+              let details: string;
+              if (!oldVal && newVal) {
+                action = field === 'specialty' ? `${label} 최초 입력 (앱 게시)` : `${label} 입력`;
+                details = newVal;
+              } else if (oldVal && !newVal) {
+                action = `${label} 삭제`;
+                details = oldVal;
+              } else {
+                action = `${label} 변경`;
+                details = `${oldVal} → ${newVal}`;
               }
-              if (oldName && !newName) {
-                sheetsService.logActivity(user.email, `R파트너${pf.idx} 삭제`, `${oldName}`);
+
+              // V-C-P 단계 필드에 추가 라벨
+              if (field.endsWith('Stage') && newVal) {
+                const stageLabel = newVal.includes('Visibility') ? 'V단계' : newVal.includes('Credibility') ? 'C단계' : newVal.includes('Profit') ? 'P단계' : '';
+                if (stageLabel) details += ` (${stageLabel})`;
               }
-              if (oldSpec !== newSpec && newSpec) {
-                sheetsService.logActivity(user.email, `R파트너${pf.idx} 전문분야 변경`, `${newName}: ${oldSpec || '없음'} → ${newSpec}`);
-              }
-              if (oldStage !== newStage && newStage) {
-                const stageLabel = newStage.includes('Visibility') ? 'V단계' : newStage.includes('Credibility') ? 'C단계' : newStage.includes('Profit') ? 'P단계' : newStage;
-                sheetsService.logActivity(user.email, `R파트너${pf.idx} 단계변경`, `${newName}: ${oldStage || '없음'} → ${newStage} (${stageLabel})`);
-              }
+
+              sheetsService.logActivity(user.email, action, details);
             }
           }
         }
