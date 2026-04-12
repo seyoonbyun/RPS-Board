@@ -2349,6 +2349,16 @@ class GoogleSheetsService {
     console.log('='.repeat(60));
   }
 
+  async readSheetRange(sheetName: string, range: string): Promise<any[][]> {
+    const accessToken = await this.getAccessToken();
+    const r = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!${range}`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d.values || [];
+  }
 }
 
 // Export singleton instance
