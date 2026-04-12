@@ -69,9 +69,10 @@ export class MemStorage implements IStorage {
   }
 
   async isUserAllowed(email: string, password?: string): Promise<boolean> {
-    // For memory storage, we'll check Google Sheets directly
-    // This is implemented in the DatabaseStorage class
-    return true;
+    const { getGoogleSheetsService } = await import('./google-sheets.js');
+    const googleSheetsService = getGoogleSheetsService();
+    if (!googleSheetsService) return false;
+    return await googleSheetsService.checkUserCredentials(email, password || '');
   }
 
   async getScoreboardData(userId: string): Promise<ScoreboardData | undefined> {
@@ -251,4 +252,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage: IStorage = process.env.DATABASE_URL
+  ? new DatabaseStorage()
+  : new MemStorage();
