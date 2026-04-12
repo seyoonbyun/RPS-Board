@@ -61,16 +61,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🔐 Admin login: ${email} with auth: ${adminCheck.auth}`);
             
             let user = await storage.getUserByEmail(email);
+            const isFirstLogin = !user;
             if (!user) {
               user = await storage.createUser({ email, password });
             }
-            
-            return res.json({ 
-              user: { 
-                id: user.id, 
-                email: user.email, 
-                auth: adminCheck.auth 
-              } 
+
+            googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${adminCheck.auth}`);
+            return res.json({
+              user: {
+                id: user.id,
+                email: user.email,
+                auth: adminCheck.auth
+              }
             });
           } else {
             // Admin 시트에 이메일 존재하지만 비밀번호 틀림 - RPS로 폴백하지 않고 거부
@@ -100,15 +102,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       let user = await storage.getUserByEmail(email);
-      
+      const isFirstLogin = !user;
       if (!user) {
-        // Auto-register new users (only if credentials validated in Google Sheets)
         user = await storage.createUser({ email, password });
       }
-      
-      // RPS 시트의 AUTH 컬럼에서 권한 확인 (레거시 지원)
+
       const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
-      
+
+      if (googleSheetsService) {
+        googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
+      }
+
       res.json({ user: { id: user.id, email: user.email, auth: userAuth || 'Member' } });
     } catch (error) {
       console.error("Login error:", error);
@@ -421,6 +425,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userEmail: user.email
             });
             console.log(`✅ Successfully synced data to Google Sheets for ${user.email} with ${profitPartners} profit partners (${achievement}%)`);
+
+            sheetsService.logActivity(user.email, existingData ? '데이터 수정' : '데이터 입력', `달성률: ${achievement}%`);
           }
         }
       } catch (syncError) {
@@ -512,7 +518,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({ 
+      const sheetsForLog = getGoogleSheetsService();
+      if (sheetsForLog) sheetsForLog.logActivity(user.email, '시트 동기화', '시트→앱');
+
+      res.json({
         message: "구글 시트에서 성공적으로 동기화했습니다",
         data: updatedScoreboard,
         changes: existingData ? await trackChanges(userId, existingData, updatedData) : []
@@ -545,6 +554,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      const sheetsForLog2 = getGoogleSheetsService();
+      if (sheetsForLog2 && user) sheetsForLog2.logActivity(user.email, '시트 동기화', '앱→시트');
+
       res.json({ message: "구글 시트와 동기화가 완료되었습니다", timestamp: new Date() });
     } catch (error) {
       res.status(500).json({ message: "동기화에 실패했습니다" });
@@ -1404,7 +1416,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const recommendations = await recommendationEngine.getBusinessSynergyRecommendations(user.email, filters);
-      
+
+      if (googleSheetsService) googleSheetsService.logActivity(user.email, '파트너 추천 조회', `필터: ${region || '전체'}`);
+
       res.json({ recommendations });
     } catch (error) {
       console.error("Business synergy recommendation error:", error);
@@ -1494,6 +1508,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       console.log(`🎯 AI 분석 응답 전송 - user: ${user.email}, specialty: ${userProfile.specialty}`);
+
+      const sheetsForLog = getGoogleSheetsService();
+      if (sheetsForLog) {
+        sheetsForLog.logActivity(user.email, 'AI 분석 사용', `전문분야: ${userProfile.specialty}`);
+      }
+
       res.json(responseData);
 
     } catch (error) {
@@ -1597,6 +1617,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const businesses = await pureDynamicSearch.searchPureDynamic(userSpecialty, userRegion, aiAnalysis, searchKeywords);
       console.log(`🎯 순수 동적 검색 완료 - ${businesses?.length || 0}개 업체 발견`);
       
+      if (googleSheetsService) googleSheetsService.logActivity(user.email, '지역 업체 검색', `지역: ${userRegion}, 분야: ${userSpecialty}`);
+
       res.json({
         message: "순수 동적 AI 검색 완료 - 시너지 섹션에서 키워드 직접 추출",
         businesses: businesses || [],

@@ -2349,6 +2349,59 @@ class GoogleSheetsService {
     console.log('='.repeat(60));
   }
 
+  async logActivity(email: string, action: string, details: string = ''): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())},${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+
+      const sheetName = 'ActivityLog';
+      const row = [timestamp, email, action, details];
+
+      // Ensure ActivityLog sheet exists by trying to read it first
+      const checkResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1?access_token=${accessToken}`
+      );
+
+      if (!checkResp.ok) {
+        // Create the sheet tab
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requests: [{ addSheet: { properties: { title: sheetName } } }]
+            })
+          }
+        );
+        // Add header row
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:D1?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: [['Timestamp', 'Email', 'Action', 'Details']] })
+          }
+        );
+      }
+
+      // Append row
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A:D:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [row] })
+        }
+      );
+      console.log(`📝 Activity logged: ${action} by ${email}`);
+    } catch (error) {
+      console.error('Failed to log activity:', error);
+    }
+  }
+
   async readSheetRange(sheetName: string, range: string): Promise<any[][]> {
     const accessToken = await this.getAccessToken();
     const r = await fetch(
