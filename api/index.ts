@@ -1,5 +1,4 @@
 import { initializeGoogleSheets, getGoogleSheetsService } from "./_lib/google-sheets.js";
-import jwt from "jsonwebtoken";
 
 let initialized = false;
 
@@ -18,59 +17,44 @@ function ensureInit() {
   }
 }
 
-async function getAccessToken() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "";
-  let privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "";
-  privateKey = privateKey.replace(/\\n/g, '\n');
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: email,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  };
-  const assertion = jwt.sign(payload, privateKey, { algorithm: "RS256" });
-  const resp = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${assertion}`,
-  });
-  const data = await resp.json();
-  return data.access_token;
-}
-
 export default async function handler(req: any, res: any) {
   ensureInit();
   const url: string = req.url || "";
 
   if (url.includes("/api/diag")) {
+    const svc = getGoogleSheetsService();
+    if (!svc) return res.status(500).json({ error: "no sheets service" });
+
     try {
-      const spreadsheetId = process.env.GOOGLE_SHEETS_ID || "";
-      const token = await getAccessToken();
+      // Use existing service methods
+      const adminCheck = await svc.checkAdminSheetCredentials("joy.byun@bnikorea.com", "1234");
+      const userCheck = await svc.checkUserCredentials("joy.byun@bnikorea.com", "1234");
 
-      // Get spreadsheet metadata (sheet names)
-      const metaResp = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?access_token=${token}&fields=sheets.properties.title`
-      );
-      const meta = await metaResp.json();
-      const sheetNames = (meta.sheets || []).map((s: any) => s.properties.title);
+      let allUsers: any = null;
+      let allUsersError: string | null = null;
+      try {
+        allUsers = await svc.getAllUsers();
+        allUsers = allUsers?.slice(0, 3); // first 3 users only
+      } catch (e: any) {
+        allUsersError = e.message;
+      }
 
-      // Read first 3 rows of each sheet
-      const previews: Record<string, any> = {};
-      for (const name of sheetNames.slice(0, 5)) {
-        const r = await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(name)}!A1:Z3?access_token=${token}`
-        );
-        const d = await r.json();
-        previews[name] = d.values || [];
+      let userProfile: any = null;
+      let profileError: string | null = null;
+      try {
+        userProfile = await svc.getUserProfile("joy.byun@bnikorea.com");
+      } catch (e: any) {
+        profileError = e.message;
       }
 
       return res.status(200).json({
         ok: true,
-        spreadsheetId,
-        sheetNames,
-        previews,
+        adminCheck,
+        userCheck,
+        allUsers,
+        allUsersError,
+        userProfile,
+        profileError,
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message, stack: err.stack?.split("\n").slice(0, 5) });
