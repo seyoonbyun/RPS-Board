@@ -80,6 +80,9 @@ export default function AdminPage() {
   const emailValidation = validateBulkEmails();
   const [currentUser, setCurrentUser] = useState<{id: string, email: string} | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showAddChapterDialog, setShowAddChapterDialog] = useState(false);
+  const [newChapterName, setNewChapterName] = useState('');
+  const [newChapterRegion, setNewChapterRegion] = useState('');
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
@@ -812,7 +815,16 @@ export default function AdminPage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button 
+              <Button
+                onClick={() => setShowAddChapterDialog(true)}
+                variant="outline"
+                size="sm"
+                className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                신규 챕터 생성
+              </Button>
+              <Button
                 onClick={() => setShowAddUserDialog(true)}
                 className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600"
                 size="sm"
@@ -861,7 +873,16 @@ export default function AdminPage() {
 
             {/* 버튼들 - 아래에 수직 배치 */}
             <div className="space-y-2">
-              <Button 
+              <Button
+                onClick={() => setShowAddChapterDialog(true)}
+                variant="outline"
+                size="sm"
+                className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                신규 챕터 생성
+              </Button>
+              <Button
                 onClick={() => setShowAddUserDialog(true)}
                 className="bg-red-600 hover:bg-white hover:text-red-600 text-white border border-red-600 w-full"
                 size="sm"
@@ -2184,6 +2205,78 @@ export default function AdminPage() {
         </Card>
       )}
       </div>
+
+      {/* 신규 챕터 생성 다이얼로그 */}
+      <AlertDialog open={showAddChapterDialog} onOpenChange={setShowAddChapterDialog}>
+        <AlertDialogContent className="max-w-md bg-white border border-gray-200 shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <Plus className="mr-2 w-5 h-5 text-red-600" />
+              신규 챕터 생성
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">지역 선택 *</label>
+              <select
+                value={newChapterRegion}
+                onChange={(e) => setNewChapterRegion(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="">지역을 선택하세요</option>
+                {(regions as string[]).map((r: string) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">챕터명 *</label>
+              <input
+                type="text"
+                value={newChapterName}
+                onChange={(e) => setNewChapterName(e.target.value)}
+                placeholder="새 챕터명을 입력하세요"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setNewChapterName(''); setNewChapterRegion(''); }}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (!newChapterName.trim() || !newChapterRegion) {
+                  alert('챕터명과 지역을 모두 입력해주세요');
+                  return;
+                }
+                try {
+                  const resp = await apiRequest('POST', '/api/admin/add-chapter', {
+                    chapter: newChapterName.trim(),
+                    region: newChapterRegion,
+                    adminEmail: currentUser?.email || 'admin',
+                  });
+                  const data = await resp.json();
+                  if (data.success) {
+                    alert(data.message);
+                    queryClient.invalidateQueries({ queryKey: ['/api/admin/chapters'] });
+                    setNewChapterName('');
+                    setNewChapterRegion('');
+                    setShowAddChapterDialog(false);
+                  } else {
+                    alert(data.message || '챕터 추가 실패');
+                  }
+                } catch (err: any) {
+                  alert(err.message || '챕터 추가 중 오류');
+                }
+              }}
+            >
+              챕터 생성
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 단일 사용자 추가 다이얼로그 */}
       <AlertDialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>

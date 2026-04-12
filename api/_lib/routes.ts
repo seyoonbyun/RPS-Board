@@ -723,6 +723,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Add new chapter to Master sheet
+  app.post("/api/admin/add-chapter", async (req, res) => {
+    try {
+      const { chapter, region } = req.body;
+      if (!chapter || !region) {
+        return res.status(400).json({ message: "챕터명과 지역명은 필수 항목입니다" });
+      }
+
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) {
+        return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
+      }
+
+      const existing = await sheetsService.getChaptersFromMaster();
+      if (existing.includes(chapter.trim())) {
+        return res.status(409).json({ message: `'${chapter}' 챕터가 이미 존재합니다` });
+      }
+
+      await sheetsService.addChapterToMaster(chapter.trim(), region.trim());
+      sheetsService.logAdminActivity('admin', '신규 챕터 생성', `${chapter} (지역: ${region})`);
+      sheetsService.logChapterActivity(req.body.adminEmail || 'admin', '신규 챕터 생성', `챕터: ${chapter}, 지역: ${region}`);
+      res.json({ success: true, message: `'${chapter}' 챕터가 등록되었습니다` });
+    } catch (error: any) {
+      console.error("❌ Error adding chapter:", error);
+      res.status(500).json({ message: "챕터 추가 중 오류가 발생했습니다" });
+    }
+  });
+
   // Admin API: Get regions from Master sheet
   app.get("/api/admin/regions", async (req, res) => {
     try {
