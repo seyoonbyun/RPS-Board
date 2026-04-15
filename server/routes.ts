@@ -49,40 +49,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       const googleSheetsService = getGoogleSheetsService();
-      
-      // Step 1: 먼저 Admin 시트에서 관리자 확인
-      if (googleSheetsService) {
-        const adminCheck = await googleSheetsService.checkAdminSheetCredentials(email, password);
-        
-        // Admin 시트에 이메일이 존재하는 경우
-        if (adminCheck.found) {
-          if (adminCheck.valid && adminCheck.auth) {
-            // Admin 시트에서 인증 성공 - 관리자로 로그인
-            console.log(`🔐 Admin login: ${email} with auth: ${adminCheck.auth}`);
-            
-            let user = await storage.getUserByEmail(email);
-            if (!user) {
-              user = await storage.createUser({ email, password });
-            }
-            
-            return res.json({ 
-              user: { 
-                id: user.id, 
-                email: user.email, 
-                auth: adminCheck.auth 
-              } 
-            });
-          } else {
-            // Admin 시트에 이메일 존재하지만 비밀번호 틀림 - RPS로 폴백하지 않고 거부
-            console.log(`❌ Admin ${email} found in Admin sheet but password mismatch - rejecting`);
-            return res.status(403).json({ 
-              message: "관리자 비밀번호가 일치하지 않습니다. 올바른 비밀번호를 입력해주세요." 
-            });
-          }
-        }
-      }
-      
-      // Step 2: Admin 시트에 없으면 RPS 시트에서 일반 멤버 확인
+
+      // RPS 시트가 로그인 인증의 유일한 원천 (Auth 시트는 참조하지 않음)
       try {
         const isAllowed = await storage.isUserAllowed(email, password);
         if (!isAllowed) {

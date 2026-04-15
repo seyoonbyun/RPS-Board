@@ -91,42 +91,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       const googleSheetsService = getGoogleSheetsService();
-      
-      // Step 1: 먼저 Admin 시트에서 관리자 확인
-      if (googleSheetsService) {
-        const adminCheck = await googleSheetsService.checkAdminSheetCredentials(email, password);
-        
-        // Admin 시트에 이메일이 존재하는 경우
-        if (adminCheck.found) {
-          if (adminCheck.valid && adminCheck.auth) {
-            // Admin 시트에서 인증 성공 - 관리자로 로그인
-            console.log(`🔐 Admin login: ${email} with auth: ${adminCheck.auth}`);
-            
-            let user = await storage.getUserByEmail(email);
-            const isFirstLogin = !user;
-            if (!user) {
-              user = await storage.createUser({ email, password });
-            }
 
-            await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${adminCheck.auth}`);
-            return res.json({
-              user: {
-                id: user.id,
-                email: user.email,
-                auth: adminCheck.auth
-              }
-            });
-          } else {
-            // Admin 시트에 이메일 존재하지만 비밀번호 틀림 - RPS로 폴백하지 않고 거부
-            console.log(`❌ Admin ${email} found in Admin sheet but password mismatch - rejecting`);
-            return res.status(403).json({ 
-              message: "관리자 비밀번호가 일치하지 않습니다. 올바른 비밀번호를 입력해주세요." 
-            });
-          }
-        }
-      }
-      
-      // Step 2: Admin 시트에 없으면 RPS 시트에서 일반 멤버 확인
+      // RPS 시트가 로그인 인증의 유일한 원천 (Auth 시트는 참조하지 않음 — 관리자 추가/삭제 audit log 전용)
       try {
         const isAllowed = await storage.isUserAllowed(email, password);
         if (!isAllowed) {
@@ -176,11 +142,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Google Sheets 서비스가 초기화되지 않았습니다' });
       }
 
-      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, auth || 'Admin');
+      const effectiveAuth = auth || 'Admin';
+      // Auth 시트에 audit log 기록
+      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, effectiveAuth);
 
       if (result.success) {
-        googleSheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 추가', `${memberName} (${email}), 권한: ${auth || 'Admin'}, 지역: ${region}`);
-        res.json({ success: true, message: `${email} 관리자가 Admin 시트에 등록되었습니다` });
+        // RPS 시트 Z열(AUTH)에도 반영 — 실제 로그인/권한 판정의 유일한 원천
+        try {
+          await googleSheetsService.setUserAuthInRPS(email, effectiveAuth, { region, memberName, password });
+        } catch (rpsErr: any) {
+          console.error('RPS AUTH upsert failed:', rpsErr);
+          return res.status(500).json({ message: `Auth 시트엔 등록됐으나 RPS 시트 권한 반영 실패: ${rpsErr.message || rpsErr}` });
+        }
+        await googleSheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 추가', `${memberName} (${email}), 권한: ${effectiveAuth}, 지역: ${region}`);
+        res.json({ success: true, message: `${email} 관리자가 등록되었습니다 (RPS + Auth 시트 반영)` });
       } else {
         res.status(400).json({ message: result.message || '관리자 등록에 실패했습니다' });
       }
@@ -837,9 +812,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sheetsService = getGoogleSheetsService();
       if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
 
+      // Auth 시트에서 audit 행 제거
       await sheetsService.deleteAdminFromSheet(email.trim());
-      sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 삭제', `${email}`);
-      res.json({ success: true, message: `'${email}' 관리자가 삭제되었습니다` });
+      // RPS 시트 Z열을 Member로 다운그레이드 (사용자 데이터 자체는 보존)
+      try {
+        await sheetsService.setUserAuthInRPS(email.trim(), 'Member');
+      } catch (rpsErr: any) {
+        console.error('RPS AUTH downgrade failed:', rpsErr);
+      }
+      await sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 삭제', `${email}`);
+      res.json({ success: true, message: `'${email}' 관리자가 삭제되었습니다 (RPS 권한 Member로 복귀)` });
     } catch (error: any) {
       console.error("❌ Error deleting admin:", error);
       res.status(500).json({ message: error.message || "관리자 삭제 중 오류가 발생했습니다" });

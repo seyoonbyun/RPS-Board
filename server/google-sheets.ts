@@ -649,19 +649,13 @@ class GoogleSheetsService {
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);
-      
-      // 먼저 Admin 시트에서 확인
-      const adminSheetAuth = await this.getAdminSheetAuth(email);
-      if (adminSheetAuth) {
-        console.log(`✅ ${email} found in Admin sheet with auth: ${adminSheetAuth}`);
-        return true;
-      }
-      
-      // Admin 시트에 없으면 RPS 시트에서 확인
+
+      // RPS 시트 Z열(AUTH)을 유일한 권한 원천으로 사용 (Auth 시트는 참조하지 않음)
+      const accessToken = await this.getAccessToken();
       const response = await requestQueue.enqueue(
         `checkAdminPermission-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {

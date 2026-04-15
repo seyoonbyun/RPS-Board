@@ -667,19 +667,13 @@ class GoogleSheetsService {
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
       console.log(`🔐 Checking admin permission for ${email}...`);
-      
-      // 먼저 Admin 시트에서 확인
-      const adminSheetAuth = await this.getAdminSheetAuth(email);
-      if (adminSheetAuth) {
-        console.log(`✅ ${email} found in Admin sheet with auth: ${adminSheetAuth}`);
-        return true;
-      }
-      
-      // Admin 시트에 없으면 RPS 시트에서 확인
+
+      // RPS 시트 Z열(AUTH)을 유일한 권한 원천으로 사용 (Auth 시트는 참조하지 않음)
+      const accessToken = await this.getAccessToken();
       const response = await requestQueue.enqueue(
         `checkAdminPermission-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
@@ -762,6 +756,66 @@ class GoogleSheetsService {
   // 하위 호환성을 위한 기존 함수명 유지 (deprecated)
   private convertStageToFullText(stage: string): string {
     return this.normalizeStage(stage);
+  }
+
+  // RPS 시트 Z열(AUTH) 단일 원천으로 관리자 권한 upsert
+  // 기존 RPS 행이 있으면 Z만 갱신, 없고 createMeta가 주어지면 새 행 생성
+  async setUserAuthInRPS(
+    email: string,
+    auth: string,
+    createMeta?: { region: string; chapter?: string; memberName: string; password?: string }
+  ): Promise<{ updated: boolean; created: boolean }> {
+    const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+    );
+    if (!resp.ok) throw new Error('RPS 시트를 읽을 수 없습니다');
+    const data = await resp.json();
+    const rows: any[][] = data.values || [];
+
+    let userRow = -1;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row) continue;
+      const rowEmail = (row[0] || '').toString().trim().toLowerCase();
+      if (rowEmail === email.toLowerCase()) { userRow = i; break; }
+    }
+
+    if (userRow >= 0) {
+      const range = `RPS!Z${userRow + 1}`;
+      const upd = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [[auth]] })
+        }
+      );
+      if (!upd.ok) throw new Error(`RPS AUTH 업데이트 실패 (${upd.status})`);
+      console.log(`🔑 RPS AUTH updated: ${email} → ${auth}`);
+      return { updated: true, created: false };
+    }
+
+    if (!createMeta) {
+      console.warn(`⚠️ RPS에 ${email} 없음 — createMeta 미제공, AUTH upsert 스킵`);
+      return { updated: false, created: false };
+    }
+
+    await this.addNewUser({
+      email,
+      region: createMeta.region,
+      chapter: createMeta.chapter || '',
+      memberName: createMeta.memberName,
+      industry: '',
+      company: '',
+      specialty: '',
+      targetCustomer: '',
+      password: createMeta.password,
+      auth,
+    });
+    console.log(`🆕 RPS 신규 행 생성 (관리자 추가): ${email} (AUTH=${auth})`);
+    return { updated: false, created: true };
   }
 
   async addNewUser(userData: {
