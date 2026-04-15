@@ -60,18 +60,16 @@ export default function LoginPage() {
     onSuccess: (data) => {
       console.log('Login successful:', data);
       localStorage.setItem("bni_user", JSON.stringify(data.user));
-      
-      const isAdmin = ['Admin', 'Growth', 'National'].includes(data.user.auth);
-      
+
+      // 관리자 계정도 일반 멤버와 동일하게 /dashboard로 착지.
+      // 관리자 패널 진입은 대시보드 우상단 버튼으로만.
       toast({
         title: "로그인 성공",
-        description: isAdmin 
-          ? "BNI 코리아 관리자 패널에 오신 것을 환영합니다!" 
-          : "BNI 코리아 파워팀 스코어보드에 오신 것을 환영합니다!",
+        description: "BNI 코리아 파워팀 스코어보드에 오신 것을 환영합니다!",
         duration: CACHE_CONFIG.TOAST_DURATION,
       });
-      
-      setLocation(isAdmin ? "/admin" : "/dashboard");
+
+      setLocation("/dashboard");
     },
     onError: (error: any) => {
       console.error('Login error:', error);
