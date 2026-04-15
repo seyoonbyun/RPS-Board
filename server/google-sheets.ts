@@ -430,10 +430,11 @@ class GoogleSheetsService {
 
   async getUserAuth(email: string): Promise<string | null> {
     try {
+      const accessToken = await this.getAccessToken();
       const response = await requestQueue.enqueue(
         `getUserAuth-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${this.accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A:Z?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
