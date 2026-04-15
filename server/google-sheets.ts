@@ -566,11 +566,12 @@ class GoogleSheetsService {
   async getAdminSheetAuth(email: string): Promise<string | null> {
     try {
       const accessToken = await this.getAccessToken();
-      
+
+      // Auth 시트 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW(D), AUTH/권한(E)
       const response = await requestQueue.enqueue(
         `getAdminSheetAuth-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:C?access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:E?access_token=${accessToken}`,
           {
             method: 'GET',
             headers: {
@@ -579,24 +580,26 @@ class GoogleSheetsService {
           }
         )
       );
-      
+
       if (!response.ok) {
         return null;
       }
-      
+
       const data = await response.json();
       const rows = data.values || [];
-      
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || !row[0]) continue;
-        
-        const emailInSheet = row[0].toString().trim().toLowerCase();
+        if (!row || !row[2]) continue; // C열(이메일) 기준 스킵
+
+        const emailInSheet = row[2].toString().trim().toLowerCase();
         if (emailInSheet === email.toLowerCase()) {
-          return row[2]?.toString().trim() || 'Admin';
+          const rawAuth = row[4]?.toString().trim() || 'Admin'; // E열: AUTH
+          const normalized = rawAuth.charAt(0).toUpperCase() + rawAuth.slice(1).toLowerCase();
+          return ['Admin', 'Growth', 'National'].includes(normalized) ? normalized : 'Admin';
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error getting admin sheet auth:', error);
