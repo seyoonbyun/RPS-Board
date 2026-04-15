@@ -539,7 +539,7 @@ export default function AdminPage() {
   // 일괄 탈퇴 처리 mutation
   const bulkWithdrawalMutation = useMutation({
     mutationFn: async (userEmails: string[]) => {
-      const response = await apiRequest('POST', '/api/admin/bulk-withdrawal', { userEmails });
+      const response = await apiRequest('POST', '/api/admin/bulk-withdrawal', { userEmails, adminEmail: currentUser?.email });
       return response.json();
     },
     onMutate: () => {
@@ -598,7 +598,7 @@ export default function AdminPage() {
   // 멤버 복원 mutation
   const restoreUsersMutation = useMutation({
     mutationFn: async (userEmails: string[]) => {
-      const response = await apiRequest('POST', '/api/admin/restore-users', { userEmails });
+      const response = await apiRequest('POST', '/api/admin/restore-users', { userEmails, adminEmail: currentUser?.email });
       return response.json();
     },
     onSuccess: (data) => {
@@ -628,7 +628,7 @@ export default function AdminPage() {
   // 사용자 추가 관련 mutation
   const addUserMutation = useMutation({
     mutationFn: async (userData: typeof newUser) => {
-      const response = await apiRequest('POST', '/api/admin/add-user', userData);
+      const response = await apiRequest('POST', '/api/admin/add-user', { ...userData, adminEmail: currentUser?.email });
       return response.json();
     },
     onSuccess: (data) => {
@@ -665,7 +665,7 @@ export default function AdminPage() {
 
   const bulkAddUserMutation = useMutation({
     mutationFn: async (users: any[]) => {
-      const response = await apiRequest('POST', '/api/admin/bulk-add-users', { users });
+      const response = await apiRequest('POST', '/api/admin/bulk-add-users', { users, adminEmail: currentUser?.email });
       return response.json();
     },
     onSuccess: (data) => {
@@ -710,7 +710,7 @@ export default function AdminPage() {
       company?: string; 
       password?: string;
     }) => {
-      const response = await apiRequest('PUT', '/api/admin/update-user', data);
+      const response = await apiRequest('PUT', '/api/admin/update-user', { ...data, adminEmail: currentUser?.email });
       return response.json();
     },
     onSuccess: (data) => {
@@ -935,7 +935,8 @@ export default function AdminPage() {
           memberName: newUser.memberName,
           email: newUser.email,
           password: newUser.password,
-          auth: newUser.auth || 'Admin'
+          auth: newUser.auth || 'Admin',
+          adminEmail: currentUser?.email
         })
       });
 
@@ -2179,6 +2180,7 @@ export default function AdminPage() {
                                           region: item.region,
                                           chapter: item.chapter,
                                           memberName: item.memberName,
+                                          adminEmail: currentUser?.email,
                                         });
                                         const data = await resp.json();
                                         if (data.success) {
