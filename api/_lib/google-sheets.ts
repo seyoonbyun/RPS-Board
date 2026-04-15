@@ -819,6 +819,137 @@ class GoogleSheetsService {
     return { updated: false, created: true };
   }
 
+  // 관리자 추가 시 RPS 시트의 A/B/C/D/W/X/Y/Z 8개 열을 일괄 upsert
+  // 기존 행 있으면 해당 8열만 새 값으로 덮어쓰기 (R파트너 등 E~V는 보존)
+  // 기존 행 없으면 신규 행 생성 (E~V는 빈 값으로)
+  async upsertAdminRowInRPS(args: {
+    email: string;
+    region: string;
+    memberName: string;
+    password: string;
+    auth: string;
+    chapter?: string;
+  }): Promise<{ updated: boolean; created: boolean }> {
+    const { email, region, memberName, password, auth } = args;
+    const chapter = args.chapter || '';
+    const accessToken = await this.getAccessToken();
+
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+    );
+    if (!resp.ok) throw new Error('RPS 시트를 읽을 수 없습니다');
+    const data = await resp.json();
+    const rows: any[][] = data.values || [];
+
+    let userRow = -1;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row) continue;
+      const rowEmail = (row[0] || '').toString().trim().toLowerCase();
+      if (rowEmail === email.toLowerCase()) { userRow = i; break; }
+    }
+
+    if (userRow >= 0) {
+      // 기존 행: A..D와 W..Z를 batchUpdate로 한 번에 갱신
+      const rowNumber = userRow + 1;
+      const abcd = [[email, region, chapter, memberName]]; // A B C D
+      const wxyz = [[email, password, '활동중', auth]];    // W X Y Z
+      const batchResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values:batchUpdate`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            valueInputOption: 'RAW',
+            data: [
+              { range: `RPS!A${rowNumber}:D${rowNumber}`, values: abcd },
+              { range: `RPS!W${rowNumber}:Z${rowNumber}`, values: wxyz },
+            ]
+          })
+        }
+      );
+      if (!batchResp.ok) {
+        const txt = await batchResp.text();
+        throw new Error(`RPS 관리자 행 업데이트 실패 (${batchResp.status}): ${txt}`);
+      }
+      console.log(`✎ RPS 관리자 행 업데이트: ${email} (A~D, W~Z)`);
+      return { updated: true, created: false };
+    }
+
+    // 신규 행 생성 — addNewUser가 A..Z 전체 채워서 append
+    await this.addNewUser({
+      email,
+      region,
+      chapter,
+      memberName,
+      industry: '',
+      company: '',
+      specialty: '',
+      targetCustomer: '',
+      password,
+      auth,
+    });
+    console.log(`🆕 RPS 관리자 행 신규 생성: ${email}`);
+    return { updated: false, created: true };
+  }
+
+  // RPS 시트에서 해당 이메일의 행을 통째로 삭제
+  async deleteUserRowFromRPS(email: string): Promise<boolean> {
+    const accessToken = await this.getAccessToken();
+
+    // 1) RPS 시트 ID 조회
+    const metaResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!metaResp.ok) throw new Error('시트 메타 조회 실패');
+    const meta = await metaResp.json();
+    const rpsSheet = meta.sheets?.find((s: any) => s.properties.title === 'RPS');
+    if (!rpsSheet) throw new Error('RPS 시트를 찾을 수 없습니다');
+    const sheetId = rpsSheet.properties.sheetId;
+
+    // 2) 해당 이메일 행 인덱스 찾기 (A열 기준)
+    const rowsResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:A5000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!rowsResp.ok) throw new Error('RPS A열 읽기 실패');
+    const data = await rowsResp.json();
+    const col = (data.values || []) as any[][];
+    let targetIndex = -1; // 0-based
+    for (let i = 1; i < col.length; i++) {
+      const v = (col[i]?.[0] || '').toString().trim().toLowerCase();
+      if (v === email.toLowerCase()) { targetIndex = i; break; }
+    }
+    if (targetIndex === -1) {
+      console.warn(`⚠️ RPS에 ${email} 행 없음 — 삭제 스킵`);
+      return false;
+    }
+
+    // 3) deleteDimension으로 행 삭제
+    const delResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            deleteDimension: {
+              range: { sheetId, dimension: 'ROWS', startIndex: targetIndex, endIndex: targetIndex + 1 }
+            }
+          }]
+        })
+      }
+    );
+    if (!delResp.ok) {
+      const txt = await delResp.text();
+      throw new Error(`RPS 행 삭제 실패 (${delResp.status}): ${txt}`);
+    }
+    console.log(`🗑️ RPS 행 삭제: ${email} (row ${targetIndex + 1})`);
+    return true;
+  }
+
   async addNewUser(userData: {
     email: string;
     region: string;

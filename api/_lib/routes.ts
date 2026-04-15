@@ -147,12 +147,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, effectiveAuth);
 
       if (result.success) {
-        // RPS 시트 Z열(AUTH)에도 반영 — 실제 로그인/권한 판정의 유일한 원천
+        // RPS 시트의 A/B/C/D/W/X/Y/Z 열을 일괄 upsert (C는 빈 값)
         try {
-          await googleSheetsService.setUserAuthInRPS(email, effectiveAuth, { region, memberName, password });
+          await googleSheetsService.upsertAdminRowInRPS({ email, region, memberName, password, auth: effectiveAuth });
         } catch (rpsErr: any) {
-          console.error('RPS AUTH upsert failed:', rpsErr);
-          return res.status(500).json({ message: `Auth 시트엔 등록됐으나 RPS 시트 권한 반영 실패: ${rpsErr.message || rpsErr}` });
+          console.error('RPS admin row upsert failed:', rpsErr);
+          return res.status(500).json({ message: `Auth 시트엔 등록됐으나 RPS 시트 반영 실패: ${rpsErr.message || rpsErr}` });
         }
         await googleSheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 추가', `${memberName} (${email}), 권한: ${effectiveAuth}, 지역: ${region}`);
         res.json({ success: true, message: `${email} 관리자가 등록되었습니다 (RPS + Auth 시트 반영)` });
@@ -814,14 +814,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Auth 시트에서 audit 행 제거
       await sheetsService.deleteAdminFromSheet(email.trim());
-      // RPS 시트 Z열을 Member로 다운그레이드 (사용자 데이터 자체는 보존)
+      // RPS 시트에서 해당 행을 통째로 삭제 (A,B,C,D,W,X,Y,Z 포함 전체)
       try {
-        await sheetsService.setUserAuthInRPS(email.trim(), 'Member');
+        await sheetsService.deleteUserRowFromRPS(email.trim());
       } catch (rpsErr: any) {
-        console.error('RPS AUTH downgrade failed:', rpsErr);
+        console.error('RPS 행 삭제 실패:', rpsErr);
+        return res.status(500).json({ message: `Auth 시트에선 제거됐으나 RPS 시트 행 삭제 실패: ${rpsErr.message || rpsErr}` });
       }
       await sheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 삭제', `${email}`);
-      res.json({ success: true, message: `'${email}' 관리자가 삭제되었습니다 (RPS 권한 Member로 복귀)` });
+      res.json({ success: true, message: `'${email}' 관리자가 삭제되었습니다 (RPS 행 삭제 + Auth 시트 제거)` });
     } catch (error: any) {
       console.error("❌ Error deleting admin:", error);
       res.status(500).json({ message: error.message || "관리자 삭제 중 오류가 발생했습니다" });
