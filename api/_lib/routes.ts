@@ -66,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               user = await storage.createUser({ email, password });
             }
 
-            googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${adminCheck.auth}`);
+            await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${adminCheck.auth}`);
             return res.json({
               user: {
                 id: user.id,
@@ -110,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
 
       if (googleSheetsService) {
-        googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
+        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
       }
 
       res.json({ user: { id: user.id, email: user.email, auth: userAuth || 'Member' } });
@@ -394,92 +394,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Automatically sync to Google Sheets after saving - 강화된 실시간 동기화
-      try {
-        // Get user's email for Google Sheets sync
-        const user = await storage.getUserById(userId);
-        if (user) {
-          console.log('🔄 Starting ENHANCED Google Sheets sync with validated data:', JSON.stringify(formData, null, 2));
-          console.log(`🔄 User: ${user.email}, Data saved:`, savedData);
-          
-          const sheetsService = getGoogleSheetsService();
-          if (sheetsService) {
-            // 실시간 달성률 계산 강화
-            const partners = [
-              { name: savedData.rpartner1, stage: savedData.rpartner1Stage },
-              { name: savedData.rpartner2, stage: savedData.rpartner2Stage },
-              { name: savedData.rpartner3, stage: savedData.rpartner3Stage },
-              { name: savedData.rpartner4, stage: savedData.rpartner4Stage },
-            ];
-            
-            const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage?.includes('Profit')).length;
-            const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
-            
-            console.log(`🔄 Real-time achievement calculation:`, {
-              partners,
-              profitPartners,
-              achievement: `${achievement}%`
-            });
-            
-            await sheetsService.syncScoreboardData({
-              ...savedData,
-              userEmail: user.email
-            });
-            console.log(`✅ Successfully synced data to Google Sheets for ${user.email} with ${profitPartners} profit partners (${achievement}%)`);
+      // 1) 활동 로깅 (구글 시트 동기화 성공 여부와 무관하게 항상 기록)
+      const user = await storage.getUserById(userId);
+      const sheetsService = getGoogleSheetsService();
 
-            sheetsService.logActivity(user.email, existingData ? '데이터 수정' : '데이터 입력', `달성률: ${achievement}%`);
+      if (user && sheetsService) {
+        const partners = [
+          { name: savedData.rpartner1, stage: savedData.rpartner1Stage },
+          { name: savedData.rpartner2, stage: savedData.rpartner2Stage },
+          { name: savedData.rpartner3, stage: savedData.rpartner3Stage },
+          { name: savedData.rpartner4, stage: savedData.rpartner4Stage },
+        ];
+        const profitPartners = partners.filter(p => p.name && p.name.trim() && p.stage?.includes('Profit')).length;
+        const achievement = Math.round((profitPartners / BUSINESS_CONFIG.PARTNER_TARGET) * 100);
 
-            // 유저 수정 가능 필드 전체 변경사항 개별 로깅
-            const fieldLabels: Record<string, string> = {
-              specialty: '전문분야',
-              company: '회사명',
-              targetCustomer: '핵심 고객층',
-              industry: '산업군',
-              memberName: '멤버명',
-              rpartner1: 'R파트너1',
-              rpartner1Specialty: 'R파트너1 전문분야',
-              rpartner1Stage: 'R파트너1 단계',
-              rpartner2: 'R파트너2',
-              rpartner2Specialty: 'R파트너2 전문분야',
-              rpartner2Stage: 'R파트너2 단계',
-              rpartner3: 'R파트너3',
-              rpartner3Specialty: 'R파트너3 전문분야',
-              rpartner3Stage: 'R파트너3 단계',
-              rpartner4: 'R파트너4',
-              rpartner4Specialty: 'R파트너4 전문분야',
-              rpartner4Stage: 'R파트너4 단계',
-            };
-            for (const [field, label] of Object.entries(fieldLabels)) {
-              const oldVal = (existingData as any)?.[field]?.toString().trim() || '';
-              const newVal = (savedData as any)?.[field]?.toString().trim() || '';
-              if (oldVal === newVal) continue;
+        const fieldLabels: Record<string, string> = {
+          specialty: '전문분야',
+          company: '회사명',
+          targetCustomer: '핵심 고객층',
+          industry: '산업군',
+          memberName: '멤버명',
+          rpartner1: 'R파트너1',
+          rpartner1Specialty: 'R파트너1 전문분야',
+          rpartner1Stage: 'R파트너1 단계',
+          rpartner2: 'R파트너2',
+          rpartner2Specialty: 'R파트너2 전문분야',
+          rpartner2Stage: 'R파트너2 단계',
+          rpartner3: 'R파트너3',
+          rpartner3Specialty: 'R파트너3 전문분야',
+          rpartner3Stage: 'R파트너3 단계',
+          rpartner4: 'R파트너4',
+          rpartner4Specialty: 'R파트너4 전문분야',
+          rpartner4Stage: 'R파트너4 단계',
+        };
 
-              let action: string;
-              let details: string;
-              if (!oldVal && newVal) {
-                action = field === 'specialty' ? `${label} 최초 입력 (앱 게시)` : `${label} 입력`;
-                details = newVal;
-              } else if (oldVal && !newVal) {
-                action = `${label} 삭제`;
-                details = oldVal;
-              } else {
-                action = `${label} 변경`;
-                details = `${oldVal} → ${newVal}`;
-              }
+        const logEntries: Array<{ action: string; details: string }> = [
+          { action: existingData ? '데이터 수정' : '데이터 입력', details: `달성률: ${achievement}%` }
+        ];
+        for (const [field, label] of Object.entries(fieldLabels)) {
+          const oldVal = (existingData as any)?.[field]?.toString().trim() || '';
+          const newVal = (savedData as any)?.[field]?.toString().trim() || '';
+          if (oldVal === newVal) continue;
 
-              // V-C-P 단계 필드에 추가 라벨
-              if (field.endsWith('Stage') && newVal) {
-                const stageLabel = newVal.includes('Visibility') ? 'V단계' : newVal.includes('Credibility') ? 'C단계' : newVal.includes('Profit') ? 'P단계' : '';
-                if (stageLabel) details += ` (${stageLabel})`;
-              }
-
-              sheetsService.logActivity(user.email, action, details);
-            }
+          let action: string;
+          let details: string;
+          if (!oldVal && newVal) {
+            action = field === 'specialty' ? `${label} 최초 입력 (앱 게시)` : `${label} 입력`;
+            details = newVal;
+          } else if (oldVal && !newVal) {
+            action = `${label} 삭제`;
+            details = oldVal;
+          } else {
+            action = `${label} 변경`;
+            details = `${oldVal} → ${newVal}`;
           }
+          if (field.endsWith('Stage') && newVal) {
+            const stageLabel = newVal.includes('Visibility') ? 'V단계' : newVal.includes('Credibility') ? 'C단계' : newVal.includes('Profit') ? 'P단계' : '';
+            if (stageLabel) details += ` (${stageLabel})`;
+          }
+          logEntries.push({ action, details });
         }
-      } catch (syncError) {
-        console.error('Google Sheets auto-sync failed:', syncError);
-        // Don't fail the main request if sync fails
+
+        // 모든 로그를 병렬로 await — 서버리스에서 응답 전 완료 보장
+        const logResults = await Promise.allSettled(
+          logEntries.map(e => sheetsService.logActivity(user.email, e.action, e.details))
+        );
+        const failed = logResults.filter(r => r.status === 'rejected').length;
+        if (failed > 0) console.error(`⚠️ ActivityLog: ${failed}/${logEntries.length} entries failed to write`);
+
+        // 2) 구글 시트 RPS 데이터 동기화 (로깅과 분리하여 실패해도 로그는 보존)
+        try {
+          await sheetsService.syncScoreboardData({ ...savedData, userEmail: user.email });
+          console.log(`✅ Synced to Google Sheets for ${user.email} (${profitPartners} profit partners, ${achievement}%)`);
+        } catch (syncError) {
+          console.error('Google Sheets sync failed:', syncError);
+          try {
+            await sheetsService.logActivity(user.email, '시트 동기화 실패', String((syncError as Error)?.message || syncError).substring(0, 100));
+          } catch {}
+        }
       }
       
       res.json(savedData);
@@ -567,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const sheetsForLog = getGoogleSheetsService();
-      if (sheetsForLog) sheetsForLog.logActivity(user.email, '시트 동기화', '시트→앱');
+      if (sheetsForLog) await sheetsForLog.logActivity(user.email, '시트 동기화', '시트→앱');
 
       res.json({
         message: "구글 시트에서 성공적으로 동기화했습니다",
@@ -603,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const sheetsForLog2 = getGoogleSheetsService();
-      if (sheetsForLog2 && user) sheetsForLog2.logActivity(user.email, '시트 동기화', '앱→시트');
+      if (sheetsForLog2 && user) await sheetsForLog2.logActivity(user.email, '시트 동기화', '앱→시트');
 
       res.json({ message: "구글 시트와 동기화가 완료되었습니다", timestamp: new Date() });
     } catch (error) {
@@ -632,13 +624,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "구글 시트에서 사용자 프로필을 찾을 수 없습니다" });
       }
 
+      // 활동 로그 기록 (탈퇴 처리 전에 — 시트에 흔적 남기기)
+      try {
+        await sheetsService.logActivity(user.email, '계정 탈퇴', `${profile.memberName || ''} (${profile.region || ''}/${profile.chapter || ''})`);
+      } catch (e) {
+        console.error('ActivityLog write for self-withdrawal failed:', e);
+      }
+
       // Delete user completely from Google Sheets - 행 자체를 삭제
       await sheetsService.markUserAsWithdrawn(user.email);
 
       // Delete user data from local database
       await storage.deleteUserData(userId);
 
-      res.json({ 
+      res.json({
         message: "사용자가 완전히 삭제되었습니다",
         deletedUser: {
           region: profile.region,
