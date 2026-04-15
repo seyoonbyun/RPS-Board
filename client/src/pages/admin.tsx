@@ -517,7 +517,7 @@ export default function AdminPage() {
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
       const timestamp = Date.now();
-      const response = await fetch(`/api/admin/users?t=${timestamp}`, {
+      const response = await apiFetch(`/api/admin/users?t=${timestamp}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
