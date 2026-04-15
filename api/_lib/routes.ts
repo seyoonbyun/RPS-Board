@@ -25,7 +25,49 @@ const upload = multer({
   }
 });
 
+// requireAdmin: /api/admin/* 엔드포인트에 대한 호출자 권한 검증 미들웨어
+// 호출자 이메일은 x-caller-email 헤더 또는 req.body.adminEmail로 식별
+// check-permission, board 조회 등 일부 read-only 엔드포인트는 화이트리스트로 제외
+// app.use('/api/admin', ...)로 마운트되므로 req.path는 mount 이후 부분 (예: '/check-permission')
+const ADMIN_AUTH_BYPASS = new Set([
+  '/check-permission',  // 자기 자신의 권한 확인용 (인증 전 호출됨)
+]);
+
+async function requireAdmin(req: any, res: any, next: any) {
+  if (ADMIN_AUTH_BYPASS.has(req.path)) return next();
+
+  const callerEmail =
+    (req.headers['x-caller-email'] as string | undefined)?.trim().toLowerCase() ||
+    (req.body?.adminEmail as string | undefined)?.trim().toLowerCase() ||
+    (req.query?.adminEmail as string | undefined)?.trim().toLowerCase() ||
+    '';
+
+  if (!callerEmail) {
+    return res.status(401).json({ message: '호출자 식별 정보가 없습니다 (x-caller-email 헤더 필요)' });
+  }
+
+  try {
+    const sheetsService = getGoogleSheetsService();
+    if (!sheetsService) {
+      return res.status(500).json({ message: '권한 검증 서비스 초기화 실패' });
+    }
+    const isAdmin = await sheetsService.checkAdminPermission(callerEmail);
+    if (!isAdmin) {
+      console.warn(`🚫 Non-admin access blocked: ${callerEmail} → ${req.method} ${req.path}`);
+      return res.status(403).json({ message: '관리자 권한이 필요합니다' });
+    }
+    (req as any).adminEmail = callerEmail;
+    next();
+  } catch (err) {
+    console.error('requireAdmin middleware error:', err);
+    res.status(500).json({ message: '권한 검증 중 오류' });
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // 모든 /api/admin/* 엔드포인트에 권한 미들웨어 적용 (라우트 등록 전에 마운트 필수)
+  app.use('/api/admin', requireAdmin);
+
   // Health check endpoint for deployment
   app.get("/health", (req, res) => {
     res.status(200).json({ 

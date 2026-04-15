@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, apiFetch } from '@/lib/queryClient';
 import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search, Home, Wrench, ExternalLink } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -44,7 +44,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["/api/admin/board"],
     queryFn: async () => {
-      const resp = await fetch('/api/admin/board');
+      const resp = await apiFetch('/api/admin/board');
       if (!resp.ok) return [];
       return resp.json();
     },
@@ -54,7 +54,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
   const { data: masterNotices = [] } = useQuery({
     queryKey: ["/api/admin/master-notices"],
     queryFn: async () => {
-      const resp = await fetch('/api/admin/master-notices');
+      const resp = await apiFetch('/api/admin/master-notices');
       if (!resp.ok) return [];
       return resp.json();
     },
@@ -69,7 +69,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
 
   const submitPost = async () => {
     if (!newContent.trim()) return;
-    await fetch('/api/admin/board', {
+    await apiFetch('/api/admin/board', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: newContent.trim() })
@@ -80,7 +80,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
 
   const deletePost = async (rowIndex: number) => {
     if (!confirm('이 글을 삭제하시겠습니까?')) return;
-    await fetch('/api/admin/board/delete', {
+    await apiFetch('/api/admin/board/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rowIndex })
@@ -90,7 +90,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
 
   const updatePost = async (rowIndex: number) => {
     if (!editContent.trim()) return;
-    await fetch('/api/admin/board/update', {
+    await apiFetch('/api/admin/board/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rowIndex, content: editContent.trim() })
@@ -102,7 +102,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
 
   const submitReply = async (parentIndex: number) => {
     if (!replyContent.trim()) return;
-    await fetch('/api/admin/board/reply', {
+    await apiFetch('/api/admin/board/reply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: replyContent.trim(), parentIndex })
@@ -238,7 +238,7 @@ function AdminListBody({ currentUserEmail, queryClient, toast, apiRequest }: any
   const { data: admins = [], isLoading } = useQuery({
     queryKey: ["/api/admin/list-admins"],
     queryFn: async () => {
-      const resp = await fetch('/api/admin/list-admins');
+      const resp = await apiFetch('/api/admin/list-admins');
       if (!resp.ok) return [];
       return resp.json();
     },
@@ -399,7 +399,7 @@ export default function AdminPage() {
     queryKey: ["/api/admin/check-permission", currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return { isAdmin: false, auth: null };
-      const response = await fetch('/api/admin/check-permission', {
+      const response = await apiFetch('/api/admin/check-permission', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: currentUser.email })
@@ -417,7 +417,7 @@ export default function AdminPage() {
   const { data: chapters = [], isLoading: isChaptersLoading } = useQuery({
     queryKey: ["/api/admin/chapters"],
     queryFn: async () => {
-      const response = await fetch('/api/admin/chapters');
+      const response = await apiFetch('/api/admin/chapters');
       if (!response.ok) {
         throw new Error('챕터 목록을 가져올 수 없습니다');
       }
@@ -431,7 +431,7 @@ export default function AdminPage() {
   const { data: regions = [], isLoading: isRegionsLoading } = useQuery({
     queryKey: ["/api/admin/regions"],
     queryFn: async () => {
-      const response = await fetch('/api/admin/regions');
+      const response = await apiFetch('/api/admin/regions');
       if (!response.ok) {
         throw new Error('지역 목록을 가져올 수 없습니다');
       }
@@ -445,7 +445,7 @@ export default function AdminPage() {
   const { data: withdrawalHistory = [], isLoading: isHistoryLoading, refetch: refetchHistory } = useQuery({
     queryKey: ["/api/admin/withdrawal-history"],
     queryFn: async () => {
-      const response = await fetch('/api/admin/withdrawal-history', {
+      const response = await apiFetch('/api/admin/withdrawal-history', {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -927,7 +927,7 @@ export default function AdminPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/add-admin', {
+      const response = await apiFetch('/api/admin/add-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1066,6 +1066,23 @@ export default function AdminPage() {
   // 탈퇴 히스토리에서 고유한 지역과 챕터 목록 추출
   const historyRegions = ["전체", ...Array.from(new Set(withdrawalHistory.map((item: WithdrawalHistoryItem) => item.region).filter(Boolean)))];
   const historyChapters = ["전체", ...Array.from(new Set(withdrawalHistory.map((item: WithdrawalHistoryItem) => item.chapter).filter(Boolean)))];
+
+  // 권한 가드: 확인 중이거나 관리자가 아니면 패널을 렌더링하지 않음
+  // (useEffect redirect 이전에 Member가 관리자 UI를 잠깐이라도 볼 수 없도록 차단)
+  if (!currentUser || isAdminLoading || adminPermission === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">권한 확인 중...</div>
+      </div>
+    );
+  }
+  if (!adminPermission.isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">접근 권한이 없습니다. 이동 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
