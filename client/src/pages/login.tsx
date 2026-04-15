@@ -61,7 +61,7 @@ export default function LoginPage() {
       console.log('Login successful:', data);
       localStorage.setItem("bni_user", JSON.stringify(data.user));
       
-      const isAdmin = data.user.auth === 'Admin' || data.user.auth === 'Growth';
+      const isAdmin = ['Admin', 'Growth', 'National'].includes(data.user.auth);
       
       toast({
         title: "로그인 성공",
