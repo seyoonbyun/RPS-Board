@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search, Home, Wrench, ExternalLink } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -33,8 +33,13 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
   const [replyContent, setReplyContent] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [expandedReplies, setExpandedReplies] = useState<Record<number, boolean>>({});
   const queryClient = useQueryClient();
   const isMaster = adminPermission?.auth === 'National';
+
+  const toggleReplies = (parentIndex: number) => {
+    setExpandedReplies(prev => ({ ...prev, [parentIndex]: !prev[parentIndex] }));
+  };
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["/api/admin/board"],
@@ -103,7 +108,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
       body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: replyContent.trim(), parentIndex })
     });
     setReplyContent('');
-    setReplyTo(null);
+    setExpandedReplies(prev => ({ ...prev, [parentIndex]: true }));
     queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
   };
 
@@ -171,21 +176,48 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
                     )}
                   </div>
                 </div>
-                {qReplies.map((r: any) => (
+                {qReplies.length > 0 && (
+                  <button
+                    onClick={() => toggleReplies(q.index)}
+                    className="ml-4 mt-2 flex items-center gap-1 text-[10px] text-red-600 hover:text-red-700 font-medium"
+                  >
+                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedReplies[q.index] ? '' : '-rotate-90'}`} />
+                    답변 {qReplies.length}개 {expandedReplies[q.index] ? '접기' : '펼치기'}
+                  </button>
+                )}
+                {expandedReplies[q.index] && qReplies.map((r: any) => (
                   <div key={r.index} className="ml-4 mt-2 pl-3 border-l-2 border-red-200">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[10px] font-semibold text-red-700">{r.name}</span>
-                      <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">답변</span>
-                      <span className="text-[10px] text-gray-400">{r.timestamp}</span>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[10px] font-semibold text-red-700">{r.name}</span>
+                          <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">답변</span>
+                          <span className="text-[10px] text-gray-400">{r.timestamp}</span>
+                        </div>
+                        {editingIndex === r.index ? (
+                          <div className="flex gap-1 mt-1">
+                            <input value={editContent} onChange={(e) => setEditContent(e.target.value)} className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" onKeyDown={(e) => e.key === 'Enter' && updatePost(r.index)} />
+                            <button onClick={() => updatePost(r.index)} className="text-[10px] bg-red-600 text-white px-2 py-1 rounded">저장</button>
+                            <button onClick={() => setEditingIndex(null)} className="text-[10px] text-gray-500 px-1">취소</button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-600">{renderContent(r.content)}</p>
+                        )}
+                      </div>
+                      {r.email === currentUser?.email && editingIndex !== r.index && (
+                        <div className="flex items-center gap-1 ml-2">
+                          <button onClick={() => { setEditingIndex(r.index); setEditContent(r.content); }} className="text-gray-400 hover:text-gray-600 p-0.5"><Edit3 className="w-3 h-3" /></button>
+                          <button onClick={() => deletePost(r.index)} className="text-gray-400 hover:text-red-600 p-0.5"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-600">{renderContent(r.content)}</p>
                   </div>
                 ))}
                 {replyTo === q.index && (
                   <div className="ml-4 mt-2 flex gap-1">
-                    <input value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="답변 입력..." className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" onKeyDown={(e) => e.key === 'Enter' && submitReply(q.index)} />
+                    <input value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="답변 입력... (Enter로 연속 전송)" className="flex-1 text-xs border border-gray-300 rounded px-2 py-1" onKeyDown={(e) => e.key === 'Enter' && submitReply(q.index)} autoFocus />
                     <button onClick={() => submitReply(q.index)} className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">전송</button>
-                    <button onClick={() => setReplyTo(null)} className="text-xs text-gray-500 px-1">취소</button>
+                    <button onClick={() => { setReplyTo(null); setReplyContent(''); }} className="text-xs text-gray-500 px-1">닫기</button>
                   </div>
                 )}
               </div>
@@ -1287,6 +1319,45 @@ export default function AdminPage() {
             <BoardWidget currentUser={currentUser} adminPermission={adminPermission} boardSearch={boardSearch} />
           </div>
         </div>
+
+        {/* 푸터 */}
+        <footer className="mt-8 border-t border-gray-200 pt-6 pb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a
+              href="https://www.powerteam-bnikorea.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-red-600 border-2 border-red-600 !text-white font-semibold text-sm hover:bg-red-700 hover:border-red-700 shadow-sm hover:shadow-md transition-all"
+            >
+              <Home className="w-4 h-4" />
+              PowerTeam Home 으로 바로가기
+              <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+            </a>
+            <a
+              href="https://www.powerteam-bnikorea.com/PowerTeamToolkit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-red-600 border-2 border-red-600 !text-white font-semibold text-sm hover:bg-red-700 hover:border-red-700 shadow-sm hover:shadow-md transition-all"
+            >
+              <Wrench className="w-4 h-4" />
+              파워팀 툴킷으로 바로가기
+              <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+            </a>
+            <a
+              href="https://www.powerteam-bnikorea.com/RPI"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-red-600 border-2 border-red-600 !text-white font-semibold text-sm hover:bg-red-700 hover:border-red-700 shadow-sm hover:shadow-md transition-all"
+            >
+              <BarChart3 className="w-4 h-4" />
+              RPI Viewer 로 바로가기
+              <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+            </a>
+          </div>
+          <div className="mt-4 text-right text-xs text-gray-400 italic tracking-wide">
+            Created by Joy Byun
+          </div>
+        </footer>
       </div>
 
       {/* ========== MODAL: 새로운 멤버 추가 ========== */}
