@@ -8,6 +8,7 @@ import { getGoogleSheetsService } from "./google-sheets.js";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
 import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
+import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 
 // Multer 설정 - 메모리에 파일 저장
@@ -65,6 +66,12 @@ async function requireAdmin(req: any, res: any, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // 매 요청마다 pending sheet sync 큐를 비동기 처리 (응답을 블로킹하지 않음)
+  app.use((req, res, next) => {
+    processPendingSyncs().catch(err => console.error('Background sync processing error:', err));
+    next();
+  });
+
   // 모든 /api/admin/* 엔드포인트에 권한 미들웨어 적용 (라우트 등록 전에 마운트 필수)
   app.use('/api/admin', requireAdmin);
 
@@ -77,12 +84,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // API status endpoint
-  app.get("/api/status", (req, res) => {
-    res.status(200).json({ 
-      status: "ok", 
+  // API status endpoint (includes pending sync count for monitoring)
+  app.get("/api/status", async (req, res) => {
+    let pendingSyncCount = 0;
+    try {
+      const { db: dbInstance } = await import('./db.js');
+      const { pendingSheetSyncs: pss } = await import('./schema.js');
+      if (dbInstance) {
+        const { sql: sqlFn } = await import('drizzle-orm');
+        const [row] = await dbInstance.select({ count: sqlFn`count(*)::int` }).from(pss);
+        pendingSyncCount = (row as any)?.count ?? 0;
+      }
+    } catch {}
+    res.status(200).json({
+      status: "ok",
       message: "BNI Korea RPS System API",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      pendingSyncCount,
     });
   });
 
@@ -117,8 +135,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
 
+      // 활동 로그는 로그인 성공 여부에 영향을 주지 않도록 분리
       if (googleSheetsService) {
-        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
+        try {
+          await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
+        } catch (logError) {
+          console.error('Activity log failed (login still succeeds):', logError);
+        }
       }
 
       res.json({ user: { id: user.id, email: user.email, auth: userAuth || 'Member' } });
@@ -479,15 +502,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const failed = logResults.filter(r => r.status === 'rejected').length;
         if (failed > 0) console.error(`⚠️ ActivityLog: ${failed}/${logEntries.length} entries failed to write`);
 
-        // 2) 구글 시트 RPS 데이터 동기화 (로깅과 분리하여 실패해도 로그는 보존)
+        // 2) 구글 시트 RPS 데이터 동기화 (실패 시 pending 큐에 저장하여 재시도)
         try {
           await sheetsService.syncScoreboardData({ ...savedData, userEmail: user.email });
           console.log(`✅ Synced to Google Sheets for ${user.email} (${profitPartners} profit partners, ${achievement}%)`);
         } catch (syncError) {
-          console.error('Google Sheets sync failed:', syncError);
-          try {
-            await sheetsService.logActivity(user.email, '시트 동기화 실패', String((syncError as Error)?.message || syncError).substring(0, 100));
-          } catch {}
+          console.error('Google Sheets sync failed, saving to retry queue:', syncError);
+          await enqueuePendingSync(
+            user.email,
+            'syncScoreboard',
+            { ...savedData, userEmail: user.email },
+            String((syncError as Error)?.message || syncError).substring(0, 500),
+          );
         }
       }
       
@@ -594,28 +620,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const data = await storage.getScoreboardData(userId);
-      
+
       if (!data) {
         return res.status(404).json({ message: "저장된 데이터가 없습니다" });
       }
-      
+
       // Get user's email for Google Sheets sync
       const user = await storage.getUserById(userId);
       if (user) {
         const sheetsService = getGoogleSheetsService();
         if (sheetsService) {
-          await sheetsService.syncScoreboardData({
-            ...data,
-            userEmail: user.email
-          });
+          try {
+            await sheetsService.syncScoreboardData({
+              ...data,
+              userEmail: user.email
+            });
+          } catch (syncError) {
+            console.error('Google Sheets sync failed, saving to retry queue:', syncError);
+            await enqueuePendingSync(
+              user.email,
+              'syncScoreboard',
+              { ...data, userEmail: user.email },
+              String((syncError as Error)?.message || syncError).substring(0, 500),
+            );
+            // DB에는 이미 데이터가 있으므로 유저에게는 성공 응답 + 경고
+            return res.json({
+              message: "데이터가 저장되었습니다. 구글 시트 동기화는 잠시 후 자동으로 재시도됩니다.",
+              timestamp: new Date(),
+              pendingSync: true,
+            });
+          }
+
+          try {
+            await sheetsService.logActivity(user.email, '시트 동기화', '앱→시트');
+          } catch (logError) {
+            console.error('Activity log failed (sync succeeded):', logError);
+          }
         }
       }
-      
-      const sheetsForLog2 = getGoogleSheetsService();
-      if (sheetsForLog2 && user) await sheetsForLog2.logActivity(user.email, '시트 동기화', '앱→시트');
 
       res.json({ message: "구글 시트와 동기화가 완료되었습니다", timestamp: new Date() });
     } catch (error) {
+      console.error('Error in POST /api/sync:', error);
       res.status(500).json({ message: "동기화에 실패했습니다" });
     }
   });

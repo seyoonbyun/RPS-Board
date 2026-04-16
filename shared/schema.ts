@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, json, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -44,6 +44,20 @@ export const changeHistory = pgTable("change_history", {
   newValue: text("new_value"),
   timestamp: timestamp("timestamp").defaultNow(),
 });
+
+// 실패한 Google Sheets 쓰기를 저장하여 재시도하는 큐 테이블
+export const pendingSheetSyncs = pgTable("pending_sheet_syncs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userEmail: text("user_email").notNull(),
+  operation: text("operation").notNull(), // 'syncScoreboard' | 'logActivity'
+  payload: json("payload").notNull(), // 원본 데이터 (ScoreboardData 등)
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  nextRetryAt: timestamp("next_retry_at").defaultNow(),
+});
+
+export type PendingSheetSync = typeof pendingSheetSyncs.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
