@@ -15,7 +15,7 @@ if (!process.env.DATABASE_URL) {
 // Create pool with better error handling and connection management
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 1, // Reduce connection pool size for development
+  max: 10, // 동시접속 대응 (Neon serverless 권장 범위)
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
