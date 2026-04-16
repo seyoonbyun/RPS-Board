@@ -1,4 +1,4 @@
-import { API_RATE_LIMITS } from './constants.js';
+import { API_RATE_LIMITS } from './constants';
 
 interface QueuedRequest<T> {
   id: string;
@@ -107,13 +107,13 @@ class RequestQueue {
       request.resolve(result);
     } catch (error) {
       if (request.retryCount < API_RATE_LIMITS.MAX_RETRY_ATTEMPTS) {
-        const retryDelay = API_RATE_LIMITS.RETRY_DELAY_MS *
+        const retryDelay = API_RATE_LIMITS.RETRY_DELAY_MS * 
           Math.pow(API_RATE_LIMITS.RETRY_BACKOFF_MULTIPLIER, request.retryCount);
-
+        
         console.log(`⚠️ Request ${request.id} failed, retrying in ${retryDelay}ms (attempt ${request.retryCount + 1}/${API_RATE_LIMITS.MAX_RETRY_ATTEMPTS})`);
-
+        
         await new Promise(resolve => setTimeout(resolve, retryDelay));
-
+        
         request.retryCount++;
         this.queue.unshift(request);
       } else {
@@ -122,7 +122,7 @@ class RequestQueue {
       }
     } finally {
       this.activeRequests--;
-
+      
       if (request.lockKey) {
         this.releaseLock(request.lockKey, request.id);
       }
