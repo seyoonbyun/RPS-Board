@@ -791,6 +791,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API: Add region to Master sheet
+  app.post("/api/admin/add-region", async (req, res) => {
+    try {
+      const { region } = req.body;
+      if (!region) return res.status(400).json({ message: "지역명은 필수입니다" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      const existing = await sheetsService.getRegionsFromMaster();
+      if (existing.includes(region.trim())) return res.status(409).json({ message: `'${region}' 지역이 이미 존재합니다` });
+      await sheetsService.addRegionToMaster(region.trim());
+      res.json({ success: true, message: `'${region}' 지역이 등록되었습니다` });
+    } catch (error: any) {
+      res.status(500).json({ message: "지역 추가 중 오류" });
+    }
+  });
+
+  // Admin API: Delete region from Master sheet
+  app.delete("/api/admin/delete-region", async (req, res) => {
+    try {
+      const { region } = req.body;
+      if (!region) return res.status(400).json({ message: "지역명은 필수입니다" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      await sheetsService.deleteRegionFromMaster(region.trim());
+      res.json({ success: true, message: `'${region}' 지역이 삭제되었습니다` });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "지역 삭제 중 오류" });
+    }
+  });
+
   // Admin API: Initialize Master sheet with regions and chapters
   app.post("/api/admin/initialize-master", async (req, res) => {
     try {

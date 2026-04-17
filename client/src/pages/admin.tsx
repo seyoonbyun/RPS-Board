@@ -351,6 +351,7 @@ export default function AdminPage() {
   const [boardSearch, setBoardSearch] = useState('');
   const [newChapterName, setNewChapterName] = useState('');
   const [newChapterRegion, setNewChapterRegion] = useState('');
+  const [newRegionName, setNewRegionName] = useState('');
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
@@ -1252,18 +1253,18 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {/* Card: 챕터 관리 */}
+          {/* Card: 지역 & 챕터 관리 */}
           <div
             onClick={() => setShowAddChapterDialog(true)}
             className="bg-white rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-400 p-5 flex flex-col justify-between min-h-[200px]"
           >
             <div>
               <Plus className="w-5 h-5 text-gray-700 mb-3" />
-              <h3 className="font-bold text-gray-900 mb-2">챕터 관리</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">새로운 챕터를 생성하거나 기존 챕터를 삭제합니다.</p>
+              <h3 className="font-bold text-gray-900 mb-2">지역 & 챕터 관리</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">지역과 챕터를 생성하거나 삭제합니다.</p>
             </div>
             <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
-              MANAGE CHAPTERS 📋
+              MANAGE REGIONS & CHAPTERS 📋
             </button>
           </div>
 
@@ -2492,16 +2493,101 @@ export default function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 챕터 관리 다이얼로그 (생성 + 삭제) */}
+      {/* 지역 & 챕터 관리 다이얼로그 */}
       <Dialog open={showAddChapterDialog} onOpenChange={setShowAddChapterDialog}>
         <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center text-lg">
               <Plus className="mr-2 w-5 h-5 text-red-600" />
-              챕터 관리
+              지역 & 챕터 관리
             </DialogTitle>
-            <DialogDescription className="text-gray-500">챕터를 생성하거나 기존 챕터를 삭제합니다</DialogDescription>
+            <DialogDescription className="text-gray-500">지역과 챕터를 생성하거나 삭제합니다</DialogDescription>
           </DialogHeader>
+
+          {/* 기존 지역 목록 */}
+          <div className="border rounded-md max-h-36 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">지역명</th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600 w-20"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(regions as string[]).length === 0 ? (
+                  <tr><td colSpan={2} className="px-3 py-4 text-center text-gray-400">등록된 지역이 없습니다</td></tr>
+                ) : (regions as string[]).map((r: string) => (
+                  <tr key={r} className="border-t hover:bg-gray-50">
+                    <td className="px-3 py-2">{r}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 px-2"
+                        onClick={async () => {
+                          if (!confirm(`'${r}' 지역과 해당 지역의 모든 챕터를 삭제하시겠습니까?`)) return;
+                          try {
+                            const resp = await apiRequest('DELETE', '/api/admin/delete-region', {
+                              region: r,
+                            });
+                            const data = await resp.json();
+                            if (data.success) {
+                              toast({ title: data.message });
+                              queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/admin/chapters'] });
+                            } else {
+                              alert(data.message || '삭제 실패');
+                            }
+                          } catch (err: any) {
+                            alert(err.message || '삭제 중 오류');
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 새 지역 추가 폼 */}
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newRegionName}
+                onChange={(e) => setNewRegionName(e.target.value)}
+                placeholder="BNI Connect의 지역 표기명을 등록해주세요"
+                className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+              />
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4"
+                disabled={!newRegionName.trim()}
+                onClick={async () => {
+                  try {
+                    const resp = await apiRequest('POST', '/api/admin/add-region', {
+                      region: newRegionName.trim(),
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                      toast({ title: data.message });
+                      queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
+                      setNewRegionName('');
+                    } else {
+                      alert(data.message || '지역 추가 실패');
+                    }
+                  } catch (err: any) {
+                    alert(err.message || '지역 추가 중 오류');
+                  }
+                }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                추가
+              </Button>
+            </div>
+          </div>
 
           {/* 기존 챕터 목록 */}
           <div className="border rounded-md max-h-48 overflow-y-auto">

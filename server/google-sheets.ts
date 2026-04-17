@@ -2210,6 +2210,18 @@ class GoogleSheetsService {
     );
   }
 
+  async addRegionToMaster(region: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A:B:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [[region, '']] })
+      }
+    );
+  }
+
   async addChapterToMaster(chapter: string, region: string): Promise<void> {
     const accessToken = await this.getAccessToken();
     await fetch(
@@ -2218,6 +2230,44 @@ class GoogleSheetsService {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ values: [[region, chapter]] })
+      }
+    );
+  }
+
+  async deleteRegionFromMaster(region: string): Promise<void> {
+    const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A2:B200`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!resp.ok) throw new Error('Master 시트를 읽을 수 없습니다');
+    const data = await resp.json();
+    const rows = data.values || [];
+    // 해당 지역의 모든 행 인덱스를 찾음 (역순으로 삭제해야 인덱스가 밀리지 않음)
+    const rowIndices: number[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i][0]?.toString().trim() === region) {
+        rowIndices.push(i + 2); // header offset
+      }
+    }
+    if (rowIndices.length === 0) throw new Error(`'${region}' 지역을 찾을 수 없습니다`);
+    const metaResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    const meta = await metaResp.json();
+    const masterSheet = meta.sheets?.find((s: any) => s.properties.title === 'Master');
+    if (!masterSheet) throw new Error('Master 시트를 찾을 수 없습니다');
+    // 역순으로 삭제하여 인덱스가 밀리지 않도록 함
+    const requests = rowIndices.reverse().map(rowNum => ({
+      deleteDimension: { range: { sheetId: masterSheet.properties.sheetId, dimension: 'ROWS', startIndex: rowNum - 1, endIndex: rowNum } }
+    }));
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests })
       }
     );
   }
