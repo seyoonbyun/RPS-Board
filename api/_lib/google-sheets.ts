@@ -683,9 +683,11 @@ export class GoogleSheetsService {
   // Admin 시트에 새 관리자 추가
   async addAdminToSheet(region: string, memberName: string, email: string, password: string, auth: string): Promise<{ success: boolean; message?: string }> {
     try {
-      // Auth 시트 정책: 오직 관리자 권한(Admin) 만 기록. 그 외 값은 거부.
-      if ((auth || '').toString().trim() !== 'Admin') {
-        return { success: false, message: `Auth 시트는 관리자(Admin) 권한만 기록됩니다 (받은 권한: ${auth})` };
+      // Auth 시트 정책: 관리자 tier(Admin/National/Growth)만 기록. Member 거부.
+      const ADMIN_TIERS = new Set(['Admin', 'National', 'Growth']);
+      const tier = (auth || '').toString().trim();
+      if (!ADMIN_TIERS.has(tier)) {
+        return { success: false, message: `Auth 시트는 관리자 tier(Admin/National/Growth)만 기록됩니다 (받은 권한: ${auth})` };
       }
 
       console.log(`📝 Upserting admin in Auth sheet: ${email}`);
@@ -2725,6 +2727,74 @@ export class GoogleSheetsService {
       }
     );
     console.log(`🗑️ Admin deleted: ${email}`);
+  }
+
+  /**
+   * 관리자 항목을 Auth 시트 + RPS 시트에 원자적으로 동기화한다.
+   * Auth 시트 쓰기 성공 후 RPS 쓰기 실패 시 Auth를 자동 롤백해
+   * "Auth 시트엔 있는데 RPS Z열은 Member" 같은 drift 상태를 방지한다.
+   *
+   * @returns created: RPS에 신규 행을 만들었는지 / updated: 기존 행을 갱신했는지
+   */
+  async syncAdminEntry(args: {
+    email: string;
+    region: string;
+    memberName: string;
+    password: string;
+    chapter?: string;
+  }): Promise<{ created: boolean; updated: boolean }> {
+    const { email, region, memberName, password, chapter } = args;
+    const auth = 'Admin'; // Auth 시트는 Admin 전용
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 0. Auth 시트 이전 상태 스냅샷 (롤백용)
+    const accessToken = await this.getAccessToken();
+    const snapResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A1:E200`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    const snapData = snapResp.ok ? await snapResp.json() : { values: [] };
+    const snapRows: any[] = snapData.values || [];
+    const prevAuthRowIdx = snapRows.findIndex((r, i) => i > 0 && r[2]?.toString().trim().toLowerCase() === normalizedEmail);
+    const prevAuthRow = prevAuthRowIdx > 0 ? [...snapRows[prevAuthRowIdx]] : null;
+
+    // 1. Auth 시트 upsert
+    const authResult = await this.addAdminToSheet(region, memberName, email, password, auth);
+    if (!authResult.success) {
+      throw new Error(`Auth 시트 업데이트 실패: ${authResult.message}`);
+    }
+
+    // 2. RPS 시트 upsert
+    try {
+      const rpsResult = await this.upsertAdminRowInRPS({ email, region, memberName, password, auth, chapter });
+      console.log(`🔄 syncAdminEntry 완료: ${email} (Auth ✓, RPS ${rpsResult.created ? 'created' : 'updated'})`);
+      return rpsResult;
+    } catch (rpsErr: any) {
+      // RPS 실패 → Auth 롤백
+      console.error(`❌ RPS 반영 실패, Auth 롤백 시도: ${rpsErr.message || rpsErr}`);
+      try {
+        if (prevAuthRow) {
+          // 이전에 Auth에 있었다면 이전 값으로 되돌림
+          const rowNum = prevAuthRowIdx + 1;
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A${rowNum}:E${rowNum}?valueInputOption=RAW`,
+            {
+              method: 'PUT',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [prevAuthRow] })
+            }
+          );
+          console.log(`↩️ Auth 행 ${rowNum} 이전 값으로 롤백`);
+        } else {
+          // 이전에 없던 항목 → Auth에서 방금 추가된 행 제거
+          await this.deleteAdminFromSheet(email);
+          console.log(`↩️ Auth 시트에서 방금 추가한 ${email} 제거`);
+        }
+      } catch (rollbackErr) {
+        console.error('⚠️ Auth 롤백도 실패 — 수동 확인 필요:', rollbackErr);
+      }
+      throw new Error(`RPS 시트 반영 실패: ${rpsErr.message || rpsErr}`);
+    }
   }
 
   async deleteRegionFromMaster(region: string): Promise<void> {

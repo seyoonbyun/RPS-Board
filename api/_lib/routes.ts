@@ -165,27 +165,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Google Sheets 서비스가 초기화되지 않았습니다' });
       }
 
-      // Auth 시트는 관리자 전용 — auth를 클라이언트 입력값과 무관하게 'Admin'으로 강제
-      const effectiveAuth = 'Admin';
-      // Auth 시트에 audit log 기록
-      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, effectiveAuth);
-
-      if (result.success) {
-        // RPS 시트의 A/B/C/D/W/X/Y/Z 열을 일괄 upsert (C는 빈 값)
-        try {
-          await googleSheetsService.upsertAdminRowInRPS({ email, region, memberName, password, auth: effectiveAuth });
-        } catch (rpsErr: any) {
-          console.error('RPS admin row upsert failed:', rpsErr);
-          return res.status(500).json({ message: `Auth 시트엔 등록됐으나 RPS 시트 반영 실패: ${rpsErr.message || rpsErr}` });
-        }
-        await googleSheetsService.logAdminActivity(req.body.adminEmail || 'admin', '관리자 추가', `${memberName} (${email}), 권한: ${effectiveAuth}, 지역: ${region}`);
-        res.json({ success: true, message: `${email} 관리자가 등록되었습니다 (RPS + Auth 시트 반영)` });
-      } else {
-        res.status(400).json({ message: result.message || '관리자 등록에 실패했습니다' });
-      }
+      // Auth + RPS 원자적 동기화 (실패 시 Auth 자동 롤백)
+      const result = await googleSheetsService.syncAdminEntry({ email, region, memberName, password });
+      await googleSheetsService.logAdminActivity(
+        req.body.adminEmail || 'admin',
+        '관리자 추가',
+        `${memberName} (${email}), 권한: Admin, 지역: ${region} [RPS ${result.created ? 'created' : 'updated'}]`
+      );
+      res.json({ success: true, message: `${email} 관리자가 등록되었습니다 (RPS + Auth 시트 반영)` });
     } catch (error: any) {
       console.error('Add admin error:', error);
-      res.status(500).json({ message: error.message || '서버 오류가 발생했습니다' });
+      res.status(500).json({ message: error.message || '관리자 등록에 실패했습니다' });
     }
   });
 
