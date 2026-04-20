@@ -741,6 +741,44 @@ class GoogleSheetsService {
     return this.normalizeStage(stage);
   }
 
+  /**
+   * RPS 시트의 grid가 requiredRow 이상을 포함할 수 있는지 확인하고,
+   * 부족하면 appendDimension으로 행을 추가한다.
+   * deleteDimension으로 행을 반복 삭제하면 grid가 줄어들어 쓰기가 실패할 수 있어 반드시 필요.
+   */
+  private async ensureRpsCapacity(requiredRow: number): Promise<void> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const metaResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      if (!metaResp.ok) return;
+      const meta = await metaResp.json();
+      const rpsSheet = (meta.sheets || []).find((s: any) => s.properties?.title === 'RPS');
+      if (!rpsSheet) return;
+      const currentRowCount = rpsSheet.properties?.gridProperties?.rowCount || 0;
+      const sheetId = rpsSheet.properties?.sheetId ?? 0;
+      if (currentRowCount >= requiredRow) return;
+      const rowsToAdd = Math.max(100, requiredRow - currentRowCount + 100);
+      console.log(`📐 Expanding RPS grid: ${currentRowCount} → ${currentRowCount + rowsToAdd} rows`);
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requests: [{
+              appendDimension: { sheetId, dimension: 'ROWS', length: rowsToAdd }
+            }]
+          })
+        }
+      );
+    } catch (e) {
+      console.error('ensureRpsCapacity failed:', e);
+    }
+  }
+
   async addNewUser(userData: {
     email: string;
     region: string;
@@ -847,7 +885,10 @@ class GoogleSheetsService {
           });
 
           const range = `RPS!A${targetRowIndex + 1}:Z${targetRowIndex + 1}`;
-          
+
+          // Grid 용량 확인 — deleteDimension으로 줄어든 sheet에 쓸 때 "exceeds grid limits" 방지
+          await this.ensureRpsCapacity(targetRowIndex + 1);
+
           // Direct fetch call for update
           const updateResponse = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
@@ -1226,7 +1267,7 @@ class GoogleSheetsService {
   }
 
   // 탈퇴 히스토리 기록
-  async addWithdrawalHistory(userEmail: string, region: string, chapter: string, memberName: string): Promise<void> {
+  async addWithdrawalHistory(userEmail: string, region: string, chapter: string, memberName: string, adminEmail?: string): Promise<void> {
     try {
       const accessToken = await this.getAccessToken();
 
@@ -1260,13 +1301,13 @@ class GoogleSheetsService {
 
       // 2. WithdrawalHistory 헤더 확인
       const headerResp = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA1`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AB1`,
         { headers: { 'Authorization': `Bearer ${accessToken}` } }
       );
       if (headerResp.ok) {
         const hd = await headerResp.json();
         if (!hd.values || hd.values.length === 0) {
-          // RPS 헤더 복사 + 맨 앞에 탈퇴일시 추가
+          // RPS 헤더 복사 + 맨 앞에 탈퇴일시, 맨 뒤에 삭제 처리자 추가
           const rpsHeaderResp = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z1`,
             { headers: { 'Authorization': `Bearer ${accessToken}` } }
@@ -1277,23 +1318,25 @@ class GoogleSheetsService {
             if (rhd.values?.[0]) rpsHeader = rhd.values[0];
           }
           await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA1?valueInputOption=USER_ENTERED`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AB1?valueInputOption=USER_ENTERED`,
             {
               method: 'PUT',
               headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ values: [['탈퇴일시', ...rpsHeader]] })
+              body: JSON.stringify({ values: [['탈퇴일시', ...rpsHeader, '삭제 처리자']] })
             }
           );
         }
       }
 
-      // 3. 탈퇴일시 + 전체 행 데이터를 WithdrawalHistory에 추가
+      // 3. 탈퇴일시 + 전체 행 데이터 + 삭제 처리자를 WithdrawalHistory에 추가
+      const paddedRow = [...fullRowData];
+      while (paddedRow.length < 26) paddedRow.push('');
       const rowToAppend = fullRowData.length > 0
-        ? [withdrawalTime, ...fullRowData]
-        : [withdrawalTime, userEmail, region, chapter, memberName];
+        ? [withdrawalTime, ...paddedRow.slice(0, 26), adminEmail || '']
+        : [withdrawalTime, userEmail, region, chapter, memberName, ...Array(21).fill(''), adminEmail || ''];
 
       await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AA:append?valueInputOption=USER_ENTERED`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AB:append?valueInputOption=USER_ENTERED`,
         {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -1490,13 +1533,13 @@ class GoogleSheetsService {
   }
 
   // 사용자 완전 삭제 - 구글 시트에서 해당 행 자체를 삭제
-  async markUserAsWithdrawn(userEmail: string): Promise<void> {
+  async markUserAsWithdrawn(userEmail: string, adminEmail?: string): Promise<void> {
     return requestQueue.enqueue(
       `markUserAsWithdrawn-${userEmail}`,
       async () => {
         try {
           const accessToken = await this.getAccessToken();
-          
+
           // 사용자 행 찾기 - direct fetch call (히스토리용 정보도 여기서 추출)
           const getResponse = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`,
@@ -1514,20 +1557,23 @@ class GoogleSheetsService {
 
           const data = await getResponse.json();
           const rows = data.values || [];
-          
+
           // 사용자 행 검색 및 정보 추출 (히스토리용)
           let userRowIndex = -1;
-          let userInfo: { email: string; region: string; chapter: string; memberName: string } | null = null;
-          
+          let userInfo: { email: string; region: string; chapter: string; memberName: string; fullRow: string[] } | null = null;
+
           for (let i = 1; i < rows.length; i++) {
-            if (rows[i] && rows[i][0] && 
+            if (rows[i] && rows[i][0] &&
                 rows[i][0].toString().trim().toLowerCase() === userEmail.toLowerCase()) {
               userRowIndex = i;
+              const rawRow = rows[i].map((cell: any) => cell?.toString() ?? '');
+              while (rawRow.length < 26) rawRow.push('');
               userInfo = {
                 email: rows[i][0] || '',
                 region: rows[i][1] || '',
                 chapter: rows[i][2] || '',
-                memberName: rows[i][3] || ''
+                memberName: rows[i][3] || '',
+                fullRow: rawRow.slice(0, 26)
               };
               break;
             }
@@ -1583,9 +1629,10 @@ class GoogleSheetsService {
                 second: '2-digit'
               });
               
-              // 직접 append API 호출
+              // 직접 append API 호출 - 전체 행 데이터 + 삭제 처리자 포함
+              const historyRow = [withdrawalTime, ...userInfo.fullRow, adminEmail || ''];
               const historyResponse = await fetch(
-                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:E:append?valueInputOption=USER_ENTERED`,
+                `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AB:append?valueInputOption=USER_ENTERED`,
                 {
                   method: 'POST',
                   headers: {
@@ -1593,7 +1640,7 @@ class GoogleSheetsService {
                     'Content-Type': 'application/json'
                   },
                   body: JSON.stringify({
-                    values: [[withdrawalTime, userInfo.email, userInfo.region, userInfo.chapter, userInfo.memberName]]
+                    values: [historyRow]
                   })
                 }
               );
@@ -1619,7 +1666,7 @@ class GoogleSheetsService {
   }
 
   // 일괄 사용자 삭제 - 여러 사용자를 한 번에 삭제 (최적화)
-  async bulkMarkUsersAsWithdrawn(userEmails: string[]): Promise<{ processedCount: number; errors: string[] }> {
+  async bulkMarkUsersAsWithdrawn(userEmails: string[], adminEmail?: string): Promise<{ processedCount: number; errors: string[] }> {
     return requestQueue.enqueue(
       `bulkMarkUsersAsWithdrawn`,
       async () => {
@@ -1729,15 +1776,15 @@ class GoogleSheetsService {
             second: '2-digit'
           });
           
-          const historyRows = usersToDelete.map(user =>
-            user.fullRow.length > 0
-              ? [withdrawalTime, ...user.fullRow]
-              : [withdrawalTime, user.email, user.region, user.chapter, user.memberName]
-          );
+          const historyRows = usersToDelete.map(user => {
+            const padded = [...user.fullRow];
+            while (padded.length < 26) padded.push('');
+            return [withdrawalTime, ...padded.slice(0, 26), adminEmail || ''];
+          });
 
           try {
             const historyResponse = await fetch(
-              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AA:append?valueInputOption=USER_ENTERED`,
+              `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A:AB:append?valueInputOption=USER_ENTERED`,
               {
                 method: 'POST',
                 headers: {
@@ -2315,10 +2362,10 @@ class GoogleSheetsService {
     const rpsHeader = rhd.values?.[0] || [];
     if (rpsHeader.length === 0) throw new Error('RPS 헤더가 비어있습니다');
 
-    // WithdrawalHistory 헤더를 탈퇴일시 + RPS 헤더로 덮어쓰기
-    const newHeader = ['탈퇴일시', ...rpsHeader];
+    // WithdrawalHistory 헤더를 탈퇴일시 + RPS 헤더 + 삭제 처리자로 덮어쓰기
+    const newHeader = ['탈퇴일시', ...rpsHeader, '삭제 처리자'];
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA1?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AB1?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -2333,7 +2380,7 @@ class GoogleSheetsService {
 
     // 1. WithdrawalHistory 헤더 + 전체 행 데이터 읽기
     const histResp = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AA5000`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/WithdrawalHistory!A1:AB5000`,
       { headers: { 'Authorization': `Bearer ${accessToken}` } }
     );
     if (!histResp.ok) throw new Error('WithdrawalHistory 시트를 읽을 수 없습니다');
@@ -2350,6 +2397,9 @@ class GoogleSheetsService {
       const h = headerRow[j]?.toString().trim().toUpperCase() || '';
       if (h === 'ID' || h === '이메일') { idColIdx = j; break; }
     }
+    // 헤더에서 '삭제 처리자' 열 인덱스(있다면) — 복원 시 RPS 데이터에서 제외
+    const deletedByColIdx = headerRow.findIndex((h: any) => h?.toString().trim() === '삭제 처리자');
+
     // ID 열 못 찾으면 모든 열에서 이메일 검색
     let histRowIndex = -1;
     for (let i = histRows.length - 1; i >= 0; i--) {
@@ -2363,7 +2413,9 @@ class GoogleSheetsService {
     if (histRowIndex === -1) throw new Error(`WithdrawalHistory에서 '${email}'을 찾을 수 없습니다`);
 
     const fullRow = histRows[histRowIndex];
-    const rpsRowData = fullRow.slice(1); // 첫 열(탈퇴일시) 제거
+    // 첫 열(탈퇴일시) 제거, 마지막 열(삭제 처리자)도 제거 — RPS 복원 데이터만 남김
+    const rpsEndIdx = deletedByColIdx > 0 ? deletedByColIdx : fullRow.length;
+    const rpsRowData = fullRow.slice(1, rpsEndIdx);
 
     // 2. RPS에 복원 — 이전 형식(짧은 행)이면 addNewUser, 새 형식(전체 행)이면 직접 append
     const rpsResp = await fetch(
@@ -2397,6 +2449,8 @@ class GoogleSheetsService {
             if (col[i] && col[i][0]?.toString().trim()) { targetRow = i + 2; break; }
           }
         }
+        // Grid 용량 확인 — sheet가 꽉 찬 상태에서 복원 시 실패 방지
+        await this.ensureRpsCapacity(targetRow);
         const range = `RPS!A${targetRow}:Z${targetRow}`;
         const putResp = await fetch(
           `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,

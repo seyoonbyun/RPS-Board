@@ -695,7 +695,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Delete user completely from Google Sheets - 행 자체를 삭제
-      await sheetsService.markUserAsWithdrawn(user.email);
+      // 자진 탈퇴이므로 삭제 처리자 = 본인 이메일로 기록
+      await sheetsService.markUserAsWithdrawn(user.email, user.email);
 
       // Delete user data from local database
       await storage.deleteUserData(userId);
@@ -1068,21 +1069,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API: Bulk withdrawal (최적화됨 - 단일 batchUpdate로 여러 사용자 삭제)
   app.post("/api/admin/bulk-withdrawal", async (req, res) => {
     try {
-      const { userEmails } = req.body;
-      
+      const { userEmails, adminEmail } = req.body;
+
       if (!userEmails || !Array.isArray(userEmails) || userEmails.length === 0) {
         return res.status(400).json({ message: "유효한 이메일 목록을 제공해주세요" });
       }
 
-      console.log(`🔄 Starting optimized bulk withdrawal for ${userEmails.length} users:`, userEmails);
-      
+      console.log(`🔄 Starting optimized bulk withdrawal for ${userEmails.length} users by admin: ${adminEmail || 'unknown'}`, userEmails);
+
       const sheetsService = getGoogleSheetsService();
       if (!sheetsService) {
         return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
       }
-      
+
       // 최적화된 일괄 삭제 메서드 사용 (단일 API 호출로 여러 행 삭제)
-      const result = await sheetsService.bulkMarkUsersAsWithdrawn(userEmails);
+      const result = await sheetsService.bulkMarkUsersAsWithdrawn(userEmails, adminEmail);
       
       // 로컬 데이터베이스에서도 사용자 데이터 삭제
       for (const email of userEmails) {
