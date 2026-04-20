@@ -937,7 +937,9 @@ export default function AdminPage() {
           memberName: newUser.memberName,
           email: newUser.email,
           password: newUser.password,
-          auth: newUser.auth || 'Admin',
+          // 이 폼은 "관리자 추가" 전용이므로 auth는 항상 Admin으로 고정
+          // (newUser.auth는 다른 모달과 공유되는 상태이고 초기값이 'Member'여서 버그 유발)
+          auth: 'Admin',
           adminEmail: currentUser?.email
         })
       });
@@ -2812,8 +2814,8 @@ export default function AdminPage() {
                         onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
                         className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                       >
-                        <span className={newUser.auth ? 'text-gray-900' : 'text-gray-400'}>
-                          {newUser.auth === 'Admin' ? 'Admin' : 'Admin'}
+                        <span className="text-gray-900">
+                          Admin
                         </span>
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </button>
