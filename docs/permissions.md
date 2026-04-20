@@ -47,12 +47,18 @@
 
 ## 관리자 CRUD 동기화 흐름
 
-### 추가 (`POST /api/admin/add-admin`)
-1. Auth 시트에 upsert (AUTH=Admin 강제)
-2. RPS 시트에 upsert (`upsertAdminRowInRPS`)
+### 로그인 판정의 유일한 기준 = RPS 시트
+- RPS 시트에 행 존재 + Z열(AUTH) ∈ {Admin, National, Growth} ⇒ 관리자 로그인 가능
+- **Auth 시트에만 존재하고 RPS 행이 없으면 로그인 불가**
+- 따라서 쓰기는 반드시 **RPS 먼저 → Auth 나중** 순서로 이뤄져야 함
+
+### 추가 (`POST /api/admin/add-admin` → `syncAdminEntry`)
+1. RPS 시트에 upsert — 로그인 기준이 되는 원천 (`upsertAdminRowInRPS`)
    - 기존 행 있으면 A~D, W~Z 갱신
-   - 없으면 `addNewUser` 로 전체 행 신규 생성
-3. `AdminLog` 시트에 감사 로그 기록
+   - 없으면 `addNewUser`로 전체 행 신규 생성 (Z열=Admin)
+2. Auth 시트에 upsert — 관리자 명단 인덱스 (`addAdminToSheet`)
+3. **Auth 실패 시 RPS를 이전 값으로 롤백** (신규였다면 행 삭제)
+4. `AdminLog` 시트에 감사 로그 기록
 
 ### 삭제 (`DELETE /api/admin/delete-admin`)
 1. Auth 시트에서 해당 행 삭제
