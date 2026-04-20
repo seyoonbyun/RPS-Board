@@ -469,10 +469,12 @@ class GoogleSheetsService {
         const emailInSheet = row[0].toString().trim().toLowerCase();
         if (emailInSheet === email.toLowerCase()) {
           // ID, PW, STATUS, AUTH 값 검증
-          const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ? 
+          const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ?
             row[userIdColumnIndex].toString().trim() : null;
-          const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] ? 
-            row[passwordColumnIndex].toString() : null;
+          // 시트에 숫자로 저장된 PW(예: 32)도 "0032"로 비교 가능하도록 4자리 패딩
+          const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] !== undefined && row[passwordColumnIndex] !== null && row[passwordColumnIndex].toString().trim() !== ''
+            ? row[passwordColumnIndex].toString().trim().padStart(4, '0')
+            : null;
           const statusInSheet = statusColumnIndex >= 0 && row[statusColumnIndex] ? 
             row[statusColumnIndex].toString().trim() : '활동중';
           const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
@@ -602,7 +604,9 @@ class GoogleSheetsService {
         if (!row || !row[2]) continue; // C열(이메일)이 없으면 스킵
         
         const emailInSheet = row[2].toString().trim().toLowerCase(); // C열: ID/이메일
-        const passwordInSheet = row[3]?.toString().trim() || ''; // D열: PW/비밀번호
+        // D열: PW/비밀번호 — 숫자로 저장된 경우에도 "0032" 형태로 비교 가능하도록 4자리 패딩
+        const rawPwCell = row[3]?.toString().trim() || '';
+        const passwordInSheet = rawPwCell ? rawPwCell.padStart(4, '0') : '';
         const rawAuth = row[4]?.toString().trim() || 'Admin'; // E열: AUTH/권한
         
         // 권한 정규화: 대소문자 구분 없이 처리
@@ -2205,7 +2209,8 @@ class GoogleSheetsService {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                valueInputOption: 'USER_ENTERED',
+                // RAW: "0032" 같은 앞자리 0이 있는 비밀번호가 숫자로 자동 변환되지 않도록 문자열 그대로 저장
+                valueInputOption: 'RAW',
                 data: requests
               })
             }
@@ -2309,7 +2314,10 @@ class GoogleSheetsService {
           rpartner4Stage: this.normalizeStage(row[19] || ''), // R파트너 4 V-C-P (index 19)
           totalPartners: row[20] || '0', // 총 R파트너 수 (index 20)
           achievement: row[21] || '0%', // 달성 (index 21)
-          password: row[SHEET_COLUMN_INDICES.PASSWORD] || '', // PW (index 23 = X열)
+          // PW (index 23 = X열) — 시트에 숫자로 저장된 경우 앞자리 0이 소실되므로 4자리로 좌측 패딩
+          password: (row[SHEET_COLUMN_INDICES.PASSWORD] ?? '').toString().trim()
+            ? (row[SHEET_COLUMN_INDICES.PASSWORD]).toString().trim().padStart(4, '0')
+            : '',
           status: status
         };
         
