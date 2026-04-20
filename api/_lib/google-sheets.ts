@@ -97,7 +97,7 @@ function invalidateSheetCache(spreadsheetId: string) {
   }
 }
 
-class GoogleSheetsService {
+export class GoogleSheetsService {
   private spreadsheetId: string;
   private serviceAccountEmail: string;
   private serviceAccountPrivateKey: string;

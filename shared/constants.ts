@@ -196,21 +196,27 @@ export const SHEETS_CONFIG = {
 // Google Sheets API Rate Limiting 및 동시성 제어 상수
 export const API_RATE_LIMITS = {
   // Google Sheets API 공식 제한: 100 requests per 100 seconds per user
-  MAX_REQUESTS_PER_WINDOW: 60,        // 여유를 두고 60으로 설정
+  MAX_REQUESTS_PER_WINDOW: 80,        // 여유를 두고 80으로 설정 (캐싱으로 실제 호출 대폭 감소)
   RATE_LIMIT_WINDOW_MS: 100000,       // 100초 윈도우
-  
+
   // 동시 요청 제어
-  MAX_CONCURRENT_REQUESTS: 5,         // 최대 5개 동시 요청
-  
+  MAX_CONCURRENT_REQUESTS: 20,        // 최대 20개 동시 요청 (100명 동시접속 대응)
+
   // Retry 설정
   MAX_RETRY_ATTEMPTS: 3,              // 최대 3번 재시도
   RETRY_DELAY_MS: 1000,               // 1초 대기 후 재시도
   RETRY_BACKOFF_MULTIPLIER: 2,        // 지수 백오프 (1초 -> 2초 -> 4초)
-  
+
   // 요청 타임아웃
-  REQUEST_TIMEOUT_MS: 30000,          // 30초 타임아웃
-  
+  REQUEST_TIMEOUT_MS: 60000,          // 60초 타임아웃 (100명 큐 대기 여유)
+
   // 큐 관리
   QUEUE_CLEANUP_INTERVAL_MS: 60000,   // 1분마다 큐 정리
-  MAX_QUEUE_SIZE: 100                 // 최대 큐 크기
+  MAX_QUEUE_SIZE: 500                 // 최대 큐 크기 (100명 동시접속 대응)
+} as const;
+
+// Google Sheets 읽기 캐시 설정
+export const SHEET_CACHE_CONFIG = {
+  READ_CACHE_TTL_MS: 10000,           // 10초 캐시 TTL (동시 접속 시 동일 데이터 공유)
+  MAX_CACHE_ENTRIES: 20,              // 최대 캐시 항목 수
 } as const;
