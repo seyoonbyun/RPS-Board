@@ -987,36 +987,40 @@ class GoogleSheetsService {
    * deleteDimension으로 행을 반복 삭제하면 grid가 줄어들어 쓰기가 실패할 수 있어 반드시 필요.
    */
   private async ensureRpsCapacity(requiredRow: number): Promise<void> {
-    try {
-      const accessToken = await this.getAccessToken();
-      const metaResp = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
-        { headers: { 'Authorization': `Bearer ${accessToken}` } }
-      );
-      if (!metaResp.ok) return;
-      const meta = await metaResp.json();
-      const rpsSheet = (meta.sheets || []).find((s: any) => s.properties?.title === 'RPS');
-      if (!rpsSheet) return;
-      const currentRowCount = rpsSheet.properties?.gridProperties?.rowCount || 0;
-      const sheetId = rpsSheet.properties?.sheetId ?? 0;
-      if (currentRowCount >= requiredRow) return;
-      const rowsToAdd = Math.max(100, requiredRow - currentRowCount + 100);
-      console.log(`📐 Expanding RPS grid: ${currentRowCount} → ${currentRowCount + rowsToAdd} rows`);
-      await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
-        {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requests: [{
-              appendDimension: { sheetId, dimension: 'ROWS', length: rowsToAdd }
-            }]
-          })
-        }
-      );
-    } catch (e) {
-      console.error('ensureRpsCapacity failed:', e);
+    const accessToken = await this.getAccessToken();
+    const metaResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!metaResp.ok) {
+      const txt = await metaResp.text();
+      throw new Error(`ensureRpsCapacity: sheet metadata fetch failed ${metaResp.status} ${txt}`);
     }
+    const meta = await metaResp.json();
+    const rpsSheet = (meta.sheets || []).find((s: any) => s.properties?.title === 'RPS');
+    if (!rpsSheet) throw new Error('ensureRpsCapacity: RPS sheet not found in spreadsheet');
+    const currentRowCount = rpsSheet.properties?.gridProperties?.rowCount || 0;
+    const sheetId = rpsSheet.properties?.sheetId ?? 0;
+    if (currentRowCount >= requiredRow) return;
+    const rowsToAdd = Math.max(100, requiredRow - currentRowCount + 100);
+    console.log(`📐 Expanding RPS grid: ${currentRowCount} → ${currentRowCount + rowsToAdd} rows (required ${requiredRow})`);
+    const expandResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            appendDimension: { sheetId, dimension: 'ROWS', length: rowsToAdd }
+          }]
+        })
+      }
+    );
+    if (!expandResp.ok) {
+      const txt = await expandResp.text();
+      throw new Error(`ensureRpsCapacity: appendDimension failed ${expandResp.status} ${txt}`);
+    }
+    console.log(`✅ RPS grid expanded to ${currentRowCount + rowsToAdd} rows`);
   }
 
   async addNewUser(userData: {
@@ -1114,8 +1118,7 @@ class GoogleSheetsService {
           // Grid 용량 확인 — deleteDimension으로 줄어든 sheet에 쓸 때 "exceeds grid limits" 방지
           await this.ensureRpsCapacity(targetRowIndex + 1);
 
-          // Direct fetch call for update
-          const updateResponse = await fetch(
+          const doPut = async () => fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}?valueInputOption=RAW`,
             {
               method: 'PUT',
@@ -1123,15 +1126,26 @@ class GoogleSheetsService {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({
-                values: [newUserData]
-              })
+              body: JSON.stringify({ values: [newUserData] })
             }
           );
 
+          let updateResponse = await doPut();
+
+          // Grid 한계 에러면 강제로 한 번 더 확장 후 재시도 (race 대비)
           if (!updateResponse.ok) {
-            const errorData = await updateResponse.json();
-            throw new Error(`Failed to add user: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
+            const errorText = await updateResponse.text();
+            if (errorText.includes('exceeds grid limits')) {
+              console.warn(`⚠️ Grid limit hit despite pre-expansion, forcing additional expansion and retrying...`);
+              await this.ensureRpsCapacity(targetRowIndex + 200); // 넉넉히 확장
+              updateResponse = await doPut();
+              if (!updateResponse.ok) {
+                const errText2 = await updateResponse.text();
+                throw new Error(`Failed to add user after retry: ${updateResponse.status} - ${errText2}`);
+              }
+            } else {
+              throw new Error(`Failed to add user: ${updateResponse.status} - ${errorText}`);
+            }
           }
 
           console.log(`✅ Successfully added user ${userData.email} to row ${targetRowIndex + 1}`);
@@ -2295,6 +2309,7 @@ class GoogleSheetsService {
           rpartner4Stage: this.normalizeStage(row[19] || ''), // R파트너 4 V-C-P (index 19)
           totalPartners: row[20] || '0', // 총 R파트너 수 (index 20)
           achievement: row[21] || '0%', // 달성 (index 21)
+          password: row[SHEET_COLUMN_INDICES.PASSWORD] || '', // PW (index 23 = X열)
           status: status
         };
         

@@ -2115,6 +2115,7 @@ class GoogleSheetsService {
           rpartner4Stage: this.normalizeStage(row[19] || ''), // R파트너 4 V-C-P (index 19)
           totalPartners: row[20] || '0', // 총 R파트너 수 (index 20)
           achievement: row[21] || '0%', // 달성 (index 21)
+          password: row[SHEET_COLUMN_INDICES.PASSWORD] || '', // PW (index 23 = X열)
           status: status
         };
         

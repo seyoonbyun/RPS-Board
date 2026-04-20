@@ -305,6 +305,7 @@ interface UserData {
   status: string;
   totalPartners: string;
   achievement: string;
+  password?: string;
 }
 
 interface WithdrawalHistoryItem {
@@ -1666,6 +1667,10 @@ export default function AdminPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
+                                  {/* user.chapter가 Master 시트의 챕터 목록에 없으면(예: Admin) 동적으로 추가해 기존 값이 보이도록 */}
+                                  {editFormData.chapter && !(chapters as string[]).includes(editFormData.chapter) && (
+                                    <SelectItem key={editFormData.chapter} value={editFormData.chapter}>{editFormData.chapter}</SelectItem>
+                                  )}
                                   {(chapters as string[]).map((chapter: string) => (
                                     <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
                                   ))}
@@ -1703,7 +1708,7 @@ export default function AdminPage() {
                                 maxLength={4}
                                 value={editFormData.password}
                                 onChange={(e) => setEditFormData({...editFormData, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
-                                placeholder="변경 시 입력"
+                                placeholder="현재 비밀번호"
                                 className="mt-1"
                               />
                             </div>
@@ -1758,7 +1763,7 @@ export default function AdminPage() {
                                 memberName: user.memberName,
                                 industry: user.industry,
                                 company: user.company,
-                                password: '',
+                                password: user.password || '',
                                 auth: 'Member'
                               });
                             }}
