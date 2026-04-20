@@ -87,8 +87,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin 시트에 관리자 추가 API
   app.post('/api/admin/add-admin', async (req, res) => {
     try {
-      const { region, memberName, email, password, auth } = req.body;
-      
+      const { region, memberName, email, password } = req.body;
+
       if (!region || !memberName || !email || !password) {
         return res.status(400).json({ message: '지역명, 담당자명, 이메일, 비밀번호는 필수 입력 사항입니다' });
       }
@@ -98,7 +98,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'Google Sheets 서비스가 초기화되지 않았습니다' });
       }
 
-      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, auth || 'Admin');
+      // Auth 시트는 관리자 전용 — auth를 클라이언트 입력값과 무관하게 'Admin'으로 강제
+      const effectiveAuth = 'Admin';
+      const result = await googleSheetsService.addAdminToSheet(region, memberName, email, password, effectiveAuth);
       
       if (result.success) {
         res.json({ success: true, message: `${email} 관리자가 Admin 시트에 등록되었습니다` });

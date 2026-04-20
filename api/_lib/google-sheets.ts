@@ -683,36 +683,73 @@ class GoogleSheetsService {
   // Admin 시트에 새 관리자 추가
   async addAdminToSheet(region: string, memberName: string, email: string, password: string, auth: string): Promise<{ success: boolean; message?: string }> {
     try {
-      console.log(`📝 Adding admin to Admin sheet: ${email}`);
-      
+      // Auth 시트 정책: 오직 관리자 권한(Admin) 만 기록. 그 외 값은 거부.
+      if ((auth || '').toString().trim() !== 'Admin') {
+        return { success: false, message: `Auth 시트는 관리자(Admin) 권한만 기록됩니다 (받은 권한: ${auth})` };
+      }
+
+      console.log(`📝 Upserting admin in Auth sheet: ${email}`);
       const accessToken = await this.getAccessToken();
-      
-      // Admin 시트 구조: 지역명(A), 담당자명(B), ID/이메일(C), PW/비밀번호(D), AUTH/권한(E)
-      const values = [[region, memberName, email, password, auth]];
-      
-      const response = await requestQueue.enqueue(
+
+      // 기존 행 탐색 (이메일이 C열)
+      const listResp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A1:E200`,
+        { headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+      );
+      if (!listResp.ok) {
+        return { success: false, message: `Auth 시트 조회 실패 (${listResp.status})` };
+      }
+      const listData = await listResp.json();
+      const rows = listData.values || [];
+      let existingRow = -1;
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][2]?.toString().trim().toLowerCase() === email.trim().toLowerCase()) {
+          existingRow = i + 1;
+          break;
+        }
+      }
+
+      const record = [[region, memberName, email, password, auth]];
+
+      if (existingRow > 0) {
+        const putResp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A${existingRow}:E${existingRow}?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: record })
+          }
+        );
+        if (!putResp.ok) {
+          const errorText = await putResp.text();
+          console.error('Failed to update admin row:', errorText);
+          return { success: false, message: '기존 관리자 행 업데이트 실패' };
+        }
+        console.log(`✎ Auth 시트 관리자 업데이트: ${email} (행 ${existingRow})`);
+        return { success: true };
+      }
+
+      const appendResp = await requestQueue.enqueue(
         `addAdmin-${email}`,
         async () => await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS&access_token=${accessToken}`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Auth!A:E:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ values })
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: record })
           }
         )
       );
-      
-      if (!response.ok) {
-        const errorText = await response.text();
+
+      if (!appendResp.ok) {
+        const errorText = await appendResp.text();
         console.error('Failed to add admin:', errorText);
-        return { success: false, message: 'Admin 시트에 관리자 추가 실패' };
+        return { success: false, message: 'Auth 시트에 관리자 추가 실패' };
       }
-      
-      console.log(`✅ Admin ${email} added successfully to Admin sheet`);
+
+      console.log(`✅ Auth 시트 관리자 신규 append: ${email}`);
       return { success: true };
-      
+
     } catch (error: any) {
       console.error('Error adding admin to sheet:', error);
       return { success: false, message: error.message || '관리자 추가 중 오류 발생' };
