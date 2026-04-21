@@ -26,6 +26,35 @@ const upload = multer({
   }
 });
 
+// 로그인 rate limiter: IP당 10초 윈도우에 5회 제한 (서버리스 인스턴스별 카운트; 완벽하진 않아도 급증 방어)
+const LOGIN_RATE_WINDOW_MS = 10_000;
+const LOGIN_RATE_MAX = 5;
+const loginAttempts = new Map<string, number[]>();
+
+function loginRateLimit(req: any, res: any, next: any) {
+  const ip =
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
+    req.socket?.remoteAddress ||
+    'unknown';
+  const now = Date.now();
+  const cutoff = now - LOGIN_RATE_WINDOW_MS;
+  const history = (loginAttempts.get(ip) || []).filter((t: number) => t > cutoff);
+  if (history.length >= LOGIN_RATE_MAX) {
+    return res.status(429).json({ message: '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+  }
+  history.push(now);
+  loginAttempts.set(ip, history);
+  // 간이 GC: 맵이 커지면 오래된 항목 정리
+  if (loginAttempts.size > 5000) {
+    Array.from(loginAttempts.entries()).forEach(([k, v]) => {
+      const pruned = v.filter((t: number) => t > cutoff);
+      if (pruned.length === 0) loginAttempts.delete(k);
+      else loginAttempts.set(k, pruned);
+    });
+  }
+  next();
+}
+
 // requireAdmin: /api/admin/* 엔드포인트에 대한 호출자 권한 검증 미들웨어
 // 호출자 이메일은 x-caller-email 헤더 또는 req.body.adminEmail로 식별
 // check-permission, board 조회 등 일부 read-only 엔드포인트는 화이트리스트로 제외
@@ -105,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", loginRateLimit, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
       const googleSheetsService = getGoogleSheetsService();
@@ -127,11 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw error;
       }
       
-      let user = await storage.getUserByEmail(email);
-      const isFirstLogin = !user;
-      if (!user) {
-        user = await storage.createUser({ email, password });
-      }
+      const { user, isFirst: isFirstLogin } = await storage.upsertUserByEmail({ email, password });
 
       const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
 
@@ -186,7 +211,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // 전체 사용자 데이터를 가져와서 특정 행 찾기
       const googleSheetsService = getGoogleSheetsService();
-      const allUsers = await googleSheetsService.getAllUsersFromGoogleSheets();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: 'Google Sheets service not initialized' });
+      }
+      const allUsers = await googleSheetsService.getAllUsers();
       
       // 행 번호는 헤더를 제외하고 시작하므로 rowNumber - 2로 계산
       const userIndex = rowNumber - 2;
@@ -215,8 +243,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔥 DEBUGGING USER: ${email}`);
       
       const googleSheetsService = getGoogleSheetsService();
-      const allUsers = await googleSheetsService.getAllUsersFromGoogleSheets();
-      const targetUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!googleSheetsService) {
+        return res.status(500).json({ error: 'Google Sheets service not initialized' });
+      }
+      const allUsers = await googleSheetsService.getAllUsers();
+      const targetUser = allUsers.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
       
       if (!targetUser) {
         return res.status(404).json({ error: 'User not found' });
@@ -747,10 +778,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("🔄 Force refreshing user data from Google Sheets...");
       const allUsersData = await storage.getAllUsersFromGoogleSheets();
-      
+
       // 활성 사용자와 탈퇴 사용자 필터링
-      const activeUsers = allUsersData.filter(user => user.status !== '탈퇴');
-      const withdrawnUsers = allUsersData.filter(user => user.status === '탈퇴');
+      const activeUsers = allUsersData.filter((user: any) => user.status !== '탈퇴');
+      const withdrawnUsers = allUsersData.filter((user: any) => user.status === '탈퇴');
       
       console.log(`📊 User summary: ${activeUsers.length} active, ${withdrawnUsers.length} withdrawn`);
       
@@ -1289,11 +1320,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // PW 필드만 업데이트 (X열, index 23)
-      const accessToken = await googleSheetsService.getAccessToken();
+      const accessToken = await googleSheetsService.getAccessTokenPublic();
       
       // 사용자 행 찾기
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/RPS!A1:Z5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.getSpreadsheetId()}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -1322,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // PW 컬럼만 업데이트 (X열, index 23)
       const range = `RPS!X${userRowIndex + 1}`;
       const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.getSpreadsheetId()}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
         {
           method: 'PUT',
           headers: {
@@ -1366,11 +1397,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // AUTH 필드만 업데이트 (Z열, index 25)
-      const accessToken = await googleSheetsService.getAccessToken();
+      const accessToken = await googleSheetsService.getAccessTokenPublic();
       
       // 사용자 행 찾기
       const getResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/RPS!A1:Z5000`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.getSpreadsheetId()}/values/RPS!A1:Z5000`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -1399,7 +1430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // AUTH 컬럼만 업데이트 (Z열, index 25)
       const range = `RPS!Z${userRowIndex + 1}`;
       const updateResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${googleSheetsService.getSpreadsheetId()}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
         {
           method: 'PUT',
           headers: {
@@ -1534,7 +1565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // 필드 개수에 따라 유연하게 처리
-        let password = DEFAULT_VALUES.PASSWORD;
+        let password: string = DEFAULT_VALUES.PASSWORD;
         let auth = 'Member';
 
         // CSV 필드 매핑 (전문분야 제외):
@@ -1887,8 +1918,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { getGoogleSheetsService } = await import('./google-sheets.js');
       const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        return res.status(500).json({ message: 'Google Sheets service not initialized' });
+      }
       const allUsers = await googleSheetsService.getAllUsers();
-      const userRow = allUsers.find(u => u.email === user.email);
+      const userRow = allUsers.find((u: any) => u.email === user.email);
       
       // 1단계 검증: 지역과 전문분야 정보 확인
       if (!userRow?.specialty || !userRow?.region) {
@@ -1992,7 +2026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
       }
 
-      const accessToken = await sheetsService.getAccessToken();
+      const accessToken = await sheetsService.getAccessTokenPublic();
       
       // ALPHA 사용자(133행)의 K열과 N열을 "P"에서 "Profit : 수익단계"로 변경
       const updates = [
@@ -2047,7 +2081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
       }
 
-      const accessToken = await sheetsService.getAccessToken();
+      const accessToken = await sheetsService.getAccessTokenPublic();
       const getResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/RPS!A1:V5000`,
         {
@@ -2062,23 +2096,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rows = data.values || [];
       
       // 챕터별 사용자 분석
-      const chapterAnalysis = {};
-      
+      const chapterAnalysis: Record<string, any[]> = {};
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || !row[0] || !row[2]) continue; // 이메일과 챕터가 있는 행만
-        
+
         const email = row[0];
-        const chapter = row[2];
+        const chapter = row[2] as string;
         const uValue = row[20]; // U열
         const vValue = row[21]; // V열
-        
+
         // ALPHA, Admin, 기타 챕터 분석
         if (['ALPHA', 'Admin', 'Ace', 'All-in-One'].includes(chapter)) {
           if (!chapterAnalysis[chapter]) {
             chapterAnalysis[chapter] = [];
           }
-          
+
           chapterAnalysis[chapter].push({
             email,
             rowNumber: i + 1,
@@ -2088,7 +2122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               value: uValue,
               type: typeof uValue,
               length: uValue.toString().length,
-              charCodes: Array.from(uValue.toString()).map(char => char.charCodeAt(0)),
+              charCodes: Array.from(uValue.toString() as string).map((char: string) => char.charCodeAt(0)),
               hasSpecialChars: /[^\x20-\x7E]/.test(uValue.toString()),
               isNumeric: !isNaN(Number(uValue)),
               rawValue: JSON.stringify(uValue)
@@ -2097,7 +2131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               value: vValue,
               type: typeof vValue,
               length: vValue.toString().length,
-              charCodes: Array.from(vValue.toString()).map(char => char.charCodeAt(0)),
+              charCodes: Array.from(vValue.toString() as string).map((char: string) => char.charCodeAt(0)),
               hasSpecialChars: /[^\x20-\x7E]/.test(vValue.toString()),
               isNumeric: !isNaN(Number(vValue.toString().replace('%', ''))),
               rawValue: JSON.stringify(vValue)
@@ -2105,14 +2139,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       res.json({
         success: true,
         chapterAnalysis,
-        summary: Object.keys(chapterAnalysis).map(chapter => ({
+        summary: Object.keys(chapterAnalysis).map((chapter: string) => ({
           chapter,
           userCount: chapterAnalysis[chapter].length,
-          hasUVData: chapterAnalysis[chapter].filter(user => user.uValue && user.vValue).length
+          hasUVData: chapterAnalysis[chapter].filter((user: any) => user.uValue && user.vValue).length
         }))
       });
       
@@ -2133,7 +2167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 직접 구글 시트에서 해당 사용자의 U/V열 값 확인
-      const accessToken = await sheetsService.getAccessToken();
+      const accessToken = await sheetsService.getAccessTokenPublic();
       const getResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/RPS!A1:V5000`,
         {
@@ -2168,18 +2202,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         value: uValue,
         type: typeof uValue,
         length: uValue.toString().length,
-        charCodes: Array.from(uValue.toString()).map(char => char.charCodeAt(0)),
+        charCodes: Array.from(uValue.toString() as string).map((char: string) => char.charCodeAt(0)),
         hasSpecialChars: /[^\x20-\x7E]/.test(uValue.toString()),
         isNumeric: !isNaN(Number(uValue)),
         toString: uValue.toString(),
         jsonStringify: JSON.stringify(uValue)
       } : null;
-      
+
       const vAnalysis = vValue ? {
         value: vValue,
         type: typeof vValue,
         length: vValue.toString().length,
-        charCodes: Array.from(vValue.toString()).map(char => char.charCodeAt(0)),
+        charCodes: Array.from(vValue.toString() as string).map((char: string) => char.charCodeAt(0)),
         hasSpecialChars: /[^\x20-\x7E]/.test(vValue.toString()),
         isNumeric: !isNaN(Number(vValue.replace('%', ''))),
         toString: vValue.toString(),

@@ -121,7 +121,7 @@ export const BUSINESS_CONFIG = {
 export const CACHE_CONFIG = {
   ADMIN_PERMISSION_STALE_TIME: 60000,    // 1분 - 관리자 권한 캐시
   SHEETS_DATA_STALE_TIME: 300000,        // 5분 - 시트 데이터 캐시
-  REALTIME_REFRESH_INTERVAL: 5000,       // 5초 - 실시간 새로고침
+  REALTIME_REFRESH_INTERVAL: 30000,      // 30초 - 실시간 새로고침 (800명 동시접속 대응)
   ADMIN_REFRESH_INTERVAL: 30000,         // 30초 - 관리자 패널 새로고침
   FAST_REFRESH_INTERVAL: 3000,           // 3초 - 빠른 새로고침
   NO_CACHE: 0,                           // 캐시 없음
@@ -196,11 +196,11 @@ export const SHEETS_CONFIG = {
 // Google Sheets API Rate Limiting 및 동시성 제어 상수
 export const API_RATE_LIMITS = {
   // Google Sheets API 공식 제한: 100 requests per 100 seconds per user
-  MAX_REQUESTS_PER_WINDOW: 80,        // 여유를 두고 80으로 설정 (캐싱으로 실제 호출 대폭 감소)
+  MAX_REQUESTS_PER_WINDOW: 200,       // 200 req/100s (Google 한도 300/min 내, 800명 대응)
   RATE_LIMIT_WINDOW_MS: 100000,       // 100초 윈도우
 
   // 동시 요청 제어
-  MAX_CONCURRENT_REQUESTS: 20,        // 최대 20개 동시 요청 (100명 동시접속 대응)
+  MAX_CONCURRENT_REQUESTS: 50,        // 최대 50개 동시 요청 (800명 동시접속 대응)
 
   // Retry 설정
   MAX_RETRY_ATTEMPTS: 3,              // 최대 3번 재시도
@@ -212,11 +212,11 @@ export const API_RATE_LIMITS = {
 
   // 큐 관리
   QUEUE_CLEANUP_INTERVAL_MS: 60000,   // 1분마다 큐 정리
-  MAX_QUEUE_SIZE: 500                 // 최대 큐 크기 (100명 동시접속 대응)
+  MAX_QUEUE_SIZE: 2000                // 최대 큐 크기 (800명 동시접속 대응)
 } as const;
 
 // Google Sheets 읽기 캐시 설정
 export const SHEET_CACHE_CONFIG = {
-  READ_CACHE_TTL_MS: 10000,           // 10초 캐시 TTL (동시 접속 시 동일 데이터 공유)
-  MAX_CACHE_ENTRIES: 20,              // 최대 캐시 항목 수
+  READ_CACHE_TTL_MS: 300000,          // 5분 캐시 TTL (800명 동시접속 시 시트 API 호출 대폭 감소)
+  MAX_CACHE_ENTRIES: 50,              // 최대 캐시 항목 수
 } as const;

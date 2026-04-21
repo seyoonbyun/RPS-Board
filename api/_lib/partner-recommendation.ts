@@ -37,7 +37,7 @@ export class PartnerRecommendationEngine {
   private googleSheetsService: GoogleSheetsService;
   
   // 비즈니스 확장을 위한 시너지 매트릭스 (타겟 고객 기반)
-  private businessSynergyMatrix = {
+  private businessSynergyMatrix: Record<string, { complementary: string[]; description: string }> = {
     // 대기업 타겟 고객층을 위한 시너지 업종
     '대기업': {
       complementary: ['컨설팅', '법무', '회계', 'IT솔루션', '마케팅', '디자인', '교육', '보안'],
@@ -74,7 +74,7 @@ export class PartnerRecommendationEngine {
   };
 
   // 업종별 핵심 서비스 매트릭스
-  private industryServiceMatrix = {
+  private industryServiceMatrix: Record<string, string[]> = {
     '마케팅': ['브랜딩', '광고', 'SNS', '콘텐츠', '전략기획'],
     '디자인': ['브랜딩', 'UI/UX', '패키지', '인테리어', '웹디자인'],
     'IT': ['솔루션개발', '웹개발', '앱개발', '시스템구축', '보안'],
@@ -125,8 +125,8 @@ export class PartnerRecommendationEngine {
     for (const userTarget of userTargets) {
       const synergyInfo = this.businessSynergyMatrix[userTarget];
       if (synergyInfo) {
-        const hasComplementaryService = synergyInfo.complementary.some(service =>
-          candidateServices.some(candidateService =>
+        const hasComplementaryService = synergyInfo.complementary.some((service: string) =>
+          candidateServices.some((candidateService: string) =>
             candidateService.includes(service) || service.includes(candidateService)
           )
         );
@@ -448,7 +448,7 @@ export class PartnerRecommendationEngine {
   // Google Sheets에서 모든 사용자 데이터 가져오기
   private async getAllUsersFromGoogleSheets(): Promise<any[]> {
     try {
-      const accessToken = await this.googleSheetsService.getAccessToken();
+      const accessToken = await this.googleSheetsService.getAccessTokenPublic();
       
       const getResponse = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg/values/RPS!A1:H5000`,
@@ -469,8 +469,8 @@ export class PartnerRecommendationEngine {
       
       // 헤더 제외하고 사용자 데이터 변환
       const users = rows.slice(1)
-        .filter(row => row && row[0] && row[0].toString().trim())
-        .map(row => ({
+        .filter((row: any) => row && row[0] && row[0].toString().trim())
+        .map((row: any) => ({
           email: row[0] || '',
           region: row[1] || '',
           chapter: row[2] || '',

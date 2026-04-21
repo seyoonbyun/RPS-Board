@@ -418,7 +418,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
                   control={form.control}
                   name="industry"
                   render={({ field }) => {
-                    const isAdmin = ['Admin', 'Growth', 'National'].includes(userProfile?.auth);
+                    const isAdmin = ['Admin', 'Growth', 'National'].includes(userProfile?.auth ?? '');
                     return (
                       <FormItem>
                         <FormLabel>산업군 <span className="text-xs text-gray-500">_BNI 커넥트 기준</span></FormLabel>

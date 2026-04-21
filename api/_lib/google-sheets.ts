@@ -21,6 +21,16 @@ interface SheetCacheEntry {
 
 const sheetReadCache = new Map<string, SheetCacheEntry>();
 
+// O(1) email → 사용자 인덱스. 800명 동시접속 시 선형 스캔 제거용.
+interface UserIndexEntry {
+  rowIndex: number;      // 0-based, row[0] = header
+  email: string;         // 원본 표기(대소문자 유지)
+  userId: string;
+  password: string;      // 4자리 패딩 적용됨
+  status: string;        // '활동중' | '탈퇴' | ...
+  auth: string;          // 'Admin' | 'Growth' | 'National' | 'Member' | ''
+}
+
 /**
  * Cached fetch for Google Sheets reads.
  * If multiple callers request the same range within TTL, they share one API call.
@@ -103,6 +113,10 @@ export class GoogleSheetsService {
   private serviceAccountPrivateKey: string;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
+
+  // 외부 라우트 코드가 임시로 raw fetch를 호출할 때 사용 (장기적으로는 메서드로 흡수 권장)
+  getSpreadsheetId(): string { return this.spreadsheetId; }
+  async getAccessTokenPublic(): Promise<string> { return this.getAccessToken(); }
 
   constructor(config: GoogleSheetsConfig) {
     // Extract spreadsheet ID from URL if needed
@@ -270,7 +284,7 @@ export class GoogleSheetsService {
 
   /**
    * Cached read of the full RPS sheet (A1:Z5000).
-   * 100명 동시접속 시 동일한 시트를 100번 읽는 대신 캐시에서 공유.
+   * 800명 동시접속 시 동일한 시트를 800번 읽는 대신 캐시에서 공유.
    */
   async getCachedFullSheet(callerId: string): Promise<string[][]> {
     const accessToken = await this.getAccessToken();
@@ -287,9 +301,71 @@ export class GoogleSheetsService {
     return data.values || [];
   }
 
+  /**
+   * O(1) 조회용 사용자 인덱스. getCachedFullSheet의 TTL과 함께 캐시되어
+   * 800명 동시접속 시에도 email 조회가 상수 시간.
+   * 컬럼 인덱스는 헤더에서 동적으로 감지하여 헤더 순서 변동에도 안전.
+   */
+  private userIndexCache: { index: Map<string, UserIndexEntry>; timestamp: number } | null = null;
+
+  async getCachedUserIndex(callerId: string): Promise<Map<string, UserIndexEntry>> {
+    const now = Date.now();
+    if (
+      this.userIndexCache &&
+      now - this.userIndexCache.timestamp < SHEET_CACHE_CONFIG.READ_CACHE_TTL_MS
+    ) {
+      return this.userIndexCache.index;
+    }
+
+    const rows = await this.getCachedFullSheet(callerId);
+    const header: string[] = (rows[0] || []).map((h: any) =>
+      (h ? h.toString().trim().toUpperCase() : ''),
+    );
+    const col = (name: string) => header.indexOf(name);
+    const idCol = col('ID');
+    const pwCol = col('PW');
+    const statusCol = col('STATUS');
+    const authCol = col('AUTH');
+
+    const index = new Map<string, UserIndexEntry>();
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || !row[0]) continue;
+      const emailRaw = row[0].toString().trim();
+      if (!emailRaw) continue;
+      const emailLower = emailRaw.toLowerCase();
+
+      const userId = idCol >= 0 && row[idCol] ? row[idCol].toString().trim() : '';
+      const pwRaw =
+        pwCol >= 0 &&
+        row[pwCol] !== undefined &&
+        row[pwCol] !== null &&
+        row[pwCol].toString().trim() !== ''
+          ? row[pwCol].toString().trim().padStart(4, '0')
+          : '';
+      const status =
+        statusCol >= 0 && row[statusCol] ? row[statusCol].toString().trim() : '활동중';
+      const auth = authCol >= 0 && row[authCol] ? row[authCol].toString().trim() : '';
+
+      index.set(emailLower, {
+        rowIndex: i,
+        email: emailRaw,
+        userId,
+        password: pwRaw,
+        status,
+        auth,
+      });
+    }
+
+    this.userIndexCache = { index, timestamp: now };
+    console.log(`📇 User index rebuilt: ${index.size} users`);
+    return index;
+  }
+
   /** Invalidate cache after writes */
   invalidateCache() {
     invalidateSheetCache(this.spreadsheetId);
+    this.userIndexCache = null;
   }
 
   async getUserProfile(email: string): Promise<any> {
@@ -415,102 +491,26 @@ export class GoogleSheetsService {
 
   async checkUserCredentials(email: string, password: string): Promise<boolean> {
     try {
-      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유
-      const rows = await this.getCachedFullSheet(`checkUserCredentials-${email}`);
-      
-      console.log('🔍 Dynamic user management - Google Sheets data scan:', {
-        totalRows: rows.length,
-        headerRow: rows[0],
-        activeUsers: rows.slice(1).filter((row: any) => row && row[0] && row[0].trim()).length,
-        columnsCount: rows[0] ? rows[0].length : 0
-      });
-      
-      // 헤더 행에서 ID, PW, STATUS, AUTH 컬럼 동적 감지
-      const headerRow = rows[0] || [];
-      let userIdColumnIndex = -1;
-      let passwordColumnIndex = -1;
-      let statusColumnIndex = -1;
-      let authColumnIndex = -1;
-      
-      // ID, PW, STATUS, AUTH 컬럼 찾기 (대소문자 무관, 공백 허용)
-      for (let j = 0; j < headerRow.length; j++) {
-        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
-        if (header === 'ID') {
-          userIdColumnIndex = j;
-        }
-        if (header === 'PW') {
-          passwordColumnIndex = j;
-        }
-        if (header === 'STATUS') {
-          statusColumnIndex = j;
-        }
-        if (header === 'AUTH') {
-          authColumnIndex = j;
-        }
-      }
-      
-      if (userIdColumnIndex === -1 || passwordColumnIndex === -1) {
-        console.error('❌ Critical: ID or PW column not found in Google Sheets');
-        console.error('Available headers:', headerRow);
+      const index = await this.getCachedUserIndex(`checkUserCredentials-${email}`);
+      const entry = index.get(email.toLowerCase());
+      if (!entry) {
+        console.log(`❌ User ${email} not found in Google Sheets user list`);
         return false;
       }
-      
-      console.log(`✅ Column detection - ID: ${userIdColumnIndex} (${headerRow[userIdColumnIndex]}), PW: ${passwordColumnIndex} (${headerRow[passwordColumnIndex]}), STATUS: ${statusColumnIndex} (${statusColumnIndex >= 0 ? headerRow[statusColumnIndex] : 'NOT FOUND'}), AUTH: ${authColumnIndex} (${authColumnIndex >= 0 ? headerRow[authColumnIndex] : 'NOT FOUND'})`);
-      
-      // 모든 행에서 사용자 검색 (빈 행 스킵)
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        // 빈 행이나 이메일이 없는 행은 스킵
-        if (!row || !row[0] || !row[0].toString().trim()) {
-          continue;
-        }
-        
-        const emailInSheet = row[0].toString().trim().toLowerCase();
-        if (emailInSheet === email.toLowerCase()) {
-          // ID, PW, STATUS, AUTH 값 검증
-          const userIdInSheet = userIdColumnIndex >= 0 && row[userIdColumnIndex] ?
-            row[userIdColumnIndex].toString().trim() : null;
-          // 시트에 숫자로 저장된 PW(예: 32)도 "0032"로 비교 가능하도록 4자리 패딩
-          const passwordInSheet = passwordColumnIndex >= 0 && row[passwordColumnIndex] !== undefined && row[passwordColumnIndex] !== null && row[passwordColumnIndex].toString().trim() !== ''
-            ? row[passwordColumnIndex].toString().trim().padStart(4, '0')
-            : null;
-          const statusInSheet = statusColumnIndex >= 0 && row[statusColumnIndex] ? 
-            row[statusColumnIndex].toString().trim() : '활동중';
-          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
-            row[authColumnIndex].toString().trim() : '';
-          
-          console.log(`🔍 Found user ${email} in row ${i+1}:`);
-          console.log(`- Email: ${emailInSheet}`);
-          console.log(`- ID: ${userIdInSheet ? '✓' : '✗'}`);
-          console.log(`- PW: ${passwordInSheet ? '✓' : '✗'}`);
-          console.log(`- STATUS: ${statusInSheet}`);
-          console.log(`- AUTH: ${authInSheet || 'NONE'}`);
-          
-          // 탈퇴한 사용자는 로그인 차단
-          if (statusInSheet === '탈퇴') {
-            console.log(`❌ User ${email} is withdrawn (STATUS: 탈퇴) - login blocked`);
-            throw new Error('WITHDRAWN_USER');
-          }
-          
-          // 사용자 인증: ID와 PW 모두 존재하고 PW가 일치해야 함
-          if (userIdInSheet && userIdInSheet !== '' && 
-              passwordInSheet && passwordInSheet === password) {
-            console.log(`✅ User ${email} authenticated successfully (Row: ${i+1})`);
-            return true;
-          } else {
-            console.log(`❌ User ${email} authentication failed:`);
-            console.log(`- ID present: ${!!userIdInSheet}`);
-            console.log(`- PW match: ${passwordInSheet === password}`);
-            return false;
-          }
-        }
+      if (entry.status === '탈퇴') {
+        console.log(`❌ User ${email} is withdrawn (STATUS: 탈퇴) - login blocked`);
+        throw new Error('WITHDRAWN_USER');
       }
-      
-      console.log(`❌ User ${email} not found in Google Sheets user list`);
+      if (entry.userId && entry.password && entry.password === password) {
+        console.log(`✅ User ${email} authenticated successfully (Row: ${entry.rowIndex + 1})`);
+        return true;
+      }
+      console.log(
+        `❌ User ${email} auth failed (ID present: ${!!entry.userId}, PW match: ${entry.password === password})`,
+      );
       return false;
-      
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.message === 'WITHDRAWN_USER') throw error;
       console.error('❌ Error during user credential check:', error);
       return false;
     }
@@ -518,44 +518,9 @@ export class GoogleSheetsService {
 
   async getUserAuth(email: string): Promise<string | null> {
     try {
-      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유
-      const rows = await this.getCachedFullSheet(`getUserAuth-${email}`);
-      
-      // 헤더 행에서 AUTH 컬럼 찾기
-      const headerRow = rows[0] || [];
-      let authColumnIndex = -1;
-      
-      for (let j = 0; j < headerRow.length; j++) {
-        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
-        if (header === 'AUTH') {
-          authColumnIndex = j;
-          break;
-        }
-      }
-      
-      if (authColumnIndex === -1) {
-        return null;
-      }
-      
-      // 사용자 검색하여 AUTH 값 반환
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        if (!row || !row[0] || !row[0].toString().trim()) {
-          continue;
-        }
-        
-        const emailInSheet = row[0].toString().trim().toLowerCase();
-        if (emailInSheet === email.toLowerCase()) {
-          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
-            row[authColumnIndex].toString().trim() : '';
-          
-          return authInSheet || null;
-        }
-      }
-      
-      return null;
-      
+      const index = await this.getCachedUserIndex(`getUserAuth-${email}`);
+      const entry = index.get(email.toLowerCase());
+      return entry?.auth || null;
     } catch (error) {
       console.error('Error getting user auth:', error);
       return null;
@@ -760,50 +725,10 @@ export class GoogleSheetsService {
 
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
-      console.log(`🔐 Checking admin permission for ${email}...`);
-
-      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유
-      const rows = await this.getCachedFullSheet(`checkAdminPermission-${email}`);
-      
-      // 헤더 행에서 AUTH 컬럼 찾기
-      const headerRow = rows[0] || [];
-      let authColumnIndex = -1;
-      
-      for (let j = 0; j < headerRow.length; j++) {
-        const header = headerRow[j] ? headerRow[j].toString().trim().toUpperCase() : '';
-        if (header === 'AUTH') {
-          authColumnIndex = j;
-          break;
-        }
-      }
-      
-      if (authColumnIndex === -1) {
-        console.log(`❌ AUTH column not found for admin permission check`);
-        return false;
-      }
-      
-      // 사용자 검색
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        if (!row || !row[0] || !row[0].toString().trim()) {
-          continue;
-        }
-        
-        const emailInSheet = row[0].toString().trim().toLowerCase();
-        if (emailInSheet === email.toLowerCase()) {
-          const authInSheet = authColumnIndex >= 0 && row[authColumnIndex] ? 
-            row[authColumnIndex].toString().trim() : '';
-          
-          const isAdmin = authInSheet === 'Admin' || authInSheet === 'Growth' || authInSheet === 'National';
-          console.log(`🔐 Admin permission for ${email}: ${isAdmin ? '✅ GRANTED' : '❌ DENIED'} (AUTH: "${authInSheet}")`);
-          return isAdmin;
-        }
-      }
-      
-      console.log(`❌ User ${email} not found for admin permission check`);
-      return false;
-      
+      const index = await this.getCachedUserIndex(`checkAdminPermission-${email}`);
+      const entry = index.get(email.toLowerCase());
+      if (!entry) return false;
+      return entry.auth === 'Admin' || entry.auth === 'Growth' || entry.auth === 'National';
     } catch (error) {
       console.error('❌ Error during admin permission check:', error);
       return false;

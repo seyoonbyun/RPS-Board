@@ -737,17 +737,17 @@ ${specialty} 분야의 특성을 살린 맞춤형 협업 전략으로 지속 가
       
     try {
       // 새로운 순수 동적 검색 시스템 사용 - AI 분석만을 사용한 완전 동적 검색
-      const businesses = await this.pureDynamicSearch.searchCollaborationBusinesses(
-        searchQuery,
+      const businesses = await this.pureDynamicSearch.searchPureDynamic(
         userSpecialty,
-        userRegion
+        userRegion,
+        searchQuery,
       );
-      
+
       console.log(`🎯 순수 동적 검색 완료 - ${businesses.length}개 업체 발견`);
-      
+
       if (businesses.length > 0) {
         console.log(`📊 검색된 업체 목록:`);
-        businesses.forEach((business, index) => {
+        businesses.forEach((business: any, index: number) => {
           console.log(`  ${index + 1}. ${business.name} (${business.category}) - ${business.address}`);
         });
         return { businesses };

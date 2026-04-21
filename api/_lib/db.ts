@@ -11,9 +11,9 @@ let db: ReturnType<typeof drizzle> | null = null;
 if (process.env.DATABASE_URL) {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 10,
+    max: 100,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 30000,
   });
   pool.on('error', (err) => {
     console.error('Database pool error:', err);

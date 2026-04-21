@@ -14,6 +14,13 @@ function ensureInit() {
       serviceAccountPrivateKey: key,
     });
     initialized = true;
+    // 콜드 스타트 시 사용자 인덱스 프리워밍 (첫 요청이 800명 × O(1) 조회 감당)
+    const svc = getGoogleSheetsService();
+    if (svc) {
+      svc.getCachedUserIndex('warmup').catch((err: any) =>
+        console.warn('Warmup getCachedUserIndex failed:', err?.message || err),
+      );
+    }
   }
 }
 

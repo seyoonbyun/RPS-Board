@@ -19,7 +19,7 @@ export default function DataSummary({ scoreboardData, userProfile, achievement }
   const getPartnersList = () => {
     // 구글 시트 프로필 데이터가 있으면 우선 사용
     if (userProfile) {
-      const partners = [];
+      const partners: Array<{ name: string; specialty: string; stage: string }> = [];
       const partnerData = [
         { name: userProfile.rpartner1, specialty: userProfile.rpartner1Specialty, stage: userProfile.rpartner1Stage },
         { name: userProfile.rpartner2, specialty: userProfile.rpartner2Specialty, stage: userProfile.rpartner2Stage },

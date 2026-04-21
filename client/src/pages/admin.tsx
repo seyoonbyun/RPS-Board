@@ -2094,8 +2094,8 @@ export default function AdminPage() {
                         className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
                       >
                         <option value="전체">전체</option>
-                        {historyRegions.filter(region => region !== "전체").map(region => (
-                          <option key={region} value={region}>{region}</option>
+                        {historyRegions.filter((region: any) => region !== "전체").map((region: any) => (
+                          <option key={String(region)} value={String(region)}>{String(region)}</option>
                         ))}
                       </select>
                     </div>
@@ -2109,8 +2109,8 @@ export default function AdminPage() {
                         className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
                       >
                         <option value="전체">전체</option>
-                        {historyChapters.filter(chapter => chapter !== "전체").map(chapter => (
-                          <option key={chapter} value={chapter}>{chapter}</option>
+                        {historyChapters.filter((chapter: any) => chapter !== "전체").map((chapter: any) => (
+                          <option key={String(chapter)} value={String(chapter)}>{String(chapter)}</option>
                         ))}
                       </select>
                     </div>
