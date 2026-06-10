@@ -217,6 +217,11 @@ export const API_RATE_LIMITS = {
 
 // Google Sheets 읽기 캐시 설정
 export const SHEET_CACHE_CONFIG = {
-  READ_CACHE_TTL_MS: 300000,          // 5분 캐시 TTL (800명 동시접속 시 시트 API 호출 대폭 감소)
+  // 부하 차단용 백스톱 TTL. 평상시 신선도는 아래 버전 토큰이 보장하므로 길게 둬도 됨.
+  // (DB 버전 메커니즘이 죽어도 이 시간 안에 자가 복구)
+  READ_CACHE_TTL_MS: 300000,          // 5분 (800명 동시접속 시 시트 API 호출 대폭 감소)
   MAX_CACHE_ENTRIES: 50,              // 최대 캐시 항목 수
+  // 인스턴스 간 캐시 무효화용 공유 버전 토큰을 다시 확인하는 최소 간격.
+  // 이 값이 곧 '쓰기 후 다른 인스턴스에 반영되는 최대 지연'이자, 버전 조회 DB 부하의 상한.
+  VERSION_CHECK_TTL_MS: 3000,         // 3초
 } as const;

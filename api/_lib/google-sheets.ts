@@ -1,5 +1,6 @@
 import type { ScoreboardData } from './schema.js';
 import { SHEET_COLUMN_INDICES, BUSINESS_CONFIG, SHEET_CACHE_CONFIG } from './constants.js';
+import { bumpCacheVersion, readCacheVersion } from './cache-version.js';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
 import { requestQueue } from './request-queue.js';
@@ -20,6 +21,10 @@ interface SheetCacheEntry {
 }
 
 const sheetReadCache = new Map<string, SheetCacheEntry>();
+
+// 이 인스턴스가 마지막으로 본 공유 캐시 버전. 공유 버전이 더 크면(=다른 인스턴스가 쓰기함)
+// 이 인스턴스의 전체시트 캐시를 버리고 새로 읽는다. (-1: 아직 확인 전)
+let lastFullSheetVersion = -1;
 
 // O(1) email → 사용자 인덱스. 800명 동시접속 시 선형 스캔 제거용.
 interface UserIndexEntry {
@@ -286,9 +291,16 @@ export class GoogleSheetsService {
    * Cached read of the full RPS sheet (A1:Z5000).
    * 800명 동시접속 시 동일한 시트를 800번 읽는 대신 캐시에서 공유.
    */
-  async getCachedFullSheet(callerId: string): Promise<string[][]> {
+  async getCachedFullSheet(callerId: string, forceRefresh = false): Promise<string[][]> {
     const accessToken = await this.getAccessToken();
     const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/RPS!A1:Z5000`;
+    // 인스턴스 간 무효화: 다른 인스턴스가 쓰기로 공유 버전을 올렸으면 이 인스턴스의
+    // 캐시도 버리고 새로 읽는다. forceRefresh(관리자 목록 등)도 동일하게 강제 갱신.
+    const sharedVersion = await readCacheVersion(Date.now());
+    if (forceRefresh || sharedVersion !== lastFullSheetVersion) {
+      sheetReadCache.delete(sheetUrl);
+      lastFullSheetVersion = sharedVersion;
+    }
     const response = await cachedSheetRead(
       sheetUrl,
       { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -306,12 +318,14 @@ export class GoogleSheetsService {
    * 800명 동시접속 시에도 email 조회가 상수 시간.
    * 컬럼 인덱스는 헤더에서 동적으로 감지하여 헤더 순서 변동에도 안전.
    */
-  private userIndexCache: { index: Map<string, UserIndexEntry>; timestamp: number } | null = null;
+  private userIndexCache: { index: Map<string, UserIndexEntry>; timestamp: number; version: number } | null = null;
 
   async getCachedUserIndex(callerId: string): Promise<Map<string, UserIndexEntry>> {
     const now = Date.now();
+    const sharedVersion = await readCacheVersion(now);
     if (
       this.userIndexCache &&
+      this.userIndexCache.version === sharedVersion &&
       now - this.userIndexCache.timestamp < SHEET_CACHE_CONFIG.READ_CACHE_TTL_MS
     ) {
       return this.userIndexCache.index;
@@ -357,7 +371,7 @@ export class GoogleSheetsService {
       });
     }
 
-    this.userIndexCache = { index, timestamp: now };
+    this.userIndexCache = { index, timestamp: now, version: sharedVersion };
     console.log(`📇 User index rebuilt: ${index.size} users`);
     return index;
   }
@@ -366,6 +380,9 @@ export class GoogleSheetsService {
   invalidateCache() {
     invalidateSheetCache(this.spreadsheetId);
     this.userIndexCache = null;
+    lastFullSheetVersion = -1; // 이 인스턴스도 다음 읽기에서 강제 갱신
+    // 인스턴스 간 무효화: 공유 버전을 올려 다른 인스턴스들도 다음 읽기에서 새로 읽게 함(best-effort)
+    bumpCacheVersion().catch(() => {});
   }
 
   async getUserProfile(email: string): Promise<any> {
@@ -2240,10 +2257,11 @@ export class GoogleSheetsService {
     }
   }
 
-  async getAllUsers(): Promise<any[]> {
+  async getAllUsers(forceRefresh = false): Promise<any[]> {
     try {
-      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유
-      const rows = await this.getCachedFullSheet('getAllUsers');
+      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유.
+      // forceRefresh=true 면 캐시를 무시하고 새로 읽어 즉시 최신값 보장(관리자 목록).
+      const rows = await this.getCachedFullSheet('getAllUsers', forceRefresh);
       
       if (rows.length <= 1) return []; // 헤더만 있거나 빈 시트
       

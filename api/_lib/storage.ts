@@ -165,7 +165,7 @@ export class MemStorage implements IStorage {
     const { getGoogleSheetsService } = await import('./google-sheets.js');
     const svc = getGoogleSheetsService();
     if (!svc) return [];
-    return await svc.getAllUsers();
+    return await svc.getAllUsers(true); // 관리자 목록: 항상 시트에서 새로 읽어 즉시 반영
   }
 
   async getUserProfileFromGoogleSheets(email: string): Promise<any> {
@@ -295,7 +295,7 @@ export class DatabaseStorage implements IStorage {
     if (!googleSheetsService) {
       throw new Error('Google Sheets service not available');
     }
-    return await googleSheetsService.getAllUsers();
+    return await googleSheetsService.getAllUsers(true); // 관리자 목록: 항상 시트에서 새로 읽어 즉시 반영
   }
 
   async getUserProfileFromGoogleSheets(email: string): Promise<any> {
