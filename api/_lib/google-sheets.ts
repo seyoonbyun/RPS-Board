@@ -2186,6 +2186,8 @@ export class GoogleSheetsService {
           }
 
           console.log(`✅ User ${userEmail} info updated successfully`);
+          // 캐시 무효화: 수정 직후 앱이 옛 값(회사명 등)을 5분 TTL 동안 계속 보여주지 않도록
+          this.invalidateCache();
           return { success: true, message: '정보가 성공적으로 수정되었습니다' };
         } catch (error: any) {
           console.error(`❌ Error updating user ${userEmail} info:`, error);
