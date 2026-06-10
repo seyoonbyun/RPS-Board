@@ -2148,13 +2148,16 @@ export class GoogleSheetsService {
           };
 
           Object.entries(updates).forEach(([field, value]) => {
-            if (value !== undefined && value !== '' && fieldToColumn[field]) {
-              const columnLetter = fieldToColumn[field];
-              requests.push({
-                range: `RPS!${columnLetter}${rowNumber}`,
-                values: [[value]]
-              });
-            }
+            if (value === undefined || !fieldToColumn[field]) return;
+            // 비밀번호는 빈 값으로 덮어쓰지 않음(실수로 PW 삭제 방지).
+            // 그 외 필드(회사명·지역·챕터·멤버명·산업군)는 빈 값도 그대로 써서
+            // 관리자가 값을 '삭제'할 수 있게 한다. (RAW 로 빈 문자열 = 셀 비움)
+            if (field === 'password' && value === '') return;
+            const columnLetter = fieldToColumn[field];
+            requests.push({
+              range: `RPS!${columnLetter}${rowNumber}`,
+              values: [[value]]
+            });
           });
 
           if (requests.length === 0) {
