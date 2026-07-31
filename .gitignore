@@ -7,3 +7,16 @@ vite.config.ts.*
 .env
 .env.local
 .env.*.local
+
+# automation (런칭 자동화 배치 스크립트)
+# 결과물·부산물은 저장소에 넣지 않는다 — 로컬 작업 폴더와 구글 드라이브가 맡는다.
+__pycache__/
+*.pyc
+automation/output/
+automation/snapshots/
+automation/_verify/
+# 자격증명은 어떤 경우에도 커밋하지 않는다 (paths.py 가 저장소 밖에서 읽는다)
+automation/**/*token*.txt
+automation/**/*secret*.json
+automation/**/gcp-key.json
+automation/**/solapi.json
