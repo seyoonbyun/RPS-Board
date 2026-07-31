@@ -165,7 +165,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
                         <button onClick={() => setEditingIndex(null)} className="text-[10px] text-gray-500 px-1">취소</button>
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-700">{renderContent(q.content)}</p>
+                      <p className="text-xs text-gray-700 whitespace-pre-wrap">{renderContent(q.content)}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 ml-2">
