@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, apiFetch } from '@/lib/queryClient';
-import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search, Home, Wrench, ExternalLink } from 'lucide-react';
+import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search, Home, Wrench, ExternalLink, Rocket } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -26,6 +26,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// 신규 챕터 런칭 신청 폼 (Airtable) — base appmBdOMAhjhyATUI / 테이블 "런칭 신청"
+const LAUNCH_FORM_EMBED_URL = 'https://airtable.com/embed/appmBdOMAhjhyATUI/shrTOccgAqMfWtrmu';
 
 function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
   const [newContent, setNewContent] = useState('');
@@ -227,7 +231,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
         )}
       </div>
       <div className="p-3 border-t border-gray-100 flex gap-2">
-        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문을 입력하세요..." className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
+        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문 (※ 챕터 런칭 신청은 위 신청서를 이용해 주세요)" className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
         <button onClick={submitPost} className="text-xs bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 whitespace-nowrap">등록</button>
       </div>
     </div>
@@ -1019,6 +1023,16 @@ export default function AdminPage() {
 
   const activeUsers = allUsers?.filter(user => user.status !== '탈퇴') || [];
   const withdrawnUsers = allUsers?.filter(user => user.status === '탈퇴') || [];
+
+  // 런칭 신청 폼(Airtable) — 담당자 이름만 미리 채운다.
+  // 런칭 지역/챕터는 신규일 수 있어 자동 입력하지 않는다.
+  const launchApplicantName =
+    allUsers?.find(user => user.email === currentUser?.email)?.memberName || '';
+  const launchFormUrl =
+    LAUNCH_FORM_EMBED_URL +
+    (launchApplicantName
+      ? `?prefill_${encodeURIComponent('담당자')}=${encodeURIComponent(launchApplicantName)}`
+      : '');
   
   // 필터링된 활성 사용자 목록
   const filteredActiveUsers = activeUsers.filter(user => {
@@ -1264,10 +1278,12 @@ export default function AdminPage() {
             <div>
               <Plus className="w-5 h-5 text-gray-700 mb-3" />
               <h3 className="font-bold text-gray-900 mb-2">지역 & 챕터 관리</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">지역과 챕터를 생성하거나 삭제합니다.</p>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                <span className="text-red-600 font-semibold">신규 챕터 런칭을 신청</span>하거나, 등록된 지역·챕터를 직접 수정합니다.
+              </p>
             </div>
             <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
-              MANAGE REGIONS & CHAPTERS 📋
+              LAUNCH REQUEST & MANAGE 📋
             </button>
           </div>
 
@@ -2502,14 +2518,49 @@ export default function AdminPage() {
 
       {/* 지역 & 챕터 관리 다이얼로그 */}
       <Dialog open={showAddChapterDialog} onOpenChange={setShowAddChapterDialog}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto w-[95vw] sm:w-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center text-lg">
               <Plus className="mr-2 w-5 h-5 text-red-600" />
               지역 & 챕터 관리
             </DialogTitle>
-            <DialogDescription className="text-gray-500">지역과 챕터를 생성하거나 삭제합니다</DialogDescription>
+            <DialogDescription className="text-gray-500">
+              신규 챕터 런칭을 신청하거나, 지역·챕터 목록을 직접 수정합니다
+            </DialogDescription>
           </DialogHeader>
+
+          <Tabs defaultValue="launch" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="launch" className="text-xs sm:text-sm">
+                <Rocket className="w-4 h-4 mr-1.5" />
+                신규 챕터 런칭 신청
+              </TabsTrigger>
+              <TabsTrigger value="manage" className="text-xs sm:text-sm">
+                <Wrench className="w-4 h-4 mr-1.5" />
+                지역 · 챕터 직접 수정
+              </TabsTrigger>
+            </TabsList>
+
+            {/* --- 탭 1: 런칭 신청 (Airtable 폼) --- */}
+            <TabsContent value="launch" className="mt-4">
+              <p className="text-xs text-gray-500 leading-relaxed mb-3">
+                런칭이 확정된 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
+                접수 및 처리 결과는 입력하신 담당자 연락처로 <span className="font-medium text-gray-700">카카오톡 알림</span>이 발송됩니다.
+              </p>
+              <iframe
+                title="신규 챕터 런칭 신청서"
+                src={launchFormUrl}
+                className="w-full border border-gray-200 rounded-md bg-white"
+                style={{ height: '60vh' }}
+              />
+            </TabsContent>
+
+            {/* --- 탭 2: 지역·챕터 직접 수정 (기존 기능) --- */}
+            <TabsContent value="manage" className="mt-4 space-y-4">
+              <p className="text-xs text-gray-500 leading-relaxed">
+                이미 등록된 지역·챕터의 표기를 고치거나 잘못 만든 항목을 지울 때 사용합니다.
+                <span className="text-red-600"> 신규 런칭은 왼쪽 신청 탭을 이용해 주세요.</span>
+              </p>
 
           {/* 기존 지역 목록 */}
           <div className="border rounded-md max-h-36 overflow-y-auto">
@@ -2703,6 +2754,8 @@ export default function AdminPage() {
               챕터 생성
             </Button>
           </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
