@@ -1134,7 +1134,7 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  localStorage.removeItem('currentUser');
+                  localStorage.removeItem('bni_user');
                   setLocation('/');
                 }}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
@@ -1171,7 +1171,7 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  localStorage.removeItem('currentUser');
+                  localStorage.removeItem('bni_user');
                   setLocation('/');
                 }}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"
