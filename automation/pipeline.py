@@ -324,6 +324,34 @@ def step_sheets(p: Plan) -> None:
             log(f"    {kind} 시트 {m.group(1)}")
 
 
+def step_rpi(p: Plan) -> None:
+    """[2-b] RPI 집계 시트에 챕터(·지역) 행 추가 — rpi_sheet.py.
+
+    이 단계가 없어서 하남 시그니아·수원1 스타가 통째로 빠져 있었다(2026-08-02 발견).
+
+    ⚠ 실패해도 런칭 전체를 죽이지 않는다. 집계 시트는 나중에 단독 재실행으로 채울 수 있고,
+      여기서 멈추면 imweb 페이지가 안 만들어져 손해가 더 크다.
+    ⚠ 원천은 모 시트를 당겨오는 `IMPORTRANGE` 라 [1] append 가 **반영되기까지 시차**가
+      있을 수 있다. 그때는 `_source` 매칭 없음으로 걸러지므로(0 이 박히지 않는다)
+      잠시 뒤 `python rpi_sheet.py --apply` 를 다시 돌리면 된다.
+    """
+    log("[2-b] RPI 집계 시트")
+    if not p.apply:
+        log("    $ rpi_sheet.py  (dry-run)")
+        return
+    try:
+        out = run("rpi_sheet.py", "--apply")
+        tail = [l for l in out.splitlines() if l.strip().startswith(("+", "✓", "⚠"))]
+        for l in tail[-4:]:
+            log("    " + l.strip())
+        p.result["rpi"] = f"{p.chapter_eng} 행 추가"
+    except RuntimeError as e:
+        log(f"    ⚠ 건너뜀 — {str(e).splitlines()[0]}")
+        log("      나중에 `python rpi_sheet.py --apply` 로 단독 실행할 것.")
+        p.steps.append("rpi:failed")
+        p.result["rpi"] = "실패(수동 재실행 필요)"
+
+
 def step_qr(p: Plan) -> None:
     log("[3] bitly 링크·QR")
     targets = [("chapter", p.chapter_eng, p.result.get("chapter_sheet"))]
@@ -513,6 +541,8 @@ def main() -> None:
                          f"{p.chapter_eng} · {p.result.get('member_count', '?')}명")
             step_sheets(p)
             rep.step("[2] 구글 시트", str(p.result.get("chapter_sheet") or ""))
+            step_rpi(p)
+            rep.step("[2-b] RPI 집계 시트", p.result.get("rpi", ""))
             step_qr(p)
             rep.step("[3] QR", str(p.result.get("chapter_qrcode_id") or ""))
             step_banner(p)
