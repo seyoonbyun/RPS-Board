@@ -231,7 +231,7 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
         )}
       </div>
       <div className="p-3 border-t border-gray-100 flex gap-2">
-        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문 (※ 챕터 런칭 신청은 위 신청서 · 문자 안내를 원하시면 연락처를 처음 한 번만 남겨주세요, 확인 후 바로 삭제합니다)" className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
+        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문 (※ 챕터 런칭 신청은 위 신청서를 이용해 주세요)" className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
         <button onClick={submitPost} className="text-xs bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 whitespace-nowrap">등록</button>
       </div>
     </div>
@@ -2545,9 +2545,7 @@ export default function AdminPage() {
             <TabsContent value="launch" className="mt-4">
               <p className="text-xs text-gray-500 leading-relaxed mb-3">
                 런칭이 확정된 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
-                신청서에는 <span className="font-medium text-gray-700">담당자 성함까지만</span> 남겨 주세요.
-                처리 결과를 <span className="font-medium text-gray-700">문자(LMS)</span>로 받으시려면 아래 게시판에 연락처를 <span className="font-medium text-gray-700">처음 한 번만</span> 남겨 주세요.
-                확인 후 게시판 글에서 바로 삭제하며, 다음 신청부터는 다시 남기지 않으셔도 됩니다.
+                접수 및 처리 결과는 신청서에 남겨 주신 담당자 연락처로 <span className="font-medium text-gray-700">문자(LMS)</span>가 발송됩니다.
               </p>
               <iframe
                 title="신규 챕터 런칭 신청서"
