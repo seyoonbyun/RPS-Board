@@ -63,6 +63,30 @@ def find_master() -> Path:
     return max(files, key=lambda p: p.stat().st_mtime)
 
 
+def read_all_status(path: Path) -> dict[str, tuple[str, str]]:
+    """`ALL 챕터` 시트 → {챕터명(casefold): (상태, 지역명)}. 폐쇄 감지 메시지용.
+
+    ⚠ 공백만 다른 동명이 있다(`The Great` 송파 정지됨 / `TheGreat` 성남 코어 그룹).
+      마지막 것이 이기지 않도록 활동중이 아닌 쪽을 덮어쓰지 않는다.
+    """
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+    if "ALL 챕터" not in wb.sheetnames:
+        return {}
+    rows = list(wb["ALL 챕터"].iter_rows(values_only=True))
+    h = {v: i for i, v in enumerate(rows[0]) if v}
+    out: dict[str, tuple[str, str]] = {}
+    for r in rows[1:]:
+        ch = str(r[h["챕터명(Eng)"]] or "").strip()
+        if not ch:
+            continue
+        st = str(r[h["상태"]] or "").strip()
+        rg = str(r[h["지역명"]] or "").strip()
+        k = ch.casefold()
+        if k not in out or st == "활동중":
+            out[k] = (st, rg)
+    return out
+
+
 def read_master(path: Path) -> list[tuple[str, str]]:
     wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
     name = next((n for n in wb.sheetnames if n.startswith("활동중")), None)
@@ -89,6 +113,9 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true", help="실제 쓰기 (미지정 시 dry-run)")
     ap.add_argument("--allow-skip", action="store_true",
                     help="_source 에 없는 항목을 중단 대신 제외하고 진행")
+    ap.add_argument("--reconcile", action="store_true",
+                    help="마스터 활동중에 없는 행도 제거한다. 기본은 추가만. "
+                         "평시 제거는 `rpi_watch.py`(어드민 삭제 로그 감지)가 보고와 함께 맡는다")
     a = ap.parse_args()
 
     svc = build("sheets", "v4", credentials=user_credentials(), cache_discovery=False)
@@ -129,7 +156,19 @@ def main() -> int:
     ch_rows = [pad(r, 7) for r in snap["챕터 RPI"]["formula"][1:]
                if len(r) > 2 and str(r[2]).strip()]
     ch_head, ch_body = ch_rows[0], ch_rows[1:]        # 0번 = 전국/BNI K. ALL, 정렬 제외
-    existing = {str(r[2]).strip().casefold() for r in ch_body}
+
+    # 같은 챕터가 두 줄이면 앞의 것만 남긴다. 행이 줄어드는 쓰기에서 꼬리 행이 남으면
+    # 중복이 생기는데(2026-08-02 Zeus), 그것을 다음 실행이 스스로 걷어내게 하는 안전망이다.
+    seen, deduped = set(), []
+    for r in ch_body:
+        k = str(r[2]).strip().casefold()
+        if k in seen:
+            print(f"   ⚠ 중복 행 제거: {str(r[2]).strip()}")
+            continue
+        seen.add(k)
+        deduped.append(r)
+    ch_body = deduped
+    existing = set(seen)
     tmpl = next(r for r in ch_body if str(r[2]).strip() == TMPL_CHAPTER)
 
     new_ch = [(c, rg) for c, rg in master if c.casefold() not in existing]
@@ -147,6 +186,45 @@ def main() -> int:
             row[i] = str(tmpl[i]).replace(f'"{TMPL_CHAPTER}"', f'"{c}"')
         ch_body.append(row)
         print(f"   + {c:<12} ({rg})  _source {n}명")
+
+    # ── 3-b) 폐쇄·정지 챕터 자동 제거 ──────────────────────────
+    #
+    # RPS Board 는 지역 담당자가 실시간으로 관리하는데 이 시트는 그렇지 않아, 챕터가
+    # 문을 닫아도 행이 남는다. 멤버가 `_source` 에서 빠지면 분모가 0 이 되고 IFERROR 가
+    # 0 을 돌려주므로 **폐쇄 챕터가 RPI 0.00 짜리 활동 챕터처럼 보인다.**
+    #
+    # 정본은 챕터 마스터 `활동중(N)` — 거기 없으면 지운다.
+    # ⚠ `RPI = 0` 을 기준으로 삼으면 안 된다. 활동중인데 R파트너 기록이 없어 0 인 챕터가 많다.
+    # ⚠ 마스터는 월 1회 갱신이라, 이번 달 마스터가 아니면 갓 런칭한 챕터를 지울 수 있다.
+    #    그래서 **이번 달에 만든 마스터인지 확인**하고, 아니면 제거를 건너뛴다.
+    # 되돌리기는 맨 위에서 뜬 스냅샷으로 한다(수식까지 그대로 들어 있다).
+    status = read_all_status(master_path)
+    active = {c.casefold() for c, _ in master}
+    fresh_master = master_path.stat().st_mtime >= (
+        datetime.datetime.now() - datetime.timedelta(days=40)).timestamp()
+
+    removable = [r for r in ch_body if str(r[2]).strip().casefold() not in active]
+    if removable and not a.reconcile:
+        print(f"\n[챕터] 마스터 활동중 아닌 행 {len(removable)}건 — 제거하지 않음 (--reconcile 필요)")
+        for r in removable:
+            name = str(r[2]).strip()
+            st, _ = status.get(name.casefold(), ("(마스터에 없음)", ""))
+            print(f"   · {name:<14} {str(r[1]).strip():<18} 마스터 상태: {st}")
+        removable = []
+    elif removable and not fresh_master:
+        print(f"\n⚠ 마스터가 40일 이상 지난 파일이라 제거를 건너뛴다 ({master_path.name})")
+        print(f"   대상이었던 {len(removable)}건: {[str(r[2]).strip() for r in removable]}")
+    elif removable:
+        print(f"\n[챕터] 제거 {len(removable)}건 (마스터 활동중 아님)")
+        for r in removable:
+            name = str(r[2]).strip()
+            st, rg = status.get(name.casefold(), ("(마스터에 없음)", str(r[1]).strip()))
+            n = src_chapters.get(name.casefold(), 0)
+            mark = "" if n == 0 else f"  ⚠ 아직 _source 에 {n}명 남아 있다"
+            print(f"   - {name:<14} {rg:<18} 마스터 상태: {st}{mark}")
+        ch_body = [r for r in ch_body if str(r[2]).strip().casefold() in active]
+    else:
+        print("\n[챕터] 제거 0건")
 
     ch_body.sort(key=lambda r: str(r[2]).strip().casefold())
     for i, r in enumerate(ch_body, start=2):
@@ -192,6 +270,12 @@ def main() -> int:
 
     print(f"\n챕터 RPI {len(ch_rows)}행 → {len(ch_out)}행 · 지역 RPI {len(rg_rows)}행 → {len(rg_out)}행")
 
+    # ⚠ 행이 줄면 쓰기 범위도 줄어 **이전 마지막 행이 시트에 남는다**(2026-08-02 실제로 발생:
+    #   95→94 로 줄였더니 96행에 Zeus 가 중복으로 남았다). 줄어든 만큼 빈 행으로 덮는다.
+    #   `batchClear` 는 쓰지 않는다 — 데이터 확인·서식까지 지운다.
+    ch_write = ch_out + [[""] * 7] * max(0, len(ch_rows) - len(ch_out))
+    rg_write = rg_out + [[""] * 6] * max(0, len(rg_rows) - len(rg_out))
+
     if ch_blocked or rg_blocked:
         print(f"\n⛔ _source 에 없어 수식이 0 을 반환한다. 챕터={ch_blocked} 지역={rg_blocked}")
         if not a.allow_skip:
@@ -208,8 +292,8 @@ def main() -> int:
     svc.spreadsheets().values().batchUpdate(spreadsheetId=SID, body={
         "valueInputOption": "USER_ENTERED",
         "data": [
-            {"range": f"'챕터 RPI'!A2:G{1 + len(ch_out)}", "values": ch_out},
-            {"range": f"'지역 RPI'!A2:F{1 + len(rg_out)}", "values": rg_out},
+            {"range": f"'챕터 RPI'!A2:G{1 + len(ch_write)}", "values": ch_write},
+            {"range": f"'지역 RPI'!A2:F{1 + len(rg_write)}", "values": rg_write},
         ]}).execute()
     print("\n✓ 쓰기 완료 — 재조회 검증")
 

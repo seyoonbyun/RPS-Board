@@ -32,6 +32,7 @@ finalize.py  담당자 문자 + 게시판 결과 게시 + 상태 정리 + 완료
 | **단계** | `roster_gen.py` | [1] BNI Connect 추출 → 모 시트 멤버 append |
 | | `sheet_gen.py` | [2] 챕터·지역 RPS 구글시트 생성 |
 | | `rpi_sheet.py` | [2-b] `RPI : BNI K. All` 집계 시트에 챕터·지역 행 추가 |
+| **감시** | `rpi_watch.py` | 어드민 챕터 삭제 감지 → RPI 시트 행 제거 + 이메일 보고 (1시간 스케줄) |
 | | `qr_gen.py` | [3] bitly 단축링크 + 브랜드 QR |
 | | `banner_gen.py` | [4] 챕터 카드 500×500 · 지역 로고 |
 | | `imweb_client.py` | [5] imweb 내부 API 래퍼 |
