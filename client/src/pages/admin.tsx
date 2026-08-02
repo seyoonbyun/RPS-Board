@@ -2545,7 +2545,7 @@ export default function AdminPage() {
             <TabsContent value="launch" className="mt-4">
               <p className="text-xs text-gray-500 leading-relaxed mb-3">
                 런칭이 확정된 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
-                접수 및 처리 결과는 입력하신 담당자 연락처로 <span className="font-medium text-gray-700">카카오톡 알림</span>이 발송됩니다.
+                접수 및 처리 결과는 입력하신 담당자 연락처로 <span className="font-medium text-gray-700">문자(LMS)</span>가 발송됩니다.
               </p>
               <iframe
                 title="신규 챕터 런칭 신청서"
