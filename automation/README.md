@@ -199,7 +199,27 @@ publish_watch  게시 감지  → 담당자 통보 + 게시판 결과 글 + 상�
 dropdowns      지역·챕터 드롭다운 현행화
 ```
 
-**사람이 하는 것은 둘뿐이다** — ① 로그인(imweb·BNI Connect) ② 게시 전 확인·게시 클릭.
+**사람이 하는 것은 게시 전 확인·게시 클릭 하나뿐이다.** 로그인은 자격증명 파일로 자동이다.
+
+### 로그인 — 자격증명 파일
+
+| 대상 | 파일 (`cred_dir()` 안) | 상태 |
+|---|---|---|
+| BNI Connect | `BNI Connect_login ID PW.txt` | 이미 있음 (다운로드 스킬이 쓴다) |
+| imweb | **`imweb_login.json`** — `{"id": "...", "pw": "..."}` | 사람이 채운다 |
+
+세션이 끊기면 워커가 **스스로 한 번** 붙는다(`imweb_client.ensure_login`).
+
+```bash
+python imweb_client.py --auto-login   # 자격증명 파일로 (창 없음)
+python imweb_client.py --login        # 창 띄워 직접 (파일이 없거나 캡차가 뜰 때)
+python imweb_client.py --check        # 지금 붙어 있나
+```
+
+⛔ **캡차·2단계 인증이 뜨면 자동 로그인을 하지 않는다.** 그건 사람이 하라고 있는 것이다.
+⛔ **실패하면 1시간 쉰다**(`imweb_login_cooldown.txt`). 비밀번호가 틀린 채로 3분마다
+   두드리면 **계정이 잠긴다.** 쿨다운 중에는 사람에게 넘긴다.
+⚠ 비밀번호는 로그·예외 메시지 어디에도 찍지 않는다(예외는 클래스 이름만 남긴다).
 
 ```bash
 python intake_ack.py                 # dry-run

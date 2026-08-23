@@ -415,6 +415,106 @@ def _sheet_id(url: str) -> str:
     return m.group(1)
 
 
+# ---------------------------------------------------------------- 자동 로그인
+
+#: 자격증명 파일 — `cred_dir()` 안. `{"id": "...", "pw": "..."}`
+#: ⚠ **사람이 직접 채운다.** 저장소에도, 대화에도 값이 남지 않는다.
+#:   같은 폴더의 `solapi.json`·`BNI Connect_login ID PW.txt` 와 같은 방식이다.
+LOGIN_CFG = "imweb_login.json"
+
+#: 실패한 뒤 다시 시도하기까지 쉬는 시간(초). 비밀번호가 틀린 채로 3분마다 두드리면
+#: **계정이 잠긴다.** 한 번 실패하면 한 시간 쉬고, 그동안은 사람에게 맡긴다.
+LOGIN_COOLDOWN = 3600
+
+
+def _login_cfg() -> dict | None:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import paths
+    f = paths.cred_dir() / LOGIN_CFG
+    if not f.exists():
+        return None
+    try:
+        d = json.loads(f.read_text(encoding="utf-8"))
+    except Exception:                                        # noqa: BLE001
+        return None
+    return d if d.get("id") and d.get("pw") else None
+
+
+def _cooldown_file() -> Path:
+    return PROFILE_DIR.parent / "imweb_login_cooldown.txt"
+
+
+def _in_cooldown() -> int:
+    """남은 쿨다운 초. 0 이면 시도해도 된다."""
+    f = _cooldown_file()
+    if not f.exists():
+        return 0
+    try:
+        import time
+        left = int(float(f.read_text(encoding="utf-8").strip()) + LOGIN_COOLDOWN - time.time())
+    except Exception:                                        # noqa: BLE001
+        return 0
+    return max(0, left)
+
+
+def auto_login(im: "ImwebClient") -> bool:
+    """자격증명 파일로 로그인한다. 성공하면 쿠키까지 받아 둔다.
+
+    ⛔ **캡차·2단계 인증이 뜨면 시도하지 않고 멈춘다.** 그건 사람이 하라고 있는 것이다.
+    ⚠ 비밀번호는 어디에도 찍지 않는다(로그·예외 메시지 포함).
+    """
+    import time
+
+    cfg = _login_cfg()
+    if not cfg:
+        print(f"   [로그인] 자격증명 파일이 없다: {LOGIN_CFG}", file=sys.stderr)
+        return False
+    left = _in_cooldown()
+    if left:
+        print(f"   [로그인] 직전 실패로 쉬는 중 — {left // 60}분 뒤 재시도", file=sys.stderr)
+        return False
+
+    try:
+        page = im._ctx.pages[0] if im._ctx.pages else im._ctx.new_page()
+        page.goto(f"{SITE}/admin", wait_until="networkidle", timeout=60000)
+        if page.locator("#txt_email").count() == 0:
+            # 폼이 없다 = 이미 로그인됐거나 화면이 바뀌었다
+            return im.logged_in(restore=False)
+        html = page.content()
+        if re.search(r"recaptcha|hcaptcha|captcha", html, re.I):
+            print("   [로그인] 캡차가 떴다 — 자동 로그인을 하지 않는다. 사람이 로그인할 것.",
+                  file=sys.stderr)
+            return False
+        page.fill("#txt_email", cfg["id"])
+        page.fill("#txt_pass", cfg["pw"])
+        page.click("#login-form button[type=submit]")
+        page.wait_for_load_state("networkidle", timeout=60000)
+        for _ in range(10):
+            if im.logged_in(restore=False):
+                im.save_cookies()
+                print("   [로그인] 자동 로그인 성공 · 쿠키 저장")
+                _cooldown_file().unlink(missing_ok=True)
+                return True
+            time.sleep(2)
+        _cooldown_file().write_text(str(time.time()), encoding="utf-8")
+        print("   [로그인] 자동 로그인 실패 — 아이디·비밀번호를 확인하세요 "
+              f"({LOGIN_COOLDOWN // 60}분간 재시도하지 않는다)", file=sys.stderr)
+        return False
+    except Exception as e:                                   # noqa: BLE001
+        # ⚠ 예외 메시지에 입력값이 섞일 수 있어 **클래스 이름만** 남긴다.
+        import time
+        _cooldown_file().write_text(str(time.time()), encoding="utf-8")
+        print(f"   [로그인] 자동 로그인 오류: {e.__class__.__name__}", file=sys.stderr)
+        return False
+
+
+def ensure_login(im: "ImwebClient") -> bool:
+    """로그인돼 있으면 True. 아니면 **한 번** 자동 로그인을 시도한다."""
+    if im.logged_in():
+        return True
+    return auto_login(im)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -422,6 +522,8 @@ if __name__ == "__main__":
     ap.add_argument("--login", action="store_true",
                     help="창을 띄워 사람이 직접 로그인 (최초 1회)")
     ap.add_argument("--check", action="store_true", help="로그인 상태·현황 확인")
+    ap.add_argument("--auto-login", action="store_true",
+                    help=f"자격증명 파일({LOGIN_CFG})로 로그인 (창 없이)")
     a = ap.parse_args()
 
     if a.login:
@@ -446,6 +548,14 @@ if __name__ == "__main__":
                 time.sleep(3)
             else:
                 print("\n[FAIL] 5분 안에 로그인되지 않았습니다. 다시 실행해 주세요.")
+    elif a.auto_login:
+        with ImwebClient(headless=True) as im:
+            if im.logged_in():
+                print("[OK] 이미 로그인돼 있습니다.")
+            elif auto_login(im):
+                print(f"[OK] 페이지 {len(im.menu_list())}개가 보입니다.")
+            else:
+                raise SystemExit("[FAIL] 자동 로그인 실패 — python imweb_client.py --login")
     elif a.check:
         with ImwebClient() as im:
             if not im.logged_in():

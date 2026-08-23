@@ -42,7 +42,8 @@ sys.stderr.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import paths                                              # noqa: E402
-from imweb_client import ImwebClient, ImwebError          # noqa: E402
+from imweb_client import (ImwebClient, ImwebError,         # noqa: E402
+                          ensure_login)
 from pipeline import TEMPLATE_ALL, TEMPLATE_REGION, qr_png_2000   # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -278,8 +279,11 @@ def step_pw_note(p: RegionPlan) -> None:
 def run_region(p: RegionPlan) -> dict:
     """단계를 순서대로. 리포트 dict 를 돌려준다(워커가 대장에 옮겨 적는다)."""
     with ImwebClient(headless=not p.headful) as im:
-        if not im.logged_in():
-            raise SystemExit("imweb 로그인 안 됨 →  python imweb_client.py --login")
+        # 세션이 끊겼으면 자격증명 파일로 **스스로 한 번** 붙어 본다.
+        # 실패하면(파일 없음·비번 틀림·캡차) 사람에게 넘긴다 — 재시도는 쿨다운이 막는다.
+        if not ensure_login(im):
+            raise SystemExit("imweb 로그인 안 됨 →  python imweb_client.py --auto-login "
+                             "(자격증명 파일) 또는 --login (창 띄워 직접)")
         if im.find_by_name(p.kor):
             raise SystemExit(f"imweb 에 `{p.kor}` 페이지가 이미 있다 — 신규 지역이 아니다.\n"
                              "  표기만 다른 기존 지역은 아닌지 확인하세요 (예: `수원1` ↔ imweb `수원`).")

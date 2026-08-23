@@ -53,9 +53,10 @@ def region_english(region_kor: str) -> tuple[str | None, bool]:
     돌려주는 값: (영문명, imweb 로그인 여부)
     영문명이 None 이면 **신규 지역이거나 로그인이 안 된 것** — 둘은 구분해야 한다.
     """
-    from imweb_client import ImwebClient
+    from imweb_client import ImwebClient, ensure_login
     with ImwebClient() as im:
-        if not im.logged_in():
+        # 끊겼으면 자격증명 파일로 스스로 붙어 본다(쿨다운이 무한 재시도를 막는다).
+        if not ensure_login(im):
             return None, False
         m = im.find_by_name(region_kor)
         if m and not str(m.get("url", "")).isdigit():
