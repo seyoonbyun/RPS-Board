@@ -2727,7 +2727,7 @@ export default function AdminPage() {
                     ))}
                   </select>
                   <p className="text-[10px] text-gray-400 mt-0.5">
-                    목록에 없으면 <span className="text-gray-600">지역 · 챕터 직접 수정</span> 탭에서 먼저 지역을 등록하세요
+                    목록에 없으면 위 <span className="text-gray-600">①</span> 에서 먼저 지역을 등록하세요
                   </p>
                 </div>
                 <div>
