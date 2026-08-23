@@ -395,8 +395,6 @@ export default function AdminPage() {
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showAddChapterDialog, setShowAddChapterDialog] = useState(false);
   const [boardSearch, setBoardSearch] = useState('');
-  const [newChapterName, setNewChapterName] = useState('');
-  const [newChapterRegion, setNewChapterRegion] = useState('');
   const [newRegionName, setNewRegionName] = useState('');
   // 지역 등록은 모 시트 한 줄로 끝나지 않는다 — RPS 시트·RPI 집계 행·QR·지역 로고·
   // imweb ALL/지역 페이지까지 만들어야 한다. 그 단계들이 쓰는 값이라 따로 받는다.
@@ -1357,7 +1355,7 @@ export default function AdminPage() {
               <Plus className="w-5 h-5 text-gray-700 mb-3" />
               <h3 className="font-bold text-gray-900 mb-2">지역 & 챕터 관리</h3>
               <p className="text-xs text-gray-500 leading-relaxed">
-                <span className="text-red-600 font-semibold">신규 챕터 런칭을 신청</span>하거나, 등록된 지역·챕터를 직접 수정합니다.
+                <span className="text-red-600 font-semibold">신규 지역·챕터 런칭을 신청</span>하거나, 등록된 지역·챕터를 정리합니다.
               </p>
             </div>
             <button className="mt-4 w-full border border-gray-300 hover:border-gray-500 text-gray-700 text-xs font-semibold py-2.5 px-4 rounded-md flex items-center justify-center gap-1 transition-colors bg-white">
@@ -2603,7 +2601,7 @@ export default function AdminPage() {
               지역 & 챕터 관리
             </DialogTitle>
             <DialogDescription className="text-gray-500">
-              신규 챕터 런칭을 신청하거나, 지역·챕터 목록을 직접 수정합니다
+              신규 지역·챕터 런칭을 신청하거나, 등록된 목록을 정리합니다
             </DialogDescription>
           </DialogHeader>
 
@@ -2611,7 +2609,7 @@ export default function AdminPage() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="launch" className="text-xs sm:text-sm">
                 <Rocket className="w-4 h-4 mr-1.5" />
-                신규 챕터 런칭 신청
+                신규 런칭 신청
               </TabsTrigger>
               <TabsTrigger value="manage" className="text-xs sm:text-sm">
                 <Wrench className="w-4 h-4 mr-1.5" />
@@ -2622,10 +2620,98 @@ export default function AdminPage() {
             {/* --- 탭 1: 런칭 신청 (네이티브 폼 → `신청 접수` 시트) --- */}
             <TabsContent value="launch" className="mt-4 space-y-3">
               <p className="text-xs text-gray-500 leading-relaxed">
-                런칭이 <span className="text-gray-700">확정된</span> 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
+                신청하면 RPS 시트 · RPI 집계 · QR · 페이지 생성이 순차적으로 진행됩니다.
                 접수 및 처리 결과는 담당자 연락처로 <span className="font-medium text-gray-700">문자(LMS)</span>가 발송되며,
                 페이지는 확인 후 게시됩니다.
+                <br />
+                <span className="text-gray-400">지역이 아직 없다면 ①을 먼저 등록하세요. 이미 있으면 ②만 하시면 됩니다.</span>
               </p>
+
+              {/* ① 신규 지역 — 챕터보다 먼저다. 지역이 없으면 챕터를 걸 곳이 없다 */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">① 신규 지역 등록 <span className="text-xs font-normal text-gray-400">— 지역이 처음 생길 때만</span></p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newRegionName}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setNewRegionName(v);
+                      // `Seoul Central 센트럴` 처럼 영문에 공백이 있을 수 있어 한글을 뒤에서 뗀다.
+                      const m = v.trim().match(/^(.*?)\s*([가-힣][가-힣0-9]*)$/);
+                      if (m) { setNewRegionEng(m[1].trim()); setNewRegionKor(m[2]); }
+                    }}
+                    placeholder="BNI Connect의 지역 표기명 (예: Suwon2 수원2)"
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">지역 영문명 *</label>
+                    <input
+                      type="text"
+                      value={newRegionEng}
+                      onChange={(e) => setNewRegionEng(e.target.value)}
+                      placeholder="Suwon2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-0.5">페이지 주소 · 시트 · QR 에 쓰입니다</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">지역 한글명 (페이지 표기) *</label>
+                    <input
+                      type="text"
+                      value={newRegionKor}
+                      onChange={(e) => setNewRegionKor(e.target.value)}
+                      placeholder="수원2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-0.5">RPI 메뉴에 보이는 이름입니다</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  등록하면 <span className="text-gray-700">RPS 시트 · RPI 집계 · QR · 지역 페이지</span> 생성이 순차 진행되고,
+                  진행 결과는 <span className="font-medium text-gray-700">문자(LMS)</span>로 안내됩니다.
+                  페이지는 확인 후 게시됩니다.
+                </p>
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                  disabled={regionSubmitting || !newRegionName.trim() || !newRegionEng.trim() || !newRegionKor.trim()}
+                  onClick={async () => {
+                    setRegionSubmitting(true);
+                    try {
+                      const resp = await apiRequest('POST', '/api/admin/add-region', {
+                        region: newRegionName.trim(),
+                        regionEng: newRegionEng.trim(),
+                        regionKor: newRegionKor.trim(),
+                        adminEmail: currentUser?.email || 'admin',
+                        ownerName: currentUser?.email?.split('@')[0] || '',
+                      });
+                      const data = await resp.json();
+                      if (data.success) {
+                        toast({ title: data.message, description: data.detail });
+                        queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
+                        setNewRegionName(''); setNewRegionEng(''); setNewRegionKor('');
+                      } else {
+                        alert(data.message || '지역 추가 실패');
+                      }
+                    } catch (err: any) {
+                      alert(err.message || '지역 추가 중 오류');
+                    } finally {
+                      setRegionSubmitting(false);
+                    }
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  {regionSubmitting ? '등록 중…' : '지역 등록'}
+                </Button>
+              </div>
+
+
+              {/* ② 신규 챕터 — 위에서 지역이 이미 있는 경우 */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">② 신규 챕터 런칭 신청</p>
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2789,8 +2875,12 @@ export default function AdminPage() {
             {/* --- 탭 2: 지역·챕터 직접 수정 (기존 기능) --- */}
             <TabsContent value="manage" className="mt-4 space-y-4">
               <p className="text-xs text-gray-500 leading-relaxed">
-                이미 등록된 지역·챕터의 표기를 고치거나 잘못 만든 항목을 지울 때 사용합니다.
-                <span className="text-red-600"> 신규 런칭은 왼쪽 신청 탭을 이용해 주세요.</span>
+                잘못 만든 지역·챕터를 지울 때 사용합니다.
+                <span className="text-red-600"> 신규 등록·런칭은 왼쪽 신청 탭에서 합니다.</span>
+                <br />
+                <span className="text-gray-400">
+                  삭제는 되돌릴 수 없고, 지역을 지우면 그 지역의 챕터도 함께 사라집니다.
+                </span>
               </p>
 
           {/* 기존 지역 목록 */}
@@ -2841,86 +2931,6 @@ export default function AdminPage() {
             </table>
           </div>
 
-          {/* 새 지역 추가 폼 */}
-          <div className="space-y-2 border-t pt-4">
-            <p className="text-sm font-medium text-gray-700">새 지역 등록</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newRegionName}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setNewRegionName(v);
-                  // `Seoul Central 센트럴` 처럼 영문에 공백이 있을 수 있어 한글을 뒤에서 뗀다.
-                  const m = v.trim().match(/^(.*?)\s*([가-힣][가-힣0-9]*)$/);
-                  if (m) { setNewRegionEng(m[1].trim()); setNewRegionKor(m[2]); }
-                }}
-                placeholder="BNI Connect의 지역 표기명 (예: Suwon2 수원2)"
-                className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">지역 영문명 *</label>
-                <input
-                  type="text"
-                  value={newRegionEng}
-                  onChange={(e) => setNewRegionEng(e.target.value)}
-                  placeholder="Suwon2"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-                <p className="text-[10px] text-gray-400 mt-0.5">페이지 주소 · 시트 · QR 에 쓰입니다</p>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">지역 한글명 (페이지 표기) *</label>
-                <input
-                  type="text"
-                  value={newRegionKor}
-                  onChange={(e) => setNewRegionKor(e.target.value)}
-                  placeholder="수원2"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-                <p className="text-[10px] text-gray-400 mt-0.5">RPI 메뉴에 보이는 이름입니다</p>
-              </div>
-            </div>
-            <p className="text-[11px] text-gray-500 leading-relaxed">
-              등록하면 <span className="text-gray-700">RPS 시트 · RPI 집계 · QR · 지역 페이지</span> 생성이 순차 진행되고,
-              진행 결과는 <span className="font-medium text-gray-700">문자(LMS)</span>로 안내됩니다.
-              페이지는 확인 후 게시됩니다.
-            </p>
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm"
-              disabled={regionSubmitting || !newRegionName.trim() || !newRegionEng.trim() || !newRegionKor.trim()}
-              onClick={async () => {
-                setRegionSubmitting(true);
-                try {
-                  const resp = await apiRequest('POST', '/api/admin/add-region', {
-                    region: newRegionName.trim(),
-                    regionEng: newRegionEng.trim(),
-                    regionKor: newRegionKor.trim(),
-                    adminEmail: currentUser?.email || 'admin',
-                    ownerName: currentUser?.email?.split('@')[0] || '',
-                  });
-                  const data = await resp.json();
-                  if (data.success) {
-                    toast({ title: data.message, description: data.detail });
-                    queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
-                    setNewRegionName(''); setNewRegionEng(''); setNewRegionKor('');
-                  } else {
-                    alert(data.message || '지역 추가 실패');
-                  }
-                } catch (err: any) {
-                  alert(err.message || '지역 추가 중 오류');
-                } finally {
-                  setRegionSubmitting(false);
-                }
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {regionSubmitting ? '등록 중…' : '지역 등록'}
-            </Button>
-          </div>
-
           {/* 기존 챕터 목록 */}
           <div className="border rounded-md max-h-48 overflow-y-auto">
             <table className="w-full text-sm">
@@ -2969,65 +2979,6 @@ export default function AdminPage() {
             </table>
           </div>
 
-          {/* 새 챕터 생성 폼 */}
-          <div className="border-t pt-4 mt-2 space-y-3">
-            <p className="text-sm font-medium text-gray-700">새 챕터 생성</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">지역 *</label>
-                <select
-                  value={newChapterRegion}
-                  onChange={(e) => setNewChapterRegion(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="">선택</option>
-                  {(regions as string[]).map((r: string) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">챕터명 *</label>
-                <input
-                  type="text"
-                  value={newChapterName}
-                  onChange={(e) => setNewChapterName(e.target.value)}
-                  placeholder="챕터명"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-            <Button
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
-              onClick={async () => {
-                if (!newChapterName.trim() || !newChapterRegion) {
-                  alert('챕터명과 지역을 모두 입력해주세요');
-                  return;
-                }
-                try {
-                  const resp = await apiRequest('POST', '/api/admin/add-chapter', {
-                    chapter: newChapterName.trim(),
-                    region: newChapterRegion,
-                    adminEmail: currentUser?.email || 'admin',
-                  });
-                  const data = await resp.json();
-                  if (data.success) {
-                    toast({ title: data.message });
-                    queryClient.invalidateQueries({ queryKey: ['/api/admin/chapters'] });
-                    setNewChapterName('');
-                    setNewChapterRegion('');
-                  } else {
-                    alert(data.message || '챕터 추가 실패');
-                  }
-                } catch (err: any) {
-                  alert(err.message || '챕터 추가 중 오류');
-                }
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              챕터 생성
-            </Button>
-          </div>
             </TabsContent>
           </Tabs>
         </DialogContent>

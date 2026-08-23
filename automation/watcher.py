@@ -109,6 +109,16 @@ def write_back(app: dict, region_eng: str, report_path: Path | None,
         fields["status"] = intake.ST_CREATED if ok else intake.ST_HOLD
         line = (f"생성 {'완료' if ok else '실패(검증 불통과)'} · "
                 f"리포트 {report_path.name}")
+        # 모 시트 `Master` B열(챕터 목록)에 넣는다. 예전엔 어드민의 `새 챕터 생성`
+        # 폼이 채웠는데 신규 런칭 신청과 겹쳐 없앴다(2026-08-23) → 여기가 유일한 경로다.
+        # ⚠ 실패해도 런칭 결과 기록을 막지 않는다. 목록은 나중에 채울 수 있다.
+        if ok and fields.get("chapter_eng"):
+            try:
+                import dropdowns
+                if dropdowns.master_add_chapter(fields["chapter_eng"]):
+                    line += f" · Master 챕터 목록 추가({fields['chapter_eng']})"
+            except Exception as e:                                  # noqa: BLE001
+                print(f"   ⚠ Master 챕터 목록 추가 실패 (수동 확인 필요): {e}")
     else:
         fields["status"] = intake.ST_HOLD
         line = f"중단 (rc={rc}) · {tail.strip().splitlines()[-1] if tail.strip() else ''}"

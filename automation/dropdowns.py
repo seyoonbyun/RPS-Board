@@ -175,5 +175,37 @@ def main() -> int:
     return 0
 
 
+# ---------------------------------------------------------------- 목록 채우기
+
+def master_add_chapter(eng: str, svc=None) -> bool:
+    """`Master` B열(챕터 목록)에 챕터 영문명을 넣는다. 이미 있으면 아무것도 안 한다.
+
+    ⚠ 이 함수가 필요해진 이유 — 예전엔 어드민의 `새 챕터 생성` 폼이 B열을 채웠는데,
+      그 폼이 신규 런칭 신청과 겹쳐서 없앴다(2026-08-23). 그대로 두면 **새 챕터가
+      목록에 영영 안 들어가** 드롭다운·필터가 낡는다. 런칭이 성공한 뒤 여기서 채운다.
+
+    ⚠ B열은 A열(지역)과 짝이 아니라 **독립된 목록**이다 → B열 첫 빈 칸에만 쓴다.
+    """
+    eng = (eng or "").strip()
+    if not eng:
+        return False
+    svc = svc or proclog._svc()
+    col = svc.spreadsheets().values().get(
+        spreadsheetId=SID, range="'Master'!B2:B2000",
+        valueRenderOption="FORMATTED_VALUE").execute().get("values", [])
+    have = [str(r[0]).strip() for r in col if r and str(r[0]).strip()]
+    if any(x.casefold() == eng.casefold() for x in have):
+        return False
+    row = 2 + len(col)
+    for i in range(len(col) - 1, -1, -1):
+        if col[i] and str(col[i][0]).strip():
+            row = i + 3
+            break
+    svc.spreadsheets().values().update(
+        spreadsheetId=SID, range=f"'Master'!B{row}",
+        valueInputOption="RAW", body={"values": [[eng]]}).execute()
+    return True
+
+
 if __name__ == "__main__":
     sys.exit(main())
