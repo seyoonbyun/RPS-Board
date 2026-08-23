@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
-r"""Airtable `런칭 신청` 테이블 읽기·쓰기 — watcher / pipeline 공용.
+r"""⛔ **더 이상 쓰지 않는다 (2026-08-23).** → `intake.py` (`신청 접수` 시트)
+
+접수 채널을 구글시트로 되돌렸다. 옮길 때 Airtable 레코드가 **0건**이라 이관 비용이
+없었고, 어드민에 끼워 둔 **임베드 iframe 이 페이지 로딩을 끌었다.**
+`watcher.py`·`finalize.py` 는 이제 `intake.py` 를 쓴다.
+
+이 파일과 `airtable_setup.py` 는 되돌릴 일이 생길 때를 위해 남겨 둔다 — 지우면
+스키마가 어땠는지 알 길이 없어진다. **새 코드에서 import 하지 말 것.**
+
+---
+
+(아래는 옛 설명)
+
+Airtable `런칭 신청` 테이블 읽기·쓰기 — watcher / pipeline 공용.
 
 접수 채널이 구글시트에서 Airtable 로 바뀌었다(2026-08-01).
 바뀐 것은 **입구뿐**이고 pipeline 본체는 그대로다.

@@ -40,6 +40,16 @@ RELAY_PS1 = Path(r"C:\Users\Gram\ObsidianBackup\report-backup-email.ps1")
 #: 문자 발송 설정 — 솔라피. 번호가 없으면 문자만 조용히 건너뛴다(이메일은 나간다).
 SOLAPI_CFG = "solapi.json"        # cred_dir() 안. {"api_key","api_secret","sender","to"}
 
+#: 대외 문자의 첫 줄. 받는 사람이 누구한테서 온 문자인지 모르면 스팸으로 읽힌다.
+GREETING = "안녕하세요 조이입니다 :)"
+
+#: **테스트 모드** — 켜져 있으면 남의 번호로 안 나가고 전부 내 번호로 온다.
+#: 끄려면 환경변수 `MYPT_SMS_LIVE=1`. 기본이 테스트인 이유는, 실수의 방향을
+#: "안 갔다"로 몰아두기 위해서다. 잘못 간 문자는 회수할 수 없다.
+def sms_test_mode() -> bool:
+    import os
+    return os.environ.get("MYPT_SMS_LIVE", "").strip() not in ("1", "true", "YES", "yes")
+
 
 class NotifyError(RuntimeError):
     pass
@@ -91,8 +101,47 @@ def _solapi_cfg() -> dict | None:
     return json.loads(f.read_text(encoding="utf-8"))
 
 
+def _euckr_len(s: str) -> int:
+    """솔라피는 길이를 **EUC-KR 바이트**로 센다 (한글 2 · 영문 1). 90 이 SMS 한계."""
+    return sum(2 if ord(c) > 127 else 1 for c in s)
+
+
+def _payload(text: str, to: str, cfg: dict) -> dict:
+    """SMS/LMS 를 길이로 갈라 준다.
+
+    ⚠ `type` 을 안 주면 90바이트를 넘는 본문이 잘려 나가거나 거부된다.
+      기존 런칭 문자는 짧아서 드러나지 않았다 — 문의 본문을 실어 보내면 바로 걸린다.
+    """
+    text = text.strip()
+    long = _euckr_len(text) > 90
+    if long:
+        # LMS 는 2000바이트. 자르더라도 **어디서 잘렸는지 보이게** 한다.
+        while _euckr_len(text) > 1990:
+            text = text[:-20]
+        text += "…"
+    msg = {
+        "to": re.sub(r"\D", "", to),
+        "from": re.sub(r"\D", "", cfg["sender"]),
+        "text": text,
+        "type": "LMS" if long else "SMS",
+    }
+    if long:
+        msg["subject"] = "RPS Board"
+    return msg
+
+
+def admin_phone() -> str:
+    """관리자(나) 번호. 모든 내부 보고 문자의 수신처."""
+    cfg = _solapi_cfg()
+    return (cfg or {}).get("to", "")
+
+
 def send_sms(text: str, to: str = "") -> bool:
     """솔라피 문자. 설정이 없으면 **조용히 건너뛴다**(아직 미구성 단계이므로).
+
+    `to` 를 주면 그 번호로, 안 주면 관리자 번호로 간다.
+    ⚠ **테스트 모드**(기본)에서는 `to` 가 무엇이든 관리자 번호로 돌린다.
+      원래 받았어야 할 번호는 본문 첫 줄에 붙여, 무엇이 어디로 갈 뻔했는지 보이게 한다.
 
     카카오 알림톡은 채널 연동+템플릿 승인이 끝난 뒤 여기서 kakaoOptions 만 얹으면 된다.
     """
@@ -102,6 +151,11 @@ def send_sms(text: str, to: str = "") -> bool:
     to = to or cfg.get("to", "")
     if not to:
         return False
+    if sms_test_mode():
+        mine = cfg.get("to", "")
+        if mine and re.sub(r"\D", "", to) != re.sub(r"\D", "", mine):
+            text = f"[테스트 · 원래 수신 {to}]\n{text}"
+        to = mine or to
     try:
         import hashlib
         import hmac
@@ -117,11 +171,8 @@ def send_sms(text: str, to: str = "") -> bool:
         r = requests.post(
             "https://api.solapi.com/messages/v4/send", timeout=30,
             headers={"Authorization": auth, "Content-Type": "application/json"},
-            data=json.dumps({"message": {
-                "to": re.sub(r"\D", "", to),
-                "from": re.sub(r"\D", "", cfg["sender"]),
-                "text": text[:2000],
-            }}, ensure_ascii=False).encode("utf-8"))
+            data=json.dumps({"message": _payload(text, to, cfg)},
+                            ensure_ascii=False).encode("utf-8"))
         if r.status_code >= 400:
             print(f"   [알림] 문자 실패 {r.status_code} {r.text[:200]}", file=sys.stderr)
             return False
@@ -129,6 +180,21 @@ def send_sms(text: str, to: str = "") -> bool:
     except Exception as e:                          # noqa: BLE001
         print(f"   [알림] 문자 실패: {e}", file=sys.stderr)
         return False
+
+
+def send_sms_public(body: str, to: str) -> bool:
+    """**대외 문자** — 담당자·문의자처럼 회사 밖 사람에게. 인사말이 앞에 붙는다.
+
+    번호가 없으면 보내지 않는다(빈 문자열로 관리자에게 새는 것을 막는다).
+    """
+    if not (to or "").strip():
+        return False
+    return send_sms(f"{GREETING}\n\n{body}", to=to)
+
+
+def send_sms_admin(body: str) -> bool:
+    """**내부 보고 문자** — 나에게. 인사말을 붙이지 않는다(나한테 인사할 일이 없다)."""
+    return send_sms(body, to=admin_phone())
 
 
 # ---------------------------------------------------------------- 파이프라인용
@@ -196,6 +262,7 @@ def main() -> None:
     print(f"릴레이 : {url[:60]}…  (정본 {RELAY_PS1.name})")
     cfg = _solapi_cfg()
     print(f"솔라피 : {'설정됨 → ' + cfg.get('to', '(수신번호 없음)') if cfg else '미설정 (문자 건너뜀)'}")
+    print(f"모드   : {'⚠ 테스트 — 모든 문자가 내 번호로 온다 (MYPT_SMS_LIVE=1 로 해제)' if sms_test_mode() else '실발송'}")
 
     if not a.test:
         print("\n--test 를 붙이면 실제로 1통 보냅니다.")

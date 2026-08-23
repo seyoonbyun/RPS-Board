@@ -29,7 +29,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // 신규 챕터 런칭 신청 폼 (Airtable) — base appmBdOMAhjhyATUI / 테이블 "런칭 신청"
-const LAUNCH_FORM_EMBED_URL = 'https://airtable.com/embed/appmBdOMAhjhyATUI/shrTOccgAqMfWtrmu';
 
 function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
   const [newContent, setNewContent] = useState('');
@@ -71,15 +70,36 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
     : allQuestions;
   const replies = posts.filter((p: any) => p.type === '답변');
 
+  // 문의 접수·답변 안내를 문자로 보내려면 번호가 필요한데 시트에 연락처 칸이 없었다.
+  // **처음 한 번만** 받아 Auth 시트에 저장한다 — 글 본문에는 남기지 않는다(지울 일이 없게).
+  const { data: myPhone = '', isLoading: phoneLoading } = useQuery({
+    queryKey: ['/api/admin/my-phone', currentUser?.email],
+    enabled: !!currentUser?.email,
+    queryFn: async () => {
+      const resp = await apiFetch(`/api/admin/my-phone?email=${encodeURIComponent(currentUser.email)}`);
+      if (!resp.ok) return '';
+      return (await resp.json()).phone || '';
+    },
+  });
+  const [phoneInput, setPhoneInput] = useState('');
+  const needPhone = !!currentUser?.email && !phoneLoading && !myPhone;
+
   const submitPost = async () => {
     if (!newContent.trim()) return;
+    const phone = phoneInput.replace(/\D/g, '');
+    if (needPhone && phone && !/^01\d{8,9}$/.test(phone)) {
+      alert('휴대폰 번호 형식을 확인해 주세요 (예: 01012345678)');
+      return;
+    }
     await apiFetch('/api/admin/board', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: newContent.trim() })
+      body: JSON.stringify({ email: currentUser?.email, name: currentUser?.email?.split('@')[0], role: adminPermission?.auth || 'Admin', content: newContent.trim(), phone })
     });
     setNewContent('');
+    setPhoneInput('');
     queryClient.invalidateQueries({ queryKey: ['/api/admin/board'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/my-phone', currentUser?.email] });
   };
 
   const deletePost = async (rowIndex: number) => {
@@ -230,9 +250,30 @@ function BoardWidget({ currentUser, adminPermission, boardSearch }: any) {
           </>
         )}
       </div>
-      <div className="p-3 border-t border-gray-100 flex gap-2">
-        <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문 (※ 챕터 런칭 신청은 위 신청서를 이용해 주세요)" className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
-        <button onClick={submitPost} className="text-xs bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 whitespace-nowrap">등록</button>
+      <div className="p-3 border-t border-gray-100 space-y-2">
+        <div className="flex gap-2">
+          <input value={newContent} onChange={(e) => setNewContent(e.target.value)} placeholder="수정 건의 또는 질문 (※ 챕터 런칭 신청은 위 신청서를 이용해 주세요)" className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2" onKeyDown={(e) => e.key === 'Enter' && submitPost()} />
+          <button onClick={submitPost} className="text-xs bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 whitespace-nowrap">등록</button>
+        </div>
+        {needPhone && (
+          <div className="flex items-center gap-2">
+            <input
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="휴대폰 번호 (예: 01012345678)"
+              className="flex-1 text-xs border border-gray-300 rounded-md px-3 py-2"
+              onKeyDown={(e) => e.key === 'Enter' && submitPost()}
+            />
+            <span className="text-[10px] text-gray-500 whitespace-nowrap">
+              처음 한 번만 — 접수·답변을 문자로 안내드립니다
+            </span>
+          </div>
+        )}
+        {!needPhone && myPhone && (
+          <p className="text-[10px] text-gray-400">
+            접수·답변 안내 문자를 <span className="text-gray-600">{myPhone}</span> 으로 보내드립니다
+          </p>
+        )}
       </div>
     </div>
   );
@@ -357,6 +398,13 @@ export default function AdminPage() {
   const [newChapterName, setNewChapterName] = useState('');
   const [newChapterRegion, setNewChapterRegion] = useState('');
   const [newRegionName, setNewRegionName] = useState('');
+  // 지역 등록은 모 시트 한 줄로 끝나지 않는다 — RPS 시트·RPI 집계 행·QR·지역 로고·
+  // imweb ALL/지역 페이지까지 만들어야 한다. 그 단계들이 쓰는 값이라 따로 받는다.
+  //  · 영문명  imweb 주소(`/Suwon2`)·호버 영문(`sub_name`)·시트/QR 슬러그
+  //  · 한글명  imweb 페이지 표시명. **모 시트 표기와 다를 수 있다**(모 시트 `Suwon1 수원1` ↔ imweb `수원`)
+  const [newRegionEng, setNewRegionEng] = useState('');
+  const [newRegionKor, setNewRegionKor] = useState('');
+  const [regionSubmitting, setRegionSubmitting] = useState(false);
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
@@ -1024,15 +1072,39 @@ export default function AdminPage() {
   const activeUsers = allUsers?.filter(user => user.status !== '탈퇴') || [];
   const withdrawnUsers = allUsers?.filter(user => user.status === '탈퇴') || [];
 
-  // 런칭 신청 폼(Airtable) — 담당자 이름만 미리 채운다.
-  // 런칭 지역/챕터는 신규일 수 있어 자동 입력하지 않는다.
+  // 런칭 신청 폼 — 2026-08-23 Airtable 임베드를 걷어내고 네이티브 폼으로 바꿨다.
+  // iframe 이 어드민 로딩을 끌었고, 로그인한 담당자 정보를 못 채워 매번 손으로 적어야 했다.
   const launchApplicantName =
     allUsers?.find(user => user.email === currentUser?.email)?.memberName || '';
-  const launchFormUrl =
-    LAUNCH_FORM_EMBED_URL +
-    (launchApplicantName
-      ? `?prefill_${encodeURIComponent('담당자')}=${encodeURIComponent(launchApplicantName)}`
-      : '');
+  const [launchRegion, setLaunchRegion] = useState('');
+  const [launchChapter, setLaunchChapter] = useState('');
+  const [launchDate, setLaunchDate] = useState('');
+  const [launchConnectOk, setLaunchConnectOk] = useState(false);
+  const [launchNote, setLaunchNote] = useState('');
+  const [launchPhone, setLaunchPhone] = useState('');
+  const [launchSubmitting, setLaunchSubmitting] = useState(false);
+
+  // 내 연락처 — 있으면 폼에서 다시 묻지 않는다
+  const { data: launchMyPhone = '' } = useQuery({
+    queryKey: ['/api/admin/my-phone', currentUser?.email],
+    enabled: !!currentUser?.email,
+    queryFn: async () => {
+      const resp = await apiFetch(`/api/admin/my-phone?email=${encodeURIComponent(currentUser!.email)}`);
+      if (!resp.ok) return '';
+      return (await resp.json()).phone || '';
+    },
+  });
+
+  // 접수 현황 — 신청한 뒤 어디까지 됐는지 같은 화면에서 보이게
+  const { data: intakeRows = [] } = useQuery({
+    queryKey: ['/api/admin/intake'],
+    queryFn: async () => {
+      const resp = await apiFetch('/api/admin/intake');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+    refetchInterval: 60000,
+  });
   
   // 필터링된 활성 사용자 목록
   const filteredActiveUsers = activeUsers.filter(user => {
@@ -2541,18 +2613,171 @@ export default function AdminPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* --- 탭 1: 런칭 신청 (Airtable 폼) --- */}
-            <TabsContent value="launch" className="mt-4">
-              <p className="text-xs text-gray-500 leading-relaxed mb-3">
-                런칭이 확정된 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
-                접수 및 처리 결과는 신청서에 남겨 주신 담당자 연락처로 <span className="font-medium text-gray-700">문자(LMS)</span>가 발송됩니다.
+            {/* --- 탭 1: 런칭 신청 (네이티브 폼 → `신청 접수` 시트) --- */}
+            <TabsContent value="launch" className="mt-4 space-y-3">
+              <p className="text-xs text-gray-500 leading-relaxed">
+                런칭이 <span className="text-gray-700">확정된</span> 챕터를 신청하면 RPS 시트 · QR · 챕터 페이지 생성이 순차적으로 진행됩니다.
+                접수 및 처리 결과는 담당자 연락처로 <span className="font-medium text-gray-700">문자(LMS)</span>가 발송되며,
+                페이지는 확인 후 게시됩니다.
               </p>
-              <iframe
-                title="신규 챕터 런칭 신청서"
-                src={launchFormUrl}
-                className="w-full border border-gray-200 rounded-md bg-white"
-                style={{ height: '60vh' }}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">지역 *</label>
+                  <select
+                    value={launchRegion}
+                    onChange={(e) => setLaunchRegion(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="">선택</option>
+                    {(regions as string[]).map((r: string) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    목록에 없으면 <span className="text-gray-600">지역 · 챕터 직접 수정</span> 탭에서 먼저 지역을 등록하세요
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">챕터명 (한글) *</label>
+                  <input
+                    type="text"
+                    value={launchChapter}
+                    onChange={(e) => setLaunchChapter(e.target.value)}
+                    placeholder="시그니아"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    영문명은 BNI Connect 에서 자동으로 확인합니다
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">런칭 예정일 *</label>
+                  <input
+                    type="date"
+                    value={launchDate}
+                    onChange={(e) => setLaunchDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">시트·페이지 비밀번호가 이 날짜에서 나옵니다</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    담당자 연락처 {launchMyPhone ? '' : '*'}
+                  </label>
+                  <input
+                    type="text"
+                    value={launchPhone || launchMyPhone}
+                    onChange={(e) => setLaunchPhone(e.target.value)}
+                    placeholder="01012345678"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {launchMyPhone ? '등록된 번호입니다 — 바꾸려면 수정하세요' : '처음 한 번만 — 이후 자동으로 채워집니다'}
+                  </p>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={launchConnectOk}
+                  onChange={(e) => setLaunchConnectOk(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                BNI Connect 지원서 등록이 완료되었습니다
+                <span className="text-gray-400">(미완료면 멤버 명단을 받을 수 없습니다)</span>
+              </label>
+
+              <input
+                type="text"
+                value={launchNote}
+                onChange={(e) => setLaunchNote(e.target.value)}
+                placeholder="비고 (선택)"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
               />
+
+              <Button
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                disabled={launchSubmitting || !launchRegion || !launchChapter.trim() || !launchDate}
+                onClick={async () => {
+                  const contact = (launchPhone || launchMyPhone || '').replace(/\D/g, '');
+                  if (contact && !/^01\d{8,9}$/.test(contact)) {
+                    alert('휴대폰 번호 형식을 확인해 주세요 (예: 01012345678)');
+                    return;
+                  }
+                  setLaunchSubmitting(true);
+                  try {
+                    const resp = await apiRequest('POST', '/api/admin/launch-request', {
+                      region: launchRegion,
+                      chapter: launchChapter.trim(),
+                      launch: launchDate,
+                      owner: launchApplicantName || currentUser?.email?.split('@')[0] || '',
+                      email: currentUser?.email || '',
+                      phone: contact,
+                      connectOk: launchConnectOk,
+                      note: launchNote.trim(),
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                      toast({ title: data.message, description: data.detail });
+                      setLaunchChapter(''); setLaunchDate('');
+                      setLaunchConnectOk(false); setLaunchNote('');
+                      queryClient.invalidateQueries({ queryKey: ['/api/admin/intake'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/admin/my-phone', currentUser?.email] });
+                    } else {
+                      alert(data.message || '신청 실패');
+                    }
+                  } catch (err: any) {
+                    alert(err.message || '신청 중 오류');
+                  } finally {
+                    setLaunchSubmitting(false);
+                  }
+                }}
+              >
+                <Rocket className="w-4 h-4 mr-2" />
+                {launchSubmitting ? '접수 중…' : '런칭 신청'}
+              </Button>
+
+              {/* 접수 현황 — 신청한 뒤 어디까지 됐는지 */}
+              {(intakeRows as any[]).length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-xs font-medium text-gray-700 mb-2">최근 접수 현황</p>
+                  <div className="border rounded-md max-h-44 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="text-left px-2 py-1.5 font-medium text-gray-600">구분</th>
+                          <th className="text-left px-2 py-1.5 font-medium text-gray-600">대상</th>
+                          <th className="text-left px-2 py-1.5 font-medium text-gray-600">런칭일</th>
+                          <th className="text-left px-2 py-1.5 font-medium text-gray-600">상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(intakeRows as any[]).map((x: any) => (
+                          <tr key={x.row} className="border-t">
+                            <td className="px-2 py-1.5 text-gray-500">{x.kind}</td>
+                            <td className="px-2 py-1.5">
+                              {x.kind === '지역' ? x.regionKor : `${x.regionKor} ${x.chapterKor}`}
+                            </td>
+                            <td className="px-2 py-1.5 text-gray-500">{x.launch || '-'}</td>
+                            <td className="px-2 py-1.5">
+                              <span className={
+                                x.status === '게시완료' ? 'text-green-600'
+                                  : x.status === '보류' ? 'text-red-600'
+                                  : 'text-gray-600'
+                              }>{x.status || '대기'}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             {/* --- 탭 2: 지역·챕터 직접 수정 (기존 기능) --- */}
@@ -2611,40 +2836,83 @@ export default function AdminPage() {
           </div>
 
           {/* 새 지역 추가 폼 */}
-          <div className="space-y-2">
+          <div className="space-y-2 border-t pt-4">
+            <p className="text-sm font-medium text-gray-700">새 지역 등록</p>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newRegionName}
-                onChange={(e) => setNewRegionName(e.target.value)}
-                placeholder="BNI Connect의 지역 표기명을 등록해주세요"
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setNewRegionName(v);
+                  // `Seoul Central 센트럴` 처럼 영문에 공백이 있을 수 있어 한글을 뒤에서 뗀다.
+                  const m = v.trim().match(/^(.*?)\s*([가-힣][가-힣0-9]*)$/);
+                  if (m) { setNewRegionEng(m[1].trim()); setNewRegionKor(m[2]); }
+                }}
+                placeholder="BNI Connect의 지역 표기명 (예: Suwon2 수원2)"
                 className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
               />
-              <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4"
-                disabled={!newRegionName.trim()}
-                onClick={async () => {
-                  try {
-                    const resp = await apiRequest('POST', '/api/admin/add-region', {
-                      region: newRegionName.trim(),
-                    });
-                    const data = await resp.json();
-                    if (data.success) {
-                      toast({ title: data.message });
-                      queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
-                      setNewRegionName('');
-                    } else {
-                      alert(data.message || '지역 추가 실패');
-                    }
-                  } catch (err: any) {
-                    alert(err.message || '지역 추가 중 오류');
-                  }
-                }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                추가
-              </Button>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">지역 영문명 *</label>
+                <input
+                  type="text"
+                  value={newRegionEng}
+                  onChange={(e) => setNewRegionEng(e.target.value)}
+                  placeholder="Suwon2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <p className="text-[10px] text-gray-400 mt-0.5">페이지 주소 · 시트 · QR 에 쓰입니다</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">지역 한글명 (페이지 표기) *</label>
+                <input
+                  type="text"
+                  value={newRegionKor}
+                  onChange={(e) => setNewRegionKor(e.target.value)}
+                  placeholder="수원2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                <p className="text-[10px] text-gray-400 mt-0.5">RPI 메뉴에 보이는 이름입니다</p>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              등록하면 <span className="text-gray-700">RPS 시트 · RPI 집계 · QR · 지역 페이지</span> 생성이 순차 진행되고,
+              진행 결과는 <span className="font-medium text-gray-700">문자(LMS)</span>로 안내됩니다.
+              페이지는 확인 후 게시됩니다.
+            </p>
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              disabled={regionSubmitting || !newRegionName.trim() || !newRegionEng.trim() || !newRegionKor.trim()}
+              onClick={async () => {
+                setRegionSubmitting(true);
+                try {
+                  const resp = await apiRequest('POST', '/api/admin/add-region', {
+                    region: newRegionName.trim(),
+                    regionEng: newRegionEng.trim(),
+                    regionKor: newRegionKor.trim(),
+                    adminEmail: currentUser?.email || 'admin',
+                    ownerName: currentUser?.email?.split('@')[0] || '',
+                  });
+                  const data = await resp.json();
+                  if (data.success) {
+                    toast({ title: data.message, description: data.detail });
+                    queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
+                    setNewRegionName(''); setNewRegionEng(''); setNewRegionKor('');
+                  } else {
+                    alert(data.message || '지역 추가 실패');
+                  }
+                } catch (err: any) {
+                  alert(err.message || '지역 추가 중 오류');
+                } finally {
+                  setRegionSubmitting(false);
+                }
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              {regionSubmitting ? '등록 중…' : '지역 등록'}
+            </Button>
           </div>
 
           {/* 기존 챕터 목록 */}

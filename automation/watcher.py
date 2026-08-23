@@ -5,13 +5,12 @@ r"""런칭 신청 감시 — 새 신청이 들어오면 파이프라인을 띄�
     python watcher.py --run            # 신규 건을 dry-run 으로 돌려 계획을 찍는다
     python watcher.py --run --apply    # 실제 생성까지 (게시는 하지 않는다)
 
-접수 채널 = **Airtable** `런칭 신청` 테이블 (2026-08-01 구글시트에서 이관).
-담당자는 RPS Board `/admin` → 지역 & 챕터 관리 → [신규 챕터 런칭 신청] 탭에서
-폼으로 제출한다. `런칭 버튼 활성화 = YES` 인 건만 처리 대상이다.
+접수 채널 = 모 시트 **`신청 접수`** 탭 (2026-08-23 Airtable 에서 되돌렸다 — 레코드 0건이라
+이관 비용이 없었고, 임베드 iframe 이 어드민 로딩을 끌었다).
+담당자는 RPS Board `/admin` → 지역 & 챕터 관리 → [신규 챕터 런칭 신청] 에서
+**네이티브 폼**으로 제출한다. `활성화 = YES` 인 건만 처리 대상이다.
 
-처리 이력은 **Airtable `처리 상태`·`처리 로그` 필드**에 남긴다.
-구글시트 때는 남의 시트라 로컬 `launch_state.json` 에 따로 뒀지만, 이 테이블은
-우리 것이라 상태를 한 곳에만 두는 편이 낫다.
+처리 이력은 같은 행의 `처리상태`·`처리로그` 열에 남긴다 — 상태가 한 곳에만 있다.
 
 ⚠ 신청서에는 **한글 이름만** 있다. imweb·시트·QR 은 전부 영문명을 쓴다.
    - 지역: 기존 지역이면 imweb 지역 페이지의 url 이 곧 영문명이다.
@@ -41,7 +40,7 @@ except Exception:
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-import airtable_client as at                    # noqa: E402
+import intake                                   # noqa: E402
 import paths                                    # noqa: E402
 
 SNAP = paths.snap_dir()
@@ -96,38 +95,38 @@ def run_pipeline(app: dict, region_eng: str, apply: bool) -> tuple[int, str, Pat
 
 def write_back(app: dict, region_eng: str, report_path: Path | None,
                rc: int, tail: str) -> None:
-    """실행 결과를 Airtable 로 되돌려 쓴다."""
+    """실행 결과를 `신청 접수` 시트로 되돌려 쓴다."""
     stamp = f"{datetime.now():%Y-%m-%d %H:%M}"
-    fields = {at.F_REGION_ENG: region_eng}
+    fields = {"region_eng": region_eng}
 
     if report_path and report_path.exists():
         data = json.loads(report_path.read_text(encoding="utf-8"))
         plan = data.get("plan", {})
         ok = data.get("report", {}).get("ok")
-        fields[at.F_CHAPTER_ENG] = plan.get("chapter_eng", "")
-        fields[at.F_SHEET] = plan.get("chapter_sheet", "")
-        fields[at.F_PAGE] = plan.get("chapter_page_name", "")
-        fields[at.F_STATUS] = at.ST_CREATED if ok else at.ST_HOLD
-        line = (f"{stamp}  생성 {'완료' if ok else '실패(검증 불통과)'} · "
+        fields["chapter_eng"] = plan.get("chapter_eng", "")
+        fields["sheet"] = plan.get("chapter_sheet", "")
+        fields["page"] = plan.get("chapter_page_name", "")
+        fields["status"] = intake.ST_CREATED if ok else intake.ST_HOLD
+        line = (f"생성 {'완료' if ok else '실패(검증 불통과)'} · "
                 f"리포트 {report_path.name}")
     else:
-        fields[at.F_STATUS] = at.ST_HOLD
-        line = f"{stamp}  중단 (rc={rc}) · {tail.strip().splitlines()[-1] if tail.strip() else ''}"
+        fields["status"] = intake.ST_HOLD
+        line = f"중단 (rc={rc}) · {tail.strip().splitlines()[-1] if tail.strip() else ''}"
 
-    at.update(app["id"], fields)
-    at.append_log(app["id"], line, app["log"])
-    print(f"   → Airtable 기록: {fields.get(at.F_STATUS)} / {line}")
+    intake.update(app["row"], log=line, **fields)
+    print(f"   → 접수 시트 {app['row']}행: {fields.get('status')} / {stamp} {line}")
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="런칭 신청 감시 (Airtable)")
+    ap = argparse.ArgumentParser(description="챕터 런칭 신청 감시 (`신청 접수` 시트)")
     ap.add_argument("--run", action="store_true", help="신규 건에 파이프라인을 돌린다")
     ap.add_argument("--apply", action="store_true", help="실제 생성 (게시는 안 함)")
     ap.add_argument("--all", action="store_true", help="처리 상태를 무시하고 전부 대상")
     a = ap.parse_args()
 
-    apps = at.applications()
-    todo = [x for x in apps if x["active"]] if a.all else at.pending(apps)
+    apps = [x for x in intake.applications() if x["kind"] == intake.KIND_CHAPTER]
+    todo = ([x for x in apps if x["active"]] if a.all
+            else intake.pending(intake.KIND_CHAPTER, apps))
 
     print(f"신청 {len(apps)}건 · 런칭버튼 YES {sum(1 for x in apps if x['active'])}건 "
           f"· 미처리 {len(todo)}건\n")

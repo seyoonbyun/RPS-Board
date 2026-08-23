@@ -911,15 +911,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin API: Create board post (question/request)
+  //
+  // 글이 올라오면 **문의자에게 접수 문자 · 나에게 알림 문자**가 나가야 하는데,
+  // 솔라피 키가 서버에 없다(로컬 워커만 갖고 있다). 그래서 여기서는 대장에 행만 열고,
+  // 문자는 `automation/board_watch.py` 가 3분마다 집어가 보낸다.
   app.post("/api/admin/board", async (req, res) => {
     try {
-      const { email, name, role, content } = req.body;
+      const { email, name, role, content, phone } = req.body;
       if (!content?.trim()) return res.status(400).json({ message: "내용을 입력해주세요" });
       const sheetsService = getGoogleSheetsService();
       if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
-      await sheetsService.addBoardPost(email, name, role, '요청', content.trim());
+
+      // 연락처는 **Auth 시트에만** 저장한다. 게시글 본문에 남기지 않는 이유는,
+      // 본문에 남기면 확인 후 지워야 하고 잊으면 전 지역 담당자에게 보이기 때문이다.
+      let saved = '';
+      if (phone?.trim() && email) {
+        saved = (await sheetsService.setContactPhone(email, phone.trim())) ? phone.trim() : '';
+      }
+
+      const rowNo = await sheetsService.addBoardPost(email, name, role, '요청', content.trim());
+      if (rowNo > 0) {
+        await sheetsService.openProcessRow({
+          flow: '게시판',
+          key: `게시판 #${rowNo}`,
+          owner: name || email,
+          email,
+          phone: saved || await sheetsService.getContactPhone(email),
+          body: content.trim(),
+          status: '접수',
+        });
+      }
       sheetsService.logAdminActivity(email, '게시판 글 작성', content.trim().substring(0, 50));
-      res.json({ success: true, message: "등록되었습니다" });
+      res.json({ success: true, message: "등록되었습니다 — 확인 후 안내드리겠습니다" });
     } catch (error: any) {
       res.status(500).json({ message: "게시글 등록 실패" });
     }
@@ -1021,18 +1044,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin API: Add region to Master sheet
+  //
+  // 모 시트에 한 줄 넣는 것으로 끝나지 않는다. 지역 하나가 실제로 쓰이려면
+  // RPS 시트 · RPI 집계 행 · QR · 지역 로고 · imweb ALL/지역 페이지가 다 있어야 하는데,
+  // 그것들은 예전엔 **신규 챕터가 런칭할 때만** 곁다리로 만들어졌다(안양이 넉 달간 빠진 이유).
+  //
+  // imweb 쓰기는 사람이 로그인해 둔 브라우저 프로필로만 되므로 서버리스에서 못 한다.
+  // → 여기서는 **접수만** 하고(대장 `rps new account` 에 행을 연다),
+  //   로컬 워커 `automation/region_watch.py` 가 3분마다 집어가 생성한다.
   app.post("/api/admin/add-region", async (req, res) => {
     try {
-      const { region } = req.body;
+      const { region, regionEng, regionKor, ownerPhone, ownerName, adminEmail } = req.body;
       if (!region) return res.status(400).json({ message: "지역명은 필수입니다" });
       const sheetsService = getGoogleSheetsService();
       if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+
+      const label = region.trim();
       const existing = await sheetsService.getRegionsFromMaster();
-      if (existing.includes(region.trim())) return res.status(409).json({ message: `'${region}' 지역이 이미 존재합니다` });
-      await sheetsService.addRegionToMaster(region.trim());
-      res.json({ success: true, message: `'${region}' 지역이 등록되었습니다` });
+      if (existing.includes(label)) return res.status(409).json({ message: `'${label}' 지역이 이미 존재합니다` });
+
+      // `Seoul Central 센트럴` 처럼 영문에 공백이 있을 수 있다 → 한글 부분을 뒤에서 떼어낸다.
+      const m = label.match(/^(.*?)\s*([가-힣][가-힣0-9]*)$/);
+      const eng = (regionEng || m?.[1] || '').trim();
+      const kor = (regionKor || m?.[2] || '').trim();
+      if (!eng || !/^[A-Za-z][A-Za-z0-9 ]*$/.test(eng)) {
+        return res.status(400).json({
+          message: `지역 영문명을 확정하지 못했습니다 (받은 값: '${eng}'). 영문명을 직접 입력해 주세요` });
+      }
+      if (!kor) {
+        return res.status(400).json({ message: "지역 한글명(imweb 페이지 표기)이 필요합니다" });
+      }
+
+      await sheetsService.addRegionToMaster(label);
+
+      // 지역 페이지 비밀번호 = **랜덤 4자리**(챕터는 런칭일 MMDD 지만 지역은 규칙이 없다).
+      // ⛔ imweb 은 비번을 bcrypt 로 저장해 되읽을 수 없다 → 여기서 정해 대장에 남긴다.
+      const pw = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      const key = `지역 ${label}`;
+      const actor = adminEmail || 'admin';
+      let phone = (ownerPhone || '').replace(/\D/g, '');
+      if (!phone && adminEmail) phone = await sheetsService.getContactPhone(adminEmail);
+
+      // 입구(`신청 접수`) 와 처리 대장(`rps new account`) 둘 다 연다.
+      // 입구 = 무엇을 요청했나 · 대장 = 어디까지 됐고 문자가 나갔나.
+      const intakeRow = await sheetsService.addIntakeRow({
+        kind: '지역',
+        regionKor: label, regionEng: eng,
+        owner: ownerName || actor, email: actor, phone,
+        active: true,
+        note: `pw=${pw}`,
+      });
+      const rowNo = await sheetsService.openProcessRow({
+        flow: '지역등록',
+        key,
+        owner: ownerName || actor,
+        email: actor,
+        phone,
+        body: `imweb=${kor} | url=${eng} | pw=${pw}`,
+        status: '접수',
+      });
+      console.log(`📥 지역 접수: 신청 ${intakeRow}행 / 대장 ${rowNo}행`);
+
+      sheetsService.logAdminActivity(actor, '신규 지역 등록', `${label} (imweb: ${kor} /${eng})`);
+      sheetsService.logChapterActivity(actor, '신규 지역 등록', `지역: ${label}`);
+
+      res.json({
+        success: true,
+        message: `'${label}' 지역이 등록되었습니다 — 시트·QR·페이지 생성이 접수되었습니다`,
+        queued: rowNo > 0,
+        detail: rowNo > 0
+          ? "생성 진행 상황은 문자로 안내되며, 페이지는 확인 후 게시됩니다."
+          : "⚠ 목록에는 추가됐지만 생성 접수에 실패했습니다. 담당자에게 알려주세요.",
+      });
     } catch (error: any) {
+      console.error("❌ Error adding region:", error);
       res.status(500).json({ message: "지역 추가 중 오류" });
+    }
+  });
+
+  // Admin API: 신규 챕터 런칭 신청 (네이티브 폼 → `신청 접수` 시트)
+  //
+  // 2026-08-23 Airtable 임베드 폼을 걷어냈다. iframe 이 어드민 로딩을 끌었고,
+  // 로그인한 담당자 정보를 못 채워 매번 손으로 적어야 했다.
+  // ⚠ 챕터 영문명은 **받지 않는다.** 파이프라인이 BNI Connect 추출에서 역산한다 —
+  //   오기가 시트명·QR 슬러그·페이지 url 에 전부 번지기 때문이다.
+  app.post("/api/admin/launch-request", async (req, res) => {
+    try {
+      const { region, chapter, launch, owner, email, phone, connectOk, note } = req.body;
+      if (!region?.trim() || !chapter?.trim()) {
+        return res.status(400).json({ message: "지역과 챕터명은 필수입니다" });
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test((launch || '').trim())) {
+        // 런칭일이 없으면 챕터 시트·페이지 비밀번호(MMDD)를 정할 수 없다.
+        return res.status(400).json({ message: "런칭 예정일을 YYYY-MM-DD 로 입력해 주세요" });
+      }
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+
+      let contact = (phone || '').trim();
+      if (contact) await sheetsService.setContactPhone(email, contact, owner);
+      if (!contact && email) contact = await sheetsService.getContactPhone(email);
+
+      const rowNo = await sheetsService.addIntakeRow({
+        kind: '챕터',
+        regionKor: region.trim(),
+        chapterKor: chapter.trim(),
+        launch: launch.trim(),
+        owner: owner || email || '',
+        email: email || '',
+        phone: contact,
+        connectOk: !!connectOk,
+        // 담당자가 낸 신청은 곧 런칭 확정 건이다. 확정 전이면 접수하지 않는 게 맞다 —
+        // imweb 은 삭제 API 가 없어 잘못 만든 페이지를 되돌릴 수 없다.
+        active: true,
+        note: (note || '').trim(),
+      });
+      if (!rowNo) return res.status(500).json({ message: "접수 기록에 실패했습니다" });
+
+      sheetsService.logAdminActivity(email || 'admin', '챕터 런칭 신청',
+        `${region.trim()} ${chapter.trim()} · 런칭 ${launch.trim()}`);
+      res.json({
+        success: true,
+        message: `'${chapter.trim()}' 챕터 런칭 신청이 접수되었습니다`,
+        detail: contact
+          ? "처리 결과는 문자(LMS)로 안내드립니다. 페이지는 확인 후 게시됩니다."
+          : "⚠ 연락처가 없어 문자 안내를 받지 못합니다. 연락처를 남겨 주세요.",
+        row: rowNo,
+      });
+    } catch (error: any) {
+      console.error("❌ Error creating launch request:", error);
+      res.status(500).json({ message: "런칭 신청 중 오류가 발생했습니다" });
+    }
+  });
+
+  // Admin API: 신청 접수 현황 (지역·챕터 공통)
+  app.get("/api/admin/intake", async (req, res) => {
+    try {
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      res.json(await sheetsService.getIntakeRows(50));
+    } catch (error: any) {
+      res.status(500).json({ message: "접수 현황 조회 실패" });
+    }
+  });
+
+  // Admin API: 내 연락처 조회 (게시판 문의 접수 문자용)
+  app.get("/api/admin/my-phone", async (req, res) => {
+    try {
+      const email = (req.query.email || '').toString().trim();
+      if (!email) return res.status(400).json({ message: "이메일이 필요합니다" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      res.json({ phone: await sheetsService.getContactPhone(email) });
+    } catch (error: any) {
+      res.status(500).json({ message: "연락처 조회 실패" });
+    }
+  });
+
+  // Admin API: 내 연락처 저장 (Auth 시트 F열. 게시글 본문에는 남기지 않는다)
+  app.post("/api/admin/my-phone", async (req, res) => {
+    try {
+      const { email, phone } = req.body;
+      if (!email || !phone) return res.status(400).json({ message: "이메일과 연락처가 필요합니다" });
+      const sheetsService = getGoogleSheetsService();
+      if (!sheetsService) return res.status(500).json({ message: "구글 시트 서비스 초기화 실패" });
+      const ok = await sheetsService.setContactPhone(email, phone);
+      if (!ok) return res.status(400).json({ message: "저장 실패 — 휴대폰 번호 형식(01012345678)을 확인해 주세요" });
+      res.json({ success: true, message: "연락처가 저장되었습니다" });
+    } catch (error: any) {
+      res.status(500).json({ message: "연락처 저장 실패" });
     }
   });
 

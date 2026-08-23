@@ -2365,10 +2365,14 @@ export class GoogleSheetsService {
       const data = await response.json();
       const rows = data.values || [];
       
-      const regions = rows
-        .filter((row: any) => row && row[0] && row[0].toString().trim())
-        .map((row: any) => row[0].toString().trim());
-      
+      // 중복 제거 + 가나다/알파벳 정렬. 시트가 더러워도 드롭다운은 깨끗해야 한다 —
+      // 같은 지역이 두 번 뜨면 담당자가 아무거나 고르고, 그게 표기 불일치로 번진다.
+      const regions = Array.from(new Set<string>(
+        rows
+          .filter((row: any) => row && row[0] && row[0].toString().trim())
+          .map((row: any) => row[0].toString().trim() as string)
+      )).sort((a: string, b: string) => a.localeCompare(b, 'ko'));
+
       console.log(`📋 Regions from Master sheet: ${regions.length} items`);
       return regions;
     } catch (error) {
@@ -2403,10 +2407,12 @@ export class GoogleSheetsService {
       const data = await response.json();
       const rows = data.values || [];
       
-      const chapters = rows
-        .filter((row: any) => row && row[0] && row[0].toString().trim())
-        .map((row: any) => row[0].toString().trim());
-      
+      const chapters = Array.from(new Set<string>(
+        rows
+          .filter((row: any) => row && row[0] && row[0].toString().trim())
+          .map((row: any) => row[0].toString().trim() as string)
+      )).sort((a: string, b: string) => a.localeCompare(b, 'ko'));
+
       console.log(`📋 Chapters from Master sheet: ${chapters.length} items`);
       return chapters;
     } catch (error) {
@@ -2595,30 +2601,45 @@ export class GoogleSheetsService {
     }
   }
 
-  async addRegionToMaster(region: string): Promise<void> {
+  /**
+   * `Master` A열(지역)·B열(챕터) 은 **서로 짝이 아니라 각각 독립된 목록**이다.
+   * A열 n번째 행과 B열 n번째 행 사이에는 아무 관계가 없다.
+   *
+   * ⛔ 예전엔 둘 다 `A:B:append` 로 `[지역, 챕터]` 한 행을 통째로 붙였다. 그래서
+   *   **챕터를 하나 만들 때마다 그 지역이 A열에 또 쌓였고**, 어드민 드롭다운에
+   *   같은 지역이 두세 번 떴다(2026-08-23 정리 시점 30칸 중 8칸이 중복).
+   *   → 각 열의 **첫 빈 칸에만** 쓴다.
+   */
+  private async appendToMasterColumn(column: 'A' | 'B', value: string): Promise<void> {
     const accessToken = await this.getAccessToken();
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!${column}2:${column}1000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    const rows = resp.ok ? ((await resp.json()).values || []) : [];
+    let next = 2;
+    for (let i = 0; i < rows.length; i++) {
+      if ((rows[i]?.[0] || '').toString().trim()) next = i + 3;
+    }
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A:B:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!${column}${next}?valueInputOption=RAW`,
       {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values: [[region, '']] })
+        body: JSON.stringify({ values: [[value]] })
       }
     );
+  }
+
+  async addRegionToMaster(region: string): Promise<void> {
+    await this.appendToMasterColumn('A', region);
     console.log(`📝 New region added to Master: ${region}`);
   }
 
   async addChapterToMaster(chapter: string, region: string): Promise<void> {
-    const accessToken = await this.getAccessToken();
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/Master!A:B:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values: [[region, chapter]] })
-      }
-    );
-    console.log(`📝 New chapter added to Master: ${chapter} (${region})`);
+    // 지역은 건드리지 않는다 — 이미 목록에 있고, 없으면 지역 등록으로 들어와야 한다.
+    await this.appendToMasterColumn('B', chapter);
+    console.log(`📝 New chapter added to Master: ${chapter} (지역 ${region} — A열은 손대지 않음)`);
   }
 
   async getAdminList(): Promise<{ region: string; memberName: string; email: string; auth: string }[]> {
@@ -3125,14 +3146,21 @@ export class GoogleSheetsService {
     }
   }
 
-  async addBoardPost(email: string, name: string, role: string, type: string, content: string, parentIndex: string = ''): Promise<void> {
+  /**
+   * 게시판 글 1건 추가. **쓴 행의 시트 행번호**를 돌려준다(실패하면 0).
+   *
+   * 행번호가 곧 웹앱의 `index` 이자 대장 `rps new account` 의 키(`게시판 #N`) 다.
+   * 로컬 워커(`board_watch.py`)도 같은 규칙으로 키를 만들기 때문에, 서버가 먼저 열어 둔
+   * 행을 워커가 **중복 없이 이어서 갱신**한다.
+   */
+  async addBoardPost(email: string, name: string, role: string, type: string, content: string, parentIndex: string = ''): Promise<number> {
     try {
       const accessToken = await this.getAccessToken();
       const now = new Date();
       const pad = (n: number) => n.toString().padStart(2, '0');
       const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())},${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 
-      await fetch(
+      const resp = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent('BoardLog')}!A:G:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
         {
           method: 'POST',
@@ -3140,8 +3168,308 @@ export class GoogleSheetsService {
           body: JSON.stringify({ values: [[timestamp, email, name, role, type, content, parentIndex]] })
         }
       );
+      if (!resp.ok) return 0;
+      // updates.updatedRange = "BoardLog!A7:G7" → 7
+      const updated = (await resp.json())?.updates?.updatedRange || '';
+      const m = updated.match(/![A-Z]+(\d+)/);
+      return m ? parseInt(m[1], 10) : 0;
     } catch (error) {
       console.error('Failed to add board post:', error);
+      return 0;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // `rps new account` — 신규 지역 등록 · 게시판 문의 처리의 **단일 대장**
+  //
+  // 건당 1행이고, 진행에 따라 같은 행을 갱신한다(이벤트 나열이 아니다).
+  // 로컬 워커(python `automation/proclog.py`)가 **같은 탭·같은 열**을 읽고 쓴다.
+  // 열을 바꾸면 양쪽을 같이 고칠 것.
+  //
+  // ⚠ 대장 쓰기가 실패해도 본 작업(등록·게시)을 막지 않는다. 기록 때문에
+  //   등록이 죽으면 본말전도다. 그래서 전부 try/catch 로 삼킨다.
+  // ────────────────────────────────────────────────────────────────
+
+  private readonly PROC_TAB = 'rps new account';
+  private readonly PROC_HEADER = [
+    '접수일시', '흐름', '대상', '담당자', '이메일', '연락처', '내용',
+    '처리현황', '개선내용', '처리일시', '문자-접수', '문자-완료',
+    '답신내용', '진행로그', '최종수정',
+  ];
+
+  private procStamp(): string {
+    const now = new Date();
+    const p = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())},` +
+           `${p(now.getHours())}-${p(now.getMinutes())}-${p(now.getSeconds())}`;
+  }
+
+  /** 탭이 없으면 헤더까지 만들어 둔다. 있으면 아무것도 하지 않는다. */
+  private async ensureProcessTab(accessToken: string): Promise<void> {
+    const check = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.PROC_TAB)}!A1?access_token=${accessToken}`
+    );
+    if (check.ok) return;
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: this.PROC_TAB } } }] })
+      }
+    );
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.PROC_TAB)}!A1:O1?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [this.PROC_HEADER] })
+      }
+    );
+  }
+
+  /** `대상`(C열) 으로 시트 행번호를 찾는다. 없으면 0. */
+  private async findProcessRow(accessToken: string, key: string): Promise<number> {
+    const resp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.PROC_TAB)}!C2:C100000`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+    if (!resp.ok) return 0;
+    const rows = (await resp.json()).values || [];
+    const k = key.trim();
+    for (let i = 0; i < rows.length; i++) {
+      if ((rows[i][0] || '').toString().trim() === k) return i + 2;
+    }
+    return 0;
+  }
+
+  /**
+   * 접수 행을 연다. **같은 키가 이미 있으면 열지 않는다**(중복 방지).
+   * 돌려주는 값은 시트 행번호. 실패하면 0.
+   */
+  async openProcessRow(p: {
+    flow: string; key: string; owner?: string; email?: string;
+    phone?: string; body?: string; status?: string;
+  }): Promise<number> {
+    try {
+      const accessToken = await this.getAccessToken();
+      await this.ensureProcessTab(accessToken);
+      const existing = await this.findProcessRow(accessToken, p.key);
+      if (existing) return existing;
+
+      const ts = this.procStamp();
+      const row = [
+        ts, p.flow, p.key.trim(), p.owner || '', p.email || '', p.phone || '',
+        (p.body || '').slice(0, 2000), p.status || '접수', '', '', '', '', '', '', ts,
+      ];
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.PROC_TAB)}!A:O:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [row] })
+        }
+      );
+      console.log(`📒 ${this.PROC_TAB}: ${p.flow} ${p.key} 접수`);
+      return await this.findProcessRow(accessToken, p.key);
+    } catch (error) {
+      console.error('❌ openProcessRow 실패 (본 작업은 계속):', error);
+      return 0;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // `담당자 연락처` — 문자 수신처의 **정본**
+  //
+  // `Auth` 는 로그인·권한 시트다. 거기에 연락처를 얹으면 성격이 다른 둘이 한 표에
+  // 섞이고, 무엇보다 **정본이 두 곳이 되면 반드시 어긋난다.** 그래서 여기 하나만 둔다.
+  // 로컬 워커는 `automation/contacts.py` 로 같은 탭을 읽는다.
+  // ────────────────────────────────────────────────────────────────
+
+  private readonly CONTACT_TAB = '담당자 연락처';
+
+  /** `010-1234-5678` · `+82 10 …` → `01012345678`. 형식이 아니면 빈 문자열. */
+  private normalizePhone(phone: string): string {
+    let d = (phone || '').replace(/\D/g, '');
+    if (d.startsWith('8210')) d = '0' + d.slice(2);
+    return /^01\d{8,9}$/.test(d) ? d : '';
+  }
+
+  /** 이메일로 연락처 조회. `문자수신 = N` 이면 빈 문자열(옵트아웃). */
+  async getContactPhone(email: string): Promise<string> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.CONTACT_TAB)}!A2:H5000`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      if (!resp.ok) return '';
+      const rows = (await resp.json()).values || [];
+      const target = email.trim().toLowerCase();
+      for (const row of rows) {
+        if ((row[2] || '').toString().trim().toLowerCase() !== target) continue;
+        if (['N', 'NO', 'FALSE'].includes((row[5] || '').toString().trim().toUpperCase())) return '';
+        return this.normalizePhone((row[3] || '').toString());
+      }
+      return '';
+    } catch (error) {
+      console.error('❌ getContactPhone 실패:', error);
+      return '';
+    }
+  }
+
+  /**
+   * 연락처 기록. 명단에 없는 사람이면 행을 새로 만든다.
+   * ⚠ 게시글 **본문에는 남기지 않는다** — 본문에 남기면 확인 후 지워야 하고,
+   *   지우는 것을 잊으면 연락처가 전 지역 담당자에게 보인다(2026-08-02 되돌린 이유).
+   */
+  async setContactPhone(email: string, phone: string, name = '', region = '', auth = ''): Promise<boolean> {
+    try {
+      const digits = this.normalizePhone(phone);
+      if (!digits || !email?.trim()) return false;
+      const accessToken = await this.getAccessToken();
+      const today = new Date().toISOString().slice(0, 10);
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.CONTACT_TAB)}!A2:H5000`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      const rows = resp.ok ? ((await resp.json()).values || []) : [];
+      const target = email.trim().toLowerCase();
+      for (let i = 0; i < rows.length; i++) {
+        if ((rows[i][2] || '').toString().trim().toLowerCase() === target) {
+          await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values:batchUpdate`,
+            {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                valueInputOption: 'RAW',
+                data: [
+                  { range: `${this.CONTACT_TAB}!D${i + 2}`, values: [[digits]] },
+                  { range: `${this.CONTACT_TAB}!H${i + 2}`, values: [[today]] },
+                ],
+              })
+            }
+          );
+          return true;
+        }
+      }
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.CONTACT_TAB)}!A:H:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [[region, name, email.trim(), digits, auth || 'Admin', 'Y', '', today]] })
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error('❌ setContactPhone 실패:', error);
+      return false;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // `신청 접수` — 신규 지역·챕터 신청의 입구
+  //
+  // 2026-08-23 Airtable 에서 되돌렸다. 레코드가 0건이라 이관 비용이 없었고,
+  // 임베드 iframe 이 어드민 로딩을 끌었다. 로컬 워커는 `automation/intake.py`.
+  // ⚠ `신청 접수`(입구) 와 `rps new account`(처리 대장) 는 일부러 나눠 둔다.
+  // ────────────────────────────────────────────────────────────────
+
+  private readonly INTAKE_TAB = '신청 접수';
+  private readonly INTAKE_HEADER = [
+    '접수일시', '구분', '지역', '지역영문', '챕터', '챕터영문', '런칭예정일',
+    '담당자', '이메일', '연락처', 'Connect등록', '활성화', '처리상태',
+    '비고', '결과시트', '결과페이지', '처리로그', '최종수정',
+  ];
+
+  private async ensureIntakeTab(accessToken: string): Promise<void> {
+    const check = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.INTAKE_TAB)}!A1?access_token=${accessToken}`
+    );
+    if (check.ok) return;
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: this.INTAKE_TAB } } }] })
+      }
+    );
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.INTAKE_TAB)}!A1:R1?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [this.INTAKE_HEADER] })
+      }
+    );
+  }
+
+  /** 신청 1건 접수. 쓴 시트 행번호를 돌려준다(실패하면 0). */
+  async addIntakeRow(p: {
+    kind: '지역' | '챕터';
+    regionKor?: string; regionEng?: string;
+    chapterKor?: string; chapterEng?: string;
+    launch?: string; owner?: string; email?: string; phone?: string;
+    connectOk?: boolean; active?: boolean; note?: string;
+  }): Promise<number> {
+    try {
+      const accessToken = await this.getAccessToken();
+      await this.ensureIntakeTab(accessToken);
+      const ts = this.procStamp();
+      const row = [
+        ts, p.kind, p.regionKor || '', p.regionEng || '', p.chapterKor || '', p.chapterEng || '',
+        p.launch || '', p.owner || '', p.email || '', p.phone || '',
+        p.connectOk ? 'YES' : 'NO', p.active ? 'YES' : 'NO', '대기',
+        (p.note || '').slice(0, 1000), '', '', '', ts,
+      ];
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.INTAKE_TAB)}!A:R:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [row] })
+        }
+      );
+      if (!resp.ok) return 0;
+      const updated = (await resp.json())?.updates?.updatedRange || '';
+      const m = updated.match(/![A-Z]+(\d+)/);
+      console.log(`📝 ${this.INTAKE_TAB}: ${p.kind} 접수`);
+      return m ? parseInt(m[1], 10) : 0;
+    } catch (error) {
+      console.error('❌ addIntakeRow 실패:', error);
+      return 0;
+    }
+  }
+
+  /** 접수 현황 (어드민 화면에서 진행 상태를 보여주기 위한 읽기). */
+  async getIntakeRows(limit = 50): Promise<any[]> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const resp = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(this.INTAKE_TAB)}!A2:R1000`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      if (!resp.ok) return [];
+      const rows = (await resp.json()).values || [];
+      return rows
+        .map((r: any[], i: number) => ({
+          row: i + 2,
+          ts: r[0] || '', kind: r[1] || '',
+          regionKor: r[2] || '', regionEng: r[3] || '',
+          chapterKor: r[4] || '', chapterEng: r[5] || '',
+          launch: r[6] || '', owner: r[7] || '', email: r[8] || '',
+          connectOk: r[10] || '', active: r[11] || '', status: r[12] || '',
+          note: r[13] || '', sheet: r[14] || '', page: r[15] || '',
+        }))
+        .filter((x: any) => x.kind)
+        .slice(-limit)
+        .reverse();
+    } catch (error) {
+      console.error('❌ getIntakeRows 실패:', error);
+      return [];
     }
   }
 

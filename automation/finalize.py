@@ -38,7 +38,7 @@ import requests                                   # noqa: E402
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-import airtable_client as at                      # noqa: E402
+import intake                                     # noqa: E402
 import paths                                      # noqa: E402
 from notify import send_email, send_sms           # noqa: E402
 
@@ -111,17 +111,17 @@ def post_board(content: str) -> bool:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="게시 후 마무리")
-    ap.add_argument("--record", help="Airtable 레코드 id (rec…)")
+    ap.add_argument("--record", help="`신청 접수` 시트 행번호 (예: 5)")
     ap.add_argument("--apply", action="store_true", help="실제 발송·게시")
     a = ap.parse_args()
 
-    apps = at.applications()
-    ready = [x for x in apps if x["status"] == at.ST_CREATED]
+    apps = [x for x in intake.applications() if x["kind"] == intake.KIND_CHAPTER]
+    ready = [x for x in apps if x["status"] == intake.ST_CREATED]
 
     if not a.record:
         print(f"마무리 대기(생성완료) {len(ready)}건\n")
         for x in ready:
-            print(f"  {x['id']}  {x['region_kor']} {x['chapter_kor']} "
+            print(f"  {x['row']}행  {x['region_kor']} {x['chapter_kor']} "
                   f"· 담당 {x['owner'] or '-'} {x['owner_phone'] or '(번호 없음)'}")
         if not ready:
             print("  없음 — pipeline 이 '생성완료' 로 만든 건이 대상이다.")
@@ -129,9 +129,10 @@ def main() -> None:
             print("\n게시를 마친 뒤  --record <id> [--apply]  로 마무리하세요.")
         return
 
-    app = next((x for x in apps if x["id"] == a.record), None)
+    app = next((x for x in apps if str(x["row"]) == str(a.record).strip()), None)
     if not app:
-        raise SystemExit(f"레코드를 찾지 못했다: {a.record}")
+        raise SystemExit(f"`{intake.TAB}` 에서 {a.record}행을 찾지 못했다 "
+                         "(챕터 신청 행번호를 주세요)")
 
     rep = find_report(app["chapter_eng"])
     plan = (rep or {}).get("plan", {})
@@ -161,11 +162,10 @@ def main() -> None:
     print(f"게시판 게시 : {'완료' if ok_board else '실패'}")
 
     if ok_board:
-        at.update(app["id"], {at.F_STATUS: at.ST_PUBLISHED})
-        at.append_log(app["id"], f"{when:%Y-%m-%d %H:%M}  게시완료 · 담당자 통보"
-                                 f"{'' if ok_owner else '(문자 실패)'} · 게시판 게시",
-                      app["log"])
-        print("Airtable    : 게시완료")
+        intake.update(app["row"], status=intake.ST_PUBLISHED,
+                      log=f"게시완료 · 담당자 통보"
+                          f"{'' if ok_owner else '(문자 실패)'} · 게시판 게시")
+        print("접수 시트   : 게시완료")
 
     send_email(f"[런칭] {app['region_kor']} {app['chapter_kor']} — 마무리",
                f"게시 후 마무리를 마쳤습니다.\n\n"

@@ -116,6 +116,12 @@ def main() -> int:
     ap.add_argument("--reconcile", action="store_true",
                     help="마스터 활동중에 없는 행도 제거한다. 기본은 추가만. "
                          "평시 제거는 `rpi_watch.py`(어드민 삭제 로그 감지)가 보고와 함께 맡는다")
+    ap.add_argument("--add-region", action="append", default=[], metavar="LABEL",
+                    help="이 지역 행을 신규 챕터와 무관하게 추가한다 (모 시트 표기, 예 'Anyang 안양'). "
+                         "여러 번 줄 수 있다")
+    ap.add_argument("--backfill", action="store_true",
+                    help="마스터에 있으나 `지역 RPI` 에 없는 지역을 **전부** 추가한다. "
+                         "신규 챕터가 없어도 동작한다")
     a = ap.parse_args()
 
     svc = build("sheets", "v4", credentials=user_credentials(), cache_discovery=False)
@@ -243,10 +249,30 @@ def main() -> int:
     rg_tmpl = next(r for r in rg_body if str(r[1]).strip() == TMPL_REGION)
 
     added_regions = {rg for c, rg in new_ch if c not in ch_blocked}
+
+    # ⭐ 신규 챕터가 없어도 지역을 등록할 길. 이것이 없어서 안양이 넉 달간 빠져 있었다
+    #   (파이프라인 이전에 런칭한 지역은 "신규 챕터의 지역" 에 영영 안 걸린다).
+    #   `--add-region` 은 신규 지역 등록 워커가 쓰고, `--backfill` 은 사람이 한 번에 메울 때 쓴다.
+    master_regions = {rg for _, rg in master}
+    for label in a.add_region:
+        label = label.strip()
+        if not label:
+            continue
+        if label not in master_regions:
+            print(f"\n⚠ --add-region {label!r} 이 챕터 마스터 활동중에 없다 "
+                  "— 표기가 다르거나 아직 챕터가 없는 지역이다. 그래도 진행한다.")
+        added_regions.add(label)
+    if a.backfill:
+        gap = master_regions - covered - added_regions
+        if gap:
+            print(f"\n[backfill] 미등재 지역 {len(gap)}건을 추가 대상에 넣는다: {sorted(gap)}")
+        added_regions |= gap
+
     new_rg = sorted(added_regions - covered)
-    untouched = sorted({rg for _, rg in master} - covered - added_regions)
+    untouched = sorted(master_regions - covered - added_regions)
     if untouched:
         print(f"\n(참고) 마스터에 있으나 지역 RPI 미등재 — 범위 밖, 손대지 않음: {untouched}")
+        print("       (`--backfill` 을 붙이면 이들도 추가한다)")
 
     rg_blocked = []
     print(f"\n[지역] 추가 대상 {len(new_rg)}건")
