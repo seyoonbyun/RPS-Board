@@ -405,6 +405,42 @@ export default function AdminPage() {
   const [newRegionEng, setNewRegionEng] = useState('');
   const [newRegionKor, setNewRegionKor] = useState('');
   const [regionSubmitting, setRegionSubmitting] = useState(false);
+
+  // 런칭 신청 폼 — 2026-08-23 Airtable 임베드를 걷어내고 네이티브 폼으로 바꿨다.
+  // iframe 이 어드민 로딩을 끌었고, 로그인한 담당자 정보를 못 채워 매번 손으로 적어야 했다.
+  //
+  // ⛔ 이 훅들은 **반드시 여기(조기 return 위)** 에 있어야 한다. 아래쪽 폼 옆에 뒀더니
+  //   `if (!currentUser || isAdminLoading) return …` 다음이라 렌더마다 훅 개수가 달라져
+  //   /admin 이 통째로 죽었다(2026-08-23). tsc·빌드는 런타임 규칙이라 못 잡는다.
+  const [launchRegion, setLaunchRegion] = useState('');
+  const [launchChapter, setLaunchChapter] = useState('');
+  const [launchDate, setLaunchDate] = useState('');
+  const [launchConnectOk, setLaunchConnectOk] = useState(false);
+  const [launchNote, setLaunchNote] = useState('');
+  const [launchPhone, setLaunchPhone] = useState('');
+  const [launchSubmitting, setLaunchSubmitting] = useState(false);
+
+  // 내 연락처 — 있으면 폼에서 다시 묻지 않는다
+  const { data: launchMyPhone = '' } = useQuery({
+    queryKey: ['/api/admin/my-phone', currentUser?.email],
+    enabled: !!currentUser?.email,
+    queryFn: async () => {
+      const resp = await apiFetch(`/api/admin/my-phone?email=${encodeURIComponent(currentUser!.email)}`);
+      if (!resp.ok) return '';
+      return (await resp.json()).phone || '';
+    },
+  });
+
+  // 접수 현황 — 신청한 뒤 어디까지 됐는지 같은 화면에서 보이게
+  const { data: intakeRows = [] } = useQuery({
+    queryKey: ['/api/admin/intake'],
+    queryFn: async () => {
+      const resp = await apiFetch('/api/admin/intake');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+    refetchInterval: 60000,
+  });
   const [addMode, setAddMode] = useState<'single' | 'csv'>('single');
   const [regionFilter, setRegionFilter] = useState<string>('__all__');
   const [chapterFilter, setChapterFilter] = useState<string>('__all__');
@@ -1072,39 +1108,9 @@ export default function AdminPage() {
   const activeUsers = allUsers?.filter(user => user.status !== '탈퇴') || [];
   const withdrawnUsers = allUsers?.filter(user => user.status === '탈퇴') || [];
 
-  // 런칭 신청 폼 — 2026-08-23 Airtable 임베드를 걷어내고 네이티브 폼으로 바꿨다.
-  // iframe 이 어드민 로딩을 끌었고, 로그인한 담당자 정보를 못 채워 매번 손으로 적어야 했다.
+  // 런칭 신청 폼 — 담당자 이름. (훅은 위쪽 선언부에 있다 — 조기 return 아래면 안 된다)
   const launchApplicantName =
     allUsers?.find(user => user.email === currentUser?.email)?.memberName || '';
-  const [launchRegion, setLaunchRegion] = useState('');
-  const [launchChapter, setLaunchChapter] = useState('');
-  const [launchDate, setLaunchDate] = useState('');
-  const [launchConnectOk, setLaunchConnectOk] = useState(false);
-  const [launchNote, setLaunchNote] = useState('');
-  const [launchPhone, setLaunchPhone] = useState('');
-  const [launchSubmitting, setLaunchSubmitting] = useState(false);
-
-  // 내 연락처 — 있으면 폼에서 다시 묻지 않는다
-  const { data: launchMyPhone = '' } = useQuery({
-    queryKey: ['/api/admin/my-phone', currentUser?.email],
-    enabled: !!currentUser?.email,
-    queryFn: async () => {
-      const resp = await apiFetch(`/api/admin/my-phone?email=${encodeURIComponent(currentUser!.email)}`);
-      if (!resp.ok) return '';
-      return (await resp.json()).phone || '';
-    },
-  });
-
-  // 접수 현황 — 신청한 뒤 어디까지 됐는지 같은 화면에서 보이게
-  const { data: intakeRows = [] } = useQuery({
-    queryKey: ['/api/admin/intake'],
-    queryFn: async () => {
-      const resp = await apiFetch('/api/admin/intake');
-      if (!resp.ok) return [];
-      return resp.json();
-    },
-    refetchInterval: 60000,
-  });
   
   // 필터링된 활성 사용자 목록
   const filteredActiveUsers = activeUsers.filter(user => {
