@@ -437,7 +437,12 @@ def _login_cfg() -> dict | None:
         d = json.loads(f.read_text(encoding="utf-8"))
     except Exception:                                        # noqa: BLE001
         return None
-    return d if d.get("id") and d.get("pw") else None
+    uid, pw = str(d.get("id") or "").strip(), str(d.get("pw") or "").strip()
+    # ⚠ **템플릿 그대로면 시도하지 않는다.** 안 그러면 자리표시자로 실제 로그인을 한 번
+    #   태워 쿨다운이 걸린다(2026-08-23 실제로 그랬다). 채우기 전엔 "없는 것"으로 본다.
+    if not uid or not pw or "여기에" in uid or "여기에" in pw:
+        return None
+    return {"id": uid, "pw": pw}
 
 
 def _cooldown_file() -> Path:
