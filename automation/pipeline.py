@@ -264,8 +264,27 @@ def step_roster(p: Plan) -> None:
         log(f"    지역 표기: {label}")
     p.result["region_label"] = label
 
-    # 챕터 영문명이 안 주어졌으면 추출 파일에서 역산한다
-    if not p.chapter_eng:
+    # 챕터 영문명 — 신청서에서 받았으면 **추출 파일과 대조**하고, 없으면 역산한다.
+    #
+    # 2026-08-23 부터 신청 폼이 영문명을 직접 받는다(담당자가 BNI Connect 를 보고 적는다).
+    # 그래도 그대로 믿지 않는다 — 오기 하나가 시트명·QR 슬러그·페이지 url 세 곳에
+    # 그대로 번지고, imweb·bitly 는 지우는 API 가 없어 되돌릴 수가 없다.
+    if p.chapter_eng:
+        from roster_gen import parse as _parse
+        _, people = _parse(p.xls, label)
+        in_extract = {x["chapter"].strip() for x in people if x.get("chapter", "").strip()}
+        match = next((c for c in in_extract if c.casefold() == p.chapter_eng.casefold()), None)
+        if not match:
+            raise SystemExit(
+                f"신청서의 챕터 영문명 `{p.chapter_eng}` 이 BNI Connect 추출에 없다.\n"
+                f"  추출에 있는 챕터: {sorted(in_extract)}\n"
+                "  표기가 다르면 시트명·QR·페이지 주소가 전부 어긋난다. 신청 내용을 확인하세요.")
+        if match != p.chapter_eng:
+            log(f"    챕터 영문명 대소문자 교정: {p.chapter_eng} → **{match}** (추출 표기 기준)")
+            p.chapter_eng = match
+        else:
+            log(f"    챕터 영문명 확인: **{p.chapter_eng}** (추출과 일치)")
+    else:
         eng, candidates = resolve_chapter_eng(p.xls, p.chapter_kor, label)
         if not eng:
             raise SystemExit(

@@ -1126,13 +1126,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //
   // 2026-08-23 Airtable 임베드 폼을 걷어냈다. iframe 이 어드민 로딩을 끌었고,
   // 로그인한 담당자 정보를 못 채워 매번 손으로 적어야 했다.
-  // ⚠ 챕터 영문명은 **받지 않는다.** 파이프라인이 BNI Connect 추출에서 역산한다 —
-  //   오기가 시트명·QR 슬러그·페이지 url 에 전부 번지기 때문이다.
+  // ⚠ 챕터 영문명은 담당자가 BNI Connect 를 보고 적는다. 오기가 시트명·QR 슬러그·
+  //   페이지 url 에 전부 번지므로, 파이프라인이 추출 파일과 한 번 더 대조한다.
   app.post("/api/admin/launch-request", async (req, res) => {
     try {
-      const { region, chapter, launch, owner, email, phone, connectOk, note } = req.body;
+      const { region, chapter, chapterEng, launch, owner, email, phone, connectOk, note } = req.body;
       if (!region?.trim() || !chapter?.trim()) {
         return res.status(400).json({ message: "지역과 챕터명은 필수입니다" });
+      }
+      // 영문명 오기는 시트명·QR 슬러그·페이지 주소에 전부 번지고 되돌리기 어렵다.
+      // 파이프라인이 BNI Connect 추출과 한 번 더 대조한다(automation/pipeline.py).
+      const eng = (chapterEng || '').trim();
+      if (!eng || !/^[A-Za-z0-9][A-Za-z0-9 .&'-]*$/.test(eng)) {
+        return res.status(400).json({ message: "챕터 영문명을 BNI Connect 표기 그대로 입력해 주세요 (예: Signia)" });
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test((launch || '').trim())) {
         // 런칭일이 없으면 챕터 시트·페이지 비밀번호(MMDD)를 정할 수 없다.
@@ -1149,6 +1155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         kind: '챕터',
         regionKor: region.trim(),
         chapterKor: chapter.trim(),
+        chapterEng: eng,
         launch: launch.trim(),
         owner: owner || email || '',
         email: email || '',

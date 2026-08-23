@@ -412,6 +412,7 @@ export default function AdminPage() {
   //   /admin 이 통째로 죽었다(2026-08-23). tsc·빌드는 런타임 규칙이라 못 잡는다.
   const [launchRegion, setLaunchRegion] = useState('');
   const [launchChapter, setLaunchChapter] = useState('');
+  const [launchChapterEng, setLaunchChapterEng] = useState('');
   const [launchDate, setLaunchDate] = useState('');
   const [launchConnectOk, setLaunchConnectOk] = useState(false);
   const [launchNote, setLaunchNote] = useState('');
@@ -2679,6 +2680,7 @@ export default function AdminPage() {
                   disabled={regionSubmitting || !newRegionName.trim() || !newRegionEng.trim() || !newRegionKor.trim()}
                   onClick={async () => {
                     setRegionSubmitting(true);
+                    const added = newRegionName.trim();
                     try {
                       const resp = await apiRequest('POST', '/api/admin/add-region', {
                         region: newRegionName.trim(),
@@ -2690,7 +2692,16 @@ export default function AdminPage() {
                       const data = await resp.json();
                       if (data.success) {
                         toast({ title: data.message, description: data.detail });
+                        // 방금 등록한 지역이 아래 ② 드롭다운에 **바로** 떠야 한다.
+                        // invalidate 만 하면 재조회가 끝날 때까지 몇 초 동안 목록에 없어서,
+                        // 담당자가 "등록됐다는데 왜 안 보이지" 하고 또 등록한다.
+                        // → 캐시에 먼저 넣고(낙관적), 재조회로 확인한다.
+                        queryClient.setQueryData(['/api/admin/regions'], (prev: any) =>
+                          Array.from(new Set([...(Array.isArray(prev) ? prev : []), added]))
+                            .sort((a: any, b: any) => String(a).localeCompare(String(b), 'ko')));
                         queryClient.invalidateQueries({ queryKey: ['/api/admin/regions'] });
+                        // ② 에서 곧바로 이어 신청할 수 있게 선택까지 해 둔다
+                        setLaunchRegion(added);
                         setNewRegionName(''); setNewRegionEng(''); setNewRegionKor('');
                       } else {
                         alert(data.message || '지역 추가 실패');
@@ -2731,7 +2742,7 @@ export default function AdminPage() {
                   </p>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">챕터명 (한글) *</label>
+                  <label className="block text-xs text-gray-500 mb-1">챕터 한글명 *</label>
                   <input
                     type="text"
                     value={launchChapter}
@@ -2739,13 +2750,24 @@ export default function AdminPage() {
                     placeholder="시그니아"
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   />
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    영문명은 BNI Connect 에서 자동으로 확인합니다
-                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">챕터 페이지에 보이는 이름입니다</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">챕터 영문명 *</label>
+                  <input
+                    type="text"
+                    value={launchChapterEng}
+                    onChange={(e) => setLaunchChapterEng(e.target.value)}
+                    placeholder="Signia"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    <span className="text-gray-600">BNI Connect 표기 그대로</span> — 시트명 · QR · 페이지 주소에 쓰입니다
+                  </p>
+                </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">런칭 예정일 *</label>
                   <input
@@ -2794,11 +2816,16 @@ export default function AdminPage() {
 
               <Button
                 className="w-full bg-red-600 hover:bg-red-700 text-white"
-                disabled={launchSubmitting || !launchRegion || !launchChapter.trim() || !launchDate}
+                disabled={launchSubmitting || !launchRegion || !launchChapter.trim() || !launchChapterEng.trim() || !launchDate}
                 onClick={async () => {
                   const contact = (launchPhone || launchMyPhone || '').replace(/\D/g, '');
                   if (contact && !/^01\d{8,9}$/.test(contact)) {
                     alert('휴대폰 번호 형식을 확인해 주세요 (예: 01012345678)');
+                    return;
+                  }
+                  // 영문명 오기는 시트명·QR 슬러그·페이지 주소에 전부 번지고 되돌리기 어렵다.
+                  if (!/^[A-Za-z0-9][A-Za-z0-9 .&'-]*$/.test(launchChapterEng.trim())) {
+                    alert('챕터 영문명은 BNI Connect 표기 그대로, 영문으로 입력해 주세요 (예: Signia)');
                     return;
                   }
                   setLaunchSubmitting(true);
@@ -2806,6 +2833,7 @@ export default function AdminPage() {
                     const resp = await apiRequest('POST', '/api/admin/launch-request', {
                       region: launchRegion,
                       chapter: launchChapter.trim(),
+                      chapterEng: launchChapterEng.trim(),
                       launch: launchDate,
                       owner: launchApplicantName || currentUser?.email?.split('@')[0] || '',
                       email: currentUser?.email || '',
@@ -2816,7 +2844,7 @@ export default function AdminPage() {
                     const data = await resp.json();
                     if (data.success) {
                       toast({ title: data.message, description: data.detail });
-                      setLaunchChapter(''); setLaunchDate('');
+                      setLaunchChapter(''); setLaunchChapterEng(''); setLaunchDate('');
                       setLaunchConnectOk(false); setLaunchNote('');
                       queryClient.invalidateQueries({ queryKey: ['/api/admin/intake'] });
                       queryClient.invalidateQueries({ queryKey: ['/api/admin/my-phone', currentUser?.email] });
