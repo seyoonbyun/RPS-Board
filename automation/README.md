@@ -115,6 +115,7 @@ python dropdowns.py          # 드롭다운이 현황과 맞는지 (--apply 로 
 | **게시판** | `board_watch.py` | 새 문의·답변 감지 → 문자 발송 → 대장 기록 |
 | **마무리** | `publish_watch.py` | 게시 감지 → 담당자 통보 + 게시판 결과 글 + 상태 정리 |
 | **대장** | `proclog.py` | `rps new account` 탭 읽기·쓰기 (건당 1행, 갱신형) |
+| | `notion_pw.py` | 노션 `RPI Viewer` 에 페이지 비밀번호 등재 (정본) |
 | **스케줄** | `watch_run.cmd` | 위 워처들을 3분마다 (Windows 작업 `RPS Board Admin Watch`) |
 | **폐기** | `airtable_client.py` `airtable_setup.py` | ⛔ 2026-08-23 은퇴. 스키마 참고용으로만 남긴다 |
 | **단계** | `roster_gen.py` | [1] BNI Connect 추출 → 모 시트 멤버 append |
@@ -247,6 +248,24 @@ python dropdowns.py --apply          # 지역·챕터 드롭다운 현행화
 게시 판정(`publish_watch.is_published`)에 **브라우저 User-Agent 를 반드시 준다.**
 안 주면 게시된 페이지도 전부 `판정 불가` 가 되어 마무리가 영영 안 돈다.
 curl 로는 되는데 스크립트로는 안 되는 종류라 눈치채기 어렵다.
+
+### ⛔ 비밀번호는 만든 그 자리에서 적는다
+
+imweb 은 비번을 **bcrypt 해시로 저장**해 관리자 API 로도 평문을 되읽을 수 없다.
+설정한 즉시 적어 두지 않으면 **영영 모른다** — 실제로 지역 5개가 그렇게 유실됐다.
+
+정본은 노션 `MyPowerTeam RPI Viewer`(`notion_pw.py` 가 자동 등재), 볼트
+`99. Private/rpi page pw/` 는 사본이다. **이미 있으면 덮어쓰지 않는다** — 비번을 바꾸는 건
+사람이 판단할 일이고, 잘못 덮으면 기존 사용자가 못 들어간다.
+
+⚠ 노션 토큰은 `C:\DEVpslist\sync.py` 것을 그대로 읽어 쓴다. **이 저장소에 복사하지
+   않는다** — 여기는 GitHub 에 올라간다.
+
+### ⭐ 복제는 챕터 카드를 끌고 오지 않는다
+
+지역 페이지는 화성을 복제해 만드는데, 복제하면 **갤러리 board 가 새로 생긴다.**
+2026-08-23 실측 — 7월에 화성을 복제한 하남의 board 는 화성과 다르고 카드도 자기 것
+하나뿐이었다. 그래도 [6] 이 카드 수를 세어 둔다(imweb 이 동작을 바꾸면 알아야 한다).
 
 ### ⚠ 내셔널이 쓴 `요청` 은 문의가 아니다
 

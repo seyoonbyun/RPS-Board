@@ -10,7 +10,7 @@ r"""신규 **지역** 등록 파이프라인 — 챕터 런칭과 무관하게 �
     [4] 배너      BNI 지역 로고 500×500                       banner_gen.py
     [5] imweb     `<Kor> ALL` 페이지 + `<Kor>` 지역 페이지     imweb_client.py
     [6] 검증      만든 것을 전부 재조회해 대조
-    [7] 비번      볼트 대장에 4자리 기록                       99. Private/rpi page pw/
+    [7] 비번      노션 `RPI Viewer` 등재 + 볼트 대장에 4자리 기록
 
 왜 따로 있는가
     `pipeline.py` 는 **신규 챕터의 지역**일 때만 지역 페이지를 만든다. 그래서 파이프라인
@@ -18,9 +18,10 @@ r"""신규 **지역** 등록 파이프라인 — 챕터 런칭과 무관하게 �
     어드민에서 지역만 등록하는 길이 없으면 같은 구멍이 계속 난다.
 
 ⚠ **게시(publish)는 하지 않는다.** 사람이 편집기에서 보고 누르는 것이 마지막 관문이다.
-⚠ **지역 페이지는 화성 페이지를 복제**해서 만든다. 원본의 챕터 카드가 따라올 수 있어
-   [6] 이 카드 수를 세어 보고한다. **지우지는 않는다** — 갤러리 삭제 API 를 모르는 채
-   추측해서 호출하면 남의 페이지를 건드릴 수 있다.
+⭐ **지역 페이지는 화성 페이지를 복제**하지만 원본의 챕터 카드는 따라오지 않는다.
+   복제하면 갤러리 board 가 새로 생긴다 — 2026-08-23 실측: 7월에 화성을 복제해 만든
+   하남의 board 는 화성과 다르고 카드도 자기 것(`/108 시그니아`) 하나뿐이었다.
+   그래도 [6] 이 카드 수를 세어 둔다. imweb 이 동작을 바꾸면 그때 알아야 하니까.
 ⚠ 신규 지역은 `_source` 에 멤버가 아직 없어 [2] 가 **정상적으로 보류**된다(RPI 0 방지).
    멤버가 모 시트에 들어온 뒤 `python rpi_sheet.py --add-region "<표기>" --apply` 로 마무리한다.
 ⚠ imweb 쓰기는 되돌리기 API 가 없다. 시작할 때 `menu_list` 스냅샷을 남긴다.
@@ -214,17 +215,19 @@ def step_verify(p: RegionPlan, im: ImwebClient) -> dict:
         check("지역 url 영문", not str(rp.get("url", "")).isdigit(), f"url={rp.get('url')}")
         check("지역 sub_name", str(rp.get("sub_name") or "") == p.eng,
               f"sub_name={rp.get('sub_name')!r}")
-        # 복제 잔재 — 원본(화성)의 챕터 카드가 따라왔을 수 있다. 세기만 하고 지우지 않는다.
+        # 갓 만든 지역 페이지의 갤러리는 비어 있어야 한다(복제는 board 를 새로 만든다).
+        # 카드가 있으면 imweb 이 복제 동작을 바꾼 것이므로 사람이 봐야 한다.
         try:
             left = len(im.gallery_items(im.gallery_board(p.result["region_page"])))
         except Exception:                                     # noqa: BLE001
             left = -1
         if left > 0:
-            p.notes.append(f"[6] 지역 페이지에 복제 원본({TEMPLATE_REGION})의 챕터 카드 "
-                           f"{left}개가 남아 있다 — **게시 전에 편집기에서 삭제**할 것")
-            log(f"    ⚠ 복제 카드 {left}개 잔존 — 게시 전 수동 삭제 필요")
+            p.notes.append(f"[6] ⚠ 갓 만든 지역 페이지에 카드가 {left}개 있다 — "
+                           f"복제가 원본({TEMPLATE_REGION})의 카드를 끌고 온 것으로 보인다. "
+                           "**게시 전에 편집기에서 확인**할 것 (2026-08-23 기준으론 안 따라왔다)")
+            log(f"    ⚠ 예상 밖: 카드 {left}개 — 게시 전 확인 필요")
         elif left == 0:
-            log("    ✅ 복제 카드 잔존 없음")
+            log("    ✅ 갤러리 비어 있음 (정상)")
     return report
 
 
@@ -233,6 +236,8 @@ def step_pw_note(p: RegionPlan) -> None:
 
     ⛔ imweb 은 비번을 bcrypt 로 저장해 **관리자 API 로도 평문을 되읽을 수 없다.**
        설정 즉시 적어 두지 않으면 영영 모른다 — 실제로 지역 5개가 그렇게 유실됐다.
+
+    정본은 **노션 `MyPowerTeam RPI Viewer`**, 볼트 노트는 사본이다. 둘 다 남긴다.
     """
     log("[7] 비번 기록")
     note = PW_VAULT / f"지역 {p.master}.md"
@@ -270,8 +275,18 @@ def step_pw_note(p: RegionPlan) -> None:
         f"✅ **{today} 신규 지역 등록 자동화로 생성.**\n"
         "⛔ **노션 `MyPowerTeam RPI Viewer` 에는 아직 등재 전이다.**\n",
         encoding="utf-8")
-    p.notes.append("[7] 노션 `MyPowerTeam RPI Viewer` 등재는 **아직** — 사람이 해야 한다")
     log(f"    ✓ {note.name}")
+
+    # 정본은 노션이다. 볼트 노트는 사본 — 둘 다 남겨야 나중에 찾을 수 있다.
+    try:
+        import notion_pw
+        msg = notion_pw.add_region(p.master, p.pw, p.result.get("sheet", ""), apply=True)
+        log(f"    ✓ 노션 RPI Viewer — {msg}")
+        if "이미 있음" in msg:
+            p.notes.append(f"[7] 노션에 `{p.master}` 가 이미 있어 덮어쓰지 않았다 — 확인 필요")
+    except Exception as e:                                   # noqa: BLE001
+        p.notes.append(f"[7] 노션 등재 실패 — 손으로 등재할 것 ({e.__class__.__name__})")
+        log(f"    ⚠ 노션 등재 실패: {e.__class__.__name__} {e}")
 
 
 # ---------------------------------------------------------------- main

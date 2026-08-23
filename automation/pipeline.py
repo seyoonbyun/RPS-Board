@@ -10,7 +10,7 @@
     [2] 구글 시트  `<Eng>_rps` (신규 지역이면 `<Eng> <Kor> All_rps` 도)  sheet_gen.py
     [3] QR        bitly 단축링크 + 브랜드 QR                     qr_gen.py
     [4] 배너      챕터 카드 (신규 지역이면 BNI 지역 로고도)        banner_gen.py
-    [5] imweb     페이지 복제 → 이름·PW·QR·링크·카드              imweb_client.py
+    [5] imweb     페이지 복제 → 이름·PW·QR·링크·카드 → 노션 비번 등재  imweb_client.py
     [6] 검증      만든 것을 전부 재조회해 대조
 
 ⚠ **게시(publish)는 하지 않는다.** 사람이 편집기에서 눈으로 보고 누르는 것이 마지막 관문이다.
@@ -450,6 +450,19 @@ def step_imweb(p: Plan, im: ImwebClient) -> None:
     im.add_chapter_card(p.result["region_page"], p.result["card"],
                         ch_code, p.chapter_page_name)
     log("    ✓ 카드 추가")
+
+    # --- 비번 등재 (노션이 정본)
+    # ⛔ imweb 은 비번을 bcrypt 로 저장해 되읽을 수 없다. **설정한 이 자리에서** 적는다.
+    #   실패해도 런칭을 죽이지 않는다 — 나중에 `notion_pw.py` 로 단독 등재가 된다.
+    try:
+        import notion_pw
+        msg = notion_pw.add_chapter(
+            p.chapter_eng, p.result.get("region_label", f"{p.region_eng} {p.region_kor}"),
+            p.chapter_pw, p.launch, p.result.get("chapter_sheet", "") or "", apply=True)
+        log(f"    ✓ 노션 RPI Viewer — {msg}")
+    except Exception as e:                                   # noqa: BLE001
+        log(f"    ⚠ 노션 등재 실패 (수동 등재 필요): {e.__class__.__name__} {e}")
+        p.steps.append("notion:failed")
 
 
 def step_verify(p: Plan, im: ImwebClient) -> dict:
