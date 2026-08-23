@@ -151,6 +151,14 @@ def main() -> int:
         who = p["name"] or p["email"]
         phone = phones.get(p["email"].lower(), "")
 
+        # ⚠ **내셔널이 쓴 `요청` 은 문의가 아니다.** 결과 공지·안내를 올리는 자리다.
+        #   `publish_watch.py` 가 게시 후 결과 글을 자동으로 올리는데, 그것까지 문의로
+        #   잡으면 나에게 "이런 문의가 있다" 문자가 오고 나 자신에게 접수 안내가 간다
+        #   (2026-08-23 실제로 그랬다).
+        if p["type"] == TYPE_ASK and p["role"] in ANSWER_ROLES:
+            print(f"\n· 공지/결과 글 #{p['row']} ({who}) — 문의 아님, 건너뜀")
+            continue
+
         # 새 문의
         if p["type"] == TYPE_ASK:
             key = key_of(p["row"])

@@ -41,6 +41,7 @@ C_STATUS, C_FIX, C_DONE_TS, C_SMS_IN, C_SMS_OUT, C_REPLY, C_TRACE, C_MTIME = \
     7, 8, 9, 10, 11, 12, 13, 14
 
 FLOW_REGION = "지역등록"
+FLOW_CHAPTER = "챕터런칭"
 FLOW_BOARD = "게시판"
 
 # 처리현황 — 사람이 시트에서 눈으로 고를 수 있는 말로 둔다

@@ -35,8 +35,7 @@ import intake                                                   # noqa: E402
 import proclog                                                  # noqa: E402
 from google_auth import user_credentials                        # noqa: E402
 from googleapiclient.discovery import build                     # noqa: E402
-from notify import (send_email, send_sms_admin,                 # noqa: E402
-                    send_sms_public, sms_test_mode)
+from notify import send_email, send_sms_admin, sms_test_mode    # noqa: E402
 from region_pipeline import RegionPlan, run_region              # noqa: E402
 
 
@@ -48,15 +47,6 @@ def region_pw(app: dict) -> str:
     """
     m = re.search(r"pw\s*=\s*(\d{4})", app.get("note", ""))
     return m.group(1) if m else f"{random.randint(0, 9999):04d}"
-
-
-def sms_done(master: str, ok: bool, notes: list[str]) -> str:
-    head = "신규 지역 등록이 완료되었습니다." if ok else "신규 지역 등록 중 확인이 필요합니다."
-    body = f"{head}\n\n· 지역 {master}\n· 시트 · QR · 페이지 생성 {'완료' if ok else '일부 미완'}"
-    if notes:
-        body += "\n\n[확인 사항]\n" + "\n".join(f"- {n}" for n in notes[:3])
-    body += "\n\n※ 페이지는 확인 후 게시됩니다."
-    return body
 
 
 def main() -> int:
@@ -167,22 +157,28 @@ def main() -> int:
         ("지역", "/" + p.result["region_page_url"] if p.result.get("region_page_url") else ""),
     ] if str(value).strip()) or "(생성 결과 없음)"
 
-    ok_owner = send_sms_public(sms_done(master, ok, notes), phone) if phone else False
+    # ⚠ 담당자에게는 여기서 보내지 않는다. 담당자 문자는 **접수 1통 + 게시완료 1통**뿐이다
+    #   (`intake_ack.py` · `publish_watch.py`). 생성이 끝났다고 알려 봐야 그 시점엔
+    #   공개 사이트가 아직 404 라, 링크를 눌러도 안 열린다.
     send_sms_admin(f"[지역등록 {'완료' if ok else '확인필요'}] {master}\n{made}"
-                   + (f"\n\n확인: {notes[0]}" if notes else ""))
+                   + (f"\n\n확인: {notes[0]}" if notes else "")
+                   + "\n\n▶ 편집기에서 확인 후 게시하세요. 게시하면 마무리는 자동입니다.")
 
     proclog.update(
         key, svc=svc,
-        status=proclog.ST_DONE if ok else proclog.ST_HOLD,
-        done_ts=proclog.stamp(), fix=made,
-        sms_out=(proclog.sms_note(ok_owner, phone, "등록완료")
-                 if phone else "미발송 — `담당자 연락처` 미등록"),
+        # 생성이 끝나도 **완료가 아니다.** 게시까지 돼야 담당자가 쓸 수 있다.
+        # `publish_watch.py` 가 게시를 감지해 `완료` 로 닫는다.
+        status=proclog.ST_RUNNING if ok else proclog.ST_HOLD,
+        fix=made,
         trace=("생성 완료 · 게시 대기" if ok else "검증 불통과 — 사람 확인 필요")
               + (" · " + " / ".join(notes) if notes else ""))
+
     intake.update(row_no, svc=svc,
                   status=intake.ST_CREATED if ok else intake.ST_HOLD,
                   sheet=p.result.get("sheet", ""),
-                  page=p.result.get("all_page_url", "") or kor,
+                  # ⚠ 게시 판정용 url 이다(publish_watch 가 쓴다). ALL 페이지는 비번이 걸린
+                  #   내부 코드 url 이라, 공개 내비 페이지인 **지역 페이지 url** 을 넣는다.
+                  page=p.result.get("region_page_url", "") or eng,
                   log=("생성 완료 · 게시 대기" if ok else "검증 불통과"))
 
     send_email(f"[지역등록] {master} — {'완료' if ok else '확인필요'}",

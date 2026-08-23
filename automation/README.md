@@ -107,11 +107,13 @@ python dropdowns.py          # 드롭다운이 현황과 맞는지 (--apply 로 
 | | `pipeline.py` | 챕터 런칭 1건의 6단계 |
 | | `finalize.py` | 게시 후 마무리 |
 | **입구** | `intake.py` | `신청 접수` 탭 읽기·쓰기 (지역·챕터 공통) |
+| | `intake_ack.py` | 신청 접수 즉시 담당자에게 확인 문자 (멱등) |
 | | `contacts.py` | `담당자 연락처` 탭 — 문자 수신처 정본 |
 | | `dropdowns.py` | `신청 접수` 지역·챕터 드롭다운을 현황에 맞춘다 |
 | **지역 등록** | `region_watch.py` | 지역 신청 폴링 → region_pipeline 실행 → 대장 기록 |
 | | `region_pipeline.py` | 지역 1건의 7단계 (챕터와 무관하게 단독) |
 | **게시판** | `board_watch.py` | 새 문의·답변 감지 → 문자 발송 → 대장 기록 |
+| **마무리** | `publish_watch.py` | 게시 감지 → 담당자 통보 + 게시판 결과 글 + 상태 정리 |
 | **대장** | `proclog.py` | `rps new account` 탭 읽기·쓰기 (건당 1행, 갱신형) |
 | **스케줄** | `watch_run.cmd` | 위 워처들을 3분마다 (Windows 작업 `RPS Board Admin Watch`) |
 | **폐기** | `airtable_client.py` `airtable_setup.py` | ⛔ 2026-08-23 은퇴. 스키마 참고용으로만 남긴다 |
@@ -186,7 +188,22 @@ python pipeline.py --kor <한글> --region <Eng> --region-kor <imweb 이름> \
 
 ## 상시 워처 (3분마다)
 
+`watch_run.cmd` 가 여섯 단계를 이 순서로 돌린다 — **접수 알림 → 생성 → 마무리** 순이다.
+
+```
+intake_ack     신청 접수 → 담당자 "접수되었습니다" 문자
+board_watch    게시판 문의 → 문자 + 대장
+region_watch   지역 신청  → 시트·RPI·QR·로고·imweb
+watcher        챕터 신청  → 런칭 파이프라인 전 단계
+publish_watch  게시 감지  → 담당자 통보 + 게시판 결과 글 + 상태 종료
+dropdowns      지역·챕터 드롭다운 현행화
+```
+
+**사람이 하는 것은 둘뿐이다** — ① 로그인(imweb·BNI Connect) ② 게시 전 확인·게시 클릭.
+
 ```bash
+python intake_ack.py                 # dry-run
+python publish_watch.py              # 게시됐는지만 확인
 python board_watch.py                # dry-run — 무엇을 보낼지만
 python board_watch.py --apply        # 실제 문자 + 대장 기록
 python board_watch.py --replay 5     # 최근 5건 재검토 (커서는 안 옮긴다)
@@ -195,8 +212,27 @@ python region_watch.py               # 대기 건 확인만
 python region_watch.py --run         # dry-run
 python region_watch.py --run --apply # 실제 생성 (게시는 사람이)
 
+python watcher.py --run --apply      # 챕터 런칭 (스케줄에도 들어 있다)
 python dropdowns.py --apply          # 지역·챕터 드롭다운 현행화
 ```
+
+### 담당자에게 가는 문자는 **두 통뿐**이다
+
+접수 1통(`intake_ack`) · 게시완료 1통(`publish_watch`). 생성이 끝난 시점엔 공개
+사이트가 아직 404 라, 그때 알려 봐야 담당자가 링크를 눌러도 안 열린다.
+중간 경과(생성 완료·오류·로그인 대기)는 **나에게만** 간다.
+
+### ⚠ 공개 사이트는 `python-requests` 를 403 으로 막는다
+
+게시 판정(`publish_watch.is_published`)에 **브라우저 User-Agent 를 반드시 준다.**
+안 주면 게시된 페이지도 전부 `판정 불가` 가 되어 마무리가 영영 안 돈다.
+curl 로는 되는데 스크립트로는 안 되는 종류라 눈치채기 어렵다.
+
+### ⚠ 내셔널이 쓴 `요청` 은 문의가 아니다
+
+`publish_watch` 가 결과 글을 게시판에 자동으로 올리는데, 그것을 `board_watch` 가
+새 문의로 잡으면 **나에게 "이런 문의가 있다" 문자가 오고 나 자신에게 접수 안내가 간다.**
+`board_watch` 는 `role=National` 의 `요청` 을 공지로 보고 건너뛴다.
 
 Windows 작업 스케줄러 **`RPS Board Admin Watch`** 가 `watch_run.cmd` 를 3분마다 돌린다.
 로그는 `automation/watch_run.log` (**UTF-8 로 읽을 것**).

@@ -41,6 +41,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import intake                                   # noqa: E402
+from notify import send_sms_admin               # noqa: E402
 import paths                                    # noqa: E402
 
 SNAP = paths.snap_dir()
@@ -105,7 +106,9 @@ def write_back(app: dict, region_eng: str, report_path: Path | None,
         ok = data.get("report", {}).get("ok")
         fields["chapter_eng"] = plan.get("chapter_eng", "")
         fields["sheet"] = plan.get("chapter_sheet", "")
-        fields["page"] = plan.get("chapter_page_name", "")
+        # ⚠ 이름이 아니라 **url** 을 넣는다. `publish_watch.py` 가 이 값으로
+        #   공개 사이트를 찔러 게시 여부를 판정한다(게시 전 404 · 게시 후 200).
+        fields["page"] = plan.get("chapter_page_url") or plan.get("chapter_page_name", "")
         fields["status"] = intake.ST_CREATED if ok else intake.ST_HOLD
         line = (f"생성 {'완료' if ok else '실패(검증 불통과)'} · "
                 f"리포트 {report_path.name}")
@@ -150,13 +153,36 @@ def main() -> None:
         return
 
     for x in todo:
-        print(f"\n=== {x['region_kor']} {x['chapter_kor']} ===")
+        label = f"{x['region_kor']} {x['chapter_kor']}"
+        print(f"\n=== {label} ===")
+        log = x["log"] or ""
+
+        def hold(msg: str, once_mark: str = "") -> None:
+            """보류 처리. `once_mark` 를 주면 **그 표시가 이미 있으면 문자를 안 보낸다**.
+
+            3분마다 도는 워커라, 같은 사유로 매번 문자를 보내면 하루 480통이 나간다.
+            """
+            already = bool(once_mark) and once_mark in log
+            if a.apply:
+                intake.update(x["row"], status=intake.ST_HOLD,
+                              log="" if already else msg)
+            if not already:
+                send_sms_admin(f"[챕터런칭 보류] {label}\n{msg[:250]}")
+            print(f"  ⛔ {msg}")
 
         if not x["launch"]:
-            print("  ⚠ 런칭 예정일이 없다 — 시트·페이지 비밀번호(MMDD)를 정할 수 없다. 건너뛴다.")
+            hold("런칭 예정일이 없다 — 시트·페이지 비밀번호(MMDD)를 정할 수 없다", "런칭 예정일이 없다")
             continue
         if not x["connect_ok"]:
-            print("  ⚠ BNI Connect 지원서 등록이 아직 YES 가 아니다 — 멤버 명단을 못 받는다")
+            # 보류가 아니다 — 곧 등록될 수 있으니 대기 상태로 두고 알리기만 한다.
+            if "Connect 대기" not in log:
+                if a.apply:
+                    intake.update(x["row"], log="Connect 대기 — 지원서 등록 후 자동 재시도")
+                send_sms_admin(f"[챕터런칭 대기] {label}\n"
+                               "BNI Connect 지원서 등록이 아직 YES 가 아닙니다. "
+                               "등록되면 자동으로 이어서 진행됩니다.")
+            print("  ⏸ BNI Connect 지원서 등록 대기 — 멤버 명단을 못 받는다")
+            continue
 
         eng = x["region_eng"] or None
         logged_in = True
@@ -166,29 +192,43 @@ def main() -> None:
         if eng:
             print(f"  지역: 기존 — 영문명 `{eng}`")
         elif not logged_in:
-            print("  ⛔ imweb 로그인이 안 됐다 →  python imweb_client.py --login")
+            # imweb 로그인 만료는 사람이 한 번 붙으면 풀리는 **일시 상태**다.
+            # 보류로 확정하지 않고 대기로 두어 다음 주기에 저절로 재시도한다.
+            if "imweb 로그인 대기" not in log:
+                if a.apply:
+                    intake.update(x["row"], log="imweb 로그인 대기 — `python imweb_client.py --login` 후 자동 재시도")
+                send_sms_admin(f"[챕터런칭 대기] {label}\n"
+                               "imweb 로그인이 필요합니다. 로그인하면 자동으로 이어서 진행됩니다.")
+            print("  ⏸ imweb 로그인 대기 →  python imweb_client.py --login")
+            continue
         else:
             print(f"  지역: imweb 에 `{x['region_kor']}` 페이지가 없다 → **신규 지역으로 처리된다**")
-            print("     (지역·ALL 페이지까지 새로 만든다. 기존 지역인데 이름 표기만 다른 것은 아닌지"
-                  " 확인하세요 — 예: 신청 `수원1` ↔ imweb `수원`)")
 
         print(f"  챕터 영문명: {x['chapter_eng'] or 'pipeline 이 BNI Connect 추출에서 역산'}")
 
         if not a.run:
             continue
-        if not logged_in:
-            continue
         if not eng:
-            print("  → 지역 영문명이 없어 자동 실행하지 않는다. 확인 후 직접 넘겨주세요:")
-            print(f"     python pipeline.py --kor {x['chapter_kor']} --region <Eng> "
-                  f"--region-kor {x['region_kor']} --launch {x['launch']} --apply")
+            # 신규 지역인데 영문명을 모르면 지역·ALL 페이지를 통째로 새로 만들 위험이 있다.
+            # imweb 쓰기는 되돌리기가 없으므로 자동 실행하지 않는다.
+            hold(f"지역 `{x['region_kor']}` 을 imweb 에서 못 찾았다 — 표기 확인 필요"
+                 " (예: 신청 `수원1` ↔ imweb `수원`)", "imweb 에서 못 찾았다")
             continue
 
         rc, out, rep = run_pipeline(x, eng, a.apply)
         if a.apply:
             write_back(x, eng, rep, rc, out)
+            # 반복 실패 차단 — 같은 건을 3분마다 무한히 다시 돌리면 BNI Connect 를
+            # 계속 두드리게 된다. 3회에서 멈추고 사람이 본다.
+            fails = (x["log"] or "").count("중단 (rc=") + (1 if rc != 0 else 0)
+            if rc != 0 and fails >= 3:
+                intake.update(x["row"], status=intake.ST_HOLD,
+                              log=f"실패 {fails}회 — 자동 재시도를 멈춘다")
+                send_sms_admin(f"[챕터런칭 중단] {label}\n"
+                               f"{fails}회 실패해 자동 재시도를 멈췄습니다. 확인이 필요합니다.")
         elif rc != 0:
             print("   (dry-run 실패 — 위 메시지를 먼저 해결하세요)")
+
 
     if not a.apply and a.run:
         print("\n(dry-run 이라 Airtable 에 아무것도 쓰지 않았다. --apply 를 붙이면 실제 생성)")
