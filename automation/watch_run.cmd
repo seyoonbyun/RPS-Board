@@ -6,6 +6,7 @@ REM   intake_ack    new applications  -> "we got it" SMS to the applicant
 REM   board_watch   new board posts   -> SMS + ledger
 REM   region_watch  new region        -> sheet / RPI / QR / banner / imweb
 REM   watcher       new chapter       -> full launch pipeline
+REM   auto_publish  verified, still 404 -> publish the site (WHOLE site)
 REM   publish_watch page went live    -> notify owner + post the result
 REM   dropdowns     keep intake sheet lists in step with Master
 REM
@@ -16,8 +17,8 @@ REM ASCII ONLY, CRLF ONLY. cmd.exe reads this in the OEM codepage; a single
 REM Korean character in a comment kills the whole batch silently (it did,
 REM 2026-08-23). Keep every byte in this file under 0x80.
 REM
-REM SMS is in TEST mode by default (everything goes to the admin number).
-REM To go live, set MYPT_SMS_LIVE=1 in the scheduled task environment.
+REM SMS is LIVE since 2026-08-27 (MYPT_SMS_LIVE=1 below). Set it to 0 for
+REM test mode, where every message goes to the admin number instead.
 REM ---------------------------------------------------------------
 setlocal
 REM The watchers print UTF-8. Without this the log is written as CP949
@@ -28,6 +29,8 @@ set "LOG=%HERE%watch_run.log"
 REM Absolute path on purpose. Task Scheduler does not get the interactive
 REM PATH, so a bare "python" resolves to nothing and the job dies silently.
 set "PY=C:\Python314\python.exe"
+REM Real sending. Messages reach chapter owners and cannot be recalled.
+set "MYPT_SMS_LIVE=1"
 if not exist "%PY%" set "PY=python"
 
 echo. >> "%LOG%"
@@ -44,6 +47,9 @@ echo -- region_watch exit=%ERRORLEVEL% >> "%LOG%"
 
 "%PY%" -u "%HERE%watcher.py" --run --apply >> "%LOG%" 2>&1
 echo -- watcher exit=%ERRORLEVEL% >> "%LOG%"
+
+"%PY%" -u "%HERE%auto_publish.py" --apply >> "%LOG%" 2>&1
+echo -- auto_publish exit=%ERRORLEVEL% >> "%LOG%"
 
 "%PY%" -u "%HERE%publish_watch.py" --apply >> "%LOG%" 2>&1
 echo -- publish_watch exit=%ERRORLEVEL% >> "%LOG%"
