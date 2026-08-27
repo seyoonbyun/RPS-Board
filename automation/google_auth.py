@@ -44,7 +44,7 @@ from googleapiclient.discovery import build
 CRED_DIR = Path(r"C:\Users\Gram\desktop\connect_tl_report\connect")
 CLIENT_SECRET = CRED_DIR / "client_secret.json"
 TOKEN = CRED_DIR / "google_token.json"
-SA_KEY = Path(r"C:\SEYOON\03. Projects\Ongoing\rpslist\gcp-key.json")
+SA_KEY = Path(r"C:\Users\Gram\desktop\connect_tl_report\connect\gcp-key.json")
 
 OWNER_EMAIL = "bnikorea.joybyun@gmail.com"
 
@@ -58,15 +58,53 @@ class MissingClientSecret(RuntimeError):
     pass
 
 
+# ---------------------------------------------------------------- 일시적 오류 재시도
+
+def enable_transient_retries(times: int = 4) -> None:
+    """구글 API 의 **일시적** 실패(5xx·429)를 자동으로 다시 시도하게 만든다.
+
+    ⛔ 2026-08-27: `dropdowns.py` 가 Sheets `502 Bad Gateway` **한 번**에 죽어
+       3분 워커 실행이 통째로 `exit=1` 로 끝났다. 구글은 "30초 뒤 다시 해보라"고
+       말하는데 우리 쪽엔 다시 해보는 코드가 없었다.
+
+    `googleapiclient` 는 `execute(num_retries=N)` 으로 지수 백오프를 이미 갖고 있다.
+    다만 기본값이 0 이라 아무도 안 쓴다 — 호출부를 전부 고치는 대신 기본값만 올린다.
+    **명시적으로 `num_retries` 를 준 호출은 그 값을 그대로 쓴다.**
+    """
+    from googleapiclient import http as ghttp
+    if getattr(ghttp.HttpRequest, "_mypt_retry", False):
+        return
+    original = ghttp.HttpRequest.execute
+
+    def execute(self, *, http=None, num_retries=times):
+        return original(self, http=http, num_retries=num_retries)
+
+    ghttp.HttpRequest.execute = execute
+    ghttp.HttpRequest._mypt_retry = True
+
+
 # ---------------------------------------------------------------- 서비스계정
 
 def sa_credentials(scopes: list[str] | None = None) -> SACredentials:
+    enable_transient_retries()
     return SACredentials.from_service_account_file(str(SA_KEY), scopes=scopes or SCOPES)
 
 
 def sa_services():
-    c = sa_credentials()
-    return build("drive", "v3", credentials=c), build("sheets", "v4", credentials=c)
+    """서비스계정 서비스. 키 파일이 없으면 **소유계정 OAuth 로 넘어간다.**
+
+    예전에는 SA_KEY 가 볼트 안(`03. Projects/Ongoing/rpslist/`)을 가리켰는데
+    볼트가 재정리되면서 키가 `99. Private/api keys/rpslist/` 로 옮겨져
+    2026-08-24 오션 챕터 런칭이 여기서 멈췄다. 이 파일 맨 위 주석대로
+    자격증명 정본은 **볼트 밖** 자격증명 폴더에 두고 거기를 가리키게 바꿨다.
+
+    폴백이 안전한 이유: 서비스계정은 읽기·수정만 되고 파일 생성이 안 되는(할당량 0)
+    제한된 자격증명이다. 소유계정 OAuth 는 그 상위집합이라 기능이 줄지 않는다.
+    """
+    if SA_KEY.exists():
+        c = sa_credentials()
+        return build("drive", "v3", credentials=c), build("sheets", "v4", credentials=c)
+    return user_services()
 
 
 # ---------------------------------------------------------------- 소유계정 OAuth
@@ -76,6 +114,7 @@ def user_credentials(interactive: bool = False) -> UserCredentials:
 
     interactive=True 일 때만 브라우저를 띄운다(최초 1회).
     """
+    enable_transient_retries()
     creds: UserCredentials | None = None
     if TOKEN.exists():
         creds = UserCredentials.from_authorized_user_file(str(TOKEN), SCOPES)

@@ -930,7 +930,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rowNo = await sheetsService.addBoardPost(email, name, role, '요청', content.trim());
-      if (rowNo > 0) {
+      // ⚠ **내셔널이 쓰는 `요청` 은 문의가 아니라 공지다.** 게시 완료 결과 글을
+      //    `automation/publish_watch.py` 가 이 API 로 올리는데, 그때도 대장에 행을
+      //    열면 아무도 닫지 않는 `접수` 행이 영영 남는다(2026-08-24 `게시판 #7`).
+      //    `board_watch.py` 도 같은 기준으로 이 글을 문의에서 제외한다.
+      if (rowNo > 0 && role !== 'National') {
         await sheetsService.openProcessRow({
           flow: '게시판',
           key: `게시판 #${rowNo}`,

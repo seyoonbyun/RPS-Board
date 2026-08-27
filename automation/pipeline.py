@@ -35,7 +35,7 @@ sys.stderr.reconfigure(encoding="utf-8")   # 에러도 utf-8 로 (cp949 로 나�
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import paths                                            # noqa: E402
-from imweb_client import ImwebClient, ImwebError, SITE   # noqa: E402
+from imweb_client import RPI_MENU, ImwebClient, ImwebError, SITE   # noqa: E402
 from notify import Reporter                              # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -422,16 +422,25 @@ def step_imweb(p: Plan, im: ImwebClient) -> None:
         tpl = im.find_by_name(TEMPLATE_ALL)
         all_code = im.copy_page(tpl["code"], "foot")
         im.edit_page(all_code, name=p.all_page_name, password=p.result["region_pw"])
+        # 복제는 `pos` 를 무시할 때가 있다 → 자리를 확정한다 (아래 챕터와 같은 이유).
+        if im.place_page(all_code, "foot"):
+            log("      · ALL 페이지 자리 교정(foot/최상위)")
         im.set_chapter_content(all_code, p.result["region_qr_png"], p.result["region_sheet"])
         p.result["all_page"] = all_code
         log(f"    ✓ {p.all_page_name} ({all_code})")
 
         tpl_r = im.find_by_name(TEMPLATE_REGION)
         region_code = im.copy_page(tpl_r["code"], "main")
-        im.edit_page(region_code, name=p.region_kor, url=p.region_eng)
+        # ⚠ `sub_name` 을 반드시 같이 준다 — 안 주면 원본(`화성`)의 영문명이 그대로
+        #   따라와 메뉴 호버에 남는다(하남이 `Hwaseong` 인 채로 넉 달 갔다).
+        im.edit_page(region_code, name=p.region_kor, url=p.region_eng,
+                     sub_name=p.region_eng)
+        # 지역 페이지는 상단 RPI 메뉴의 **자식**이어야 `im.regions()` 에 잡힌다.
+        if im.place_page(region_code, "main", parent_code=RPI_MENU):
+            log("      · 지역 페이지 자리 교정(RPI 하위)")
         im.set_region_logos(region_code, p.result["logo"], all_code, p.region_kor)
         p.result["region_page"] = region_code
-        log(f"    ✓ {p.region_kor} (/{p.region_eng})")
+        log(f"    ✓ {p.region_kor} (/{p.region_eng}) · sub_name={p.region_eng}")
     else:
         region = im.find_by_name(p.region_kor)
         if not region:
@@ -441,15 +450,25 @@ def step_imweb(p: Plan, im: ImwebClient) -> None:
     # --- 챕터 페이지
     tpl_c = im.find_by_name(TEMPLATE_CHAPTER)
     ch_code = im.copy_page(tpl_c["code"], "foot")
-    im.edit_page(ch_code, name=p.chapter_page_name, password=p.chapter_pw)
+    # ⚠ `sub_name` — 템플릿(`106 온리원`)의 `Only One` 이 그대로 따라온다. 메뉴 호버에
+    #   보이는 값이라 안 고치면 남의 챕터 영문명을 달고 산다(2026-08-26 골든에서 발생).
+    fields = {"name": p.chapter_page_name, "password": p.chapter_pw}
+    if p.chapter_eng:
+        fields["sub_name"] = p.chapter_eng
+    im.edit_page(ch_code, **fields)
+    # ⛔ 복제가 `pos='foot'` 을 무시하고 RPI 하위(main·depth1)에 붙는 일이 있다.
+    #   그 자리에선 숫자 url 이 라우팅되지 않아 **게시해도 404** 다 → 자리를 확정한다.
+    if im.place_page(ch_code, "foot"):
+        log("      · 챕터 페이지 자리 교정(foot/최상위)")
     im.set_chapter_content(ch_code, p.result["chapter_qr_png"], p.result["chapter_sheet"])
     p.result["chapter_page"] = ch_code
-    log(f"    ✓ {p.chapter_page_name} ({ch_code})")
+    log(f"    ✓ {p.chapter_page_name} ({ch_code}) · sub_name={p.chapter_eng or '-'}")
 
-    # --- 지역 페이지에 카드
-    im.add_chapter_card(p.result["region_page"], p.result["card"],
-                        ch_code, p.chapter_page_name)
-    log("    ✓ 카드 추가")
+    # --- 지역 페이지 카드는 **여기서 붙이지 않는다**
+    # imweb 은 `link_code` 가 게시된 페이지로 풀릴 때만 앵커를 그린다. 게시 전에 얹으면
+    # 링크 없는 카드가 공개 사이트에 바로 노출되고 클릭이 라이트박스로 떨어진다.
+    # 카드는 게시를 감지한 `publish_watch` 가 붙인다 (2026-08-24 순서 교정).
+    log("    · 지역 카드는 게시 감지 후 자동 부착 (publish_watch)")
 
     # --- 비번 등재 (노션이 정본)
     # ⛔ imweb 은 비번을 bcrypt 로 저장해 되읽을 수 없다. **설정한 이 자리에서** 적는다.
@@ -497,6 +516,27 @@ def step_verify(p: Plan, im: ImwebClient) -> dict:
     nos = [int(re.match(r"^(\d+)\s", m["name"]).group(1)) for m in ml.values()
            if re.match(r"^\d+\s", m.get("name") or "")]
     check("챕터 번호 중복 없음", len(nos) == len(set(nos)), f"최대 {max(nos)}")
+
+    # ⛔ **챕터 페이지의 메뉴 배치를 반드시 본다.**
+    #   `menu_copy.cm` 이 `pos` 를 무시하고 RPI 하위(`pos=main`, `depth=1`)에 붙이는 일이
+    #   있다(2026-08-24 오션). 그러면 숫자 url 이 라우팅되지 않아 **게시해도 404** 이고,
+    #   지역 카드의 링크 앵커도 안 그려지며, `im.regions()` 에 챕터가 섞여 들어온다.
+    #   직전 챕터 109·110 은 `pos=foot, depth=0, 부모없음` 으로 정상 동작한다.
+    #   2026-08-27 부터는 `step_imweb` 이 `place_page()` 로 자리를 확정하므로 여기는
+    #   **그게 정말 됐는지 보는 자리**다 (그 전엔 여기서 걸리면 사람이 손으로 옮겼다).
+    ch = ml.get(p.result.get("chapter_page") or "")
+    if ch:
+        placed = (ch.get("pos") == "foot" and str(ch.get("depth")) == "0"
+                  and not ch.get("parent_code"))
+        check("챕터 페이지 배치(foot/depth0/부모없음)", placed,
+              f"pos={ch.get('pos')} depth={ch.get('depth')} "
+              f"RPI자식={ch.get('parent_code') == RPI_MENU}")
+
+    # 템플릿에서 따라온 `sub_name` 은 메뉴 호버에 그대로 보인다(하남이 `Hwaseong` 으로
+    # 넉 달 방치된 적이 있다). 챕터 영문명과 다르면 잡는다.
+    if ch and p.chapter_eng:
+        check("챕터 sub_name", str(ch.get("sub_name") or "") == p.chapter_eng,
+              f"sub_name={ch.get('sub_name')!r} 기대={p.chapter_eng!r}")
     return report
 
 

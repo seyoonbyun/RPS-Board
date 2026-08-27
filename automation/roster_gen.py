@@ -47,7 +47,7 @@ sys.stderr.reconfigure(encoding="utf-8")   # 에러도 utf-8 로 (cp949 로 나�
 NS = {"ss": "urn:schemas-microsoft-com:office:spreadsheet"}
 SS = "{urn:schemas-microsoft-com:office:spreadsheet}"
 
-KEY = Path(r"C:\SEYOON\03. Projects\Ongoing\rpslist\gcp-key.json")
+KEY = Path(r"C:\Users\Gram\desktop\connect_tl_report\connect\gcp-key.json")
 MASTER_ID = "1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg"
 TAB = "RPS"
 

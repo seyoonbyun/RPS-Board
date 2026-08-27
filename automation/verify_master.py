@@ -31,7 +31,7 @@ from googleapiclient.discovery import build
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")   # 에러도 utf-8 로 (cp949 로 나가면 깨진다)
 
-KEY = Path(r"C:\SEYOON\03. Projects\Ongoing\rpslist\gcp-key.json")
+KEY = Path(r"C:\Users\Gram\desktop\connect_tl_report\connect\gcp-key.json")
 MASTER_ID = "1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg"
 TAB = "RPS"
 SCRATCH = "AL"          # 진단용 임시 열 (데이터 영역 밖)

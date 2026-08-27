@@ -43,7 +43,7 @@ sys.stderr.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import paths                                              # noqa: E402
-from imweb_client import (ImwebClient, ImwebError,         # noqa: E402
+from imweb_client import (RPI_MENU, ImwebClient, ImwebError,         # noqa: E402
                           ensure_login)
 from pipeline import TEMPLATE_ALL, TEMPLATE_REGION, qr_png_2000   # noqa: E402
 
@@ -165,6 +165,10 @@ def step_imweb(p: RegionPlan, im: ImwebClient) -> None:
         raise ImwebError(f"복제 원본을 못 찾았다: {TEMPLATE_ALL}")
     all_code = im.copy_page(tpl["code"], "foot")
     im.edit_page(all_code, name=p.all_page_name, password=p.pw)
+    # ⛔ 복제가 `pos` 를 무시하고 상단 RPI 하위에 붙는 일이 있다(2026-08-24 오션·
+    #   2026-08-26 골든). 그 자리에선 숫자 url 이 라우팅되지 않아 게시해도 404 다.
+    if im.place_page(all_code, "foot"):
+        log("      · ALL 페이지 자리 교정(foot/최상위)")
     im.set_chapter_content(all_code, Path(p.result["qr_png"]), p.result["sheet"])
     p.result["all_page"] = all_code
     log(f"    ✓ {p.all_page_name} ({all_code}) · PW 설정됨")
@@ -177,6 +181,9 @@ def step_imweb(p: RegionPlan, im: ImwebClient) -> None:
     # ⚠ `sub_name` 을 반드시 같이 준다. 안 주면 원본 값이 그대로 따라온다 —
     #   하남이 `Hwaseong` 인 채로 넉 달을 갔다(2026-08-18 교정).
     im.edit_page(region_code, name=p.kor, url=p.eng, sub_name=p.eng)
+    # 지역 페이지는 상단 RPI 메뉴의 **자식**이어야 `im.regions()` 에 잡힌다.
+    if im.place_page(region_code, "main", parent_code=RPI_MENU):
+        log("      · 지역 페이지 자리 교정(RPI 하위)")
     im.set_region_logos(region_code, Path(p.result["logo"]), all_code, p.kor)
     p.result["region_page"] = region_code
     log(f"    ✓ {p.kor} (/{p.eng}) · sub_name={p.eng}")
@@ -210,8 +217,17 @@ def step_verify(p: RegionPlan, im: ImwebClient) -> dict:
         from imweb_client import _sheet_id
         text = im.visual_section(p.result["all_page"])[1]["data"]["slide_data"][0]["text"]
         check("ALL 시트 링크", _sheet_id(p.result["sheet"]) in text)
+    if p.result.get("all_page"):
+        ap_ = ml[p.result["all_page"]]
+        check("ALL 페이지 배치(foot/depth0/부모없음)",
+              ap_.get("pos") == "foot" and str(ap_.get("depth")) == "0"
+              and not ap_.get("parent_code"),
+              f"pos={ap_.get('pos')} depth={ap_.get('depth')}")
     if p.result.get("region_page"):
         rp = ml[p.result["region_page"]]
+        check("지역 페이지 배치(RPI 하위)",
+              str(rp.get("parent_code") or "") == RPI_MENU and rp.get("pos") == "main",
+              f"pos={rp.get('pos')} parent={rp.get('parent_code')}")
         check("지역 url 영문", not str(rp.get("url", "")).isdigit(), f"url={rp.get('url')}")
         check("지역 sub_name", str(rp.get("sub_name") or "") == p.eng,
               f"sub_name={rp.get('sub_name')!r}")

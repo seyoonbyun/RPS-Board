@@ -22,3 +22,5 @@ automation/**/gcp-key.json
 automation/**/solapi.json
 # 워처 실행 로그 (로컬 산출물)
 automation/watch_run.log
+
+automation/rpi_watch.log

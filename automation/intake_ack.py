@@ -30,7 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import contacts                                             # noqa: E402
 import intake                                               # noqa: E402
 import proclog                                              # noqa: E402
-from notify import send_sms_public, sms_test_mode           # noqa: E402
+from notify import (send_sms_admin, send_sms_public,      # noqa: E402
+                    sms_test_mode)
 
 ACK_MARK = "접수안내"
 
@@ -80,6 +81,12 @@ def main() -> int:
             # 진짜 대상이 뒤로 밀린다. 대신 왜 못 보냈는지 로그에 남긴다.
             intake.update(x["row"], svc=svc,
                           log=f"{ACK_MARK} 미발송 — `담당자 연락처` 미등록")
+            # ⚠ 여기서 끝내면 **아무도 모른다.** 담당자는 접수 안내를 못 받고, 나는
+            #   시트를 열어보기 전까지 그 사실을 모른다. 21명 중 17명이 연락처가 없어
+            #   가장 흔한 실패 경로다 → 나에게 한 번 알린다(로그 표시가 있으니 재발송 없음).
+            send_sms_admin(f"[접수안내 미발송] {target_label(x)}\n"
+                           f"{x['owner'] or x['email'] or '담당자'} 연락처가 "
+                           "`담당자 연락처` 탭에 없습니다. 번호를 넣으면 다음 안내부터 나갑니다.")
             continue
         ok = send_sms_public(ack_text(x), phone)
         intake.update(x["row"], svc=svc,

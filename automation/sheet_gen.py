@@ -44,7 +44,7 @@ from googleapiclient.discovery import build
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")   # 에러도 utf-8 로 (cp949 로 나가면 깨진다)
 
-KEY = Path(r"C:\SEYOON\03. Projects\Ongoing\rpslist\gcp-key.json")
+KEY = Path(r"C:\Users\Gram\desktop\connect_tl_report\connect\gcp-key.json")
 FOLDER_ID = "1XqC-OdatL9Dxi9fJ9a3IKr_I4NKvozGf"  # RPS_Sheets
 MASTER_ID = "1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg"  # MY PowerTeam (archive)
 

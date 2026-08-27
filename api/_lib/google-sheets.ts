@@ -3037,17 +3037,27 @@ export class GoogleSheetsService {
     console.log(`✅ Member restored with full data: ${memberName} (${email})`);
   }
 
+  /**
+   * 게시판 글 삭제 — **행을 지우지 않고 종류(E열)만 `삭제됨` 으로 바꾼다.**
+   *
+   * ⛔ 예전엔 `deleteDimension` 으로 행을 통째로 지웠다. 그러면 아래 글들의 **행번호가
+   *    한 칸씩 당겨진다.** 행번호는 이 시스템에서 그냥 표시가 아니라 키다 —
+   *      · 처리 대장 `rps new account` 의 `대상` = `게시판 #<행번호>`
+   *      · 답변 글의 `ParentIndex` = 원 문의 행번호
+   *      · 로컬 워커 `board_watch.py` 의 처리 지점
+   *    한 건만 지워도 대장의 키가 **다른 문의를 가리키게** 되고, 답변 문자가 엉뚱한
+   *    사람에게 갈 수 있다. 그래서 자리는 남기고 표시만 바꾼다(조회에서 걸러낸다).
+   */
   async deleteBoardPost(rowIndex: number): Promise<void> {
     const accessToken = await this.getAccessToken();
-    const metaResp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}?fields=sheets.properties`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-    const meta = await metaResp.json();
-    const sheet = meta.sheets?.find((s: any) => s.properties.title === 'BoardLog');
-    if (!sheet) throw new Error('BoardLog 시트를 찾을 수 없습니다');
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requests: [{ deleteDimension: { range: { sheetId: sheet.properties.sheetId, dimension: 'ROWS', startIndex: rowIndex - 1, endIndex: rowIndex } } }] })
-    });
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/BoardLog!E${rowIndex}?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [['삭제됨']] })
+      }
+    );
   }
 
   async updateBoardPost(rowIndex: number, content: string): Promise<void> {
@@ -3130,6 +3140,9 @@ export class GoogleSheetsService {
       );
       if (!resp.ok) return [];
       const data = await resp.json();
+      // `index` 는 **시트 행번호**다(대장 키·ParentIndex 가 이 값을 쓴다).
+      // 삭제된 글은 자리를 남긴 채 종류가 `삭제됨` 이므로, 매핑한 **뒤에** 걸러내야
+      // 남은 글들의 행번호가 그대로 유지된다.
       return (data.values || []).map((row: any[], i: number) => ({
         index: i + 2,
         timestamp: row[0] || '',
@@ -3139,7 +3152,7 @@ export class GoogleSheetsService {
         type: row[4] || '',
         content: row[5] || '',
         parentIndex: row[6] || '',
-      }));
+      })).filter((p: any) => p.type !== '삭제됨');
     } catch (error) {
       console.error('Failed to get board posts:', error);
       return [];

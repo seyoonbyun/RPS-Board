@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -47,21 +48,73 @@ import paths                                    # noqa: E402
 SNAP = paths.snap_dir()
 
 
-def region_english(region_kor: str) -> tuple[str | None, bool]:
+def _norm(s: str) -> str:
+    """지역 표기 정규화 — 꼬리 숫자·공백을 턴다 (`부산1`->`부산`, `Suwon1`->`suwon`)."""
+    return (s or "").strip().rstrip("0123456789").strip().lower()
+
+
+def split_label(applied: str) -> tuple[str, str]:
+    """모 시트 표기를 영문부/한글부로 나눈다.
+
+    첫 공백으로 자르면 안 된다 — 영문이 두 단어인 표기가 있다
+    (`Seoul Central 센트럴` 을 첫 공백으로 자르면 한글부가 `Central 센트럴` 이 된다).
+    한글(비 ASCII)이 처음 나오는 자리를 경계로 삼는다.
+    """
+    applied = (applied or "").strip()
+    i = next((k for k, ch in enumerate(applied) if ord(ch) > 127), None)
+    if i is None:
+        return applied, applied
+    eng, kor = applied[:i].strip(), applied[i:].strip()
+    return (eng or kor), (kor or eng)
+
+
+def match_region(applied: str, pages: list[dict]) -> dict | None:
+    """신청서의 모 시트 표기(`Busan1 부산1`)를 imweb 지역 페이지로 푼다.
+
+    두 시스템은 표기 체계가 다르다. 모 시트는 BNI Connect 기준이라 꼬리 숫자가
+    붙고(`Busan1 부산1`·`Suwon1 수원1`·`Daegu1 대구1`), imweb 페이지는 짧은
+    이름이다(`부산`·`수원`·`대구`). 예전에는 신청서 값을 **완전일치**로 찾아서
+    21개 지역이 하나도 안 맞았다 — 첫 실전 건(2026-08-24 오션)이 여기서 멈췄다.
+
+    맞추는 방식: 한글부(꼬리 숫자 제거) 우선, 안 되면 영문부.
+    후보가 **정확히 1개일 때만** 확정한다. imweb 쓰기는 되돌릴 수 없어서
+    애매하면 사람이 보는 편이 싸다.
+    """
+    if not (applied or "").strip():
+        return None
+    eng_part, kor_part = split_label(applied)
+    for want in (_norm(kor_part), _norm(eng_part)):
+        if not want:
+            continue
+        hits = [m for m in pages
+                if _norm(str(m.get("name", ""))) == want
+                or _norm(str(m.get("url", ""))) == want]
+        if len(hits) == 1:
+            return hits[0]
+        if len(hits) > 1:                  # 애매하면 폴백으로 넘어가지 않는다
+            return None
+    return None
+
+
+def region_english(region_kor: str) -> tuple[str | None, str | None, bool]:
     """기존 지역이면 imweb 지역 페이지 url 이 곧 영문명이다.
 
-    돌려주는 값: (영문명, imweb 로그인 여부)
+    돌려주는 값: (영문명, imweb 페이지 한글명, imweb 로그인 여부)
     영문명이 None 이면 **신규 지역이거나 로그인이 안 된 것** — 둘은 구분해야 한다.
+
+    한글명을 같이 돌려주는 이유: pipeline 의 `--region-kor` 는 imweb 페이지를
+    찾는 키라서 **모 시트 표기가 아니라 imweb 이름**이어야 한다. 신청서 값을
+    그대로 넘기면 `new_region` 으로 오판해 지역 페이지를 새로 만든다.
     """
     from imweb_client import ImwebClient, ensure_login
     with ImwebClient() as im:
         # 끊겼으면 자격증명 파일로 스스로 붙어 본다(쿨다운이 무한 재시도를 막는다).
         if not ensure_login(im):
-            return None, False
-        m = im.find_by_name(region_kor)
+            return None, None, False
+        m = match_region(region_kor, im.regions())
         if m and not str(m.get("url", "")).isdigit():
-            return m["url"], True
-    return None, True
+            return m["url"], str(m.get("name", "")).strip(), True
+    return None, None, True
 
 
 def latest_report(before: set[Path]) -> Path | None:
@@ -71,12 +124,13 @@ def latest_report(before: set[Path]) -> Path | None:
     return max(fresh, key=lambda p: p.stat().st_mtime) if fresh else None
 
 
-def run_pipeline(app: dict, region_eng: str, apply: bool) -> tuple[int, str, Path | None]:
+def run_pipeline(app: dict, region_eng: str, region_kor: str,
+                 apply: bool) -> tuple[int, str, Path | None]:
     """pipeline.py 를 띄운다. 챕터 영문명은 넘기지 않는다(추출에서 역산)."""
     cmd = [sys.executable, str(HERE / "pipeline.py"),
            "--kor", app["chapter_kor"],
            "--region", region_eng,
-           "--region-kor", app["region_kor"],
+           "--region-kor", region_kor,
            "--launch", app["launch"]]
     if app["chapter_eng"]:                       # 사람이 미리 확정해 둔 경우만
         cmd += ["--chapter", app["chapter_eng"]]
@@ -105,7 +159,10 @@ def write_back(app: dict, region_eng: str, report_path: Path | None,
         data = json.loads(report_path.read_text(encoding="utf-8"))
         plan = data.get("plan", {})
         ok = data.get("report", {}).get("ok")
-        fields["chapter_eng"] = plan.get("chapter_eng", "")
+        # 리포트 plan 에는 `chapter_eng` 키가 없다 (2026-08-24 오션 건에서 확인).
+        # 빈 값으로 덮으면 신청서에 있던 영문명이 지워지고, 그 결과 아래
+        # `Master` 챕터 목록 추가까지 조용히 건너뛴다 — 실제로 Ocean 이 빠졌다.
+        fields["chapter_eng"] = plan.get("chapter_eng") or app.get("chapter_eng") or ""
         fields["sheet"] = plan.get("chapter_sheet", "")
         # ⚠ 이름이 아니라 **url** 을 넣는다. `publish_watch.py` 가 이 값으로
         #   공개 사이트를 찔러 게시 여부를 판정한다(게시 전 404 · 게시 후 200).
@@ -185,10 +242,12 @@ def main() -> None:
             print("  ⏸ BNI Connect 지원서 등록 대기 — 멤버 명단을 못 받는다")
             continue
 
-        eng = x["region_eng"] or None
-        logged_in = True
-        if not eng:
-            eng, logged_in = region_english(x["region_kor"])
+        # `지역 영문` 이 채워져 있어도 imweb 한글명은 따로 풀어야 한다.
+        # 영문만 믿고 신청서 한글표기를 그대로 넘기면 pipeline 이 신규 지역으로
+        # 오판해 지역 페이지를 새로 만든다 (되돌릴 수 없다).
+        eng, kor, logged_in = region_english(x["region_kor"])
+        if not eng and x["region_eng"]:
+            eng, kor = x["region_eng"], None
 
         if eng:
             print(f"  지역: 기존 — 영문명 `{eng}`")
@@ -216,7 +275,11 @@ def main() -> None:
                  " (예: 신청 `수원1` ↔ imweb `수원`)", "imweb 에서 못 찾았다")
             continue
 
-        rc, out, rep = run_pipeline(x, eng, a.apply)
+        if not kor:
+            hold(f"지역 `{x['region_kor']}` 의 imweb 페이지 한글명을 못 풀었다"
+                 " — 표기 확인 필요", "imweb 한글명을 못 풀었다")
+            continue
+        rc, out, rep = run_pipeline(x, eng, kor, a.apply)
         if a.apply:
             write_back(x, eng, rep, rc, out)
             # 반복 실패 차단 — 같은 건을 3분마다 무한히 다시 돌리면 BNI Connect 를

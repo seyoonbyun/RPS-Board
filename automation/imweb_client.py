@@ -44,6 +44,10 @@ SITE_CODE = "S20240219d9788e91a46a5"
 RPI_MENU = "m20240412cd7f015dacea2"      # 지역 페이지들의 부모
 CDN = "https://cdn.imweb.me/upload/"
 
+#: 게시(publish)만 `/admin/ajax/*.cm` 이 아니라 **별도 게이트웨이 API** 다.
+#: 편집기 상단 `게시하기` 버튼이 여기를 부른다 (2026-08-27 번들에서 확인).
+GATEWAY = "https://gateway-brand.imwebapis.com"
+
 
 class ImwebError(RuntimeError):
     pass
@@ -227,11 +231,82 @@ class ImwebClient:
     # ---------- 쓰기 (전부 재조회 검증) ----------
 
     def copy_page(self, org_code: str, pos: str) -> str:
-        """페이지 복제. 새 code 를 돌려준다. pos: 챕터·ALL='foot', 지역='main'."""
+        """페이지 복제. 새 code 를 돌려준다. pos: 챕터·ALL='foot', 지역='main'.
+
+        ⛔ **`pos` 를 믿지 마라.** 서버가 무시하고 엉뚱한 곳에 붙이는 일이 있다 —
+          2026-08-24 오션·2026-08-26 골든 둘 다 `pos='foot'` 을 줬는데도 상단 RPI
+          메뉴의 자식(`pos=main`·`depth=1`)으로 생겼다. 그러면 숫자 url 이
+          라우팅되지 않아 **게시해도 404** 다.
+          → 복제 뒤에는 반드시 `place_page()` 로 자리를 확정할 것.
+        """
         j = self._post("menu_copy.cm", {"org_code": org_code, "name": "", "pos": pos})
         if j.get("msg") != "SUCCESS" or not j.get("data", {}).get("code"):
             raise ImwebError(f"복제 실패: {str(j)[:200]}")
         return j["data"]["code"]
+
+    def move_page(self, code: str, target: str, parent_code: str = "",
+                  prev_code: str = "", next_code: str = "") -> dict:
+        """메뉴 트리에서 페이지를 옮긴다 (편집기의 드래그앤드롭과 같은 호출).
+
+        `menu_edit.cm` 의 **`type=move`** 다. `type=edit` 와 파라미터 모양이 전혀 다르다 —
+        메뉴 객체를 통째로 주는 게 아니라 위치만 준다.
+
+            target      'main' | 'foot'   (menu_add·menu_copy 의 `pos` 와 같은 값)
+            parent_code 부모 메뉴 code (최상위면 빈 문자열)
+            prev_code   이 페이지 **앞**에 올 형제 code
+            next_code   이 페이지 **뒤**에 올 형제 code
+
+        ⚠ 2026-08-27 확인: 편집기 스크립트(`/admin/js/menu.js`)를 읽어 알아냈다.
+          그전까지는 "이동 API 가 없다"고 적어 두고 손으로 끌어다 옮겼다 — 그래서
+          검증 불통과 건이 자동화 중간에 멈춰 섰다.
+        응답 `msg` 는 SUCCESS / SAME(자리 그대로) / RELOAD(메뉴 버전이 밀림) 셋이다.
+        """
+        j = self._post("menu_edit.cm", {
+            "type": "move", "target": target, "code": code,
+            "parent_code": parent_code, "prev_code": prev_code,
+            "next_code": next_code, "menu_version": self.menu_version(),
+        })
+        if j.get("msg") not in ("SUCCESS", "SAME", "RELOAD"):
+            raise ImwebError(f"이동 실패: {str(j)[:200]}")
+        return j
+
+    def _siblings(self, pos: str, parent_code: str = "") -> list[dict]:
+        return [m for m in self.menu_list().values()
+                if str(m.get("pos") or "") == pos
+                and str(m.get("parent_code") or "") == (parent_code or "")]
+
+    def place_page(self, code: str, target: str, parent_code: str = "") -> bool:
+        """페이지가 **의도한 자리에 있는지 보고, 아니면 옮긴다.** 멱등.
+
+        돌려주는 값: 옮겼으면 True, 이미 제자리였으면 False.
+        옮긴 뒤 다시 읽어 대조하고, 안 맞으면 예외를 던진다(조용히 지나가지 않는다).
+        """
+        want_parent = parent_code or ""
+        want_depth = 0 if not want_parent else 1
+        m = self.menu_list().get(code)
+        if not m:
+            raise ImwebError(f"없는 페이지: {code}")
+        if (str(m.get("pos") or "") == target
+                and str(m.get("parent_code") or "") == want_parent
+                and str(m.get("depth")) == str(want_depth)):
+            return False
+
+        # 같은 목록의 **맨 뒤**에 붙인다 (자기 자신은 후보에서 뺀다).
+        others = [x for x in self._siblings(target, want_parent) if x["code"] != code]
+        tail = [x for x in others if not str(x.get("next_code") or "")]
+        prev = tail[0]["code"] if len(tail) == 1 else (others[-1]["code"] if others else "")
+        self.move_page(code, target, parent_code=want_parent, prev_code=prev)
+
+        after = self.menu_list().get(code) or {}
+        ok = (str(after.get("pos") or "") == target
+              and str(after.get("parent_code") or "") == want_parent
+              and str(after.get("depth")) == str(want_depth))
+        if not ok:
+            raise ImwebError(
+                f"이동이 반영되지 않았다: pos={after.get('pos')!r} "
+                f"parent={after.get('parent_code')!r} depth={after.get('depth')!r} "
+                f"(기대 pos={target!r} parent={want_parent!r} depth={want_depth})")
+        return True
 
     def edit_page(self, code: str, **fields) -> dict:
         """이름·url·비밀번호 등 수정.
@@ -258,6 +333,61 @@ class ImwebClient:
             elif str(after.get(k)) != str(v):
                 raise ImwebError(f"반영 안 됨: {k} = {after.get(k)!r} (기대 {v!r})")
         return after
+
+    # ---------- 게시 ----------
+
+    def _gateway_token(self) -> str:
+        """게시 API 용 단기 토큰. 로그인 세션(쿠키)으로 그 자리에서 발급받는다.
+
+        편집기가 하는 것과 똑같다 — `POST /_/api/auth/access-token` 이 세션을 보고
+        JWT 를 주고, 게이트웨이는 그 JWT 로만 받는다(쿠키로는 안 된다).
+        ⚠ 어디에도 저장하지 않는다. 짧게 만료되고, 저장하면 유출 표면만 늘어난다.
+        """
+        head = {"Content-Type": "application/json", "Accept": "application/json"}
+        r = self.req.post(f"{self.site}/_/api/auth/access-token", headers=head)
+        if not r.ok:
+            # 편집기도 같은 순서를 밟는다 — 옛 세션 쿠키를 새 인증으로 한 번 바꾼 뒤
+            # 토큰을 받는다. 그 교환이 아직 없으면 첫 요청이 400 으로 떨어진다.
+            self.req.post(f"{self.site}/_/api/auth/sign-in/legacy", headers=head)
+            r = self.req.post(f"{self.site}/_/api/auth/access-token", headers=head)
+        if not r.ok:
+            raise ImwebError(f"게시 토큰 발급 실패 HTTP {r.status} {r.text()[:150]}")
+        j = r.json() or {}
+        tok = j.get("accessToken") or (j.get("data") or {}).get("accessToken")
+        if not tok:
+            raise ImwebError(f"게시 토큰이 응답에 없다: {str(j)[:200]}")
+        return str(tok)
+
+    def _gateway(self, method: str, path: str, token: str = "") -> dict:
+        token = token or self._gateway_token()
+        fn = self.req.get if method == "GET" else self.req.post
+        kw = {"headers": {"Authorization": f"Bearer {token}",
+                          "Content-Type": "application/json",
+                          "Accept": "application/json"}}
+        if method != "GET":
+            kw["data"] = "{}"
+        r = fn(f"{GATEWAY}{path}", **kw)
+        if not r.ok:
+            raise ImwebError(f"{path} HTTP {r.status} {r.text()[:200]}")
+        try:
+            return r.json() or {}
+        except Exception:
+            return {"raw": r.text()[:200]}
+
+    def publish_state(self) -> dict:
+        """읽기 전용 — 지금 게시 중인지, 게시할 변경이 있는지."""
+        return self._gateway("GET", "/design-mode/design/status")
+
+    def publish(self) -> dict:
+        """**사이트를 게시한다.**
+
+        ⛔ imweb 의 게시는 **페이지 단위가 아니라 사이트 전체**이고 실행 취소가 없다
+           (편집기 확인창 문구 그대로: "변경된 디자인이 실제 사이트에 적용되며,
+           게시하기는 실행 취소가 불가합니다"). 즉 이 순간 저장돼 있는 **남의
+           미완성 편집까지 같이 공개된다** — 부르기 전에 그래도 되는 상황인지
+           호출부가 판단해야 한다.
+        """
+        return self._gateway("POST", "/design-mode/design/publish/start")
 
     def upload_image(self, file: Path, target: str, target_code: str) -> dict:
         """이미지 업로드 → 파일 레코드.
@@ -395,12 +525,37 @@ class ImwebClient:
         raise ImwebError("갤러리 위젯이 없다")
 
     def add_chapter_card(self, region_page: str, card_png: Path,
-                         chapter_page_code: str, chapter_page_name: str) -> dict:
+                         chapter_page_code: str,
+                         chapter_page_name: str | None = None) -> dict:
+        """지역 페이지 갤러리에 챕터 카드를 얹고 챕터 페이지로 링크를 건다.
+
+        ⚠ **챕터 페이지를 게시한 뒤에 부른다.** imweb 은 `link_code` 가 게시된
+          페이지로 풀릴 때만 `<a>` 를 그린다 — 미게시 상태에서 얹으면 앵커 없이
+          그려져 클릭이 **이미지 라이트박스**로 떨어진다(2026-08-24 오션에서 확인).
+          카드는 지역 페이지 재게시 없이 즉시 공개되므로, 게시 전에 얹으면
+          "눌러도 안 열리는 카드"가 공개 사이트에 그대로 노출된다.
+
+        ⚠ 갤러리 삭제 API 가 없어 **중복은 되돌릴 수 없다.** 같은 `link_code` 카드가
+          이미 있으면 새로 얹지 않고 링크 값만 맞춘다(재실행·재시도 대비).
+        """
+        if not chapter_page_name:
+            m = self.menu_list().get(chapter_page_code)
+            if not m:
+                raise ImwebError(f"챕터 페이지를 못 찾았다: {chapter_page_code}")
+            chapter_page_name = str(m.get("name") or "").strip()
+
         board = self.gallery_board(region_page)
+        link_fields = dict(link=f"/{chapter_page_name}", link_code=chapter_page_code,
+                           use_link_code="Y", link_type="default", new_window="Y")
+
+        for it in self.gallery_items(board):
+            if str(it.get("link_code")) == str(chapter_page_code):
+                if all(str(it.get(k)) == str(v) for k, v in link_fields.items()):
+                    return it                      # 이미 제대로 붙어 있다
+                return self.gallery_update(it, **link_fields)
+
         item = self.gallery_add(board, card_png)
-        return self.gallery_update(
-            item, link=f"/{chapter_page_name}", link_code=chapter_page_code,
-            use_link_code="Y", link_type="default", new_window="Y")
+        return self.gallery_update(item, **link_fields)
 
 
 def _q(s: str) -> str:

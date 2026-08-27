@@ -43,6 +43,18 @@ SOLAPI_CFG = "solapi.json"        # cred_dir() 안. {"api_key","api_secret","sen
 #: 대외 문자의 첫 줄. 받는 사람이 누구한테서 온 문자인지 모르면 스팸으로 읽힌다.
 GREETING = "안녕하세요 조이입니다 :)"
 
+
+def region_display(region: str) -> str:
+    """대외 문구용 지역명. 모 시트 표기에서 **한글부만** 남긴다.
+
+    모 시트는 BNI Connect 기준 합성 표기(`Busan1 부산1`)를 쓰는데, 이걸 그대로
+    담당자 문자·게시판 글에 실으면 내부 표기가 대외로 나간다
+    (2026-08-24 오션 안내가 `Busan1 부산1 오션 챕터` 로 나갔다).
+    """
+    r = (region or "").strip()
+    i = next((k for k, ch in enumerate(r) if ord(ch) > 127), None)
+    return (r[i:].strip() or r) if i is not None else r
+
 #: **테스트 모드** — 켜져 있으면 남의 번호로 안 나가고 전부 내 번호로 온다.
 #: 끄려면 환경변수 `MYPT_SMS_LIVE=1`. 기본이 테스트인 이유는, 실수의 방향을
 #: "안 갔다"로 몰아두기 위해서다. 잘못 간 문자는 회수할 수 없다.

@@ -117,6 +117,11 @@ def sa_key() -> Path:
     """서비스계정 키. 읽기·수정은 되지만 드라이브 파일 생성은 못 한다(할당량 0)."""
     return _first_existing([
         os.environ.get("MYPT_SA_KEY"),
+        cred_dir() / "gcp-key.json",
+        # 볼트가 재정리되면서 옮겨졌다 (2026-08-24 오션 런칭이 옛 경로 탓에 멈췄다).
+        # 볼트는 3중 동기화 중이라 자격증명 정본은 위 자격증명 폴더에 둔다.
+        r"C:\SEYOON\99. Private\api keys\rpslist\gcp-key.json",
+        r"C:\SEYOON\99. Private\mypowerteam app secret\gcp-key.json",
         r"C:\SEYOON\03. Projects\Ongoing\rpslist\gcp-key.json",
     ], "서비스계정 키 gcp-key.json")
 

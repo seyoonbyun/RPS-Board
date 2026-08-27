@@ -56,6 +56,37 @@ def key_of(sheet_row: int) -> str:
     return f"게시판 #{sheet_row}"
 
 
+def sig_of(p: dict) -> str:
+    """글 하나를 **행번호와 무관하게** 가리키는 표시.
+
+    ⛔ 예전에는 처리 지점을 `커서 = 글 개수` 로 기억했다. 그런데 게시판은 글을 지울 수
+       있고(`/api/admin/board/delete`), 지우면 개수가 **줄어든다**. 그러면
+       `posts[커서:]` 가 비어서 **그 뒤에 올라온 새 문의가 조용히 무시된다** —
+       문자도 대장도 없이. 개수를 세는 대신 글 하나하나를 기억한다.
+
+    내용(F열)은 표시에 넣지 않는다. 글 수정(`/board/update`)이 내용만 바꾸는데,
+    내용까지 넣으면 수정할 때마다 "새 글"이 되어 접수 문자가 다시 나간다.
+    """
+    return "|".join((p["ts"], p["email"].lower(), p["type"], p["parent"]))
+
+
+def save_state(st: dict, posts: list[dict], note: str = "") -> None:
+    """지금 보이는 글 전부를 처리한 것으로 적는다.
+
+    건너뛴 글(공지·형식 불명)도 함께 적는다 — 예전 커서가 그랬듯, 한 번 본 글은
+    다시 보지 않는다. 지워진 글의 표시는 남지만 몇 바이트라 따로 정리하지 않는다.
+    """
+    st = dict(st or {})
+    seen = set(st.get("seen") or [])
+    seen |= {sig_of(p) for p in posts}
+    st.pop("cursor", None)                      # 개수 커서는 더 쓰지 않는다
+    st["seen"] = sorted(seen)
+    st["checked_at"] = datetime.datetime.now().isoformat(timespec="seconds")
+    if note:
+        st["note"] = note
+    state_path().write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def phone_index(svc) -> dict[str, str]:
     """{이메일(소문자): 연락처} — 정본은 `담당자 연락처` 탭 하나뿐이다.
 
@@ -118,28 +149,26 @@ def main() -> int:
 
     st = json.loads(state_path().read_text(encoding="utf-8")) if state_path().exists() else None
     if st is None and not a.replay:
-        state_path().write_text(json.dumps(
-            {"cursor": len(posts),
-             "note": "최초 실행 — 기존 게시글은 처리하지 않았다",
-             "checked_at": datetime.datetime.now().isoformat(timespec="seconds")},
-            ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"최초 실행 — 커서를 {len(posts)} 로 맞추고 종료한다 (옛 글에 문자를 보내지 않는다).")
+        save_state({}, posts, note="최초 실행 — 기존 게시글은 처리하지 않았다")
+        print(f"최초 실행 — 기존 {len(posts)}건을 처리한 것으로 적고 종료한다 "
+              "(옛 글에 문자를 보내지 않는다).")
         print(f"   상태 파일 {state_path()}")
         return 0
 
     st = st or {}
-    cursor = 0 if a.replay else int(st.get("cursor", 0))
-    fresh = posts[-a.replay:] if a.replay else posts[cursor:]
+    seen = set(st.get("seen") or [])
+    if not seen and "cursor" in st:
+        # 옛 상태(개수 커서) → 표시 목록으로 한 번만 옮긴다. 커서 앞의 글이 처리된 것이다.
+        seen = {sig_of(p) for p in posts[:int(st.get("cursor", 0))]}
+        print(f"상태 이관 — 커서 {st.get('cursor')} → 처리 표시 {len(seen)}건")
+    fresh = posts[-a.replay:] if a.replay else [p for p in posts if sig_of(p) not in seen]
     mode = "  [테스트 모드 — 문자는 전부 내 번호로]" if sms_test_mode() else "  [실발송]"
-    print(f"{BOARD_TAB} {len(posts)}건 · 커서 {cursor} · 신규 {len(fresh)}건{mode}")
+    print(f"{BOARD_TAB} {len(posts)}건 · 처리 {len(seen)}건 · 신규 {len(fresh)}건{mode}")
 
     if not fresh:
         print("새 글 없음 — 할 일 없음")
         if a.apply and not a.replay:
-            st.update(cursor=len(posts),
-                      checked_at=datetime.datetime.now().isoformat(timespec="seconds"))
-            state_path().write_text(json.dumps(st, ensure_ascii=False, indent=1),
-                                    encoding="utf-8")
+            save_state(st, posts)
         return 0
 
     phones = phone_index(svc)
@@ -229,10 +258,7 @@ def main() -> int:
                    "\n".join(report) + f"\n\n대장: `{proclog.TAB}` 탭" + note)
 
     if not a.replay:
-        st.update(cursor=len(posts),
-                  checked_at=datetime.datetime.now().isoformat(timespec="seconds"))
-        state_path().write_text(json.dumps(st, ensure_ascii=False, indent=1),
-                                encoding="utf-8")
+        save_state(st, posts)
     print(f"\n처리 {handled}건 · 대장 `{proclog.TAB}` 기록 완료")
     return 0
 

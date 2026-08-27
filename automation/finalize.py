@@ -40,7 +40,7 @@ sys.path.insert(0, str(HERE))
 
 import intake                                     # noqa: E402
 import paths                                      # noqa: E402
-from notify import send_email, send_sms           # noqa: E402
+from notify import region_display, send_email, send_sms   # noqa: E402
 
 SNAP = paths.snap_dir()
 
@@ -74,7 +74,8 @@ def compose(app: dict, plan: dict, when: datetime) -> str:
     """게시판 본문. 첫 줄은 사용자가 정한 문구 그대로."""
     # 멤버 수를 모르면 그 문구를 통째로 뺀다 — "총 ?명" 이 나가면 안 된다.
     members = plan.get("member_count")
-    head = (f"{korean_dt(when)}, {app['region_kor']} 지역의 {app['chapter_kor']} 챕터 "
+    head = (f"{korean_dt(when)}, {region_display(app['region_kor'])} 지역의"
+            f" {app['chapter_kor']} 챕터 "
             f"RPS 계정이 개설되었습니다!" + (f" 총 {members}명" if members else ""))
 
     links = []
@@ -86,11 +87,26 @@ def compose(app: dict, plan: dict, when: datetime) -> str:
     return head + ("\n" + "\n".join(links) if links else "")
 
 
-def post_board(content: str) -> bool:
-    """게시판 API. `x-caller-email` 로 호출자를 검증한다(RPS 시트 Z열 기준)."""
+def post_board(content: str, tries: int = 2) -> bool:
+    """게시판 API. `x-caller-email` 로 호출자를 검증한다(RPS 시트 Z열 기준).
+
+    ⚠ 타임아웃이 30초였는데 **실제로 걸렸다**(2026-08-27 골든). 서버리스 함수가 찬
+      상태에서 깨어나 구글 시트를 여러 번 오가면 30초를 넘는다. 함수 자체의 상한이
+      60초라 여기서도 60초를 준다. 한 번 더 시도하는 이유도 같다 — 두 번째 호출은
+      함수가 이미 깨어 있어 대개 곧바로 끝난다.
+    """
+    for n in range(tries):
+        if _post_board_once(content):
+            return True
+        if n + 1 < tries:
+            print(f"   게시 재시도 {n + 2}/{tries}", file=sys.stderr)
+    return False
+
+
+def _post_board_once(content: str) -> bool:
     try:
         r = requests.post(
-            BOARD_API, timeout=30,
+            BOARD_API, timeout=60,
             headers={"Content-Type": "application/json",
                      "x-caller-email": POSTER_EMAIL},
             data=json.dumps({

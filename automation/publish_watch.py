@@ -5,9 +5,11 @@ r"""**게시를 감지해** 마무리까지 자동으로 — 담당자 통보 ·
     python publish_watch.py --apply    # 실제 발송·게시
 
 왜 감지인가
-    게시(publish)는 사람이 눈으로 보고 누르는 마지막 관문이라 자동화하지 않는다.
-    하지만 **누른 뒤에 남는 일**(담당자 통보·게시판 글·상태 정리)까지 손으로 할 이유는
-    없다. 예전엔 `finalize.py --record <행> --apply` 를 내가 기억해서 돌려야 했다.
+    **누른 뒤에 남는 일**(담당자 통보·게시판 글·상태 정리)을 손으로 할 이유가 없다.
+    예전엔 `finalize.py --record <행> --apply` 를 내가 기억해서 돌려야 했다.
+    2026-08-27 부터는 누르는 것도 `auto_publish.py` 가 한다 — 그래도 이 파일은
+    **누른 결과를 공개 사이트에서 직접 확인한 뒤**에만 마무리한다. "게시 요청을
+    보냈다"와 "실제로 열렸다"는 다르고, 담당자에게는 후자만 알려야 한다.
 
 게시 판정 — 공개 사이트 HTTP 상태
     게시 전  `powerteam-bnikorea.com/<url>` → **404**
@@ -38,10 +40,14 @@ import paths                                                # noqa: E402
 import proclog                                              # noqa: E402
 from finalize import (PUBLIC_SITE, compose, korean_dt,      # noqa: E402
                       post_board)
-from notify import (send_email, send_sms_admin,             # noqa: E402
+from notify import (region_display, send_email, send_sms_admin,             # noqa: E402
                     send_sms_public, sms_test_mode)
 
 SNAP = paths.snap_dir()
+
+#: 담당자에게 개설 안내 문자를 이미 보냈다는 표시 (`신청 접수` 의 `처리로그`).
+#: 게시판 글이 실패해 다음 주기에 다시 와도 문자는 두 번 가지 않게 하는 자물쇠다.
+SMS_MARK = "개설안내 발송"
 
 
 #: ⚠ 공개 사이트는 `python-requests` 기본 UA 를 **403 으로 막는다**(2026-08-23 실측).
@@ -85,7 +91,7 @@ def latest_report(kind: str, key_eng: str) -> dict:
 
 def region_board_text(app: dict, when: datetime) -> str:
     """지역용 게시판 글. 챕터 문구(`compose`)와 결이 같아야 한다."""
-    name = app["region_kor"] or app["region_eng"]
+    name = region_display(app["region_kor"]) or app["region_eng"]
     head = f"{korean_dt(when)}, {name} 지역이 RPS Board 에 개설되었습니다!"
     links = []
     if app["sheet"]:
@@ -97,16 +103,39 @@ def region_board_text(app: dict, when: datetime) -> str:
 
 def owner_sms(app: dict, kind: str) -> str:
     if kind == intake.KIND_REGION:
-        name = app["region_kor"] or app["region_eng"]
+        name = region_display(app["region_kor"]) or app["region_eng"]
         body = [f"{name} 지역 RPS 페이지가 열렸습니다."]
     else:
-        body = [f"{app['region_kor']} {app['chapter_kor']} 챕터 RPS 계정이 개설되었습니다."]
+        body = [f"{region_display(app['region_kor'])} {app['chapter_kor']} 챕터"
+                f" RPS 계정이 개설되었습니다."]
     body.append("")
     if app["sheet"]:
         body.append(f"· 시트 {app['sheet']}")
     if app["page"]:
         body.append(f"· 페이지 {PUBLIC_SITE}/{app['page'].lstrip('/')}")
     return "\n".join(body).strip()
+
+
+def attach_card(plan: dict) -> str:
+    """지역 페이지 갤러리에 챕터 카드를 붙인다 (게시 확인 후).
+
+    `add_chapter_card` 가 멱등이라 이미 붙어 있으면 아무 일도 하지 않는다.
+    """
+    region_page, card, ch_page = (plan.get("region_page"), plan.get("card"),
+                                  plan.get("chapter_page"))
+    if not (region_page and card and ch_page):
+        return "⚠ 카드 부착 건너뜀 — 리포트에 region_page/card/chapter_page 가 없다"
+    if not Path(card).exists():
+        return f"⚠ 카드 부착 건너뜀 — 이미지 없음 {card}"
+    try:
+        from imweb_client import ImwebClient, ensure_login
+        with ImwebClient() as im:
+            if not ensure_login(im):
+                return "⚠ 카드 부착 보류 — imweb 로그인 필요 (다음 주기에 재시도)"
+            im.add_chapter_card(region_page, Path(card), ch_page)
+        return "✓ 지역 페이지 카드 부착"
+    except Exception as e:                                   # noqa: BLE001
+        return f"⚠ 카드 부착 실패 ({type(e).__name__}) — 수동 확인 필요"
 
 
 def main() -> int:
@@ -142,16 +171,40 @@ def main() -> int:
         rep = latest_report(x["kind"], x["region_eng"] if x["kind"] == intake.KIND_REGION
                             else x["chapter_eng"])
         plan = (rep or {}).get("plan", {})
+
+        # 게시가 확인된 **지금** 지역 페이지에 챕터 카드를 붙인다.
+        # 게시 전에 붙이면 imweb 이 앵커를 안 그려 클릭이 라이트박스로 떨어진다.
+        # 실패해도 마무리(문자·게시판)를 막지 않는다 — 카드는 다시 붙일 수 있다.
+        card_note = ""
+        if x["kind"] != intake.KIND_REGION:
+            card_note = attach_card(plan)
+            if card_note:
+                print(f"      {card_note}")
         content = (region_board_text(x, when) if x["kind"] == intake.KIND_REGION
                    else compose(x, plan, when))
         phone = x["owner_phone"] or phones.get(x["email"].lower(), "")
-        ok_owner = send_sms_public(owner_sms(x, x["kind"]), phone) if phone else False
+        body = owner_sms(x, x["kind"])
+        # ⚠ 게시판 글이 실패하면 이 행은 `생성완료` 로 남아 다음 주기에 다시 온다.
+        #   그때 문자를 또 보내면 담당자는 같은 개설 안내를 두 번 받는다
+        #   (2026-08-27 골든 건에서 게시판 API 타임아웃으로 실제 그럴 뻔했다).
+        #   **문자는 한 번, 게시판 글은 될 때까지** — 그래서 보낸 사실을 따로 남긴다.
+        already = SMS_MARK in (x["log"] or "")
+        ok_owner = True if already else (send_sms_public(body, phone) if phone else False)
+        if already:
+            print("      · 담당자 문자는 이미 나갔다 — 다시 보내지 않는다")
+
+        # 검수용 사본 — 담당자에게 실제로 나간 문자를 나도 같은 내용으로 받는다.
+        # 테스트 모드에서는 원본이 이미 내 번호로 오므로 보내지 않는다(같은 문자 두 통).
+        if ok_owner and not already and not sms_test_mode():
+            from notify import GREETING
+            head = "[검수용 사본] 수신 " + (x["owner"] or "담당자") + " " + phone
+            send_sms_admin(head + "\n\n" + GREETING + "\n\n" + body)
         ok_board = post_board(content)
 
+        note = (SMS_MARK if ok_owner else "담당자 통보 실패/건너뜀")
         intake.update(x["row"], svc=svc,
                       status=intake.ST_PUBLISHED if ok_board else intake.ST_CREATED,
-                      log=f"게시 감지 · 담당자 통보 {'OK' if ok_owner else '실패/건너뜀'}"
-                          f" · 게시판 글 {'OK' if ok_board else '실패'}")
+                      log=f"게시 감지 · {note} · 게시판 글 {'OK' if ok_board else '실패'}")
         proclog.update(x["key"], svc=svc,
                        status=proclog.ST_DONE if ok_board else proclog.ST_RUNNING,
                        done_ts=proclog.stamp(),
@@ -166,10 +219,9 @@ def main() -> int:
                    + ("\n\n⚠ 테스트 모드 — 문자는 관리자 번호로 갔습니다."
                       if sms_test_mode() else ""))
         # ⚠ 게시판 글이 실패하면 `생성완료` 로 남겨 다음 주기에 다시 시도한다.
-        #   담당자 문자는 이미 나갔으므로 두 번 갈 수 있다 — 그래도 "결과가 안 올라오는 것"
-        #   보다는 낫다(문자는 안내, 게시판 글은 기록이다).
+        #   담당자 문자는 위 `SMS_MARK` 로 잠가 두어 다시 가지 않는다.
         if not ok_board:
-            send_sms_admin(f"[게시판 게시 실패] {label}\n다음 주기에 다시 시도합니다.")
+            send_sms_admin(f"[게시판 결과 글 실패] {label}\n다음 주기에 다시 시도합니다.")
         done += 1
 
     if not a.apply:
