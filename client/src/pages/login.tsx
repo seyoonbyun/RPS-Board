@@ -119,14 +119,6 @@ export default function LoginPage() {
         duration: CACHE_CONFIG.TOAST_DURATION,
       });
 
-      if (data?.degraded) {
-        toast({
-          title: "읽기 전용으로 접속했습니다",
-          description: "지금은 저장 서버 점검 중이라 조회만 됩니다. 입력하신 내용은 저장되지 않습니다.",
-          duration: CACHE_CONFIG.TOAST_DURATION,
-        });
-      }
-
       setLocation("/dashboard");
     },
     onError: (error: any) => {

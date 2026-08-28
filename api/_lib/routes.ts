@@ -10,7 +10,7 @@ import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
 import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
-import { httpErrorOf, DbUnavailableError } from './errors.js';
+import { httpErrorOf, DbUnavailableError, SheetUnavailableError } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
 import { pool } from './db.js';
 import { sheetUserId, emailFromUserId, isSheetUserId, scoreboardFromProfile } from './degraded.js';
@@ -570,38 +570,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const formData = scoreboardPartialUpdateSchema.parse(req.body);
 
-      // 식별자가 sheet: 로 시작하면 로그인 시점에 DB 가 죽어 있었다는 뜻이다.
-      // 저장은 대신할 수 없으므로 성공한 척하지 않고 분명히 거절한다.
-      if (isSheetUserId(userId)) {
-        throw new DbUnavailableError('scoreboard write (sheet-mode id)');
+      const sheets = getGoogleSheetsService();
+      if (!sheets) {
+        throw new SheetUnavailableError('scoreboard write: sheets service 미초기화');
       }
-      
-      // Get existing data for change tracking
-      const existingData = await storage.getScoreboardData(userId);
-      
-      // Save new data
-      const savedData = await storage.upsertScoreboardData(userId, formData);
-      
-      // Track changes
-      if (existingData) {
-        const changes = await trackChanges(userId, existingData, formData);
-        
-        // Log changes to history
-        for (const change of changes) {
-          await storage.addChangeHistory({
-            userId,
-            fieldName: change.field,
-            oldValue: change.oldValue,
-            newValue: change.newValue,
-          });
+
+      // 이메일이 정본 식별자다. 서명된 대체 id 면 거기서, 아니면 DB 에서 얻는다.
+      let userEmail = emailFromUserId(userId);
+      let dbUsable = !userEmail;   // 대체 id 로 들어왔다면 그 시점에 DB 가 죽어 있었다
+      if (!userEmail) {
+        try {
+          const u = await storage.getUserById(userId);
+          userEmail = u?.email ?? null;
+        } catch (dbError) {
+          dbUsable = false;
+          console.error('⚠️ DB unavailable at scoreboard write (id 해석):', (dbError as any)?.message || dbError);
         }
+      }
+      if (!userEmail) {
+        return res.status(404).json({ code: 'NOT_REGISTERED', message: '사용자를 찾을 수 없습니다' });
+      }
+
+      // 기존값 — DB 미러가 있으면 그것, 없으면 시트 현재값
+      let existingData: any = null;
+      if (dbUsable) {
+        try {
+          existingData = await storage.getScoreboardData(userId);
+        } catch (dbError) {
+          dbUsable = false;
+          console.error('⚠️ DB unavailable at scoreboard write (기존값):', (dbError as any)?.message || dbError);
+        }
+      }
+      if (!existingData) {
+        const profile = await sheets.getUserProfile(userEmail);
+        if (profile) existingData = scoreboardFromProfile(userId, profile);
+      }
+
+      // 저장값 — DB 가 살아 있으면 DB 에 쓰고 그 결과를, 아니면 병합값을 쓴다.
+      // **구글시트가 회원 데이터의 정본**이라 DB 가 없어도 저장은 성립한다(아래 syncScoreboardData).
+      let savedData: any;
+      if (dbUsable) {
+        try {
+          savedData = await storage.upsertScoreboardData(userId, formData);
+          if (existingData) {
+            const changes = await trackChanges(userId, existingData, formData);
+            for (const change of changes) {
+              await storage.addChangeHistory({
+                userId,
+                fieldName: change.field,
+                oldValue: change.oldValue,
+                newValue: change.newValue,
+              });
+            }
+          }
+        } catch (dbError) {
+          dbUsable = false;
+          savedData = null;
+          console.error('⚠️ DB unavailable at scoreboard write (저장):', (dbError as any)?.message || dbError);
+        }
+      }
+      if (!savedData) {
+        savedData = { ...(existingData || scoreboardFromProfile(userId, null)), ...formData, userId };
       }
 
       // 1) 활동 로깅 (구글 시트 동기화 성공 여부와 무관하게 항상 기록)
-      const user = await storage.getUserById(userId);
-      const sheetsService = getGoogleSheetsService();
+      const sheetsService = sheets;
 
-      if (user && sheetsService) {
+      {
         const partners = [
           { name: savedData.rpartner1, stage: savedData.rpartner1Stage },
           { name: savedData.rpartner2, stage: savedData.rpartner2Stage },
@@ -660,30 +695,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // 모든 로그를 병렬로 await — 서버리스에서 응답 전 완료 보장
         const logResults = await Promise.allSettled(
-          logEntries.map(e => sheetsService.logActivity(user.email, e.action, e.details))
+          logEntries.map(e => sheetsService.logActivity(userEmail, e.action, e.details))
         );
         const failed = logResults.filter(r => r.status === 'rejected').length;
         if (failed > 0) console.error(`⚠️ ActivityLog: ${failed}/${logEntries.length} entries failed to write`);
 
         // 2) 구글 시트 RPS 데이터 동기화 (실패 시 pending 큐에 저장하여 재시도)
         try {
-          await sheetsService.syncScoreboardData({ ...savedData, userEmail: user.email });
-          console.log(`✅ Synced to Google Sheets for ${user.email} (${profitPartners} profit partners, ${achievement}%)`);
+          await sheetsService.syncScoreboardData({ ...savedData, userEmail });
+          console.log(`✅ Synced to Google Sheets for ${userEmail} (${profitPartners} profit partners, ${achievement}%)`);
         } catch (syncError) {
           console.error('Google Sheets sync failed, saving to retry queue:', syncError);
-          await enqueuePendingSync(
-            user.email,
-            'syncScoreboard',
-            { ...savedData, userEmail: user.email },
-            String((syncError as Error)?.message || syncError).substring(0, 500),
-          );
+          try {
+            await enqueuePendingSync(
+              userEmail,
+              'syncScoreboard',
+              { ...savedData, userEmail },
+              String((syncError as Error)?.message || syncError).substring(0, 500),
+            );
+          } catch (queueError) {
+            // 재시도 큐도 DB 다. 여기가 막혔다고 저장 결과를 뒤집지 않는다 — 시트 쓰기가 본체다.
+            console.error('⚠️ pending sync 큐 적재 실패:', (queueError as any)?.message || queueError);
+          }
         }
       }
       
       res.json(savedData);
     } catch (error) {
-      const mapped = httpErrorOf(error instanceof DbUnavailableError ? error : new DbUnavailableError('scoreboard write', error));
-      console.error('scoreboard write error:', error);
+      const mapped = httpErrorOf(error);
+      console.error(`scoreboard write error [${mapped.code}]:`, error);
       res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
   });
@@ -692,10 +732,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/changes/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
+      if (isSheetUserId(userId)) {
+        // DB 없이 접속한 세션. 변경 내역은 DB 전용 부가 정보라 조회할 수 없다.
+        return res.json([]);
+      }
       const changes = await storage.getChangeHistory(userId);
       res.json(changes);
     } catch (error) {
-      res.status(500).json({ message: "변경 내역을 불러오는데 실패했습니다" });
+      // 부가 패널 하나 때문에 화면에 오류를 띄우지 않는다. 대신 서버에는 반드시 남긴다.
+      console.error('⚠️ change history 조회 실패 (빈 목록으로 응답):', (error as any)?.message || error);
+      res.json([]);
     }
   });
 
