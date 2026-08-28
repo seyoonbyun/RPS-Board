@@ -1,5 +1,6 @@
 // 산업 호환성 기반 파트너 추천 엔진
 import { GoogleSheetsService } from './google-sheets.js';
+import { rethrowAsSheetError } from './errors.js';
 
 export interface IndustryCompatibility {
   industry: string;
@@ -441,7 +442,7 @@ export class PartnerRecommendationEngine {
 
     } catch (error) {
       console.error('❌ Error generating partner recommendations:', error);
-      return [];
+      rethrowAsSheetError('getBusinessSynergyRecommendations', error);
     }
   }
 
@@ -486,7 +487,7 @@ export class PartnerRecommendationEngine {
 
     } catch (error) {
       console.error('❌ Error loading users data:', error);
-      return [];
+      rethrowAsSheetError('getAllUsersFromGoogleSheets', error);
     }
   }
 

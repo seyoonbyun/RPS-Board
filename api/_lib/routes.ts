@@ -10,6 +10,8 @@ import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
 import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
+import { httpErrorOf } from './errors.js';
+import { recordLoginFailure, loginFailureSummary } from './login-log.js';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({
@@ -31,16 +33,27 @@ const LOGIN_RATE_WINDOW_MS = 10_000;
 const LOGIN_RATE_MAX = 5;
 const loginAttempts = new Map<string, number[]>();
 
-function loginRateLimit(req: any, res: any, next: any) {
-  const ip =
+/** 프록시(Vercel) 뒤의 실제 클라이언트 IP. 로그인 로그와 rate limit 이 같은 값을 쓴다. */
+function clientIp(req: any): string {
+  return (
     (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim() ||
     req.socket?.remoteAddress ||
-    'unknown';
+    'unknown'
+  );
+}
+
+function loginRateLimit(req: any, res: any, next: any) {
+  const ip = clientIp(req);
   const now = Date.now();
   const cutoff = now - LOGIN_RATE_WINDOW_MS;
   const history = (loginAttempts.get(ip) || []).filter((t: number) => t > cutoff);
   if (history.length >= LOGIN_RATE_MAX) {
-    return res.status(429).json({ message: '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.' });
+    // 같은 사무실(공유 IP)에서 여러 명이 동시에 로그인하면 여기 걸린다 — 사유를 남겨야 보인다.
+    recordLoginFailure(req.body?.email, 'RATE_LIMITED', ip).catch(() => {});
+    return res.status(429).json({
+      code: 'RATE_LIMITED',
+      message: '잠시 후 다시 시도해주세요. (같은 장소에서 여러 명이 동시에 로그인하면 잠깐 제한됩니다)',
+    });
   }
   history.push(now);
   loginAttempts.set(ip, history);
@@ -89,8 +102,10 @@ async function requireAdmin(req: any, res: any, next: any) {
     (req as any).adminEmail = callerEmail;
     next();
   } catch (err) {
-    console.error('requireAdmin middleware error:', err);
-    res.status(500).json({ message: '권한 검증 중 오류' });
+    // 시트를 못 읽은 것을 '권한 없음'으로 답하지 않는다 — 관리자가 튕기는 원인이었다.
+    const mapped = httpErrorOf(err);
+    console.error(`requireAdmin middleware error [${mapped.code}]:`, err);
+    res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
   }
 }
 
@@ -135,44 +150,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication routes
   app.post("/api/auth/login", loginRateLimit, async (req, res) => {
+    const ip = clientIp(req);
+    let email: string | undefined;
     try {
-      const { email, password } = loginSchema.parse(req.body);
+      const parsed = loginSchema.safeParse(req.body);
+      if (!parsed.success) {
+        await recordLoginFailure(req.body?.email, 'INVALID_INPUT', ip);
+        return res.status(400).json({
+          code: 'INVALID_INPUT',
+          message: "이메일 형식과 4자리 비밀번호를 확인해주세요.",
+        });
+      }
+      email = parsed.data.email;
+      const password = parsed.data.password;
+
       const googleSheetsService = getGoogleSheetsService();
+      if (!googleSheetsService) {
+        await recordLoginFailure(email, 'SHEET_UNAVAILABLE', ip);
+        return res.status(503).json({
+          code: 'SHEET_UNAVAILABLE',
+          message: "지금 회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+        });
+      }
 
       // RPS 시트가 로그인 인증의 유일한 원천 (Auth 시트는 참조하지 않음 — 관리자 추가/삭제 audit log 전용)
-      try {
-        const isAllowed = await storage.isUserAllowed(email, password);
-        if (!isAllowed) {
-          return res.status(403).json({ 
-            message: "구글 시트에 등록되지 않았거나 잘못된 인증 정보입니다. 관리자에게 문의하세요." 
+      // 조회 실패(SheetUnavailableError)는 여기서 잡지 않고 아래 바깥 catch 가 503 으로 답한다.
+      const outcome = await googleSheetsService.authenticate(email, password);
+      if (!outcome.ok) {
+        await recordLoginFailure(email, outcome.reason === 'BAD_PASSWORD' ? 'BAD_PASSWORD' : 'NOT_REGISTERED', ip);
+        if (outcome.reason === 'BAD_PASSWORD') {
+          return res.status(403).json({
+            code: 'BAD_PASSWORD',
+            message: "비밀번호(4자리)가 일치하지 않습니다. 다시 확인해주세요.",
           });
         }
-      } catch (error: any) {
-        if (error.message === 'WITHDRAWN_USER') {
-          return res.status(403).json({ 
-            message: "탈퇴한 계정입니다. 관리자에게 계정 복구를 요청하세요." 
-          });
-        }
-        throw error;
+        return res.status(403).json({
+          code: 'NOT_REGISTERED',
+          message: "등록된 회원 정보를 찾지 못했습니다. 담당 오피스로 문의해주세요.",
+        });
       }
-      
-      const { user, isFirst: isFirstLogin } = await storage.upsertUserByEmail({ email, password });
 
-      const userAuth = googleSheetsService ? await googleSheetsService.getUserAuth(email) : 'Member';
+      const { user, isFirst: isFirstLogin } = await storage.upsertUserByEmail({ email, password });
+      const userAuth = outcome.auth || 'Member';
 
       // 활동 로그는 로그인 성공 여부에 영향을 주지 않도록 분리
-      if (googleSheetsService) {
-        try {
-          await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth || 'Member'}`);
-        } catch (logError) {
-          console.error('Activity log failed (login still succeeds):', logError);
-        }
+      try {
+        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth}`);
+      } catch (logError) {
+        console.error('Activity log failed (login still succeeds):', logError);
       }
 
-      res.json({ user: { id: user.id, email: user.email, auth: userAuth || 'Member' } });
+      res.json({ user: { id: user.id, email: user.email, auth: userAuth } });
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(400).json({ message: "올바른 이메일과 4자리 비밀번호를 입력해주세요" });
+      const mapped = httpErrorOf(error);
+      console.error(`Login error [${mapped.code}]:`, error);
+      await recordLoginFailure(email, mapped.code as any, ip);
+      res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
+    }
+  });
+
+  /**
+   * 로그인 실패 현황. 예전에는 회원이 카톡으로 알려주기 전까지 아무도 몰랐다.
+   * 사유별 건수를 보면 "시트 장애"인지 "PW 오타"인지 즉시 갈린다.
+   */
+  app.get("/api/admin/login-failures", async (req, res) => {
+    try {
+      const hours = Math.min(Math.max(parseInt(String(req.query.hours || '24'), 10) || 24, 1), 720);
+      res.set({ 'Cache-Control': 'no-store' });
+      res.json(await loginFailureSummary(hours));
+    } catch (error) {
+      const mapped = httpErrorOf(error);
+      console.error('login-failures error:', error);
+      res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
   });
 

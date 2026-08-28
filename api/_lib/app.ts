@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes.js";
 import { log } from "./prod-static.js";
 import { initializeGoogleSheets } from "./google-sheets.js";
 import { SHEETS_CONFIG } from "./constants.js";
+import { httpErrorOf } from "./errors.js";
 
 let cachedApp: Express | null = null;
 let cachedServer: Server | null = null;
@@ -110,11 +111,12 @@ export async function createApp(): Promise<{ app: Express; server: Server }> {
   const server = await registerRoutes(app);
   console.log('Routes registered successfully');
 
+  // 마지막 방어선: 분류되지 않은 예외도 사용자에게는 '원인이 있는 문구'로 나가야 한다.
+  // 내부 메시지는 로그에만 남기고 응답에는 code + 안내문만 싣는다.
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    console.error('Express error:', err);
-    res.status(status).json({ message });
+    const mapped = httpErrorOf(err);
+    console.error(`Express error [${mapped.code}]:`, err);
+    res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
   });
 
   cachedApp = app;

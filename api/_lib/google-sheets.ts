@@ -4,6 +4,7 @@ import { bumpCacheVersion, readCacheVersion } from './cache-version.js';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
 import { requestQueue } from './request-queue.js';
+import { SheetUnavailableError, WithdrawnUserError, rethrowAsSheetError } from './errors.js';
 
 interface GoogleSheetsConfig {
   apiKey: string;
@@ -22,11 +23,19 @@ interface SheetCacheEntry {
 
 const sheetReadCache = new Map<string, SheetCacheEntry>();
 
+/** 재시도해도 되는(=서버 사정인) 상태코드. 400/401/403/404 는 재시도해도 같다. */
+const RETRYABLE_SHEET_STATUS = new Set([408, 429, 500, 502, 503, 504]);
+const SHEET_READ_MAX_ATTEMPTS = 3;
+
 // 이 인스턴스가 마지막으로 본 공유 캐시 버전. 공유 버전이 더 크면(=다른 인스턴스가 쓰기함)
 // 이 인스턴스의 전체시트 캐시를 버리고 새로 읽는다. (-1: 아직 확인 전)
 let lastFullSheetVersion = -1;
 
 // O(1) email → 사용자 인덱스. 800명 동시접속 시 선형 스캔 제거용.
+export type AuthOutcome =
+  | { ok: true; auth: string }
+  | { ok: false; reason: 'NOT_REGISTERED' | 'BAD_PASSWORD' | 'NO_CREDENTIAL' };
+
 interface UserIndexEntry {
   rowIndex: number;      // 0-based, row[0] = header
   email: string;         // 원본 표기(대소문자 유지)
@@ -68,20 +77,36 @@ async function cachedSheetRead(
     });
   }
 
-  // Make the actual API call through the request queue
+  // Make the actual API call through the request queue.
+  // 일시적 실패(429 할당량 / 5xx)는 여기서 짧게 재시도한다. 예전에는 한 번 실패하면
+  // 그대로 상위로 올라가 로그인에서 '미등록 회원'으로 둔갑했다.
   const inflightPromise = (async () => {
-    const response = await requestQueue.enqueue(
-      queueId,
-      async () => await fetch(url, { headers }),
-    );
-    if (!response.ok) {
-      sheetReadCache.delete(url);
-      throw new Error(`Google Sheets API error: ${response.status}`);
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= SHEET_READ_MAX_ATTEMPTS; attempt++) {
+      try {
+        const response = await requestQueue.enqueue(
+          queueId,
+          async () => await fetch(url, { headers }),
+        );
+        if (response.ok) {
+          const data = await response.json();
+          sheetReadCache.set(url, { data, timestamp: Date.now() });
+          return data;
+        }
+        lastErr = new Error(`Google Sheets API error: ${response.status}`);
+        if (!RETRYABLE_SHEET_STATUS.has(response.status)) break;
+        console.warn(`⚠️ sheet read ${response.status} (${queueId}) — 재시도 ${attempt}/${SHEET_READ_MAX_ATTEMPTS}`);
+      } catch (err) {
+        lastErr = err;
+        console.warn(`⚠️ sheet read threw (${queueId}) — 재시도 ${attempt}/${SHEET_READ_MAX_ATTEMPTS}:`,
+                     (err as any)?.message || err);
+      }
+      if (attempt < SHEET_READ_MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 250 * attempt + Math.floor(Math.random() * 150)));
+      }
     }
-    const data = await response.json();
-    // Store in cache
-    sheetReadCache.set(url, { data, timestamp: Date.now() });
-    return data;
+    sheetReadCache.delete(url);
+    rethrowAsSheetError(`sheet read (${queueId})`, lastErr);
   })();
 
   // Mark inflight so other callers can piggyback
@@ -499,38 +524,51 @@ export class GoogleSheetsService {
         }
       }
       
+      // 시트에 그 이메일이 없다 = 정상적인 '부재'. 여기서만 null 을 돌려준다.
       return null;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      return null;
+      rethrowAsSheetError('getUserProfile', error);
     }
   }
 
-  async checkUserCredentials(email: string, password: string): Promise<boolean> {
-    try {
-      const index = await this.getCachedUserIndex(`checkUserCredentials-${email}`);
-      const entry = index.get(email.toLowerCase());
-      if (!entry) {
-        console.log(`❌ User ${email} not found in Google Sheets user list`);
-        return false;
-      }
-      if (entry.status === '탈퇴') {
-        console.log(`❌ User ${email} is withdrawn (STATUS: 탈퇴) - login blocked`);
-        throw new Error('WITHDRAWN_USER');
-      }
-      if (entry.userId && entry.password && entry.password === password) {
-        console.log(`✅ User ${email} authenticated successfully (Row: ${entry.rowIndex + 1})`);
-        return true;
-      }
-      console.log(
-        `❌ User ${email} auth failed (ID present: ${!!entry.userId}, PW match: ${entry.password === password})`,
-      );
-      return false;
-    } catch (error: any) {
-      if (error?.message === 'WITHDRAWN_USER') throw error;
-      console.error('❌ Error during user credential check:', error);
-      return false;
+  /**
+   * 로그인 판정. **실패 사유를 그대로 돌려준다.**
+   *
+   * 예전에는 boolean 하나였고 시트 오류까지 `false` 로 삼켜서,
+   * 429 한 번이 회원에게 "등록되지 않은 회원"으로 보였다. 조회 자체가 실패하면
+   * 여기서 판정하지 않고 SheetUnavailableError 를 그대로 위로 던진다.
+   */
+  async authenticate(email: string, password: string): Promise<AuthOutcome> {
+    const normalized = email.trim().toLowerCase();
+    // 시트를 못 읽으면 여기서 throw 된다 (아래 catch 로 내려오지 않는다)
+    const index = await this.getCachedUserIndex(`authenticate-${normalized}`);
+
+    const entry = index.get(normalized);
+    if (!entry) {
+      console.log(`❌ login NOT_REGISTERED: ${normalized}`);
+      return { ok: false, reason: 'NOT_REGISTERED' };
     }
+    if (entry.status === '탈퇴') {
+      console.log(`❌ login WITHDRAWN: ${normalized}`);
+      throw new WithdrawnUserError(normalized);
+    }
+    if (!entry.userId || !entry.password) {
+      console.log(`❌ login NO_CREDENTIAL (row ${entry.rowIndex + 1}): ${normalized}`);
+      return { ok: false, reason: 'NO_CREDENTIAL' };
+    }
+    if (entry.password !== password.trim()) {
+      console.log(`❌ login BAD_PASSWORD (row ${entry.rowIndex + 1}): ${normalized}`);
+      return { ok: false, reason: 'BAD_PASSWORD' };
+    }
+    console.log(`✅ login OK (row ${entry.rowIndex + 1}): ${normalized}`);
+    return { ok: true, auth: entry.auth || 'Member' };
+  }
+
+  /** 기존 호출부 호환용. 시트 장애는 여전히 예외로 올라간다(삼키지 않는다). */
+  async checkUserCredentials(email: string, password: string): Promise<boolean> {
+    const outcome = await this.authenticate(email, password);
+    return outcome.ok;
   }
 
   async getUserAuth(email: string): Promise<string | null> {
@@ -540,7 +578,7 @@ export class GoogleSheetsService {
       return entry?.auth || null;
     } catch (error) {
       console.error('Error getting user auth:', error);
-      return null;
+      rethrowAsSheetError('getUserAuth', error);
     }
   }
 
@@ -658,7 +696,7 @@ export class GoogleSheetsService {
       return null;
     } catch (error) {
       console.error('Error getting admin sheet auth:', error);
-      return null;
+      rethrowAsSheetError('getAdminSheetAuth', error);
     }
   }
 
@@ -748,7 +786,7 @@ export class GoogleSheetsService {
       return entry.auth === 'Admin' || entry.auth === 'Growth' || entry.auth === 'National';
     } catch (error) {
       console.error('❌ Error during admin permission check:', error);
-      return false;
+      rethrowAsSheetError('checkAdminPermission', error);
     }
   }
 
@@ -1677,7 +1715,7 @@ export class GoogleSheetsService {
       
     } catch (error) {
       console.error('탈퇴 히스토리 조회 중 오류:', error);
-      return [];
+      rethrowAsSheetError('getWithdrawalHistory', error);
     }
   }
 
@@ -1727,7 +1765,7 @@ export class GoogleSheetsService {
       return null;
     } catch (error) {
       console.error('사용자 정보 조회 중 오류:', error);
-      return null;
+      rethrowAsSheetError('getUserForWithdrawalHistory', error);
     }
   }
 
@@ -2253,7 +2291,7 @@ export class GoogleSheetsService {
       return null;
     } catch (error) {
       console.error('Error finding user by email:', error);
-      return null;
+      rethrowAsSheetError('findUserByEmail', error);
     }
   }
 
@@ -2335,7 +2373,7 @@ export class GoogleSheetsService {
       return activeEmails;
     } catch (error) {
       console.error('❌ Error getting active users from Google Sheets:', error);
-      return [];
+      rethrowAsSheetError('getActiveUsersFromGoogleSheets', error);
     }
   }
   
@@ -2377,7 +2415,7 @@ export class GoogleSheetsService {
       return regions;
     } catch (error) {
       console.error('❌ Error getting regions from Master sheet:', error);
-      return [];
+      rethrowAsSheetError('getRegionsFromMaster', error);
     }
   }
 
@@ -2417,7 +2455,7 @@ export class GoogleSheetsService {
       return chapters;
     } catch (error) {
       console.error('❌ Error getting chapters from Master sheet:', error);
-      return [];
+      rethrowAsSheetError('getChaptersFromMaster', error);
     }
   }
 
@@ -2464,7 +2502,7 @@ export class GoogleSheetsService {
       return true;
     } catch (error) {
       console.error('❌ Error creating Master sheet:', error);
-      return false;
+      rethrowAsSheetError('createMasterSheet', error);
     }
   }
 
@@ -2512,7 +2550,7 @@ export class GoogleSheetsService {
       return true;
     } catch (error) {
       console.error('❌ Error initializing Master sheet:', error);
-      return false;
+      rethrowAsSheetError('initializeMasterSheet', error);
     }
   }
 
@@ -3104,7 +3142,7 @@ export class GoogleSheetsService {
         }));
     } catch (error) {
       console.error('Failed to get master notices:', error);
-      return [];
+      rethrowAsSheetError('getMasterNotices', error);
     }
   }
 
@@ -3155,7 +3193,7 @@ export class GoogleSheetsService {
       })).filter((p: any) => p.type !== '삭제됨');
     } catch (error) {
       console.error('Failed to get board posts:', error);
-      return [];
+      rethrowAsSheetError('getBoardPosts', error);
     }
   }
 
@@ -3188,7 +3226,7 @@ export class GoogleSheetsService {
       return m ? parseInt(m[1], 10) : 0;
     } catch (error) {
       console.error('Failed to add board post:', error);
-      return 0;
+      rethrowAsSheetError('addBoardPost', error);
     }
   }
 
@@ -3327,7 +3365,7 @@ export class GoogleSheetsService {
       return '';
     } catch (error) {
       console.error('❌ getContactPhone 실패:', error);
-      return '';
+      rethrowAsSheetError('getContactPhone', error);
     }
   }
 
@@ -3378,7 +3416,7 @@ export class GoogleSheetsService {
       return true;
     } catch (error) {
       console.error('❌ setContactPhone 실패:', error);
-      return false;
+      rethrowAsSheetError('setContactPhone', error);
     }
   }
 
@@ -3453,7 +3491,7 @@ export class GoogleSheetsService {
       return m ? parseInt(m[1], 10) : 0;
     } catch (error) {
       console.error('❌ addIntakeRow 실패:', error);
-      return 0;
+      rethrowAsSheetError('addIntakeRow', error);
     }
   }
 
@@ -3482,7 +3520,7 @@ export class GoogleSheetsService {
         .reverse();
     } catch (error) {
       console.error('❌ getIntakeRows 실패:', error);
-      return [];
+      rethrowAsSheetError('getIntakeRows', error);
     }
   }
 

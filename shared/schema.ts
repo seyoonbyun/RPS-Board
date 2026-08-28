@@ -84,8 +84,15 @@ export type ChangeHistory = typeof changeHistory.$inferSelect;
 
 // Validation schemas
 export const loginSchema = z.object({
-  email: z.string().min(1, "이메일을 입력해주세요").email("올바른 이메일 형식을 입력해주세요"),
-  password: z.string().length(4, "비밀번호는 4자리여야 합니다"),
+  // 폰 자동입력이 붙이는 앞뒤 공백·대문자 때문에 로그인이 실패하던 것을 여기서 흡수한다.
+  email: z
+    .string()
+    .transform((v) => v.trim().toLowerCase())
+    .pipe(z.string().min(1, "이메일을 입력해주세요").email("올바른 이메일 형식을 입력해주세요")),
+  password: z
+    .string()
+    .transform((v) => v.trim())
+    .pipe(z.string().length(4, "비밀번호는 4자리여야 합니다")),
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;
