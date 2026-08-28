@@ -231,9 +231,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
    * 서버리스라 로그를 볼 수 없어서, 원인을 추정하지 않고 직접 읽기 위한 창구다.
    */
   app.get("/api/admin/db-check", async (req, res) => {
+    // 호스트만 노출한다(사용자명·비밀번호·DB명은 절대 싣지 않는다).
+    // Neon 은 호스트에 endpoint id(ep-...) 가 들어 있어 이것만으로 어느 컴퓨트인지 특정된다.
+    let host: string | null = null;
+    try {
+      host = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL).hostname : null;
+    } catch {
+      host = 'unparsable';
+    }
     const out: any = {
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
       poolPresent: Boolean(pool),
+      host,
+      endpointId: host && host.startsWith('ep-') ? host.split('.')[0] : null,
     };
     const started = Date.now();
     try {
