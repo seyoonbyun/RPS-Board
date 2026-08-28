@@ -10,9 +10,10 @@ import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
 import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
-import { httpErrorOf } from './errors.js';
+import { httpErrorOf, DbUnavailableError } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
 import { pool } from './db.js';
+import { sheetUserId, emailFromUserId, isSheetUserId, scoreboardFromProfile } from './degraded.js';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({
@@ -191,17 +192,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { user, isFirst: isFirstLogin } = await storage.upsertUserByEmail({ email, password });
+      // 인증의 정본은 시트다. DB 는 식별자 발급·미러링일 뿐이므로,
+      // DB 가 죽었다고 로그인을 막지 않는다 (2026-08-28 Neon disabled 로 전면 정지했던 지점).
+      let userId: string;
+      let isFirstLogin = false;
+      let degraded = false;
+      try {
+        const r = await storage.upsertUserByEmail({ email, password });
+        userId = r.user.id;
+        isFirstLogin = r.isFirst;
+      } catch (dbError) {
+        console.error('⚠️ DB unavailable at login — 시트 기준으로 계속:', (dbError as any)?.message || dbError);
+        userId = sheetUserId(email);
+        degraded = true;
+      }
       const userAuth = outcome.auth || 'Member';
 
       // 활동 로그는 로그인 성공 여부에 영향을 주지 않도록 분리
       try {
-        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인', `권한: ${userAuth}`);
+        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인',
+          `권한: ${userAuth}${degraded ? ' (DB 장애 — 시트 모드)' : ''}`);
       } catch (logError) {
         console.error('Activity log failed (login still succeeds):', logError);
       }
 
-      res.json({ user: { id: user.id, email: user.email, auth: userAuth } });
+      res.json({ user: { id: userId, email, auth: userAuth }, degraded });
     } catch (error) {
       const mapped = httpErrorOf(error);
       console.error(`Login error [${mapped.code}]:`, error);
@@ -399,9 +414,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user-profile/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      const user = await storage.getUserById(userId);
-      
-      if (!user) {
+      // DB 가 죽어 있으면 식별자 자체가 이메일이다(sheet:...). 그때는 DB 를 거치지 않는다.
+      let userEmail = emailFromUserId(userId);
+      if (!userEmail) {
+        try {
+          const user = await storage.getUserById(userId);
+          userEmail = user?.email ?? null;
+        } catch (dbError) {
+          console.error('⚠️ DB unavailable at user-profile:', (dbError as any)?.message || dbError);
+        }
+      }
+      if (!userEmail) {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
 
@@ -411,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!googleSheetsService) {
         return res.status(500).json({ message: "구글 시트 서비스를 초기화할 수 없습니다" });
       }
-      const profile = await googleSheetsService.getUserProfile(user.email);
+      const profile = await googleSheetsService.getUserProfile(userEmail);
       
       if (profile) {
         // 완전한 양방향 동기화 - Google Sheets 변경사항을 로컬 데이터베이스에 반영
@@ -443,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             rpartner4Stage: profile.rpartner4Stage || '',
           };
 
-          console.log(`🔄 Syncing Google Sheets data to local database for ${user.email}:`, {
+          console.log(`🔄 Syncing Google Sheets data to local database for ${userEmail}:`, {
             specialty: {
               fromSheets: profile.specialty,
               existing: existingData?.specialty,
@@ -467,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           if (hasChanges) {
             const updatedData = await storage.upsertScoreboardData(userId, googleSheetsData);
-            console.log(`✅ Updated local database with Google Sheets data for ${user.email}`);
+            console.log(`✅ Updated local database with Google Sheets data for ${userEmail}`);
             
             // 변경 내역 추가
             if (existingData) {
@@ -481,11 +504,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 });
               }
               if (changes.length > 0) {
-                console.log(`📝 Tracked ${changes.length} changes from Google Sheets for ${user.email}`);
+                console.log(`📝 Tracked ${changes.length} changes from Google Sheets for ${userEmail}`);
               }
             }
           } else {
-            console.log(`⚡ No changes detected for ${user.email}`);
+            console.log(`⚡ No changes detected for ${userEmail}`);
           }
         } catch (syncError) {
           console.error('❌ Google Sheets to local sync failed:', syncError);
@@ -493,6 +516,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      if (!profile) {
+        // 시트에 그 이메일이 없다. null 을 200 으로 주면 화면이 빈 보드로 보인다.
+        return res.status(404).json({ code: 'NOT_REGISTERED', message: "회원 정보를 찾지 못했습니다" });
+      }
       res.json(profile);
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -504,15 +531,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/scoreboard/:userId", async (req, res) => {
     try {
       const { userId } = req.params;
-      const data = await storage.getScoreboardData(userId);
-      
-      if (!data) {
-        return res.json(null);
+
+      let data: any = null;
+      let dbDown = false;
+      try {
+        data = await storage.getScoreboardData(userId);
+      } catch (dbError) {
+        dbDown = true;
+        console.error('⚠️ DB unavailable at scoreboard read:', (dbError as any)?.message || dbError);
       }
-      
-      res.json(data);
+      if (data) return res.json(data);
+
+      // DB 미러가 없다(장애이거나 아직 동기화 전). **빈 폼을 주면 회원이 덮어써서 지운다.**
+      // 보드 값은 시트에도 그대로 있으므로 거기서 채워 준다.
+      let email = emailFromUserId(userId);
+      if (!email && !dbDown) {
+        try {
+          const user = await storage.getUserById(userId);
+          email = user?.email ?? null;
+        } catch { /* DB 장애 */ }
+      }
+      if (email) {
+        const { getGoogleSheetsService } = await import('./google-sheets.js');
+        const svc = getGoogleSheetsService();
+        const profile = svc ? await svc.getUserProfile(email) : null;
+        if (profile) return res.json(scoreboardFromProfile(userId, profile));
+      }
+      return res.json(null);
     } catch (error) {
-      res.status(500).json({ message: "데이터를 불러오는데 실패했습니다" });
+      const mapped = httpErrorOf(error);
+      console.error('scoreboard read error:', error);
+      res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
   });
 
@@ -520,6 +569,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const formData = scoreboardPartialUpdateSchema.parse(req.body);
+
+      // 식별자가 sheet: 로 시작하면 로그인 시점에 DB 가 죽어 있었다는 뜻이다.
+      // 저장은 대신할 수 없으므로 성공한 척하지 않고 분명히 거절한다.
+      if (isSheetUserId(userId)) {
+        throw new DbUnavailableError('scoreboard write (sheet-mode id)');
+      }
       
       // Get existing data for change tracking
       const existingData = await storage.getScoreboardData(userId);
@@ -627,11 +682,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(savedData);
     } catch (error) {
-      console.error('Error in POST /api/scoreboard:', error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "입력 데이터를 확인해주세요", errors: error.errors });
-      }
-      res.status(500).json({ message: "데이터 저장에 실패했습니다" });
+      const mapped = httpErrorOf(error instanceof DbUnavailableError ? error : new DbUnavailableError('scoreboard write', error));
+      console.error('scoreboard write error:', error);
+      res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
   });
 

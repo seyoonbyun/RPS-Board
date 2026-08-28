@@ -18,6 +18,20 @@ export class SheetUnavailableError extends Error {
   }
 }
 
+
+/** DB(Postgres) 를 못 쓰는 상태. 읽기는 시트로 대체하지만 쓰기는 대신할 수 없다. */
+export class DbUnavailableError extends Error {
+  readonly status = 503;
+  readonly code = 'DB_UNAVAILABLE';
+  readonly cause?: unknown;
+
+  constructor(where: string, cause?: unknown) {
+    super(`${where}: ${(cause as any)?.message ?? cause}`);
+    this.name = 'DbUnavailableError';
+    this.cause = cause;
+  }
+}
+
 /** 탈퇴 회원. 인증 실패(403)와 구분해 안내 문구를 다르게 준다. */
 export class WithdrawnUserError extends Error {
   readonly status = 403;
@@ -33,6 +47,7 @@ export class WithdrawnUserError extends Error {
 export function rethrowAsSheetError(where: string, err: unknown): never {
   if (err instanceof SheetUnavailableError) throw err;
   if (err instanceof WithdrawnUserError) throw err;
+  if (err instanceof DbUnavailableError) throw err;
   const msg = (err as any)?.message ?? String(err);
   throw new SheetUnavailableError(`${where}: ${msg}`, err);
 }
@@ -44,6 +59,13 @@ export function httpErrorOf(err: unknown): { status: number; code: string; messa
       status: 503,
       code: 'SHEET_UNAVAILABLE',
       message: '지금 회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+    };
+  }
+  if (err instanceof DbUnavailableError) {
+    return {
+      status: 503,
+      code: 'DB_UNAVAILABLE',
+      message: '지금은 저장할 수 없습니다. 잠시 후 다시 시도해주세요 (입력하신 내용은 아직 반영되지 않았습니다).',
     };
   }
   if (err instanceof WithdrawnUserError) {

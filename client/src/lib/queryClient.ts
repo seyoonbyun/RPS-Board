@@ -3,7 +3,21 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    // 서버가 { code, message } 를 준다. 그걸 버리고 상태코드만 보여주면
+    // 화면에는 또 '원인 모를 실패'만 남는다.
+    let message = text;
+    let code: string | undefined;
+    try {
+      const body = JSON.parse(text);
+      if (body?.message) message = body.message;
+      if (body?.code) code = body.code;
+    } catch {
+      /* JSON 이 아닌 응답(프록시 오류 등) */
+    }
+    const err = new Error(message) as Error & { status?: number; code?: string };
+    err.status = res.status;
+    err.code = code;
+    throw err;
   }
 }
 
