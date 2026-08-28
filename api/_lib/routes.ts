@@ -12,6 +12,7 @@ import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 import { httpErrorOf } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
+import { pool } from './db.js';
 
 // Multer 설정 - 메모리에 파일 저장
 const upload = multer({
@@ -223,6 +224,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('login-failures error:', error);
       res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
+  });
+
+  /**
+   * DB 상태 점검. 관리자 인증(시트 기준)만 통과하면 **실제 오류 문자열**을 그대로 준다.
+   * 서버리스라 로그를 볼 수 없어서, 원인을 추정하지 않고 직접 읽기 위한 창구다.
+   */
+  app.get("/api/admin/db-check", async (req, res) => {
+    const out: any = {
+      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+      poolPresent: Boolean(pool),
+    };
+    const started = Date.now();
+    try {
+      if (!pool) throw new Error('pool is null (DATABASE_URL 미설정)');
+      const r = await pool.query('SELECT 1 AS ok');
+      out.select1 = r.rows?.[0]?.ok ?? null;
+      out.ok = true;
+    } catch (err: any) {
+      out.ok = false;
+      out.errorName = err?.name || null;
+      out.errorMessage = err?.message || String(err);
+      out.errorCode = err?.code || null;
+    }
+    out.elapsedMs = Date.now() - started;
+    res.set({ 'Cache-Control': 'no-store' });
+    res.json(out);
   });
 
   // Admin 시트에 관리자 추가 API
