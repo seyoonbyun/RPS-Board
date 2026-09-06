@@ -4,6 +4,7 @@ r"""[3-b] RPI 집계 시트에 신규 챕터·지역 행을 추가한다.
     python rpi_sheet.py                      # dry-run
     python rpi_sheet.py --apply
     python rpi_sheet.py --apply --allow-skip # _source 에 없는 항목을 제외하고 진행
+    python rpi_sheet.py --apply --add-chapter GAON "Suwon1 수원1"   # 마스터에 없는 신규 챕터
 
 대상 = `RPI : BNI K. All`. 시트 3장:
     지역 RPI / 챕터 RPI  — 전국 1행 + 대상별 1행 (전부 수식)
@@ -20,6 +21,10 @@ append 하면 원천은 이미 채워져 있고, **집계 행(수식)만 추가�
    - 쓰기 전 : 챕터명/지역 표기가 `_source` 에 실제로 있는지 확인하고, 없으면 중단한다.
    - 쓰기 후 : `R파트너수=0(%)` 열이 100 이면 분모가 살아 있는 것 = 매칭 성공.
                매칭이 실패했다면 이 열도 0 이 된다.
+
+⚠ 추가 대상의 정본은 챕터 마스터 `활동중(N)` 인데 **마스터는 월 1회 갱신**이다.
+   런칭 직후 도는 파이프라인에게는 마스터가 항상 한 달 뒤처져 있으므로, 신규 챕터는
+   `--add-chapter` 로 직접 넘겨야 한다. 그러지 않으면 조용히 0 건 처리된다.
 
 ⚠ 표기가 **챕터 마스터 · `_source` · RPI 시트** 세 군데에서 다르다.
    수식은 `_source` 값을 매칭하므로 마스터 표기를 그대로 넣으면 조용히 0 이 된다.
@@ -119,6 +124,11 @@ def main() -> int:
     ap.add_argument("--add-region", action="append", default=[], metavar="LABEL",
                     help="이 지역 행을 신규 챕터와 무관하게 추가한다 (모 시트 표기, 예 'Anyang 안양'). "
                          "여러 번 줄 수 있다")
+    ap.add_argument("--add-chapter", action="append", nargs=2, default=[],
+                    metavar=("ENG", "REGION"),
+                    help="이 챕터를 마스터와 무관하게 추가한다 "
+                         "(예: --add-chapter GAON 'Suwon1 수원1'). 갓 런칭한 챕터는 월 1회 "
+                         "갱신되는 마스터에 아직 없어 이 길이 필요하다. 여러 번 줄 수 있다")
     ap.add_argument("--backfill", action="store_true",
                     help="마스터에 있으나 `지역 RPI` 에 없는 지역을 **전부** 추가한다. "
                          "신규 챕터가 없어도 동작한다")
@@ -178,6 +188,32 @@ def main() -> int:
     tmpl = next(r for r in ch_body if str(r[2]).strip() == TMPL_CHAPTER)
 
     new_ch = [(c, rg) for c, rg in master if c.casefold() not in existing]
+
+    # ⭐ 마스터에 아직 없는 챕터를 직접 넣는 길. 이것이 없어서 GAON·Golden·Ocean 이
+    #   통째로 빠져 있었다(2026-09-06 발견). 파이프라인은 **런칭 시점**에 도는데 마스터는
+    #   월 1회 갱신이라, 갓 런칭한 챕터는 `활동중(N)` 에 실릴 수가 없다 — 즉 신규 챕터는
+    #   구조적으로 이 단계를 그냥 통과했다. 다음 달 마스터가 나온 뒤 누가 재실행해야만
+    #   들어갔다. `--add-region` 과 같은 취지의 챕터판이다.
+    #   ⚠ 안전망(`_source` 매칭 검사)은 그대로 받는다. 명단이 아직 원천에 안 올라왔으면
+    #     여기서 막히고, 0 이 박히지 않는다.
+    forced: dict[str, str] = {}
+    for eng, rg in a.add_chapter:
+        eng, rg = eng.strip(), rg.strip()
+        if not eng:
+            continue
+        if eng.casefold() in existing:
+            print()
+            print(f"(참고) --add-chapter {eng} — 이미 `챕터 RPI` 에 있다. 건너뛴다.")
+            continue
+        if any(c.casefold() == eng.casefold() for c, _ in new_ch):
+            continue
+        if not any(c.casefold() == eng.casefold() for c, _ in master):
+            print()
+            print(f"(참고) --add-chapter {eng} — 마스터 활동중에 없다. "
+                  "갓 런칭해 아직 마스터에 안 실린 챕터로 보고 진행한다.")
+        forced[eng.casefold()] = rg
+        new_ch.append((eng, rg))
+
     ch_blocked = []
     print(f"\n[챕터] 추가 대상 {len(new_ch)}건")
     for c, rg in new_ch:
@@ -205,7 +241,9 @@ def main() -> int:
     #    그래서 **이번 달에 만든 마스터인지 확인**하고, 아니면 제거를 건너뛴다.
     # 되돌리기는 맨 위에서 뜬 스냅샷으로 한다(수식까지 그대로 들어 있다).
     status = read_all_status(master_path)
-    active = {c.casefold() for c, _ in master}
+    # ⚠ `--add-chapter` 로 넣은 챕터는 마스터에 없다. `active` 에 같이 넣지 않으면
+    #   `--reconcile` 을 붙인 실행이 방금 추가한 행을 그 자리에서 도로 지운다.
+    active = {c.casefold() for c, _ in master} | set(forced)
     fresh_master = master_path.stat().st_mtime >= (
         datetime.datetime.now() - datetime.timedelta(days=40)).timestamp()
 

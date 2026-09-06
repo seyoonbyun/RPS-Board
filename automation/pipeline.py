@@ -343,10 +343,78 @@ def step_sheets(p: Plan) -> None:
             log(f"    {kind} 시트 {m.group(1)}")
 
 
+def _rpi_line(out: str, mark: str, eng: str) -> str:
+    """`rpi_sheet` 출력에서 <표시> 뒤에 **이 챕터 이름**이 오는 줄을 돌려준다.
+
+        `   + GAON         (Suwon1 수원1)  _source 30명`
+        `   ✓ GAON: RPI=0 R=0%=100 매칭 정상`
+
+    다른 챕터 줄에 속지 않으려고 이름까지 맞춘다. 한 실행에 여러 건이 함께 처리된다.
+    """
+    for line in out.splitlines():
+        s = line.strip()
+        if not s.startswith(mark):
+            continue
+        name = s[len(mark):].strip().split(":")[0].split("(")[0].strip()
+        if name.casefold() == eng.casefold():
+            return s
+    return ""
+
+
+def _report_rpi(p: Plan, out: str, failed: bool = False) -> None:
+    """[2-b] 결과를 **산출물로** 판정한다.
+
+    예외만 안 나면 `행 추가` 라고 적어 두던 탓에, 추가 대상이 0 건이어도 완료로 보고됐다 —
+    2026-09-06 에 GAON·Golden·Ocean 이 그렇게 빠진 채 `완료` 로 남아 있는 것이 드러났다.
+    이제 **이 챕터 줄이 실제로 찍혔는지**로 가른다.
+    """
+    eng = p.chapter_eng
+    blocked = _rpi_line(out, "⛔", eng)
+    verified = _rpi_line(out, "✓", eng)
+    warned = _rpi_line(out, "⚠", eng)
+    added = _rpi_line(out, "+", eng)
+    already = f"--add-chapter {eng} — 이미" in out
+
+    for line in out.splitlines():
+        if line.strip().startswith("[챕터] 추가 대상"):
+            log("    " + line.strip())
+    for s in (added, blocked, verified, warned):
+        if s:
+            log("    " + s)
+
+    if blocked:
+        p.steps.append("rpi:blocked")
+        p.result["rpi"] = "제외됨(_source 매칭 없음 · 재실행 필요)"
+        log("    ⚠ 모 시트 명단이 `_source` 에 아직 안 올라왔다(IMPORTRANGE 시차).")
+        log("      잠시 뒤 `python rpi_sheet.py --apply` 로 단독 재실행할 것.")
+    elif verified:
+        p.result["rpi"] = f"{eng} 행 추가 · 검증 정상"
+    elif warned:
+        p.steps.append("rpi:unverified")
+        p.result["rpi"] = f"{eng} 행은 있으나 매칭 실패 의심(확인 필요)"
+    elif added:
+        p.steps.append("rpi:unverified")
+        p.result["rpi"] = f"{eng} 행 추가(검증 미확인)"
+    elif already:
+        p.result["rpi"] = f"{eng} 이미 등재됨"
+    elif failed:
+        p.steps.append("rpi:failed")
+        p.result["rpi"] = "실패(수동 재실행 필요)"
+    else:
+        p.steps.append("rpi:missing")
+        p.result["rpi"] = "행 추가 안 됨(확인 필요)"
+        log(f"    ⚠ {eng} 행이 추가되지 않았다 — rpi_sheet 출력을 확인할 것.")
+
+
 def step_rpi(p: Plan) -> None:
     """[2-b] RPI 집계 시트에 챕터(·지역) 행 추가 — rpi_sheet.py.
 
     이 단계가 없어서 하남 시그니아·수원1 스타가 통째로 빠져 있었다(2026-08-02 발견).
+
+    ⭐ 추가 대상의 정본은 챕터 마스터 `활동중(N)` 인데 **마스터는 월 1회 갱신**이다.
+      이 파이프라인은 런칭 시점에 도니 마스터는 늘 한 달 뒤처져 있고, 그래서 신규 챕터는
+      구조적으로 이 단계를 0 건으로 통과했다(2026-09-06 발견 — GAON·Golden·Ocean).
+      → 방금 만든 챕터를 `--add-chapter` 로 **직접 넘긴다**.
 
     ⚠ 실패해도 런칭 전체를 죽이지 않는다. 집계 시트는 나중에 단독 재실행으로 채울 수 있고,
       여기서 멈추면 imweb 페이지가 안 만들어져 손해가 더 크다.
@@ -358,17 +426,22 @@ def step_rpi(p: Plan) -> None:
     if not p.apply:
         log("    $ rpi_sheet.py  (dry-run)")
         return
+
+    # 지역 표기는 [1] 이 확정한 모 시트 B열 형식(`Suwon1 수원1`). 그 단계를 건너뛴 실행을
+    # 대비해 지역명 합성으로 되돌아간다 — 표기가 어긋나면 rpi_sheet 가 걸러 준다.
+    label = p.result.get("region_label") or f"{p.region_eng} {p.region_kor}"
     try:
-        out = run("rpi_sheet.py", "--apply")
-        tail = [l for l in out.splitlines() if l.strip().startswith(("+", "✓", "⚠"))]
-        for l in tail[-4:]:
-            log("    " + l.strip())
-        p.result["rpi"] = f"{p.chapter_eng} 행 추가"
+        out = run("rpi_sheet.py", "--apply", "--add-chapter", p.chapter_eng, label)
     except RuntimeError as e:
-        log(f"    ⚠ 건너뜀 — {str(e).splitlines()[0]}")
-        log("      나중에 `python rpi_sheet.py --apply` 로 단독 실행할 것.")
-        p.steps.append("rpi:failed")
-        p.result["rpi"] = "실패(수동 재실행 필요)"
+        # ⚠ 종료코드 1 은 두 가지다 — 아예 안 쓴 것과, 쓰고 나서 검증이 어긋난 것.
+        #   뭉뚱그려 `건너뜀` 으로 적으면 시트에 행이 있는데도 실패로 남는다. 출력으로 가른다.
+        out = str(e)
+        log(f"    ⚠ rpi_sheet 종료코드 1 — {out.splitlines()[0]}")
+        log("      `python rpi_sheet.py --apply` 로 단독 재실행해 확인할 것.")
+        _report_rpi(p, out, failed=True)
+        return
+
+    _report_rpi(p, out)
 
 
 def step_qr(p: Plan) -> None:
