@@ -530,6 +530,27 @@ export default function AdminPage() {
     staleTime: CACHE_CONFIG.SHEETS_DATA_STALE_TIME, // 5분간 캐시
   });
 
+  // 멤버 추가 폼의 지역을 로그인한 관리자의 지역으로 미리 고른다.
+  // 지역이 21개라 목록이 상자 안에서 스크롤되고, 알파벳 순 맨 끝(Youngdeungpo)은 처음 열면
+  // 안 보여 「지역 선택이 안 된다」는 문의가 왔다(2026-10-06 #13).
+  // National 처럼 지역 목록에 없는 값이면 고르지 않는다. 쿼리 키는 관리자 목록 화면과 공유.
+  const { data: adminList = [] } = useQuery({
+    queryKey: ["/api/admin/list-admins"],
+    queryFn: async () => {
+      const resp = await apiFetch('/api/admin/list-admins');
+      if (!resp.ok) return [];
+      return resp.json();
+    },
+    enabled: !!adminPermission?.isAdmin,
+  });
+  const myRegion = (adminList as { email: string; region: string }[])
+    .find((a) => a.email === currentUser?.email)?.region || '';
+  useEffect(() => {
+    if (myRegion && (regions as string[]).includes(myRegion) && !newUser.region) {
+      setNewUser((prev) => ({ ...prev, region: myRegion }));
+    }
+  }, [myRegion, regions, newUser.region]);
+
   // 탈퇴 히스토리 가져오기 - Google Sheets 삭제 즉시 반영을 위해 실시간 동기화
   const { data: withdrawalHistory = [], isLoading: isHistoryLoading, refetch: refetchHistory } = useQuery({
     queryKey: ["/api/admin/withdrawal-history"],
