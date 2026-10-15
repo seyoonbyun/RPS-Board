@@ -34,8 +34,8 @@ import paths                                                    # noqa: E402
 import proclog                                                  # noqa: E402
 from google_auth import user_credentials                        # noqa: E402
 from googleapiclient.discovery import build                     # noqa: E402
-from notify import (admin_phone, send_email, send_sms_admin,    # noqa: E402
-                    send_sms_public, sms_test_mode)
+from notify import (GREETING, admin_phone, send_email,          # noqa: E402
+                    send_sms_admin, send_sms_public, sms_test_mode)
 
 SID = proclog.SID
 BOARD_TAB = "BoardLog"
@@ -235,12 +235,17 @@ def main() -> int:
                              email=q["email"], phone=q_phone, body=q["content"],
                              status=proclog.ST_RECEIVED, svc=svc)
             ok = send_sms_public(answer_sms_to_owner(q, p), q_phone) if q_phone else False
+            # 검수용 사본 — 문의자에게 간 문자를 **인사말까지 똑같이** 나에게도 보낸다
+            # (2026-09-15 사용자 지시). 연락처가 없어 못 보낸 경우도 사본으로 알린다.
+            ok_copy = send_sms_admin(
+                f"[검수 사본 → {q['name'] or q['email']} {q_phone or '연락처 없음·미발송'}]\n"
+                f"{GREETING}\n\n{answer_sms_to_owner(q, p)}")
             proclog.update(
                 key, svc=svc, status=proclog.ST_DONE, done_ts=proclog.stamp(),
                 reply=p["content"], fix=p["content"][:500],
                 sms_out=(proclog.sms_note(ok, q_phone, "답변안내") if q_phone
                          else "미발송 — `담당자 연락처` 미등록"),
-                trace=f"답변 게시 #{p['row']} → 완료")
+                trace=f"답변 게시 #{p['row']} → 완료 · 검수사본 {'OK' if ok_copy else 'FAIL'}")
             report.append(f"[답변] {q['name'] or q['email']} · {p['content'][:60]}")
             handled += 1
             continue

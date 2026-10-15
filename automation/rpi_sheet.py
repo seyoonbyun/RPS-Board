@@ -57,6 +57,39 @@ SID = "14KZrC6w8BUIFCp2AcLF6Uj36HKXsVQgZOY9_H2-DY18"       # RPI : BNI K. All
 TMPL_CHAPTER = "Crown"
 TMPL_REGION = "Seongdong 성동"
 
+# 읽고 쓰는 열 범위의 끝. 실제 폭은 1행 헤더 길이로 정해진다(아래 `width`).
+# ⛔ 2026-09-18 Hive: 폭을 A:G / A:F 로 박아 두었더니 09-16 에 붙인 새 열
+#    (성취율·멤버수·P0명)을 이 스크립트가 몰랐다. A→Z 정렬로 A:G 만 한 칸씩 밀리고
+#    새 열은 제자리에 남아 **Hive 아래 57개 챕터의 성취율·멤버수가 옆 챕터 값**이 됐고
+#    맨 끝 행(Zeus)은 빈칸이 됐다. 열이 늘어도 따라가도록 헤더 폭을 쓴다.
+MAX_COL = "Z"
+
+_CELL = re.compile(r"(?<![A-Za-z0-9_!:$])(\$?[A-Z]{1,2}\$?)(\d+)(?![\d(])")
+
+
+def col_letter(n: int) -> str:
+    """1 → A, 10 → J"""
+    out = ""
+    while n:
+        n, r = divmod(n - 1, 26)
+        out = chr(65 + r) + out
+    return out
+
+
+def move_row_refs(formula, old: int, new: int):
+    """수식 안에서 **자기 행**을 가리키는 셀 참조(`I42`)를 새 행 번호로 옮긴다.
+
+    새 열(성취율 = 점수합/(I행×4))은 같은 행의 멤버수 칸을 참조한다. 정렬로 행이
+    옮겨지면 이 번호도 따라가야 한다. 따옴표 안(챕터·지역명 criteria)은 건드리지 않는다.
+    """
+    if old == new or not isinstance(formula, str) or not formula.startswith("="):
+        return formula
+    parts = formula.split('"')
+    for i in range(0, len(parts), 2):
+        parts[i] = _CELL.sub(
+            lambda m: f"{m.group(1)}{new}" if int(m.group(2)) == old else m.group(0), parts[i])
+    return '"'.join(parts)
+
 
 def find_master() -> Path:
     """가장 최근 `Chapter Master Origin` 파일. 활동중(N) 시트가 정본이다."""
@@ -145,8 +178,8 @@ def main() -> int:
 
     # ── 0) 스냅샷 (되돌리기용) ────────────────────────────────
     snap = {n: {"formula": get(r, "FORMULA"), "value": get(r, "UNFORMATTED_VALUE")}
-            for n, r in [("지역 RPI", "'지역 RPI'!A1:F1020"),
-                         ("챕터 RPI", "'챕터 RPI'!A1:G1093")]}
+            for n, r in [("지역 RPI", f"'지역 RPI'!A1:{MAX_COL}1020"),
+                         ("챕터 RPI", f"'챕터 RPI'!A1:{MAX_COL}1093")]}
     snap_dir = paths.snap_dir() if hasattr(paths, "snap_dir") else Path.cwd()
     snap_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -169,8 +202,14 @@ def main() -> int:
             src_chapters[k] = src_chapters.get(k, 0) + 1
 
     # ── 3) 챕터 RPI ──────────────────────────────────────────
-    ch_rows = [pad(r, 7) for r in snap["챕터 RPI"]["formula"][1:]
-               if len(r) > 2 and str(r[2]).strip()]
+    ch_w = len(snap["챕터 RPI"]["formula"][0])          # 헤더 폭 = 쓸 열 수
+    orig: dict[int, int] = {}                            # id(row) → 원래 시트 행 번호
+    ch_rows = []
+    for n, r in enumerate(snap["챕터 RPI"]["formula"][1:], start=2):
+        if len(r) > 2 and str(r[2]).strip():
+            r = pad(r, ch_w)
+            orig[id(r)] = n
+            ch_rows.append(r)
     ch_head, ch_body = ch_rows[0], ch_rows[1:]        # 0번 = 전국/BNI K. ALL, 정렬 제외
 
     # 같은 챕터가 두 줄이면 앞의 것만 남긴다. 행이 줄어드는 쓰기에서 꼬리 행이 남으면
@@ -222,10 +261,11 @@ def main() -> int:
             ch_blocked.append(c)
             print(f"   ⛔ {c:<12} ({rg})  _source 매칭 없음 → RPI 0 이 된다")
             continue
-        row = [""] * 7
+        row = [""] * ch_w
         row[1], row[2] = rg, c
-        for i in range(3, 7):
+        for i in range(3, ch_w):
             row[i] = str(tmpl[i]).replace(f'"{TMPL_CHAPTER}"', f'"{c}"')
+        orig[id(row)] = orig[id(tmpl)]                   # 행 번호 참조는 템플릿 행 기준
         ch_body.append(row)
         print(f"   + {c:<12} ({rg})  _source {n}명")
 
@@ -271,14 +311,22 @@ def main() -> int:
         print("\n[챕터] 제거 0건")
 
     ch_body.sort(key=lambda r: str(r[2]).strip().casefold())
+    ch_out = [ch_head] + ch_body
+    for n, r in enumerate(ch_out, start=2):
+        for i in range(3, ch_w):
+            r[i] = move_row_refs(r[i], orig[id(r)], n)
     for i, r in enumerate(ch_body, start=2):
         r[0] = i
     ch_head[0] = 1
-    ch_out = [ch_head] + ch_body
 
     # ── 4) 지역 RPI — 신규 챕터의 지역만 본다 ──────────────────
-    rg_rows = [pad(r, 6) for r in snap["지역 RPI"]["formula"][1:]
-               if len(r) > 1 and str(r[1]).strip()]
+    rg_w = len(snap["지역 RPI"]["formula"][0])
+    rg_rows = []
+    for n, r in enumerate(snap["지역 RPI"]["formula"][1:], start=2):
+        if len(r) > 1 and str(r[1]).strip():
+            r = pad(r, rg_w)
+            orig[id(r)] = n
+            rg_rows.append(r)
     rg_head, rg_body = rg_rows[0], rg_rows[1:]
     # ⚠ 표시명이 아니라 수식 안의 criteria 로 '이미 커버됨' 을 판정한다
     covered: set[str] = set()
@@ -319,26 +367,30 @@ def main() -> int:
             rg_blocked.append(rg)
             print(f"   ⛔ {rg:<22} _source 매칭 없음 → RPI 0 이 된다")
             continue
-        row = [""] * 6
+        row = [""] * rg_w
         row[1] = rg
-        for i in range(2, 6):
+        for i in range(2, rg_w):
             row[i] = str(rg_tmpl[i]).replace(f'"{TMPL_REGION}"', f'"{rg}"')
+        orig[id(row)] = orig[id(rg_tmpl)]
         rg_body.append(row)
         print(f"   + {rg:<22} _source 매칭 있음")
 
     rg_body.sort(key=lambda r: str(r[1]).strip().casefold())
+    rg_out = [rg_head] + rg_body
+    for n, r in enumerate(rg_out, start=2):
+        for i in range(2, rg_w):
+            r[i] = move_row_refs(r[i], orig[id(r)], n)
     for i, r in enumerate(rg_body, start=2):
         r[0] = i
     rg_head[0] = 1
-    rg_out = [rg_head] + rg_body
 
     print(f"\n챕터 RPI {len(ch_rows)}행 → {len(ch_out)}행 · 지역 RPI {len(rg_rows)}행 → {len(rg_out)}행")
 
     # ⚠ 행이 줄면 쓰기 범위도 줄어 **이전 마지막 행이 시트에 남는다**(2026-08-02 실제로 발생:
     #   95→94 로 줄였더니 96행에 Zeus 가 중복으로 남았다). 줄어든 만큼 빈 행으로 덮는다.
     #   `batchClear` 는 쓰지 않는다 — 데이터 확인·서식까지 지운다.
-    ch_write = ch_out + [[""] * 7] * max(0, len(ch_rows) - len(ch_out))
-    rg_write = rg_out + [[""] * 6] * max(0, len(rg_rows) - len(rg_out))
+    ch_write = ch_out + [[""] * ch_w] * max(0, len(ch_rows) - len(ch_out))
+    rg_write = rg_out + [[""] * rg_w] * max(0, len(rg_rows) - len(rg_out))
 
     if ch_blocked or rg_blocked:
         print(f"\n⛔ _source 에 없어 수식이 0 을 반환한다. 챕터={ch_blocked} 지역={rg_blocked}")
@@ -356,38 +408,83 @@ def main() -> int:
     svc.spreadsheets().values().batchUpdate(spreadsheetId=SID, body={
         "valueInputOption": "USER_ENTERED",
         "data": [
-            {"range": f"'챕터 RPI'!A2:G{1 + len(ch_write)}", "values": ch_write},
-            {"range": f"'지역 RPI'!A2:F{1 + len(rg_write)}", "values": rg_write},
+            {"range": f"'챕터 RPI'!A2:{col_letter(ch_w)}{1 + len(ch_write)}", "values": ch_write},
+            {"range": f"'지역 RPI'!A2:{col_letter(rg_w)}{1 + len(rg_write)}", "values": rg_write},
         ]}).execute()
+
+    # 행이 늘면 맨 아래 새 행은 값만 있고 서식이 없다(2026-09-18 Zeus 행이 맨숫자로 보였다).
+    # 바로 윗행의 서식을 전 열에 복사한다. 값·수식은 건드리지 않는다.
+    grown = [(t, len(o) + 1, len(r) + 1, w) for t, o, r, w in
+             (("챕터 RPI", ch_out, ch_rows, ch_w), ("지역 RPI", rg_out, rg_rows, rg_w))
+             if len(o) > len(r)]
+    if grown:
+        ids = {sh["properties"]["title"]: sh["properties"]["sheetId"] for sh in
+               svc.spreadsheets().get(spreadsheetId=SID, fields="sheets.properties").execute()["sheets"]}
+        svc.spreadsheets().batchUpdate(spreadsheetId=SID, body={"requests": [
+            {"copyPaste": {
+                "source": {"sheetId": ids[t], "startRowIndex": old_last - 1, "endRowIndex": old_last,
+                           "startColumnIndex": 0, "endColumnIndex": w},
+                "destination": {"sheetId": ids[t], "startRowIndex": old_last, "endRowIndex": new_last,
+                                "startColumnIndex": 0, "endColumnIndex": w},
+                "pasteType": "PASTE_FORMAT"}}
+            for t, new_last, old_last, w in grown]}).execute()
+        print(f"   서식 복사: {[(t, f'{o + 1}~{n}행') for t, n, o, _ in grown]}")
+
     print("\n✓ 쓰기 완료 — 재조회 검증")
 
     # ── 5) 검증: R파트너수=0(%) 가 100 이면 분모가 살아 있다 = 매칭 성공 ──
+    # ⚠ 열 위치를 숫자로 박지 않는다 — 2026-09-29 재배치로 `R파트너수=0(%)` 가 챕터 E→F,
+    #   지역 D→E 로 옮겨졌다. 옛 인덱스를 쓰면 멤버수를 P0% 로 읽는다. 헤더 이름으로 찾는다.
+    def col_of(tab: str, name: str) -> int:
+        return [str(h).strip() for h in snap[tab]["value"][0]].index(name)
+    P0 = "R파트너수=0(%)"
+    ch_rpi, ch_p0 = col_of("챕터 RPI", "RPI"), col_of("챕터 RPI", P0)
+    rg_rpi, rg_p0 = col_of("지역 RPI", "RPI"), col_of("지역 RPI", P0)
+
     ok = True
-    v_ch = get(f"'챕터 RPI'!A2:G{1 + len(ch_out)}", "UNFORMATTED_VALUE")
+    v_ch = get(f"'챕터 RPI'!A2:{col_letter(ch_w)}{1 + len(ch_out)}", "UNFORMATTED_VALUE")
     names = [str(r[2]).strip() for r in v_ch[1:] if len(r) > 2]
     print(f"   챕터 {len(v_ch)}행 · 정렬 A→Z {'정상' if names == sorted(names, key=str.casefold) else '⚠ 어긋남'}")
     for c, _ in new_ch:
         if c in ch_blocked:
             continue
-        hit = [r for r in v_ch if len(r) > 4 and str(r[2]).strip() == c]
+        hit = [r for r in v_ch if len(r) > max(ch_rpi, ch_p0) and str(r[2]).strip() == c]
         if not hit:
             print(f"   ⚠ {c}: 행을 찾지 못했다")
             ok = False
             continue
         r = hit[0]
-        matched = not (r[3] == 0 and r[4] == 0)      # 둘 다 0 이면 매칭 실패
-        print(f"   {'✓' if matched else '⚠'} {c}: RPI={r[3]} R=0%={r[4]} "
+        matched = not (r[ch_rpi] == 0 and r[ch_p0] == 0)      # 둘 다 0 이면 매칭 실패
+        print(f"   {'✓' if matched else '⚠'} {c}: RPI={r[ch_rpi]} R=0%={r[ch_p0]} "
               f"{'매칭 정상' if matched else '**매칭 실패 의심**'}")
         ok &= matched
-    v_rg = get(f"'지역 RPI'!A2:F{1 + len(rg_out)}", "UNFORMATTED_VALUE")
+    v_rg = get(f"'지역 RPI'!A2:{col_letter(rg_w)}{1 + len(rg_out)}", "UNFORMATTED_VALUE")
     for rg in new_rg:
         if rg in rg_blocked:
             continue
-        hit = [r for r in v_rg if len(r) > 3 and str(r[1]).strip() == rg]
+        hit = [r for r in v_rg if len(r) > max(rg_rpi, rg_p0) and str(r[1]).strip() == rg]
         r = hit[0] if hit else None
-        matched = bool(r) and not (r[2] == 0 and r[3] == 0)
-        print(f"   {'✓' if matched else '⚠'} {rg}: {r[2:4] if r else '행 없음'}")
+        matched = bool(r) and not (r[rg_rpi] == 0 and r[rg_p0] == 0)
+        print(f"   {'✓' if matched else '⚠'} {rg}: "
+              f"{[r[rg_rpi], r[rg_p0]] if r else '행 없음'}")
         ok &= matched
+
+    # ── 6) 전 행 정렬 검산: 성취율 = RPI/4×100 ──────────────────
+    #   새 열이 옆 행 값을 가리키면(2026-09-18 Hive) 이 등식이 깨진다. 신규 행만이 아니라
+    #   **모든 행**을 본다 — 밀림은 끼워 넣은 행 아래 전부에서 일어나기 때문이다.
+    for tab, head, vals, rpi_i, name_i in (
+            ("챕터 RPI", ch_head, v_ch, ch_rpi, 2), ("지역 RPI", rg_head, v_rg, rg_rpi, 1)):
+        hdr = [str(h).strip() for h in snap[tab]["value"][0]]
+        if "실제 RPI 성취율(%)" not in hdr:
+            continue
+        k = hdr.index("실제 RPI 성취율(%)")
+        bad = [str(r[name_i]) for r in vals
+               if len(r) <= k or not isinstance(r[k], (int, float))
+               or not isinstance(r[rpi_i], (int, float))
+               or abs(r[k] - r[rpi_i] * 25) > 1e-6]
+        print(f"   {'✓' if not bad else '⛔'} {tab} 성취율=RPI/4 검산 {len(vals) - len(bad)}/{len(vals)}"
+              + (f" — 어긋남 {bad[:10]}" if bad else ""))
+        ok &= not bad
     return 0 if ok else 1
 
 

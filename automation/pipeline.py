@@ -550,11 +550,29 @@ def step_imweb(p: Plan, im: ImwebClient) -> None:
         import notion_pw
         msg = notion_pw.add_chapter(
             p.chapter_eng, p.result.get("region_label", f"{p.region_eng} {p.region_kor}"),
-            p.chapter_pw, p.launch, p.result.get("chapter_sheet", "") or "", apply=True)
+            p.chapter_pw, p.launch, p.result.get("chapter_sheet", "") or "",
+            chapter_kor=p.chapter_kor, apply=True)
         log(f"    ✓ 노션 RPI Viewer — {msg}")
     except Exception as e:                                   # noqa: BLE001
         log(f"    ⚠ 노션 등재 실패 (수동 등재 필요): {e.__class__.__name__} {e}")
         p.steps.append("notion:failed")
+
+    # --- 팀 노션 지역 하위 페이지 (외부 게시되는 쪽)
+    # ⛔ 지역 페이지 DB 는 메인과 따로 노는 사본이라 메인에만 쓰면 화면에 안 나온다
+    #   (4월 이후 신규 6개가 빠져 있었다, 2026-10-07). 메인 기준으로 그 자리에서 맞춘다.
+    try:
+        import notion_region_pages
+        s = notion_region_pages.sync(apply=True, log=lambda m: log(f"      {m}"))
+        log(f"    ✓ 노션 지역 페이지 — 추가 {s['add']} · 휴지통 {s['drop']} · 새 페이지 {s['new_pages']}")
+        # 새 행은 표 맨 끝에 붙는다 → 알파벳 순·No. 1부터로 다시 세운다(사용자 지시 2026-10-07)
+        import paths
+        c = notion_region_pages.renumber_all(apply=True, log=lambda m: log(f"      {m}"),
+                                             backup_dir=paths.snap_dir())
+        log(f"    ✓ 노션 표 정렬 — {c}개 표 재배치")
+    except Exception as e:                                   # noqa: BLE001
+        log(f"    ⚠ 노션 지역 페이지 갱신 실패 (`notion_region_pages.py --apply`): "
+            f"{e.__class__.__name__} {e}")
+        p.steps.append("notion_region:failed")
 
 
 def step_verify(p: Plan, im: ImwebClient) -> dict:

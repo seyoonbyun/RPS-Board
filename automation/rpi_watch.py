@@ -42,7 +42,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import paths                                              # noqa: E402
 from google_auth import user_credentials                  # noqa: E402
 from googleapiclient.discovery import build                # noqa: E402
-from rpi_sheet import SID, find_master, read_all_status    # noqa: E402
+from rpi_sheet import (SID, MAX_COL, col_letter, find_master,  # noqa: E402
+                       move_row_refs, read_all_status)
 
 MASTER_ID = "1JM37uOEu64D0r6zzKggOsA9ZdcK4wBCx0rpuNoVcIYg"   # MY PowerTeam (archive)
 LOG_TAB = "ChapterLog"
@@ -143,10 +144,21 @@ def main() -> int:
             k = str(r[0]).strip().casefold()
             src_count[k] = src_count.get(k, 0) + 1
 
-    ch_rows = svc.spreadsheets().values().get(
-        spreadsheetId=SID, range="'챕터 RPI'!A2:G5000",
+    # ⛔ 폭을 A:G 로 박아 두면 안 된다(rpi_sheet.py 2026-09-18 Hive 사고와 같은 구조).
+    #    09-16 에 붙인 열·09-29 열 재배치(멤버수 E · P0명 G · 성취율 I)를 모르고 A:G 만
+    #    한 칸씩 당기면, 뒤쪽 열이 옆 챕터 값이 된다. 1행 헤더 폭을 따른다.
+    ch_w = len(svc.spreadsheets().values().get(
+        spreadsheetId=SID, range=f"'챕터 RPI'!A1:{MAX_COL}1").execute()["values"][0])
+    raw = svc.spreadsheets().values().get(
+        spreadsheetId=SID, range=f"'챕터 RPI'!A2:{col_letter(ch_w)}5000",
         valueRenderOption="FORMULA").execute().get("values", [])
-    ch_rows = [list(r) + [""] * (7 - len(r)) for r in ch_rows if len(r) > 2 and str(r[2]).strip()]
+    orig: dict[int, int] = {}                            # id(row) → 원래 시트 행 번호
+    ch_rows = []
+    for n, r in enumerate(raw, start=2):
+        if len(r) > 2 and str(r[2]).strip():
+            r = list(r) + [""] * (ch_w - len(r))
+            orig[id(r)] = n
+            ch_rows.append(r)
     present = {str(r[2]).strip().casefold(): str(r[2]).strip() for r in ch_rows[1:]}
 
     todo, skipped = [], []
@@ -191,10 +203,14 @@ def main() -> int:
             r[0] = i
         head[0] = 1
         out = [head] + keep
+        # 성취율·P0명은 같은 행의 멤버수 칸을 참조한다 → 행이 당겨지면 번호도 따라가야 한다.
+        for n, r in enumerate(out, start=2):
+            for i in range(3, ch_w):
+                r[i] = move_row_refs(r[i], orig[id(r)], n)
         # ⚠ 행이 줄면 쓰기 범위도 줄어 이전 마지막 행이 남는다 → 빈 행으로 덮는다.
-        write = out + [[""] * 7] * max(0, len(ch_rows) - len(out))
+        write = out + [[""] * ch_w] * max(0, len(ch_rows) - len(out))
         svc.spreadsheets().values().update(
-            spreadsheetId=SID, range=f"'챕터 RPI'!A2:G{1 + len(write)}",
+            spreadsheetId=SID, range=f"'챕터 RPI'!A2:{col_letter(ch_w)}{1 + len(write)}",
             valueInputOption="USER_ENTERED", body={"values": write}).execute()
         print(f"\n✓ 챕터 RPI {len(ch_rows)}행 → {len(out)}행")
 
