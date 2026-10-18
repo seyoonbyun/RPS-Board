@@ -1,5 +1,5 @@
 import { users, scoreboardData, changeHistory, type User, type InsertUser, type ScoreboardData, type InsertScoreboardData, type ChangeHistory, type InsertChangeHistory } from "./schema.js";
-import { db as dbMaybe } from "./db.js";
+import { db as dbMaybe, DATABASE_URL, ensureCoreTables } from "./db.js";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -10,6 +10,13 @@ function requireDb() {
     throw new Error('DATABASE_URL not set — DatabaseStorage operations unavailable');
   }
   return dbMaybe;
+}
+
+/** 새 DB 에 회원·보드 테이블이 없으면 먼저 만든 뒤 쓴다. */
+async function readyDb() {
+  const d = requireDb();
+  await ensureCoreTables();
+  return d;
 }
 
 export interface IStorage {
@@ -179,12 +186,12 @@ export class MemStorage implements IStorage {
 // Database Storage Implementation
 export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await requireDb().select().from(users).where(eq(users.id, id));
+    const [user] = await (await readyDb()).select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await requireDb().select().from(users).where(eq(users.email, email));
+    const [user] = await (await readyDb()).select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -193,7 +200,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await requireDb()
+    const [user] = await (await readyDb())
       .insert(users)
       .values(insertUser)
       .returning();
@@ -203,7 +210,7 @@ export class DatabaseStorage implements IStorage {
   // 로그인 hot path용: getUserByEmail + createUser 2쿼리 → 1쿼리로 통합
   // xmax=0 이면 INSERT(신규), 그 외는 기존 행 업데이트
   async upsertUserByEmail(insertUser: InsertUser): Promise<{ user: User; isFirst: boolean }> {
-    const result: any = await requireDb().execute(
+    const result: any = await (await readyDb()).execute(
       sql`
         INSERT INTO users (email, password)
         VALUES (${insertUser.email}, ${insertUser.password})
@@ -225,7 +232,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserData(userId: string): Promise<void> {
     // Delete user data from database in transaction
-    await requireDb().transaction(async (tx) => {
+    await (await readyDb()).transaction(async (tx) => {
       // Delete change history first (foreign key constraint)
       await tx.delete(changeHistory).where(eq(changeHistory.userId, userId));
       
@@ -248,7 +255,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getScoreboardData(userId: string): Promise<ScoreboardData | undefined> {
-    const [data] = await requireDb().select().from(scoreboardData).where(eq(scoreboardData.userId, userId));
+    const [data] = await (await readyDb()).select().from(scoreboardData).where(eq(scoreboardData.userId, userId));
     return data || undefined;
   }
 
@@ -256,7 +263,7 @@ export class DatabaseStorage implements IStorage {
     const existing = await this.getScoreboardData(userId);
     
     if (existing) {
-      const [updated] = await requireDb()
+      const [updated] = await (await readyDb())
         .update(scoreboardData)
         .set({
           ...data,
@@ -266,7 +273,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     } else {
-      const [created] = await requireDb()
+      const [created] = await (await readyDb())
         .insert(scoreboardData)
         .values({
           userId,
@@ -278,11 +285,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getChangeHistory(userId: string): Promise<ChangeHistory[]> {
-    return await requireDb().select().from(changeHistory).where(eq(changeHistory.userId, userId));
+    return await (await readyDb()).select().from(changeHistory).where(eq(changeHistory.userId, userId));
   }
 
   async addChangeHistory(change: InsertChangeHistory): Promise<ChangeHistory> {
-    const [created] = await requireDb()
+    const [created] = await (await readyDb())
       .insert(changeHistory)
       .values(change)
       .returning();
@@ -308,6 +315,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage: IStorage = process.env.DATABASE_URL
+export const storage: IStorage = DATABASE_URL
   ? new DatabaseStorage()
   : new MemStorage();

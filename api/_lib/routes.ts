@@ -17,7 +17,7 @@ import { recordLoginFailure, loginFailureSummary } from './login-log.js';
 import { LoginGuard } from './login-guard.js';
 import crypto from 'crypto';
 import { attachSession, setSessionCookie, clearSessionCookie, denyIfEnforced, sameOriginWrite, authMode } from './session.js';
-import { pool } from './db.js';
+import { pool, DATABASE_URL } from './db.js';
 import { sheetUserId, emailFromUserId, isSheetUserId, scoreboardFromProfile } from './degraded.js';
 
 // Multer 설정 - 메모리에 파일 저장
@@ -399,12 +399,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Neon 은 호스트에 endpoint id(ep-...) 가 들어 있어 이것만으로 어느 컴퓨트인지 특정된다.
     let host: string | null = null;
     try {
-      host = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL).hostname : null;
+      host = DATABASE_URL ? new URL(DATABASE_URL).hostname : null;
     } catch {
       host = 'unparsable';
     }
     const out: any = {
-      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+      hasDatabaseUrl: Boolean(DATABASE_URL),
+      usingNeonIntegration: Boolean(process.env.NEON_DATABASE_URL),
       poolPresent: Boolean(pool),
       host,
       endpointId: host && host.startsWith('ep-') ? host.split('.')[0] : null,
