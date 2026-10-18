@@ -7,6 +7,9 @@
     { "source": "/attached_assets/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "crons": [
+    { "path": "/api/cron/drain", "schedule": "* * * * *" }
+  ],
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
