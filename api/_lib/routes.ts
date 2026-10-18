@@ -12,6 +12,7 @@ import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 import { httpErrorOf, DbUnavailableError, SheetUnavailableError } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
+import { LoginGuard } from './login-guard.js';
 import { pool } from './db.js';
 import { sheetUserId, emailFromUserId, isSheetUserId, scoreboardFromProfile } from './degraded.js';
 
@@ -30,10 +31,9 @@ const upload = multer({
   }
 });
 
-// 로그인 rate limiter: IP당 10초 윈도우에 5회 제한 (서버리스 인스턴스별 카운트; 완벽하진 않아도 급증 방어)
-const LOGIN_RATE_WINDOW_MS = 10_000;
-const LOGIN_RATE_MAX = 5;
-const loginAttempts = new Map<string, number[]>();
+// 로그인 남용 방어: 계정별 연타·실패, IP 별 '실패'만 센다 (login-guard.ts 참고).
+// 같은 사무실(공유 IP)의 정상 로그인 500건은 막지 않는다.
+const loginGuard = new LoginGuard();
 
 /** 프록시(Vercel) 뒤의 실제 클라이언트 IP. 로그인 로그와 rate limit 이 같은 값을 쓴다. */
 function clientIp(req: any): string {
@@ -46,25 +46,16 @@ function clientIp(req: any): string {
 
 function loginRateLimit(req: any, res: any, next: any) {
   const ip = clientIp(req);
-  const now = Date.now();
-  const cutoff = now - LOGIN_RATE_WINDOW_MS;
-  const history = (loginAttempts.get(ip) || []).filter((t: number) => t > cutoff);
-  if (history.length >= LOGIN_RATE_MAX) {
-    // 같은 사무실(공유 IP)에서 여러 명이 동시에 로그인하면 여기 걸린다 — 사유를 남겨야 보인다.
+  const verdict = loginGuard.check(ip, req.body?.email);
+  if (!verdict.ok) {
     recordLoginFailure(req.body?.email, 'RATE_LIMITED', ip).catch(() => {});
+    res.set('Retry-After', String(Math.max(1, Math.ceil(verdict.retryAfterMs / 1000))));
     return res.status(429).json({
       code: 'RATE_LIMITED',
-      message: '잠시 후 다시 시도해주세요. (같은 장소에서 여러 명이 동시에 로그인하면 잠깐 제한됩니다)',
-    });
-  }
-  history.push(now);
-  loginAttempts.set(ip, history);
-  // 간이 GC: 맵이 커지면 오래된 항목 정리
-  if (loginAttempts.size > 5000) {
-    Array.from(loginAttempts.entries()).forEach(([k, v]) => {
-      const pruned = v.filter((t: number) => t > cutoff);
-      if (pruned.length === 0) loginAttempts.delete(k);
-      else loginAttempts.set(k, pruned);
+      scope: verdict.scope,
+      message: verdict.scope === 'EMAIL_BURST'
+        ? '로그인 요청이 연속으로 들어왔습니다. 잠시 후 다시 시도해주세요.'
+        : '로그인 실패가 여러 번 반복되어 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.',
     });
   }
   next();
@@ -157,6 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parsed = loginSchema.safeParse(req.body);
       if (!parsed.success) {
+        loginGuard.recordFailure(ip, req.body?.email);
         await recordLoginFailure(req.body?.email, 'INVALID_INPUT', ip);
         return res.status(400).json({
           code: 'INVALID_INPUT',
@@ -179,6 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 조회 실패(SheetUnavailableError)는 여기서 잡지 않고 아래 바깥 catch 가 503 으로 답한다.
       const outcome = await googleSheetsService.authenticate(email, password);
       if (!outcome.ok) {
+        loginGuard.recordFailure(ip, email);
         await recordLoginFailure(email, outcome.reason === 'BAD_PASSWORD' ? 'BAD_PASSWORD' : 'NOT_REGISTERED', ip);
         if (outcome.reason === 'BAD_PASSWORD') {
           return res.status(403).json({
