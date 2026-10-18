@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -103,12 +104,30 @@ def post_board(content: str, tries: int = 2) -> bool:
     return False
 
 
+def _service_token() -> str:
+    """서버 세션 강제(AUTH_ENFORCE=on) 뒤에도 게시가 되도록 쓰는 자동화 전용 토큰.
+
+    환경변수 `RPS_SERVICE_TOKEN` 또는 자격증명 폴더의 `rps_service_token.txt`.
+    없으면 빈 문자열 — 전환 기간(report)에는 예전처럼 이메일 헤더만으로 동작한다.
+    """
+    tok = os.environ.get("RPS_SERVICE_TOKEN", "").strip()
+    if tok:
+        return tok
+    try:
+        return (paths.cred_dir() / "rps_service_token.txt").read_text(encoding="utf-8").strip()
+    except Exception:                             # noqa: BLE001
+        return ""
+
+
 def _post_board_once(content: str) -> bool:
+    headers = {"Content-Type": "application/json", "x-caller-email": POSTER_EMAIL}
+    tok = _service_token()
+    if tok:
+        headers["x-service-token"] = tok
     try:
         r = requests.post(
             BOARD_API, timeout=60,
-            headers={"Content-Type": "application/json",
-                     "x-caller-email": POSTER_EMAIL},
+            headers=headers,
             data=json.dumps({
                 "email": POSTER_EMAIL,
                 "name": POSTER_EMAIL.split("@")[0],   # 위젯이 쓰는 방식 그대로

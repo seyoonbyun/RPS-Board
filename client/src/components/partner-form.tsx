@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, logoutSession } from "@/lib/queryClient";
 import { scoreboardFormSchema, type ScoreboardForm, type ScoreboardData } from "@shared/schema";
 import { BRAND_COLORS, CACHE_CONFIG } from "@shared/constants";
 import { Save, Edit, User, ExternalLink, Trash2, ChevronDown } from "lucide-react";
@@ -216,7 +216,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       
       // 3초 후 로그인 창으로 리다이렉트
       setTimeout(() => {
-        localStorage.removeItem('bni_user');
+        logoutSession();
         localStorage.removeItem('user');
         window.location.href = '/';
       }, CACHE_CONFIG.TOAST_DURATION);

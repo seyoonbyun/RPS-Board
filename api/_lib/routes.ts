@@ -13,6 +13,8 @@ import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 import { httpErrorOf, DbUnavailableError, SheetUnavailableError } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
 import { LoginGuard } from './login-guard.js';
+import crypto from 'crypto';
+import { attachSession, setSessionCookie, clearSessionCookie, denyIfEnforced, sameOriginWrite, authMode } from './session.js';
 import { pool } from './db.js';
 import { sheetUserId, emailFromUserId, isSheetUserId, scoreboardFromProfile } from './degraded.js';
 
@@ -62,24 +64,50 @@ function loginRateLimit(req: any, res: any, next: any) {
 }
 
 // requireAdmin: /api/admin/* 엔드포인트에 대한 호출자 권한 검증 미들웨어
-// 호출자 이메일은 x-caller-email 헤더 또는 req.body.adminEmail로 식별
-// check-permission, board 조회 등 일부 read-only 엔드포인트는 화이트리스트로 제외
+// 호출자 = 로그인 세션의 이메일. (자동화는 서비스 토큰)
+// 예전처럼 x-caller-email 헤더·adminEmail 값만 믿는 것은 AUTH_ENFORCE=report 동안만 허용한다
+// — 그 값은 누구나 써넣을 수 있다. 쿠키가 없던 기존 로그인 상태를 바로 끊지 않기 위한 전환 기간용.
 // app.use('/api/admin', ...)로 마운트되므로 req.path는 mount 이후 부분 (예: '/check-permission')
 const ADMIN_AUTH_BYPASS = new Set([
   '/check-permission',  // 자기 자신의 권한 확인용 (인증 전 호출됨)
 ]);
 
-async function requireAdmin(req: any, res: any, next: any) {
-  if (ADMIN_AUTH_BYPASS.has(req.path)) return next();
+/** 자동화(automation/*.py)용. 환경변수 RPS_SERVICE_TOKEN 과 같은 x-service-token 이면 통과. */
+function hasServiceToken(req: any): boolean {
+  const expected = process.env.RPS_SERVICE_TOKEN || '';
+  const got = (req.headers['x-service-token'] as string | undefined) || '';
+  if (expected.length < 32 || got.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(got), Buffer.from(expected));
+}
 
-  const callerEmail =
+function claimedCallerEmail(req: any): string {
+  return (
     (req.headers['x-caller-email'] as string | undefined)?.trim().toLowerCase() ||
     (req.body?.adminEmail as string | undefined)?.trim().toLowerCase() ||
     (req.query?.adminEmail as string | undefined)?.trim().toLowerCase() ||
-    '';
+    ''
+  );
+}
+
+async function requireAdmin(req: any, res: any, next: any) {
+  if (ADMIN_AUTH_BYPASS.has(req.path)) return next();
+
+  const claimed = claimedCallerEmail(req);
+  const sessionEmail: string = req.sessionUser?.email || '';
+  let callerEmail: string;
+  if (hasServiceToken(req)) {
+    callerEmail = claimed;
+  } else if (sessionEmail) {
+    if (claimed && claimed !== sessionEmail
+        && denyIfEnforced(req, res, 403, 'CALLER_MISMATCH', `claimed=${claimed} session=${sessionEmail}`)) return;
+    callerEmail = authMode() === 'on' ? sessionEmail : (claimed || sessionEmail);
+  } else {
+    if (denyIfEnforced(req, res, 401, 'SESSION_REQUIRED', `admin call without session (claimed=${claimed || '-'})`)) return;
+    callerEmail = claimed;
+  }
 
   if (!callerEmail) {
-    return res.status(401).json({ message: '호출자 식별 정보가 없습니다 (x-caller-email 헤더 필요)' });
+    return res.status(401).json({ code: 'SESSION_REQUIRED', message: '로그인이 필요합니다.' });
   }
 
   try {
@@ -102,6 +130,67 @@ async function requireAdmin(req: any, res: any, next: any) {
   }
 }
 
+/**
+ * 회원 API(/api/.../:userId)는 본인 것만. 주소의 userId 가 가리키는 회원 이메일과
+ * 로그인 세션 이메일이 같아야 한다. (예전엔 userId 를 아는 사람이면 누구나 읽고 저장했다)
+ */
+async function requireOwner(req: any, res: any, next: any) {
+  if (authMode() === 'off') return next();
+  const sessionEmail: string = req.sessionUser?.email || '';
+  if (!sessionEmail) {
+    if (denyIfEnforced(req, res, 401, 'SESSION_REQUIRED', `member call without session`)) return;
+    return next();
+  }
+  const userId = String(req.params.userId || '');
+  let ownerEmail = emailFromUserId(userId);
+  if (!ownerEmail) {
+    try {
+      ownerEmail = (await storage.getUserById(userId))?.email?.trim().toLowerCase() ?? null;
+    } catch (dbError) {
+      // DB 장애는 권한 문제가 아니다. 판단할 수 없으면 막지도 열지도 않고 장애로 답한다.
+      if (authMode() === 'report') return next();
+      const mapped = httpErrorOf(dbError);
+      return res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
+    }
+  }
+  if (ownerEmail !== sessionEmail
+      && denyIfEnforced(req, res, 403, 'NOT_OWNER', `session=${sessionEmail} owner=${ownerEmail ?? 'unknown'}`)) return;
+  next();
+}
+
+/** 다른 사이트에서 회원 브라우저를 빌려 보내는 쓰기 요청 차단(보조 방어). */
+function requireSameOriginWrite(req: any, res: any, next: any) {
+  if (sameOriginWrite(req)) return next();
+  if (denyIfEnforced(req, res, 403, 'CROSS_ORIGIN', `origin=${req.headers?.origin}`)) return;
+  next();
+}
+
+const MEMBER_ROUTES = [
+  '/api/user-profile/:userId',
+  '/api/scoreboard/:userId',
+  '/api/changes/:userId',
+  '/api/sync-from-sheets/:userId',
+  '/api/sync/:userId',
+  '/api/user-withdrawal/:userId',
+  '/api/partner-recommendations/:userId',
+  '/api/ai-specialty-analysis/:userId',
+  '/api/regional-businesses/:userId',
+  '/api/send-analysis-email/:userId',
+];
+
+/**
+ * /api/admin 밖에 있지만 관리자만 써야 하는 것들.
+ * 특히 /api/debug/user/:email 은 이메일만 넣으면 그 회원의 4자리 비밀번호까지 돌려줬다.
+ */
+const ADMIN_ONLY_ROUTES = [
+  '/api/debug/user/:email',
+  '/api/csv/upload-url',
+  '/api/csv/process',
+  '/api/fix-alpha-stage-data',
+  '/api/analyze-chapter-data-formats',
+  '/api/verify-sheets-uv/:userEmail',
+];
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // 매 요청마다 pending sheet sync 큐를 비동기 처리 (응답을 블로킹하지 않음)
   app.use((req, res, next) => {
@@ -109,8 +198,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // 로그인 세션을 읽어 req.sessionUser 에 둔다. 아래 권한 미들웨어보다 먼저.
+  app.use(attachSession);
+  app.use('/api', requireSameOriginWrite);
+
   // 모든 /api/admin/* 엔드포인트에 권한 미들웨어 적용 (라우트 등록 전에 마운트 필수)
   app.use('/api/admin', requireAdmin);
+  app.use(ADMIN_ONLY_ROUTES, requireAdmin);
+  app.use(MEMBER_ROUTES, requireOwner);
 
   // Health check endpoint for deployment
   app.get("/health", (req, res) => {
@@ -209,6 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Activity log failed (login still succeeds):', logError);
       }
 
+      setSessionCookie(res, { email, auth: userAuth });
       res.json({ user: { id: userId, email, auth: userAuth }, degraded });
     } catch (error) {
       const mapped = httpErrorOf(error);
@@ -216,6 +312,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await recordLoginFailure(email, mapped.code as any, ip);
       res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    clearSessionCookie(res);
+    res.json({ ok: true });
   });
 
   /**
@@ -385,8 +486,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shouldUpdateV: targetUser.achievement !== `${calculatedAchievement}%`
       });
       
+      const { password: _pw, ...safeUser } = targetUser as any;
       res.json({
-        user: targetUser,
+        user: safeUser,
         recalculated: {
           profitPartners,
           achievement: `${calculatedAchievement}%`

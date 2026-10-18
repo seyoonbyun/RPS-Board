@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, apiFetch } from '@/lib/queryClient';
+import { apiRequest, apiFetch, logoutSession } from '@/lib/queryClient';
 import { Trash2, Users, AlertTriangle, Download, Upload, ArrowLeft, BarChart3, Plus, UserPlus, FileText, UserX, UserCheck, ChevronDown, UserMinus, Edit3, Search, Home, Wrench, ExternalLink, Rocket } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1232,7 +1232,7 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  localStorage.removeItem('bni_user');
+                  logoutSession();
                   setLocation('/');
                 }}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600"
@@ -1269,7 +1269,7 @@ export default function AdminPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  localStorage.removeItem('bni_user');
+                  logoutSession();
                   setLocation('/');
                 }}
                 className="text-gray-600 border-gray-300 hover:bg-red-600 hover:text-white hover:border-red-600 w-full"

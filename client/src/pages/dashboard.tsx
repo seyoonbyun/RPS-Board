@@ -11,6 +11,7 @@ import PartnerForm from "@/components/partner-form";
 import { PartnerRecommendations } from "@/components/partner-recommendations";
 import type { ScoreboardData } from "@shared/schema";
 import { CACHE_CONFIG, BRAND_COLORS } from "@shared/constants";
+import { logoutSession } from "@/lib/queryClient";
 // import ChangeHistory from "@/components/change-history";
 
 export default function Dashboard() {
@@ -72,7 +73,7 @@ export default function Dashboard() {
   const { calculateAchievement } = useScoreboard(user?.id);
 
   const handleLogout = () => {
-    localStorage.removeItem("bni_user");
+    logoutSession();
     setLocation("/");
     toast({
       title: "로그아웃",

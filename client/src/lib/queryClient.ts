@@ -14,11 +14,23 @@ async function throwIfResNotOk(res: Response) {
     } catch {
       /* JSON 이 아닌 응답(프록시 오류 등) */
     }
+    // 서버 세션이 없거나 만료됨 → 같은 이메일·4자리로 다시 로그인하면 된다.
+    // 입력 중이던 내용은 이 응답 전에 저장되지 않았으므로, 화면 이동만 하고 데이터는 건드리지 않는다.
+    if (res.status === 401 && code === 'SESSION_REQUIRED') {
+      try { localStorage.removeItem('bni_user'); } catch { /* 저장소 차단 환경 */ }
+      if (window.location.pathname !== '/') window.location.assign('/');
+    }
     const err = new Error(message) as Error & { status?: number; code?: string };
     err.status = res.status;
     err.code = code;
     throw err;
   }
+}
+
+/** 로그아웃: 브라우저 저장값과 서버 세션 쿠키를 함께 지운다. */
+export function logoutSession(): void {
+  try { localStorage.removeItem('bni_user'); } catch { /* 저장소 차단 환경 */ }
+  fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
 }
 
 function getStoredEmail(): string | null {
