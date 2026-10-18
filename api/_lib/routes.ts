@@ -628,6 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 1) 활동 로깅 (구글 시트 동기화 성공 여부와 무관하게 항상 기록)
       const sheetsService = sheets;
+      let sheetSync: 'done' | 'pending' | 'failed' = 'failed';
 
       {
         const partners = [
@@ -694,8 +695,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (failed > 0) console.error(`⚠️ ActivityLog: ${failed}/${logEntries.length} entries failed to write`);
 
         // 2) 구글 시트 RPS 데이터 동기화 (실패 시 pending 큐에 저장하여 재시도)
+        //    시트가 정본이므로 '시트에 썼다' 또는 '재시도 큐에 확실히 남겼다' 중 하나가 돼야 성공이다.
         try {
           await sheetsService.syncScoreboardData({ ...savedData, userEmail });
+          sheetSync = 'done';
           console.log(`✅ Synced to Google Sheets for ${userEmail} (${profitPartners} profit partners, ${achievement}%)`);
         } catch (syncError) {
           console.error('Google Sheets sync failed, saving to retry queue:', syncError);
@@ -706,14 +709,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               { ...savedData, userEmail },
               String((syncError as Error)?.message || syncError).substring(0, 500),
             );
+            sheetSync = 'pending';
           } catch (queueError) {
-            // 재시도 큐도 DB 다. 여기가 막혔다고 저장 결과를 뒤집지 않는다 — 시트 쓰기가 본체다.
             console.error('⚠️ pending sync 큐 적재 실패:', (queueError as any)?.message || queueError);
           }
         }
       }
-      
-      res.json(savedData);
+
+      // 시트에도 못 쓰고 재시도 큐에도 못 남겼다면 이 저장은 어디에도 확정되지 않았다.
+      // 예전에는 여기서도 성공(200)을 돌려줘 회원이 '저장됨'을 보고 떠났다(거짓 성공).
+      // 같은 내용을 다시 보내면 그대로 덮어쓰는 저장이라 재시도해도 중복이 생기지 않는다.
+      if (sheetSync === 'failed') {
+        return res.status(503).json({
+          code: 'SAVE_NOT_CONFIRMED',
+          message: '저장을 확인하지 못했습니다. 입력한 내용은 그대로 두었으니 잠시 후 다시 저장해주세요.',
+        });
+      }
+
+      res.json({ ...savedData, sheetSync });
     } catch (error) {
       const mapped = httpErrorOf(error);
       console.error(`scoreboard write error [${mapped.code}]:`, error);

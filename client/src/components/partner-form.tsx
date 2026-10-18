@@ -132,9 +132,11 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
     },
   });
 
-  // Reset form when userProfile data is loaded
+  // 서버 값이 새로 오면 폼을 맞추되, 회원이 고치고 있는 중이면 덮어쓰지 않는다.
+  // (예전에는 저장·새로고침 때마다 무조건 reset 해 입력 중인 내용이 사라질 수 있었다)
+  const { isDirty } = form.formState;
   React.useEffect(() => {
-    if (userProfile && !isProfileLoading) {
+    if (userProfile && !isProfileLoading && !isDirty) {
       form.reset({
         region: userProfile.region || "",
         userIdField: userProfile.targetCustomer || "",
@@ -158,7 +160,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
         rpartner4Stage: userProfile.rpartner4Stage || "",
       });
     }
-  }, [userProfile, isProfileLoading, form]);
+  }, [userProfile, isProfileLoading, isDirty, form]);
 
 
 
@@ -168,7 +170,9 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       const response = await apiRequest("POST", `/api/scoreboard/${userId}`, data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, submitted) => {
+      // 저장한 값을 새 기준으로 삼는다. 저장 중에 더 고친 칸은 여전히 '수정 중'으로 남는다.
+      form.reset(submitted, { keepValues: true });
       console.log('✅ Save successful! Response data:', {
         specialty: data.specialty,
         targetCustomer: data.targetCustomer,
@@ -212,6 +216,7 @@ export default function PartnerForm({ userId, initialData, achievementData, onDa
       
       // 3초 후 로그인 창으로 리다이렉트
       setTimeout(() => {
+        localStorage.removeItem('bni_user');
         localStorage.removeItem('user');
         window.location.href = '/';
       }, CACHE_CONFIG.TOAST_DURATION);
