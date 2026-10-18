@@ -32,6 +32,13 @@ const POOL_MAX = arg('poolmax', '5');
 const SPOOF_IP = process.argv.includes('--spoof-ip');
 /** 워커 로그를 버린다(Windows 에서 파일 로그 쓰기가 측정에 끼어드는지 가르는 용도) */
 const QUIET = process.argv.includes('--quiet');
+/**
+ * 실제 배포(예: Vercel 미리보기)에 보낼 때: --target https://... --users-file 시험계정.json
+ * 보호된 미리보기는 환경변수 RPS_BYPASS(Protection Bypass for Automation), 배출은 CRON_SECRET 환경변수.
+ * 이 모드에서는 로컬 DB·가짜 시트·워커를 띄우지 않는다. 시트 대조는 별도 스크립트로 한다.
+ */
+const TARGET = arg('target', '').replace(/\/$/, '');
+const USERS_FILE = arg('users-file', '');
 const OUT = arg('out', path.join(os.tmpdir(), `rps-loadtest-${Date.now()}.json`));
 const LOGIN_WINDOW_MS = 10_000;
 const SAVE_WINDOW_MS = 20_000;
@@ -81,11 +88,12 @@ const pct = (a: number[], p: number) => {
 
 async function call(op: Op, method: string, p: string, body: any, cookie: string | null, ip?: string) {
   const port = BASE_PORT + Math.floor(Math.random() * WORKERS);
+  const base = TARGET || `http://127.0.0.1:${port}`;
   const t = Date.now();
   try {
-    const r = await fetch(`http://127.0.0.1:${port}${p}`, {
+    const r = await fetch(`${base}${p}`, {
       method,
-      headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}), ...(SPOOF_IP && ip ? { 'x-forwarded-for': ip } : {}) },
+      headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}), ...(SPOOF_IP && ip ? { 'x-forwarded-for': ip } : {}), ...(process.env.RPS_BYPASS ? { 'x-vercel-protection-bypass': process.env.RPS_BYPASS } : {}) },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(65_000),
     });
@@ -155,7 +163,43 @@ async function user(vu: VU, i: number, endAt: number) {
 
 let startedAt = 0;
 
+async function mainRemote() {
+  const list = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')).users as VU[];
+  vus.length = 0;
+  vus.push(...list.slice(0, USERS));
+  console.log(`▶ target=${TARGET} users=${vus.length} duration=${DURATION_S}s`);
+  startedAt = Date.now();
+  const endAt = startedAt + DURATION_S * 1000;
+  await Promise.all(vus.map((vu, i) => user(vu, i, endAt)));
+  const loadMs = Date.now() - startedAt;
+  const drains: any[] = [];
+  const cron = process.env.CRON_SECRET || '';
+  for (let k = 0; cron && k < 30; k++) {
+    await sleep(6_000);
+    const r = await fetch(`${TARGET}/api/cron/drain`, {
+      headers: { authorization: `Bearer ${cron}`, ...(process.env.RPS_BYPASS ? { 'x-vercel-protection-bypass': process.env.RPS_BYPASS } : {}) },
+    });
+    const j = await r.json().catch(() => ({ status: r.status }));
+    drains.push(j);
+    if (j.ran && j.syncs === 0 && j.activities === 0) break;
+  }
+  const summary = {
+    target: TARGET, users: vus.length, durationS: DURATION_S, loadMs,
+    loginsOk, savesOk, failures: fails, failSamples,
+    latencyMs: Object.fromEntries(Object.entries(lat).map(([k, a]) => [k, { n: a.length, p50: pct(a, 50), p95: pct(a, 95), max: pct(a, 100) }])),
+    serverTimingMs: Object.fromEntries(Object.entries(serverTiming).map(([k, a]) => [k, { n: a.length, p50: pct(a, 50), p95: pct(a, 95), max: pct(a, 100) }])),
+    reverts, revertSamples, drains,
+    saved: Object.fromEntries(saved),
+  };
+  fs.writeFileSync(OUT, JSON.stringify(summary, null, 2));
+  const { saved: _s, ...brief } = summary;
+  console.log(JSON.stringify(brief, null, 2));
+  console.log(`▶ result: ${OUT}`);
+  process.exit(0);
+}
+
 async function main() {
+  if (TARGET) return mainRemote();
   console.log(`▶ root=${ROOT} users=${USERS} workers=${WORKERS} duration=${DURATION_S}s spoofIp=${SPOOF_IP}`);
   const pgDir = path.join(os.tmpdir(), `rps-lt-pg-${process.pid}`);
   const pgsrv = new EmbeddedPostgres({ databaseDir: pgDir, user: 'rps', password: 'rps', port: PG_PORT, persistent: false, onLog: () => {} });
