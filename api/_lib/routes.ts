@@ -8,7 +8,9 @@ import { getGoogleSheetsService } from "./google-sheets.js";
 import { PartnerRecommendationEngine } from './partner-recommendation.js';
 import { ObjectStorageService } from "./objectStorage.js";
 import * as iconv from 'iconv-lite';
-import { enqueuePendingSync, processPendingSyncs } from './sheet-sync-queue.js';
+import { enqueuePendingSync } from './sheet-sync-queue.js';
+import { recordActivities, queueScoreboardSync, hasPendingSync, kickDrain, drainOutbox, outboxStatus } from './outbox.js';
+import { WithdrawnUserError } from './errors.js';
 import { BUSINESS_CONFIG, FILE_CONFIG, DEFAULT_VALUES } from './constants.js';
 import { httpErrorOf, DbUnavailableError, SheetUnavailableError } from './errors.js';
 import { recordLoginFailure, loginFailureSummary } from './login-log.js';
@@ -165,6 +167,15 @@ function requireSameOriginWrite(req: any, res: any, next: any) {
   next();
 }
 
+/** 회원이 앱에서 고치는 칸(시트 반영 대기 중에는 DB 값이 정답) */
+const EDITABLE_PROFILE_FIELDS = [
+  'industry', 'company', 'specialty', 'targetCustomer',
+  'rpartner1', 'rpartner1Specialty', 'rpartner1Stage',
+  'rpartner2', 'rpartner2Specialty', 'rpartner2Stage',
+  'rpartner3', 'rpartner3Specialty', 'rpartner3Stage',
+  'rpartner4', 'rpartner4Specialty', 'rpartner4Stage',
+] as const;
+
 const MEMBER_ROUTES = [
   '/api/user-profile/:userId',
   '/api/scoreboard/:userId',
@@ -192,10 +203,22 @@ const ADMIN_ONLY_ROUTES = [
 ];
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // 매 요청마다 pending sheet sync 큐를 비동기 처리 (응답을 블로킹하지 않음)
+  // 쌓인 시트 반영(outbox)을 내보내라는 가벼운 신호. 인스턴스당 3초에 한 번만 실제로 돌고,
+  // 응답은 기다리지 않는다. (예전엔 매 요청마다 DB 큐를 조회하고 인스턴스끼리 같은 건을 중복 실행했다)
   app.use((req, res, next) => {
-    processPendingSyncs().catch(err => console.error('Background sync processing error:', err));
+    kickDrain();
     next();
+  });
+
+  // 정기 배출: Vercel Cron(또는 로컬 스케줄러)이 부른다. 접속이 없을 때도 시트 반영이 밀리지 않게.
+  app.get("/api/cron/drain", async (req, res) => {
+    const secret = process.env.CRON_SECRET || '';
+    const auth = (req.headers.authorization as string | undefined) || '';
+    if (secret.length < 16 || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ message: 'unauthorized' });
+    }
+    res.set({ 'Cache-Control': 'no-store' });
+    res.json(await drainOutbox());
   });
 
   // 로그인 세션을 읽어 req.sessionUser 에 둔다. 아래 권한 미들웨어보다 먼저.
@@ -239,6 +262,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", loginRateLimit, async (req, res) => {
     const ip = clientIp(req);
+    // 단계별 소요 시간을 Server-Timing 헤더로 싣는다(브라우저 개발자 도구·부하 시험에서 병목 확인용, 개인정보 없음).
+    const t0 = Date.now();
+    const marks: string[] = [];
+    let tPrev = t0;
+    const mark = (name: string) => { const now = Date.now(); marks.push(`${name};dur=${now - tPrev}`); tPrev = now; };
     let email: string | undefined;
     try {
       const parsed = loginSchema.safeParse(req.body);
@@ -264,7 +292,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // RPS 시트가 로그인 인증의 유일한 원천 (Auth 시트는 참조하지 않음 — 관리자 추가/삭제 audit log 전용)
       // 조회 실패(SheetUnavailableError)는 여기서 잡지 않고 아래 바깥 catch 가 503 으로 답한다.
-      const outcome = await googleSheetsService.authenticate(email, password);
+      // 1차: 공유 사본에서 판정(접속이 몰려도 시트 호출 없음).
+      // 사본에서 실패하면 방금 시트에 추가·변경된 회원일 수 있으므로 시트로 한 번 더 확인한다.
+      let outcome;
+      try {
+        outcome = await googleSheetsService.authenticate(email, password);
+        mark('auth');
+      } catch (err) {
+        if (!(err instanceof WithdrawnUserError)) throw err;
+        outcome = null;
+      }
+      if (!outcome || !outcome.ok) {
+        outcome = await googleSheetsService.authenticate(email, password, { fresh: true });
+        mark('auth-fresh');
+      }
       if (!outcome.ok) {
         loginGuard.recordFailure(ip, email);
         await recordLoginFailure(email, outcome.reason === 'BAD_PASSWORD' ? 'BAD_PASSWORD' : 'NOT_REGISTERED', ip);
@@ -287,6 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let degraded = false;
       try {
         const r = await storage.upsertUserByEmail({ email, password });
+        mark('db-user');
         userId = r.user.id;
         isFirstLogin = r.isFirst;
       } catch (dbError) {
@@ -296,15 +338,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const userAuth = outcome.auth || 'Member';
 
-      // 활동 로그는 로그인 성공 여부에 영향을 주지 않도록 분리
-      try {
-        await googleSheetsService.logActivity(email, isFirstLogin ? '첫 로그인' : '로그인',
-          `권한: ${userAuth}${degraded ? ' (DB 장애 — 시트 모드)' : ''}`);
-      } catch (logError) {
-        console.error('Activity log failed (login still succeeds):', logError);
-      }
+      // 활동 로그는 DB 에 적고 바로 응답한다(시트에는 묶어서 나중에). 로그인 성공 여부에 영향 없음.
+      await recordActivities([{
+        email,
+        action: isFirstLogin ? '첫 로그인' : '로그인',
+        details: `권한: ${userAuth}${degraded ? ' (DB 장애 — 시트 모드)' : ''}`,
+      }]);
 
       setSessionCookie(res, { email, auth: userAuth });
+      mark('activity');
+      marks.push(`total;dur=${Date.now() - t0}`);
+      res.set('Server-Timing', marks.join(', '));
       res.json({ user: { id: userId, email, auth: userAuth }, degraded });
     } catch (error) {
       const mapped = httpErrorOf(error);
@@ -331,6 +375,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       const mapped = httpErrorOf(error);
       console.error('login-failures error:', error);
+      res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
+    }
+  });
+
+  /** 시트 반영 대기열 상태 — 밀린 양과 가장 오래된 건의 나이, 마지막 성공·오류. */
+  app.get("/api/admin/outbox-status", async (req, res) => {
+    try {
+      res.set({ 'Cache-Control': 'no-store' });
+      res.json(await outboxStatus());
+    } catch (error) {
+      const mapped = httpErrorOf(error);
       res.status(mapped.status).json({ code: mapped.code, message: mapped.message });
     }
   });
@@ -579,9 +634,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // 변경사항이 있는지 확인하고 업데이트
-          const hasChanges = !existingData || Object.keys(googleSheetsData).some(key => 
-            existingData[key as keyof typeof existingData] !== googleSheetsData[key as keyof typeof googleSheetsData]
+          // 앱 저장이 시트보다 새것이면(아직 시트 반영 대기 중이거나, 사본이 저장보다 먼저 읽힌 경우)
+          // 시트 값으로 DB 를 덮지 않고, 화면에도 DB 값을 보여준다 — 방금 저장한 값이 옛 값으로 돌아가지 않게.
+          const dbUpdatedAt = existingData?.updatedAt ? new Date(existingData.updatedAt as any).getTime() : 0;
+          const dbIsNewer = Boolean(existingData) && (
+            dbUpdatedAt > Number((profile as any).snapshotAt || 0) || await hasPendingSync(userEmail)
           );
+          if (dbIsNewer) {
+            for (const key of EDITABLE_PROFILE_FIELDS) {
+              (profile as any)[key] = (existingData as any)[key] ?? '';
+            }
+          }
+
+          const hasChanges = !dbIsNewer && (!existingData || Object.keys(googleSheetsData).some(key => 
+            existingData[key as keyof typeof existingData] !== googleSheetsData[key as keyof typeof googleSheetsData]
+          ));
 
           if (hasChanges) {
             const updatedData = await storage.upsertScoreboardData(userId, googleSheetsData);
@@ -789,16 +856,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           logEntries.push({ action, details });
         }
 
-        // 모든 로그를 병렬로 await — 서버리스에서 응답 전 완료 보장
-        const logResults = await Promise.allSettled(
-          logEntries.map(e => sheetsService.logActivity(userEmail, e.action, e.details))
-        );
-        const failed = logResults.filter(r => r.status === 'rejected').length;
-        if (failed > 0) console.error(`⚠️ ActivityLog: ${failed}/${logEntries.length} entries failed to write`);
+        await recordActivities(logEntries.map(e => ({ email: userEmail!, action: e.action, details: e.details })));
 
-        // 2) 구글 시트 RPS 데이터 동기화 (실패 시 pending 큐에 저장하여 재시도)
-        //    시트가 정본이므로 '시트에 썼다' 또는 '재시도 큐에 확실히 남겼다' 중 하나가 돼야 성공이다.
-        try {
+        // 2) 구글 시트 RPS 반영.
+        //    DB 에 저장됐으면 시트 반영을 예약하고 바로 응답한다(묶어서 나중에 한 번에 쓴다).
+        //    DB 를 못 쓰면 예전처럼 시트에 직접 쓴다. 어느 쪽이든 '어딘가에 확정'돼야 성공이다.
+        if (dbUsable && await queueScoreboardSync(userEmail, { ...savedData, userEmail })) {
+          sheetSync = 'pending';
+          kickDrain();
+        } else try {
           await sheetsService.syncScoreboardData({ ...savedData, userEmail });
           sheetSync = 'done';
           console.log(`✅ Synced to Google Sheets for ${userEmail} (${profitPartners} profit partners, ${achievement}%)`);

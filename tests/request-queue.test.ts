@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { requestQueue } from '../api/_lib/request-queue.js';
+// 큐가 요청마다 남기는 로그(이모지 포함)가 node:test 의 자식 프로세스 통신과 섞여
+// 'Unable to deserialize cloned data' 로 시험 파일 전체가 실패 처리되는 일이 있었다 — 이 파일에서는 끈다.
+console.log = () => {};
 
 const withDeadline = <T>(p: Promise<T>, ms = 3000) =>
   Promise.race([p, new Promise<never>((_, r) => setTimeout(() => r(new Error('deadline')), ms))]);

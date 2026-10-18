@@ -1,4 +1,4 @@
-import { initializeGoogleSheets, getGoogleSheetsService } from "./_lib/google-sheets.js";
+import { initializeGoogleSheets } from "./_lib/google-sheets.js";
 
 let initialized = false;
 
@@ -14,13 +14,8 @@ function ensureInit() {
       serviceAccountPrivateKey: key,
     });
     initialized = true;
-    // 콜드 스타트 시 사용자 인덱스 프리워밍 (첫 요청이 800명 × O(1) 조회 감당)
-    const svc = getGoogleSheetsService();
-    if (svc) {
-      svc.getCachedUserIndex('warmup').catch((err: any) =>
-        console.warn('Warmup getCachedUserIndex failed:', err?.message || err),
-      );
-    }
+    // 예전엔 여기서 콜드 스타트마다 시트 전체를 미리 읽었다. 접속이 몰려 인스턴스가 수백 개 뜨면
+    // 그 자체로 구글 한도(서비스 계정당 분당 60건)를 넘겼다. 지금은 공유 사본(sheet-snapshot)을 읽으므로 하지 않는다.
   }
 }
 

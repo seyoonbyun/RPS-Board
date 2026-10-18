@@ -4,6 +4,8 @@ import { bumpCacheVersion, readCacheVersion } from './cache-version.js';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
 import { requestQueue } from './request-queue.js';
+import { getSharedRowByEmail, type SnapshotMeta } from './sheet-snapshot.js';
+import { buildRpsUpdateRow } from './rps-row.js';
 import { SheetUnavailableError, WithdrawnUserError, rethrowAsSheetError } from './errors.js';
 
 interface GoogleSheetsConfig {
@@ -345,18 +347,7 @@ export class GoogleSheetsService {
    */
   private userIndexCache: { index: Map<string, UserIndexEntry>; timestamp: number; version: number } | null = null;
 
-  async getCachedUserIndex(callerId: string): Promise<Map<string, UserIndexEntry>> {
-    const now = Date.now();
-    const sharedVersion = await readCacheVersion(now);
-    if (
-      this.userIndexCache &&
-      this.userIndexCache.version === sharedVersion &&
-      now - this.userIndexCache.timestamp < SHEET_CACHE_CONFIG.READ_CACHE_TTL_MS
-    ) {
-      return this.userIndexCache.index;
-    }
-
-    const rows = await this.getCachedFullSheet(callerId);
+  private buildUserIndex(rows: string[][]): Map<string, UserIndexEntry> {
     const header: string[] = (rows[0] || []).map((h: any) =>
       (h ? h.toString().trim().toUpperCase() : ''),
     );
@@ -396,6 +387,36 @@ export class GoogleSheetsService {
       });
     }
 
+    return index;
+  }
+
+  /**
+   * 공유 사본(sheet-snapshot)에서 회원 한 명만 찾는다. 접속이 몰려도 구글 시트를 부르지 않는다.
+   * null 이면 사본을 쓸 수 없다(DB 장애 등) → 호출한 쪽이 예전 인덱스로 간다.
+   */
+  private async lookupUserEntry(email: string): Promise<{ entry: UserIndexEntry | undefined; meta: SnapshotMeta } | null> {
+    const normalized = email.trim().toLowerCase();
+    const hit = await getSharedRowByEmail('RPS', normalized, () => this.getCachedFullSheet('snapshot-refresh', true));
+    if (!hit) return null;
+    if (!hit.row) return { entry: undefined, meta: hit.meta };
+    const entry = this.buildUserIndex([hit.header, hit.row]).get(normalized);
+    if (entry) entry.rowIndex = hit.rowIndex;
+    return { entry, meta: hit.meta };
+  }
+
+  async getCachedUserIndex(callerId: string): Promise<Map<string, UserIndexEntry>> {
+    const now = Date.now();
+    const sharedVersion = await readCacheVersion(now);
+    if (
+      this.userIndexCache &&
+      this.userIndexCache.version === sharedVersion &&
+      now - this.userIndexCache.timestamp < SHEET_CACHE_CONFIG.READ_CACHE_TTL_MS
+    ) {
+      return this.userIndexCache.index;
+    }
+
+    const rows = await this.getCachedFullSheet(callerId);
+    const index = this.buildUserIndex(rows);
     this.userIndexCache = { index, timestamp: now, version: sharedVersion };
     console.log(`📇 User index rebuilt: ${index.size} users`);
     return index;
@@ -412,8 +433,19 @@ export class GoogleSheetsService {
 
   async getUserProfile(email: string): Promise<any> {
     try {
-      // 캐시를 통해 동시 접속 시 동일 시트 읽기를 공유
-      const rows = await this.getCachedFullSheet(`getUserProfile-${email}`);
+      // 공유 사본에서 내 행만 읽는다(접속이 몰려도 시트 호출 없음). 사본을 못 쓰면 예전처럼 전체 읽기.
+      let rows: string[][];
+      let snapshotAt = Date.now();
+      let fromSnapshot = false;
+      const hit = await getSharedRowByEmail('RPS', email, () => this.getCachedFullSheet('snapshot-refresh', true));
+      if (hit) {
+        if (!hit.row) return null;
+        rows = [hit.header, hit.row];
+        snapshotAt = hit.meta.fetchedAt;
+        fromSnapshot = true;
+      } else {
+        rows = await this.getCachedFullSheet(`getUserProfile-${email}`);
+      }
       
       // Find user row - 구글 시트의 새로운 사용자도 포함
       for (let i = 1; i < rows.length; i++) {
@@ -458,7 +490,8 @@ export class GoogleSheetsService {
           });
           
           // U/V열이 실제 파트너 데이터와 맞지 않으면 자동 업데이트
-          if (currentUValue !== expectedUValue || currentVValue !== expectedVValue) {
+          // 사본에서 읽은 경우는 행 번호가 사본 기준이라 쓰지 않는다. U/V 는 저장 반영 때 함께 다시 계산된다.
+          if (!fromSnapshot && (currentUValue !== expectedUValue || currentVValue !== expectedVValue)) {
             console.log(`🔄 AUTO-UPDATING U/V columns for ${email}: ${currentUValue},${currentVValue} → ${expectedUValue},${expectedVValue}`);
             
             // 구글 시트에 올바른 U/V열 값 업데이트 (큐를 통해 처리하여 동시 접속 문제 해결)
@@ -519,7 +552,8 @@ export class GoogleSheetsService {
             rpartner4Stage: rpartner4Stage, // index 19: " R파트너 4 : V-C-P"
             totalPartners: expectedUValue, // 실시간 계산된 값 사용
             achievement: expectedVValue, // 실시간 계산된 값 사용
-            auth: row[SHEET_COLUMN_INDICES.AUTH] || '' // AUTH 컬럼
+            auth: row[SHEET_COLUMN_INDICES.AUTH] || '', // AUTH 컬럼
+            snapshotAt, // 이 값을 시트에서 읽은 시각 — 앱 저장값과 어느 쪽이 새것인지 가른다
           };
         }
       }
@@ -539,12 +573,18 @@ export class GoogleSheetsService {
    * 429 한 번이 회원에게 "등록되지 않은 회원"으로 보였다. 조회 자체가 실패하면
    * 여기서 판정하지 않고 SheetUnavailableError 를 그대로 위로 던진다.
    */
-  async authenticate(email: string, password: string): Promise<AuthOutcome> {
+  async authenticate(email: string, password: string, opts: { fresh?: boolean } = {}): Promise<AuthOutcome> {
     const normalized = email.trim().toLowerCase();
     // 시트를 못 읽으면 여기서 throw 된다 (아래 catch 로 내려오지 않는다)
-    const index = await this.getCachedUserIndex(`authenticate-${normalized}`);
-
-    const entry = index.get(normalized);
+    // 기본은 공유 사본(접속이 몰려도 시트 호출 없음). fresh 는 사본에서 실패했을 때 시트로 재확인할 때만.
+    let entry: UserIndexEntry | undefined;
+    if (opts.fresh) {
+      const rows = await this.getCachedFullSheet(`authenticate-fresh-${normalized}`, true);
+      entry = this.buildUserIndex(rows).get(normalized);
+    } else {
+      const hit = await this.lookupUserEntry(normalized);
+      entry = hit ? hit.entry : (await this.getCachedUserIndex(`authenticate-${normalized}`)).get(normalized);
+    }
     if (!entry) {
       console.log(`❌ login NOT_REGISTERED: ${normalized}`);
       return { ok: false, reason: 'NOT_REGISTERED' };
@@ -573,8 +613,8 @@ export class GoogleSheetsService {
 
   async getUserAuth(email: string): Promise<string | null> {
     try {
-      const index = await this.getCachedUserIndex(`getUserAuth-${email}`);
-      const entry = index.get(email.toLowerCase());
+      const hit = await this.lookupUserEntry(email);
+      const entry = hit ? hit.entry : (await this.getCachedUserIndex(`getUserAuth-${email}`)).get(email.toLowerCase());
       return entry?.auth || null;
     } catch (error) {
       console.error('Error getting user auth:', error);
@@ -780,8 +820,8 @@ export class GoogleSheetsService {
 
   async checkAdminPermission(email: string): Promise<boolean> {
     try {
-      const index = await this.getCachedUserIndex(`checkAdminPermission-${email}`);
-      const entry = index.get(email.toLowerCase());
+      const hit = await this.lookupUserEntry(email);
+      const entry = hit ? hit.entry : (await this.getCachedUserIndex(`checkAdminPermission-${email}`)).get(email.toLowerCase());
       if (!entry) return false;
       return entry.auth === 'Admin' || entry.auth === 'Growth' || entry.auth === 'National';
     } catch (error) {
@@ -2584,6 +2624,116 @@ export class GoogleSheetsService {
     console.log(`Total R-Partners: ${partners.filter(p => p.name).length}`);
     console.log(`Achievement: ${achievement}%`);
     console.log('='.repeat(60));
+  }
+
+  /** ActivityLog 탭 존재 확인은 인스턴스당 한 번이면 된다. */
+  private activitySheetReady = false;
+
+  private async ensureActivitySheet(accessToken: string): Promise<void> {
+    if (this.activitySheetReady) return;
+    const sheetName = 'ActivityLog';
+    const checkResp = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } },
+    );
+    if (checkResp.status === 429 || checkResp.status >= 500) {
+      throw new Error(`ActivityLog check failed: ${checkResp.status}`);
+    }
+    if (!checkResp.ok) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}:batchUpdate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: sheetName } } }] }),
+      });
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent(sheetName)}!A1:D1?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [['Timestamp', 'Email', 'Action', 'Details']] }),
+        },
+      );
+    }
+    this.activitySheetReady = true;
+  }
+
+  /**
+   * 활동 기록 여러 줄을 **한 번의 호출**로 붙인다(outbox 배출용).
+   * 예전 logActivity 는 한 줄마다 2번(존재 확인 + 추가)씩 불러 접속이 몰리면 시트 한도를 다 썼다.
+   * 실패하면 throw — 호출한 쪽이 기록을 지우지 않고 다음에 다시 보낸다.
+   */
+  async appendActivityRows(rows: string[][]): Promise<void> {
+    if (rows.length === 0) return;
+    const accessToken = await this.getAccessToken();
+    await this.ensureActivitySheet(accessToken);
+    const resp = await requestQueue.enqueue('appendActivityRows', async () =>
+      fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${encodeURIComponent('ActivityLog')}!A:D:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: rows }),
+        },
+      ),
+    );
+    if (!resp.ok) {
+      throw new Error(`ActivityLog append failed: ${resp.status} ${(await resp.text()).slice(0, 200)}`);
+    }
+  }
+
+  /**
+   * 여러 회원의 보드 저장을 시트에 **한 번에** 반영한다(outbox 배출용).
+   * 시트를 한 번 새로 읽고, 기존 회원 행들을 batchUpdate 한 번으로 쓴다.
+   * 시트에 아직 행이 없는 회원(드묾)은 예전 syncScoreboardData 로 한 명씩 처리한다.
+   * @returns 이메일(소문자)별 성공/실패. 전체 호출이 실패하면 throw.
+   */
+  async syncScoreboardBatch(payloads: Array<ScoreboardData & { userEmail: string }>): Promise<Map<string, string | null>> {
+    const result = new Map<string, string | null>();
+    if (payloads.length === 0) return result;
+    const accessToken = await this.getAccessToken();
+    const rows = await this.getCachedFullSheet('syncScoreboardBatch', true);
+    const rowOf = new Map<string, number>();
+    for (let i = 1; i < rows.length; i++) {
+      const e = rows[i]?.[0]?.toString().trim().toLowerCase();
+      if (e && !rowOf.has(e)) rowOf.set(e, i);
+    }
+
+    const data: Array<{ range: string; values: string[][] }> = [];
+    const batched: string[] = [];
+    const singles: Array<ScoreboardData & { userEmail: string }> = [];
+    for (const p of payloads) {
+      const key = p.userEmail.trim().toLowerCase();
+      const i = rowOf.get(key);
+      if (i === undefined) { singles.push(p); continue; }
+      data.push({ range: `RPS!A${i + 1}:Y${i + 1}`, values: [buildRpsUpdateRow(p, rows[i] || [], (st) => this.normalizeStage(st))] });
+      batched.push(key);
+    }
+
+    if (data.length > 0) {
+      const resp = await requestQueue.enqueue('syncScoreboardBatch', async () =>
+        fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values:batchUpdate`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
+        }),
+      );
+      if (!resp.ok) {
+        throw new Error(`RPS batchUpdate failed: ${resp.status} ${(await resp.text()).slice(0, 200)}`);
+      }
+      for (const k of batched) result.set(k, null);
+      console.log(`✅ RPS batch sync: ${batched.length} rows in 1 call`);
+    }
+
+    for (const p of singles) {
+      try {
+        await this.syncScoreboardData(p);
+        result.set(p.userEmail.trim().toLowerCase(), null);
+      } catch (err: any) {
+        result.set(p.userEmail.trim().toLowerCase(), String(err?.message || err).slice(0, 300));
+      }
+    }
+    this.invalidateCache();
+    return result;
   }
 
   async logActivity(email: string, action: string, details: string = ''): Promise<void> {
