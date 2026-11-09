@@ -484,7 +484,8 @@ export default function AdminPage() {
 
 
   // 관리자 권한 확인
-  const { data: adminPermission, isLoading: isAdminLoading } = useQuery({
+  const { data: adminPermission, isLoading: isAdminLoading, isError: isAdminCheckError,
+          error: adminCheckError, refetch: refetchAdminPermission } = useQuery({
     queryKey: ["/api/admin/check-permission", currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return { isAdmin: false, auth: null };
@@ -493,12 +494,26 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: currentUser.email })
       });
-      if (!response.ok) {
+      // 401/403 만 '권한 없음'이다. 5xx·429·네트워크 오류는 판정 불가 → 예외로 올려
+      // 아래 가드가 '잠시 후 다시 시도' 화면을 띄운다. 예전엔 이 경우도 isAdmin:false 로 바꿔
+      // 관리자를 대시보드로 쫓아냈다(2026-11-09 서초 담당자 7회 재로그인).
+      if (response.status === 401 || response.status === 403) {
         return { isAdmin: false, auth: null };
       }
-      return response.json();
+      if (!response.ok) {
+        let message = `권한 확인 실패 (${response.status})`;
+        try { const body = await response.json(); if (body?.message) message = body.message; } catch { /* 본문 없음 */ }
+        throw new Error(message);
+      }
+      const body = await response.json();
+      if (body?.isAdmin === null || body?.isAdmin === undefined) {
+        throw new Error(body?.message || '권한을 확인하지 못했습니다');
+      }
+      return body;
     },
     enabled: !!currentUser?.email,
+    retry: 2,
+    retryDelay: 1500,
     staleTime: CACHE_CONFIG.ADMIN_PERMISSION_STALE_TIME, // 1분간 캐시
   });
 
@@ -1185,6 +1200,26 @@ export default function AdminPage() {
 
   // 권한 가드: 확인 중이거나 관리자가 아니면 패널을 렌더링하지 않음
   // (useEffect redirect 이전에 Member가 관리자 UI를 잠깐이라도 볼 수 없도록 차단)
+  if (currentUser && isAdminCheckError && adminPermission === undefined) {
+    // 권한이 없는 게 아니라 확인을 못 한 것이다. 쫓아내지 않고 그 자리에서 다시 시도하게 한다.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-sm w-full bg-white border rounded-lg p-6 text-center space-y-3">
+          <div className="text-gray-800 font-medium">권한 확인이 잠시 실패했습니다</div>
+          <div className="text-gray-500 text-sm">
+            서버나 구글 시트 응답이 늦어 권한을 확인하지 못했습니다. 권한이 사라진 것이 아니니 잠시 후 다시 시도해 주세요.
+          </div>
+          <div className="text-gray-400 text-xs break-all">{(adminCheckError as Error)?.message}</div>
+          <Button onClick={() => refetchAdminPermission()} className="w-full bg-red-600 hover:bg-red-700 text-white">
+            다시 시도
+          </Button>
+          <Button variant="outline" onClick={() => setLocation('/dashboard')} className="w-full">
+            내 보드로 이동
+          </Button>
+        </div>
+      </div>
+    );
+  }
   if (!currentUser || isAdminLoading || adminPermission === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

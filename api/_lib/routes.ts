@@ -1122,8 +1122,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ isAdmin, auth: userAuth });
       
     } catch (error) {
+      // 시트를 못 읽은 것(429·5xx·네트워크)은 '권한 없음'이 아니다. isAdmin:false 로 답하면 화면이
+      // 관리자를 대시보드로 쫓아내고, 담당자는 자기 권한이 사라진 줄 안다(2026-11-09 서초 7회 재로그인).
+      // 판정 불가는 isAdmin:null + 오류 코드로 답해 화면이 '잠시 후 다시 시도'를 띄우게 한다.
       console.error('Admin permission check error:', error);
-      res.status(500).json({ message: "관리자 권한 확인 중 오류가 발생했습니다", isAdmin: false });
+      const mapped = httpErrorOf(error);
+      res.status(mapped.status).json({ code: mapped.code || 'PERMISSION_CHECK_UNAVAILABLE',
+        message: mapped.message || '권한 확인에 잠시 실패했습니다. 잠시 후 다시 시도해 주세요.', isAdmin: null });
     }
   });
 
