@@ -131,10 +131,24 @@ def ask_sms_to_admin(p: dict) -> str:
 
 
 def answer_sms_to_owner(q: dict, a: dict) -> str:
-    return ("남겨주신 문의에 답변드렸습니다.\n\n"
-            f"· 문의 {q['content'][:120]}\n"
-            f"· 답변 {a['content'][:400]}\n\n"
-            "전체 내용은 RPS Board 게시판에서 확인하실 수 있습니다.")
+    """답변 문자 = 답변 **전문**. 문의 원문은 싣지 않는다 (2026-11-09 사용자 지시).
+
+    예전엔 문의 120자 + 답변 400자로 잘라 보냈는데, 답변이 문장 중간에서 끊겨
+    「한상미 님 이메일이 'hanmail.」 같은 꼴로 나갔다. 긴 답변은 LMS(2,000바이트)로 가므로
+    전문을 그대로 싣고, 2,000바이트에 걸릴 때만 말미를 줄인다.
+    """
+    body = a["content"].strip()
+    head = "남겨주신 문의에 답변드렸습니다.\n\n"
+    tail = "\n\n전체 내용은 RPS Board 게시판에서도 확인하실 수 있습니다."
+    budget = 1900 - sum(2 if ord(c) > 127 else 1 for c in GREETING + "\n\n" + head + tail)
+    out, used = [], 0
+    for ch in body:
+        used += 2 if ord(ch) > 127 else 1
+        if used > budget:
+            out.append("…")
+            break
+        out.append(ch)
+    return head + "".join(out) + tail
 
 
 def main() -> int:

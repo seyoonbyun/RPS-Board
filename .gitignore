@@ -24,3 +24,4 @@ automation/**/solapi.json
 automation/watch_run.log
 
 automation/rpi_watch.log
+automation/*.log
