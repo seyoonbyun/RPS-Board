@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import json
 import sys
 import time
 from pathlib import Path
@@ -60,6 +61,34 @@ def folder_files(drive) -> dict[str, str]:
             return out
 
 
+def write_index(rows: dict[str, dict], partial) -> None:
+    """`rps_sheets_index.json` — board_triage 가 정식 시트 ID·한글명을 여기서 읽는다.
+
+    {"sheets": {"Medical_rps": {"id","kor","rpi","a3"}}, "old_sheets": {...옛 시트(old_sheet_sweep 가 채움)}, "updated"}
+    `--only` 로 일부만 읽었을 때는 그 항목만 갱신하고 나머지는 보존한다.
+    """
+    try:
+        import paths
+        p = paths.snap_dir() / "rps_sheets_index.json"
+    except Exception:                                           # noqa: BLE001
+        p = Path(__file__).resolve().parent / "rps_sheets_index.json"
+    try:
+        idx = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    except Exception:                                           # noqa: BLE001
+        idx = {}
+    sheets = idx.get("sheets") or {}
+    if partial:
+        sheets.update(rows)
+    else:
+        sheets = rows
+    idx["sheets"] = sheets
+    idx.setdefault("old_sheets", {})
+    idx["updated"] = datetime.datetime.now().isoformat(timespec="seconds")
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(idx, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(p)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", nargs="*", help="이 파일명들만")
@@ -77,12 +106,15 @@ def main() -> int:
     print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} · _rps 시트 {len(targets)}개 읽기 시작 (서비스계정 {creds.service_account_email.split('@')[0]})")
 
     ok, empty, problems = 0, [], []
+    index_rows: dict[str, dict] = {}
     for name in sorted(targets):
         sid = targets[name]
         try:
             v = sheets.spreadsheets().values().get(
                 spreadsheetId=sid, range="A2:D3").execute().get("values", [])
+            a2 = v[0] + [""] * (4 - len(v[0])) if v and v[0] else ["", "", "", ""]
             a3 = (v[1][0] if len(v) > 1 and v[1] else "")
+            index_rows[name] = {"id": sid, "kor": a2[0].strip(), "rpi": a2[3].strip(), "a3": a3[:20]}
             if a3 == "#N/A":
                 empty.append(name)
             elif not a3 or a3.startswith("#"):
@@ -91,8 +123,10 @@ def main() -> int:
                 ok += 1
         except Exception as e:  # noqa: BLE001
             problems.append(f"{name}: 읽기 실패 {str(e)[:120]}")
+            index_rows[name] = {"id": sid, "kor": "", "rpi": "", "a3": "ERR"}
         time.sleep(GAP_SEC)
 
+    write_index(index_rows, a.only)
     print(f"정상 {ok}개 · 빈 결과(멤버 0명) {len(empty)}개 · 문제 {len(problems)}개")
     if empty:
         print("  빈 결과:", ", ".join(empty))

@@ -119,9 +119,12 @@ def pretty_ts(ts: str) -> str:
 
 
 def ask_sms_to_owner(p: dict) -> str:
+    # 「화면에 안 보인다」류 문의는 **어느 화면을 보는지**가 원인의 절반이다(2026-11-09 RPS-03:
+    # 매니저가 2025년 옛 시트를 보고 있었는데 세 번째 문의에야 알았다). 접수 문자에서 바로 청한다.
     return ("문의가 접수되었습니다. 확인 후 안내드리겠습니다.\n\n"
             f"· 접수 {pretty_ts(p['ts'])}\n"
             f"· 내용 {p['content'][:200]}\n\n"
+            "화면 관련 문의는 보고 계신 화면의 링크나 캡처를 게시판에 함께 남겨 주시면 확인이 빨라집니다.\n"
             "답변은 RPS Board 게시판에서도 확인하실 수 있습니다.")
 
 
@@ -156,6 +159,8 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true", help="실제 발송·기록")
     ap.add_argument("--replay", type=int, default=0,
                     help="커서를 무시하고 마지막 N건 재검토 (커서는 안 옮긴다)")
+    ap.add_argument("--no-triage", action="store_true",
+                    help="새 문의의 자동 진단·답변(board_triage)을 건너뛴다 — 접수 문자만")
     a = ap.parse_args()
 
     svc = build("sheets", "v4", credentials=user_credentials(), cache_discovery=False)
@@ -189,6 +194,7 @@ def main() -> int:
     by_row = {p["row"]: p for p in posts}
     mine = admin_phone()
     handled, report = 0, []
+    triage_ctx = None
 
     for p in fresh:
         who = p["name"] or p["email"]
@@ -224,6 +230,23 @@ def main() -> int:
             report.append(f"[문의] {who} · {p['content'][:60]}"
                           + ("" if phone else "  ⚠ 연락처 없어 접수문자 미발송"))
             handled += 1
+            # 자동 진단 → 안전한 조치 → 답변 게시 → 나에게 근거 보고 (RPS-03 재발 방지).
+            # 여기서 올린 답변은 **다음 회차**에 위 '답변' 분기가 집어 문의자 문자 + 검수 사본을 보낸다.
+            # 진단이 어떤 이유로 죽어도 접수 처리는 이미 끝났으므로 조용히 기록만 남긴다.
+            if not a.no_triage:
+                try:
+                    import board_triage
+                    triage_ctx = triage_ctx or board_triage.Context()      # 한 회차에 한 번만 읽는다
+                    d = board_triage.handle(p, apply=True, ctx=triage_ctx, svc=svc)
+                    report.append(f"   └ 자동진단 {', '.join(d.causes) or '미확정'} · {d.confidence}"
+                                  + (" · 답변 게시" if d.auto_post else " · 답변 보류(검토 필요)"))
+                except Exception as e:                           # noqa: BLE001
+                    print(f"   ⚠ 자동진단 실패: {str(e)[:200]}", file=sys.stderr)
+                    report.append(f"   └ ⚠ 자동진단 실패: {str(e)[:80]}")
+                    try:
+                        send_sms_admin(f"[RPS 자동진단 실패] {key} {who}\n{str(e)[:150]}")
+                    except Exception:                            # noqa: BLE001
+                        pass
             continue
 
         # 답변 (내셔널)
