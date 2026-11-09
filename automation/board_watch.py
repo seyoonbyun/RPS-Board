@@ -237,7 +237,7 @@ def main() -> int:
                 try:
                     import board_triage
                     triage_ctx = triage_ctx or board_triage.Context()      # 한 회차에 한 번만 읽는다
-                    d = board_triage.handle(p, apply=True, ctx=triage_ctx, svc=svc)
+                    d = board_triage.handle(p, apply=True, ctx=triage_ctx, svc=svc, board_posts=posts)
                     report.append(f"   └ 자동진단 {', '.join(d.causes) or '미확정'} · {d.confidence}"
                                   + (" · 답변 게시" if d.auto_post else " · 답변 보류(검토 필요)"))
                 except Exception as e:                           # noqa: BLE001

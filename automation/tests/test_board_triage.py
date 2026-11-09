@@ -141,6 +141,18 @@ class Diagnose(unittest.TestCase):
         self.assertIn("이름을 게시판에", d.answer)              # 이름을 청한다
         self.assertIn("NEW_MED", d.answer)
 
+    def test_already_answered_is_skipped(self):
+        board = [{"row": 23, "type": "요청", "role": "Admin", "parent": ""},
+                 {"row": 26, "type": "답변", "role": "National", "parent": "23"}]
+        self.assertEqual(bt.already_answered(post(T23, row=23), board), 26)
+        d = bt.handle(post(T23, row=23), apply=False, ctx=ctx(), board_posts=board)
+        self.assertEqual(d.causes, ["ALREADY_ANSWERED"])
+        self.assertEqual(d.answer, "")
+        # 담당자(Admin)가 단 댓글은 답변으로 치지 않는다
+        board2 = [{"row": 23, "type": "요청", "role": "Admin", "parent": ""},
+                  {"row": 27, "type": "답변", "role": "Admin", "parent": "23"}]
+        self.assertIsNone(bt.already_answered(post(T23, row=23), board2))
+
     def test_unrelated_text_no_answer(self):
         d = bt.diagnose(post("QR 코드 배너 다시 보내주실 수 있나요?"), ctx())
         self.assertEqual(d.confidence, "none")

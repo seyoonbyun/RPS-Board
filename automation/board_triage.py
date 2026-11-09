@@ -672,8 +672,36 @@ def notify_me(head: str, body: str, apply: bool) -> None:
         print(f"   [triage] 보고 실패: {str(e)[:120]}", file=sys.stderr)
 
 
-def handle(post: dict, *, apply: bool = False, ctx: Context | None = None, svc=None) -> Diagnosis:
+def already_answered(post: dict, board_posts: list[dict] | None) -> int | None:
+    """이 문의에 본사(National) 답변이 이미 달려 있으면 그 답변 번호. 없으면 None.
+
+    ⛔ JOY 가 꺼져 있는 동안 SEYOON 에서 사람이 답한 문의(11-09 #23~25 → #26~28)를, JOY 가 켜지며
+       「새 문의」로 집어 자동 진단이 **또 답변을 달면** 문의자에게 같은 문자가 두 번 간다. 그래서 먼저 본다.
+    """
+    posts = board_posts
+    if posts is None:
+        try:
+            raw = api_get("board")
+            posts = [{"row": int(p["index"]), "type": p.get("type", ""), "role": p.get("role", ""),
+                      "parent": str(p.get("parentIndex", ""))} for p in raw]
+        except Exception:                                          # noqa: BLE001
+            return None
+    for p in posts:
+        if p.get("type") == "답변" and str(p.get("parent")) == str(post["row"]) and p.get("role") in ("National",):
+            return int(p["row"])
+    return None
+
+
+def handle(post: dict, *, apply: bool = False, ctx: Context | None = None, svc=None,
+           board_posts: list[dict] | None = None) -> Diagnosis:
     """board_watch 진입점. 예외를 밖으로 던지지 않는다 — 접수 문자가 이것 때문에 멈추면 안 된다."""
+    prior = already_answered(post, board_posts)
+    if prior:
+        d = Diagnosis(post=post, tags=set(), region="", is_admin=False, chapters=[], names=[], official={},
+                      old_matches=[], old_others=[], causes=["ALREADY_ANSWERED"], actions_done=[], answer="",
+                      confidence="none", notes=[f"본사 답변 #{prior} 가 이미 있어 자동 진단을 건너뜀"])
+        print(f"   [triage] #{post['row']}: 본사 답변 #{prior} 가 이미 있다 — 건너뜀")
+        return d
     ctx = ctx or Context()
     diag = diagnose(post, ctx)
     do_withdrawals(diag, ctx, apply)
